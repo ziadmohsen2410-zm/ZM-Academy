@@ -1,0 +1,326 @@
+
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ZM Academy | لوحة التحكم</title>
+<style>
+:root{--bg:#0b1020;--panel:#151d32;--panel2:#1c2942;--gold:#e8bd67;--text:#f5f6fa;--muted:#aab4c8;--red:#e66b75;--green:#5bc69b}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:Arial,Tahoma,sans-serif}
+header{padding:22px 18px;background:#111a2d;border-bottom:1px solid #293550}
+header h1{margin:0;color:var(--gold);font-size:24px}
+header p{margin:8px 0 0;color:var(--muted);font-size:13px}
+main{max-width:950px;margin:auto;padding:18px}
+.card{background:var(--panel);border:1px solid #293550;border-radius:16px;padding:18px;margin-bottom:16px}
+h2{font-size:18px;margin:0 0 15px;color:var(--gold)}
+input,select{width:100%;padding:13px;margin:7px 0 13px;border:1px solid #34415c;border-radius:10px;background:#0e1729;color:white;font-size:15px}
+label{font-size:13px;color:var(--muted)}
+button{border:0;border-radius:10px;padding:12px 16px;background:var(--gold);color:#171717;font-weight:bold;font-size:14px;cursor:pointer;margin:4px}
+button.secondary{background:#34415c;color:white}
+button.danger{background:#8e3945;color:white}
+button:disabled{opacity:.5}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.row>*{flex:1}
+.item{background:var(--panel2);border-radius:12px;padding:13px;margin:10px 0}
+.item strong{display:block;margin-bottom:7px}
+small,.muted{color:var(--muted)}
+.hidden{display:none!important}
+#message{padding:12px;border-radius:10px;margin:12px 0;display:none}
+#message.ok{display:block;background:#153c32;color:#9be4c5}
+#message.err{display:block;background:#49232b;color:#ffb5bd}
+.topline{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.check{display:flex;align-items:center;gap:8px;margin:8px 0 14px}
+.check input{width:auto;margin:0}
+@media(max-width:550px){main{padding:12px}.card{padding:14px}.row{display:block}.row button{width:100%;margin:5px 0}}
+</style>
+</head>
+<body>
+<header>
+  <div class="topline">
+    <div>
+      <h1>ZM Academy</h1>
+      <p>لوحة الإدارة والتحكم في الأكاديمية</p>
+    </div>
+    <button id="logoutBtn" class="secondary hidden" onclick="logout()">تسجيل الخروج</button>
+  </div>
+</header>
+
+<main>
+  <div id="message"></div>
+
+  <section id="loginSection" class="card">
+    <h2>تسجيل دخول الإدارة</h2>
+    <label>اسم المستخدم</label>
+    <input id="username" autocomplete="username" placeholder="اسم المستخدم">
+    <label>كلمة المرور</label>
+    <input id="password" type="password" autocomplete="current-password" placeholder="كلمة المرور">
+    <button onclick="login()">دخول لوحة التحكم</button>
+  </section>
+
+  <section id="dashboard" class="hidden">
+    <div class="card">
+      <div class="topline">
+        <h2>إدارة المواد الدراسية</h2>
+        <button onclick="loadSubjects()">تحديث</button>
+      </div>
+      <div id="subjectsList"></div>
+    </div>
+
+    <div class="card">
+      <h2 id="subjectFormTitle">إضافة مادة دراسية</h2>
+      <input id="subjectId" type="hidden">
+      <label>اسم المادة</label>
+      <input id="subjectName" placeholder="مثال: الفلسفة والمنطق">
+      <label>الصف الدراسي</label>
+      <input id="subjectGrade" placeholder="مثال: الصف الأول الثانوي">
+      <div class="row">
+        <button onclick="saveSubject()">حفظ المادة</button>
+        <button class="secondary" onclick="resetSubjectForm()">إلغاء</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>إدارة الدروس والمحتوى</h2>
+      <label>اختر المادة الدراسية</label>
+      <select id="materialSubject" onchange="loadMaterials()">
+        <option value="">كل المواد</option>
+      </select>
+      <div id="materialsList"></div>
+    </div>
+
+    <div class="card">
+      <h2 id="materialFormTitle">إضافة محتوى تعليمي</h2>
+      <input id="materialId" type="hidden">
+      <label>المادة الدراسية</label>
+      <select id="materialSubjectForm"></select>
+      <label>عنوان المحتوى</label>
+      <input id="materialTitle" placeholder="عنوان الدرس">
+      <label>نوع المحتوى</label>
+      <select id="materialType">
+        <option value="lesson">درس</option>
+        <option value="video">فيديو</option>
+        <option value="pdf">ملف PDF</option>
+      </select>
+      <label>السعر بالجنيه المصري</label>
+      <input id="materialPrice" type="number" min="0" value="0">
+      <label class="check">
+        <input id="materialFree" type="checkbox" checked>
+        محتوى مجاني
+      </label>
+      <div class="row">
+        <button onclick="saveMaterial()">حفظ المحتوى</button>
+        <button class="secondary" onclick="resetMaterialForm()">إلغاء</button>
+      </div>
+    </div>
+  </section>
+</main>
+
+<script>
+const API = "https://zm-academy-api.ziadmohsen4567.workers.dev";
+let token = sessionStorage.getItem("zm_admin_token") || "";
+let subjects = [];
+
+function message(text, type="ok"){
+  const el=document.getElementById("message");
+  el.textContent=text;
+  el.className=type;
+  el.style.display="block";
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+async function request(path,method="GET",body=null){
+  const headers={"Content-Type":"application/json"};
+  if(token) headers.Authorization="Bearer "+token;
+  const options={method,headers};
+  if(body) options.body=JSON.stringify(body);
+  const response=await fetch(API+path,options);
+  const data=await response.json().catch(()=>({}));
+  if(!response.ok || data.success===false){
+    throw new Error(data.error || "حدث خطأ في الاتصال");
+  }
+  return data;
+}
+function showDashboard(){
+  document.getElementById("loginSection").classList.add("hidden");
+  document.getElementById("dashboard").classList.remove("hidden");
+  document.getElementById("logoutBtn").classList.remove("hidden");
+}
+function showLogin(){
+  document.getElementById("loginSection").classList.remove("hidden");
+  document.getElementById("dashboard").classList.add("hidden");
+  document.getElementById("logoutBtn").classList.add("hidden");
+}
+async function login(){
+  const username=document.getElementById("username").value.trim();
+  const password=document.getElementById("password").value;
+  if(!username || !password) return message("اكتب اسم المستخدم وكلمة المرور","err");
+  try{
+    const data=await request("/api/admin/login","POST",{username,password});
+    const newToken=data.token || data.access_token || data.session?.token;
+    if(!newToken) throw new Error("لم يصل رمز الجلسة من الخادم");
+    token=newToken;
+    sessionStorage.setItem("zm_admin_token",token);
+    document.getElementById("password").value="";
+    showDashboard();
+    await loadSubjects();
+    message("تم تسجيل الدخول بنجاح");
+  }catch(e){message(e.message,"err")}
+}
+async function checkSession(){
+  if(!token){showLogin();return}
+  try{
+    await request("/api/admin/me");
+    showDashboard();
+    await loadSubjects();
+  }catch(e){
+    token="";
+    sessionStorage.removeItem("zm_admin_token");
+    showLogin();
+  }
+}
+async function logout(){
+  try{await request("/api/admin/logout","POST",{})}catch(e){}
+  token="";
+  sessionStorage.removeItem("zm_admin_token");
+  showLogin();
+  message("تم تسجيل الخروج");
+}
+async function loadSubjects(){
+  try{
+    const data=await request("/api/subjects");
+    subjects=data.subjects || [];
+    renderSubjects();
+    fillSubjectOptions();
+    await loadMaterials();
+  }catch(e){message(e.message,"err")}
+}
+function renderSubjects(){
+  const box=document.getElementById("subjectsList");
+  if(!subjects.length){box.innerHTML="<p class='muted'>لا توجد مواد دراسية حتى الآن</p>";return}
+  box.innerHTML=subjects.map(s=>`
+    <div class="item">
+      <strong>${escapeHTML(s.name)}</strong>
+      <small>${escapeHTML(s.grade || "")}</small>
+      <div class="row">
+        <button class="secondary" onclick="editSubject(${s.id})">تعديل</button>
+        <button class="danger" onclick="deleteSubject(${s.id})">حذف</button>
+      </div>
+    </div>`).join("");
+}
+function fillSubjectOptions(){
+  const options=subjects.map(s=>`<option value="${s.id}">${escapeHTML(s.name)} - ${escapeHTML(s.grade||"")}</option>`).join("");
+  document.getElementById("materialSubject").innerHTML='<option value="">كل المواد</option>'+options;
+  document.getElementById("materialSubjectForm").innerHTML=options;
+}
+function editSubject(id){
+  const s=subjects.find(x=>x.id===id);if(!s)return;
+  document.getElementById("subjectId").value=s.id;
+  document.getElementById("subjectName").value=s.name;
+  document.getElementById("subjectGrade").value=s.grade||"";
+  document.getElementById("subjectFormTitle").textContent="تعديل المادة الدراسية";
+  document.getElementById("subjectName").scrollIntoView({behavior:"smooth"});
+}
+function resetSubjectForm(){
+  document.getElementById("subjectId").value="";
+  document.getElementById("subjectName").value="";
+  document.getElementById("subjectGrade").value="";
+  document.getElementById("subjectFormTitle").textContent="إضافة مادة دراسية";
+}
+async function saveSubject(){
+  const id=document.getElementById("subjectId").value;
+  const name=document.getElementById("subjectName").value.trim();
+  const grade=document.getElementById("subjectGrade").value.trim();
+  if(!name||!grade)return message("اكتب اسم المادة والصف الدراسي","err");
+  try{
+    await request("/api/subjects",id?"PUT":"POST",id?{id:Number(id),name,grade}:{name,grade});
+    resetSubjectForm();
+    await loadSubjects();
+    message("تم حفظ المادة بنجاح");
+  }catch(e){message(e.message,"err")}
+}
+async function deleteSubject(id){
+  if(!confirm("هل أنت متأكد من حذف المادة؟"))return;
+  try{
+    await request("/api/subjects","DELETE",{id});
+    await loadSubjects();
+    message("تم حذف المادة");
+  }catch(e){message(e.message,"err")}
+}
+async function loadMaterials(){
+  try{
+    const selected=document.getElementById("materialSubject").value;
+    const data=await request("/api/materials");
+    let list=data.materials||[];
+    if(selected)list=list.filter(m=>String(m.subject_id)===selected);
+    renderMaterials(list);
+  }catch(e){message(e.message,"err")}
+}
+function renderMaterials(list){
+  const box=document.getElementById("materialsList");
+  if(!list.length){box.innerHTML="<p class='muted'>لا يوجد محتوى في هذا الاختيار</p>";return}
+  box.innerHTML=list.map(m=>`
+    <div class="item">
+      <strong>${escapeHTML(m.title)}</strong>
+      <small>النوع: ${escapeHTML(m.type)} | السعر: ${Number(m.price)||0} جنيه | ${m.is_free?"مجاني":"مدفوع"}</small>
+      <div class="row">
+        <button class="secondary" onclick="editMaterial(${m.id})">تعديل</button>
+        <button class="danger" onclick="deleteMaterial(${m.id})">حذف</button>
+      </div>
+    </div>`).join("");
+}
+async function editMaterial(id){
+  try{
+    const data=await request("/api/materials");
+    const m=(data.materials||[]).find(x=>x.id===id);if(!m)return;
+    document.getElementById("materialId").value=m.id;
+    document.getElementById("materialSubjectForm").value=m.subject_id;
+    document.getElementById("materialTitle").value=m.title;
+    document.getElementById("materialType").value=m.type;
+    document.getElementById("materialPrice").value=m.price||0;
+    document.getElementById("materialFree").checked=!!m.is_free;
+    document.getElementById("materialFormTitle").textContent="تعديل المحتوى";
+    document.getElementById("materialTitle").scrollIntoView({behavior:"smooth"});
+  }catch(e){message(e.message,"err")}
+}
+function resetMaterialForm(){
+  document.getElementById("materialId").value="";
+  document.getElementById("materialTitle").value="";
+  document.getElementById("materialType").value="lesson";
+  document.getElementById("materialPrice").value="0";
+  document.getElementById("materialFree").checked=true;
+  document.getElementById("materialFormTitle").textContent="إضافة محتوى تعليمي";
+}
+async function saveMaterial(){
+  const id=document.getElementById("materialId").value;
+  const subject_id=Number(document.getElementById("materialSubjectForm").value);
+  const title=document.getElementById("materialTitle").value.trim();
+  const type=document.getElementById("materialType").value;
+  const price=Number(document.getElementById("materialPrice").value);
+  const is_free=document.getElementById("materialFree").checked;
+  if(!subject_id||!title)return message("اختر المادة واكتب عنوان المحتوى","err");
+  if(!Number.isFinite(price)||price<0)return message("اكتب سعرًا صحيحًا","err");
+  const body={subject_id,title,type,price,is_free};
+  if(id)body.id=Number(id);
+  try{
+    await request("/api/materials",id?"PUT":"POST",body);
+    resetMaterialForm();
+    await loadMaterials();
+    message("تم حفظ المحتوى بنجاح");
+  }catch(e){message(e.message,"err")}
+}
+async function deleteMaterial(id){
+  if(!confirm("هل أنت متأكد من حذف المحتوى؟"))return;
+  try{
+    await request("/api/materials","DELETE",{id});
+    await loadMaterials();
+    message("تم حذف المحتوى");
+  }catch(e){message(e.message,"err")}
+}
+function escapeHTML(value){
+  return String(value??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+}
+checkSession();
+</script>
+</body>
+</html>
