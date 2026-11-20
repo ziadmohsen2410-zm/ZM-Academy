@@ -2,6 +2,9 @@ name = "zm-academy-api"
 main = "worker.js"
 compatibility_date = "2026-11-20"
 
+[vars]
+ALLOWED_ORIGINS = "https://ziadmohsen2410-zm.github.io"
+
 [[d1_databases]]
 binding = "DB"
 database_name = "zm-academy-db"
