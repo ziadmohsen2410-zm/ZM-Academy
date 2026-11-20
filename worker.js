@@ -212,7 +212,7 @@ async function route(request, env) {
 
     if (method === "GET" && path === "/api/admin/materials") {
       const rows = await env.DB.prepare(
-        `SELECT id, subject_id, title, type, price, is_free, created_at
+        `SELECT id, subject_id, title, type, price, is_free
          FROM materials ORDER BY id DESC`
       ).all();
       return reply(request, env, { success: true, materials: rows.results || [] });
