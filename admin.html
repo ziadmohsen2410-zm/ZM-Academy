@@ -91,6 +91,15 @@ small,.muted{color:var(--muted)}
       <div class="topline"><h2>طلبات الطلاب</h2><button onclick="loadOrders()">تحديث</button></div>
       <div id="ordersList"><p class="muted">جارٍ تحميل الطلبات...</p></div>
     </div>
+    <div class="card">
+      <div class="topline">
+        <h2>طلبات اعتماد الأجهزة</h2>
+        <button onclick="loadDeviceRequests()">تحديث</button>
+      </div>
+      <div id="deviceRequestsList">
+        <p class="muted">جارٍ تحميل طلبات الأجهزة...</p>
+      </div>
+    </div>
   </section>
 </main>
 <script>
@@ -129,7 +138,11 @@ function showLogin(){
 
 async function loadDashboardData(){
   await loadSubjects();
-  await Promise.all([loadStudents(),loadOrders()]);
+  await Promise.all([
+    loadStudents(),
+    loadOrders(),
+    loadDeviceRequests()
+  ]);
 }
 
 async function login(){
@@ -384,6 +397,63 @@ async function updateOrder(id,status){
     await loadOrders();
     message("تم تحديث حالة الطلب");
   }catch(e){message(e.message,"err")}
+}
+
+async function loadDeviceRequests(){
+  const box=document.getElementById("deviceRequestsList");
+  box.innerHTML="<p class='muted'>جارٍ تحميل طلبات الأجهزة...</p>";
+
+  try{
+    const data=await request("/api/admin/device-requests");
+    const list=data.requests||[];
+
+    if(!list.length){
+      box.innerHTML="<p class='muted'>لا توجد طلبات اعتماد أجهزة حاليًا</p>";
+      return;
+    }
+
+    box.innerHTML=list.map(d=>`
+      <div class="item">
+        <strong>${escapeHTML(d.student_name||"طالب غير معروف")}</strong>
+        <small>اسم المستخدم: ${escapeHTML(d.username||"—")}</small>
+        <small>رقم الطالب: ${Number(d.student_id)}</small>
+        <small>رقم الهاتف: ${escapeHTML(d.phone||"غير مسجل")}</small>
+        <small>الجهاز: ${escapeHTML(d.device_name||"غير معروف")}</small>
+        <small>تاريخ الطلب: ${escapeHTML(d.created_at||"—")}</small>
+        <div class="row">
+          <button onclick="reviewDevice(${Number(d.id)},'approve')">موافقة</button>
+          <button class="danger" onclick="reviewDevice(${Number(d.id)},'reject')">رفض</button>
+        </div>
+      </div>
+    `).join("");
+
+  }catch(e){
+    box.innerHTML=`<p class="muted">${escapeHTML(e.message)}</p>`;
+  }
+}
+
+async function reviewDevice(id,decision){
+  const action=decision==="approve"?"الموافقة على هذا الجهاز؟":"رفض طلب هذا الجهاز؟";
+
+  if(!confirm(action))return;
+
+  try{
+    await request(
+      "/api/admin/device-requests/"+Number(id)+"/"+decision,
+      "POST",
+      {}
+    );
+
+    await loadDeviceRequests();
+    message(
+      decision==="approve"
+        ?"تم اعتماد الجهاز بنجاح"
+        :"تم رفض طلب الجهاز"
+    );
+
+  }catch(e){
+    message(e.message,"err");
+  }
 }
 
 function escapeHTML(value){
