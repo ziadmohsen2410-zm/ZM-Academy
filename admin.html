@@ -255,7 +255,7 @@ function renderMaterials(list){
 
 async function editMaterial(id){
   try{
-    const data=await request("/api/materials");
+    const data=await request("/api/admin/materials");
     const m=(data.materials||[]).find(x=>Number(x.id)===Number(id));
     if(!m)return;
     document.getElementById("materialId").value=m.id;
