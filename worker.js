@@ -1,3 +1,4 @@
+
 const SESSION_DAYS = 7;
 const PBKDF2_ITERATIONS = 210000;
 
@@ -208,6 +209,36 @@ async function route(request, env) {
     if (method === "GET" && path === "/api/admin/students") {
       const rows = await env.DB.prepare("SELECT id, name, phone, created_at FROM students ORDER BY id DESC LIMIT 1000").all();
       return reply(request, env, { success: true, students: rows.results || [] });
+    }
+
+    // حذف طالب: لا نحذف أي طالب لديه طلبات مرتبطة به.
+    if (method === "DELETE" && /^\/api\/admin\/students\/\d+$/.test(path)) {
+      const studentId = Number(path.split("/").pop());
+
+      const student = await env.DB.prepare(
+        "SELECT id FROM students WHERE id = ?"
+      ).bind(studentId).first();
+
+      if (!student) {
+        return reply(request, env, { success: false, error: "الطالب غير موجود." }, 404);
+      }
+
+      const linkedOrders = await env.DB.prepare(
+        "SELECT COUNT(*) AS n FROM orders WHERE student_id = ?"
+      ).bind(studentId).first();
+
+      if ((linkedOrders?.n || 0) > 0) {
+        return reply(request, env, {
+          success: false,
+          error: "لا يمكن حذف الطالب لوجود طلبات مرتبطة به. احتفظ بسجل الطلبات."
+        }, 409);
+      }
+
+      await env.DB.prepare(
+        "DELETE FROM students WHERE id = ?"
+      ).bind(studentId).run();
+
+      return reply(request, env, { success: true, deleted: studentId });
     }
 
     if (method === "GET" && path === "/api/admin/materials") {
