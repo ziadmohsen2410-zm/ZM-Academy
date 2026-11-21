@@ -790,7 +790,7 @@ async function route(request, env) {
 
       return reply(request, env, {
         success: false,
-        error: "تعذر إنشاء الحساب. تأكد من البيانات وحاول مرة أخرى."
+        error: "خطأ التسجيل: " + String(error?.message || error)
       }, 500);
     }
   }
