@@ -37,6 +37,12 @@ a{color:#e8bd67}
 </form>
 
 <div id="message" role="status"></div>
+  <div id="deviceContact" style="display:none;margin:14px 0;padding:14px;border:1px solid #c99d4d;border-radius:10px;text-align:center">
+  <p>لاستكمال اعتماد جهازك، برجاء التواصل مع المدرس:</p>
+  <a href="https://wa.me/201115336341" target="_blank" rel="noopener noreferrer">تواصل عبر واتساب</a>
+  <br><br>
+  <a href="tel:+201115336341">اتصال هاتفي</a>
+</div>
 <div id="profile" class="profile"></div>
 </div>
 
@@ -47,7 +53,8 @@ const form = document.getElementById("loginForm");
 const message = document.getElementById("message");
 const button = document.getElementById("submitBtn");
 const profile = document.getElementById("profile");
-
+const deviceContact = document.getElementById("deviceContact");
+  
 form.addEventListener("submit", async function(e){
   e.preventDefault();
 
@@ -57,19 +64,36 @@ form.addEventListener("submit", async function(e){
 
   const username = document.getElementById("username").value.trim();
   const password = document.getElementById("password").value;
+  let deviceToken = localStorage.getItem("zm_device_token");
+
+if (!deviceToken) {
+  const bytes = new Uint8Array(32);
+  crypto.getRandomValues(bytes);
+  deviceToken = Array.from(bytes, b =>
+    b.toString(16).padStart(2, "0")
+  ).join("");
+
+  localStorage.setItem("zm_device_token", deviceToken);
+}
+  const deviceName = "متصفح " + String(navigator.userAgent || "هذا الجهاز").slice(0, 90);
+
+deviceContact.style.display = "none";
 
   try {
     const response = await fetch(API + "/api/students/login", {
       method: "POST",
       headers: {"Content-Type":"application/json"},
-      body: JSON.stringify({username, password})
+      body: JSON.stringify({username, password, deviceToken, deviceName})
     });
 
     const data = await response.json();
 
     if (!response.ok || !data.success) {
-      throw new Error(data.error || "تعذر تسجيل الدخول.");
-    }
+  if (data.code === "DEVICE_APPROVAL_REQUIRED") {
+    deviceContact.style.display = "block";
+  }
+  throw new Error(data.error || "تعذر تسجيل الدخول.");
+}
 
     localStorage.setItem("zm_student_token", data.token);
 
