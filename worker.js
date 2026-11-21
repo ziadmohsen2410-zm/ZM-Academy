@@ -201,8 +201,18 @@ async function studentSession(request, env) {
     `SELECT ss.id, ss.student_id, s.name, s.phone
      FROM student_sessions ss
      JOIN students s ON s.id = ss.student_id
+     JOIN student_devices d
+       ON d.student_id = ss.student_id
+      AND d.device_token_hash = ss.device_token_hash
+      AND d.status = 'approved'
      WHERE ss.token_hash = ?
-     AND ss.expires_at > datetime('now')`
+       AND ss.expires_at > datetime('now')
+       AND NOT EXISTS (
+         SELECT 1
+         FROM student_devices pending
+         WHERE pending.student_id = ss.student_id
+           AND pending.status = 'pending'
+       )`
   ).bind(tokenHash).first();
 
   return row ? { ...row, tokenHash } : null;
