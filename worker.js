@@ -1276,11 +1276,13 @@ export default {
   async fetch(request, env) {
     try {
       return await route(request, env);
-    } catch (error) {
-      // لا نعرض تفاصيل الأخطاء الداخلية للزوار
+    }     } catch (error) {
+      console.error("Worker Error:", error);
+
       return reply(request, env, {
         success: false,
-        error: "Internal server error."
+        error: "Internal server error.",
+        debug: String(error?.message || error)
       }, 500);
     }
   },
