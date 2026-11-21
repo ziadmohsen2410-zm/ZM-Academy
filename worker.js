@@ -566,6 +566,55 @@ async function route(request, env) {
     }
 
     // إضافة محتوى دراسي
+    if (method === "PUT" && path === "/api/admin/materials") {
+  const body = await readBody(request);
+  const id = Number(body?.id);
+  const subjectId = Number(body?.subject_id);
+  const title = clean(body?.title, 180);
+  const type = clean(body?.type, 40);
+  const price = Number(body?.price ?? 0);
+  const isFree =
+    body?.is_free === false || Number(body?.is_free) === 0 ? 0 : 1;
+
+  if (
+    !Number.isInteger(id) || id < 1 ||
+    !Number.isInteger(subjectId) || subjectId < 1 ||
+    !title || !type ||
+    !Number.isFinite(price) || price < 0
+  ) {
+    return reply(request, env, {
+      success: false,
+      error: "Invalid material data."
+    }, 400);
+  }
+
+  const result = await env.DB.prepare(
+    `UPDATE materials
+     SET subject_id = ?, title = ?, type = ?, price = ?,
+         is_free = ?, file_key = ?
+     WHERE id = ?`
+  ).bind(
+    subjectId,
+    title,
+    type,
+    price,
+    isFree,
+    clean(body?.file_key, 500) || null,
+    id
+  ).run();
+
+  if (!result.meta.changes) {
+    return reply(request, env, {
+      success: false,
+      error: "Material not found."
+    }, 404);
+  }
+
+  return reply(request, env, {
+    success: true,
+    message: "Material updated."
+  });
+}
     if (method === "POST" && path === "/api/admin/materials") {
       const body = await readBody(request);
       const subjectId = Number(body?.subject_id);
