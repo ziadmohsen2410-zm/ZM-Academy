@@ -907,6 +907,7 @@ async function route(request, env) {
   }
 
   // تسجيل دخول الطالب
+  
   if (method === "POST" && path === "/api/students/login") {
     const body = await readBody(request);
 
@@ -914,11 +915,22 @@ async function route(request, env) {
     const password = typeof body?.password === "string"
       ? body.password
       : "";
+    const deviceToken = typeof body?.deviceToken === "string"
+      ? body.deviceToken.trim()
+      : "";
+    const deviceName = clean(body?.deviceName, 100) || "جهاز غير معروف";
 
     if (!username || !password) {
       return reply(request, env, {
         success: false,
         error: "أدخل اسم المستخدم وكلمة المرور."
+      }, 400);
+    }
+
+    if (deviceToken.length < 32 || deviceToken.length > 200) {
+      return reply(request, env, {
+        success: false,
+        error: "تعذر التعرف على الجهاز. حدّث الصفحة وحاول مرة أخرى."
       }, 400);
     }
 
@@ -938,16 +950,103 @@ async function route(request, env) {
       }, 401);
     }
 
+    const deviceTokenHash = await sha256(deviceToken);
+
+    const existingDevice = await env.DB.prepare(
+      `SELECT id, status
+       FROM student_devices
+       WHERE student_id = ?
+         AND device_token_hash = ?`
+    ).bind(account.student_id, deviceTokenHash).first();
+
+    const pending = await env.DB.prepare(
+      `SELECT COUNT(*) AS total
+       FROM student_devices
+       WHERE student_id = ?
+         AND status = 'pending'`
+    ).bind(account.student_id).first();
+
+    if (pending.total > 0) {
+      if (existingDevice?.status === "rejected") {
+        await env.DB.prepare(
+          `UPDATE student_devices
+           SET status = 'pending',
+               device_name = ?,
+               created_at = CURRENT_TIMESTAMP,
+               reviewed_at = NULL,
+               reviewed_by = NULL
+           WHERE id = ?`
+        ).bind(deviceName, existingDevice.id).run();
+      }
+
+      return reply(request, env, {
+        success: false,
+        code: "DEVICE_APPROVAL_REQUIRED",
+        error: "الحساب متوقف مؤقتًا لحين مراجعة طلب اعتماد الجهاز. برجاء التواصل مع المدرس."
+      }, 403);
+    }
+
+    if (existingDevice?.status === "approved") {
+      // الجهاز معتمد بالفعل
+    } else {
+      if (existingDevice?.status === "rejected") {
+        await env.DB.prepare(
+          `UPDATE student_devices
+           SET status = 'pending',
+               device_name = ?,
+               created_at = CURRENT_TIMESTAMP,
+               reviewed_at = NULL,
+               reviewed_by = NULL
+           WHERE id = ?`
+        ).bind(deviceName, existingDevice.id).run();
+      } else if (!existingDevice) {
+        const deviceCount = await env.DB.prepare(
+          `SELECT COUNT(*) AS total
+           FROM student_devices
+           WHERE student_id = ?`
+        ).bind(account.student_id).first();
+
+        if (deviceCount.total === 0) {
+          await env.DB.prepare(
+            `INSERT INTO student_devices
+             (student_id, device_token_hash, device_name, status)
+             VALUES (?, ?, ?, 'approved')`
+          ).bind(
+            account.student_id,
+            deviceTokenHash,
+            deviceName
+          ).run();
+        } else {
+          await env.DB.prepare(
+            `INSERT INTO student_devices
+             (student_id, device_token_hash, device_name, status)
+             VALUES (?, ?, ?, 'pending')`
+          ).bind(
+            account.student_id,
+            deviceTokenHash,
+            deviceName
+          ).run();
+        }
+      }
+
+      return reply(request, env, {
+        success: false,
+        code: "DEVICE_APPROVAL_REQUIRED",
+        error: "هذا الجهاز يحتاج إلى موافقة المدرس قبل تسجيل الدخول."
+      }, 403);
+    }
+
     const token = randomToken();
     const tokenHash = await sha256(token);
 
     await env.DB.prepare(
       `INSERT INTO student_sessions
-       (student_id, token_hash, expires_at)
-       VALUES (?, ?, datetime('now', ?))`
+       (student_id, token_hash, device_token_hash, expires_at)
+       VALUES (?, ?, ?, datetime('now', ?))`
     ).bind(
       account.student_id,
       tokenHash,
+      deviceTokenHash,
       `+${SESSION_DAYS} days`
     ).run();
 
