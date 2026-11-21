@@ -1,0 +1,193 @@
+
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#0b1020">
+<title>لوحة الطالب | ZM Academy</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#0b1020;color:#f5f6fa;font-family:Arial,Tahoma,sans-serif;line-height:1.8}
+header{background:#111a2d;border-bottom:1px solid #34415c;padding:18px}
+header h1{margin:0;color:#e8bd67}
+header p{margin:4px 0;color:#aab4c8}
+main{max-width:950px;margin:auto;padding:18px}
+.card{background:#151d32;border:1px solid #34415c;border-radius:15px;padding:18px;margin-bottom:16px}
+h2{color:#e8bd67;font-size:19px;margin:0 0 12px}
+.item{background:#0b1020;border-radius:10px;padding:12px;margin:9px 0}
+.muted{color:#aab4c8}
+button{border:0;border-radius:9px;padding:11px 18px;background:#e8bd67;color:#171717;font-weight:bold;cursor:pointer}
+#message{padding:12px;text-align:center}
+.hidden{display:none}
+</style>
+</head>
+<body>
+<header>
+  <h1>ZM Academy</h1>
+  <p>لوحة الطالب التعليمية</p>
+</header>
+
+<main>
+  <div id="message">جارٍ تحميل بياناتك...</div>
+
+  <section id="dashboard" class="hidden">
+    <div class="card">
+      <h2 id="welcome">أهلاً بك</h2>
+      <div id="studentInfo"></div>
+    </div>
+
+    <div class="card">
+      <h2>موادي الدراسية</h2>
+      <div id="subjects"></div>
+    </div>
+
+    <div class="card">
+      <h2>المذكرات والمحتوى المجاني</h2>
+      <div id="materials"></div>
+    </div>
+
+    <div class="card">
+      <h2>مشترياتي المعتمدة</h2>
+      <div id="purchases"></div>
+    </div>
+
+    <div class="card">
+      <button id="logoutBtn">تسجيل الخروج</button>
+      <a href="./index.html" style="color:#e8bd67;margin-right:12px">الصفحة الرئيسية</a>
+    </div>
+  </section>
+</main>
+
+<script>
+const API = "https://zm-academy-api.ziadmohsen4567.workers.dev";
+const token = localStorage.getItem("zm_student_token");
+const message = document.getElementById("message");
+const dashboard = document.getElementById("dashboard");
+
+function showList(id, items, emptyText, render) {
+  const box = document.getElementById(id);
+  box.replaceChildren();
+
+  if (!items || !items.length) {
+    const empty = document.createElement("p");
+    empty.className = "muted";
+    empty.textContent = emptyText;
+    box.appendChild(empty);
+    return;
+  }
+
+  items.forEach(item => {
+    const div = document.createElement("div");
+    div.className = "item";
+    render(div, item);
+    box.appendChild(div);
+  });
+}
+
+async function api(path) {
+  const response = await fetch(API + path, {
+    headers: {"Authorization": "Bearer " + token}
+  });
+
+  const data = await response.json();
+
+  if (response.status === 401) {
+    localStorage.removeItem("zm_student_token");
+    location.replace("./login.html");
+    throw new Error("انتهت جلسة الدخول.");
+  }
+
+  if (!response.ok || !data.success) {
+    throw new Error(data.error || "تعذر تحميل البيانات.");
+  }
+
+  return data;
+}
+
+async function loadDashboard() {
+  if (!token) {
+    location.replace("./login.html");
+    return;
+  }
+
+  try {
+    const [me, purchases, materialsData] = await Promise.all([
+      api("/api/student/me"),
+      api("/api/student/purchases"),
+      fetch(API + "/api/materials").then(r => r.json())
+    ]);
+
+    const student = me.student;
+    const subjects = me.subjects || [];
+    const materials = materialsData.materials || [];
+
+    document.getElementById("welcome").textContent =
+      "أهلاً " + student.name;
+
+    document.getElementById("studentInfo").textContent =
+      "الصف الدراسي: " + student.grade;
+
+    showList("subjects", subjects, "لا توجد مواد مسجلة.", (div, s) => {
+      div.textContent = s.name;
+    });
+
+    const subjectIds = subjects.map(s => Number(s.id));
+    const myMaterials = materials.filter(m =>
+      subjectIds.includes(Number(m.subject_id))
+    );
+
+    showList("materials", myMaterials,
+      "لا يوجد محتوى مجاني متاح حاليًا.", (div, m) => {
+        const title = document.createElement("strong");
+        title.textContent = m.title;
+
+        const type = document.createElement("div");
+        type.className = "muted";
+        type.textContent = m.type || "محتوى تعليمي";
+
+        div.append(title, type);
+      }
+    );
+
+    showList("purchases", purchases.purchases,
+      "لا توجد مشتريات معتمدة حتى الآن.", (div, p) => {
+        const title = document.createElement("strong");
+        title.textContent = p.title;
+
+        const subject = document.createElement("div");
+        subject.className = "muted";
+        subject.textContent = "المادة: " + p.subject_name;
+
+        const status = document.createElement("div");
+        status.textContent = "حالة الطلب: " +
+          (p.status === "approved" ? "تمت الموافقة" : "مكتمل");
+
+        div.append(title, subject, status);
+      }
+    );
+
+    message.textContent = "تم تحميل لوحة الطالب بنجاح.";
+    dashboard.classList.remove("hidden");
+
+  } catch (error) {
+    message.textContent = error.message || "حدث خطأ أثناء تحميل البيانات.";
+  }
+}
+
+document.getElementById("logoutBtn").addEventListener("click", async () => {
+  try {
+    await fetch(API + "/api/student/logout", {
+      method: "POST",
+      headers: {"Authorization": "Bearer " + token}
+    });
+  } catch (e) {}
+
+  localStorage.removeItem("zm_student_token");
+  location.replace("./login.html");
+});
+
+loadDashboard();
+</script>
+</body>
+</html>
