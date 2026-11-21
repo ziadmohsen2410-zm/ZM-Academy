@@ -551,6 +551,20 @@ async function route(request, env) {
       }, 201);
     }
 
+        // عرض جميع المحتويات للإدارة
+    if (method === "GET" && path === "/api/admin/materials") {
+      const rows = await env.DB.prepare(
+        `SELECT id, subject_id, title, type, price, is_free, file_key
+         FROM materials
+         ORDER BY id DESC`
+      ).all();
+
+      return reply(request, env, {
+        success: true,
+        materials: rows.results || []
+      });
+    }
+
     // إضافة محتوى دراسي
     if (method === "POST" && path === "/api/admin/materials") {
       const body = await readBody(request);
