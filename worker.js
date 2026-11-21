@@ -1276,7 +1276,7 @@ export default {
   async fetch(request, env) {
     try {
       return await route(request, env);
-    }     } catch (error) {
+    } catch (error) {
       console.error("Worker Error:", error);
 
       return reply(request, env, {
