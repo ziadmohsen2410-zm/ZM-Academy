@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
@@ -94,124 +95,284 @@ small,.muted{color:var(--muted)}
 const API="https://zm-academy-api.ziadmohsen4567.workers.dev";
 let token=sessionStorage.getItem("zm_admin_token")||"";
 let subjects=[];
+
 function message(text,type="ok"){
-  const el=document.getElementById("message");el.textContent=text;el.className=type;el.style.display="block";window.scrollTo({top:0,behavior:"smooth"});
+  const el=document.getElementById("message");
+  el.textContent=text;el.className=type;el.style.display="block";
+  window.scrollTo({top:0,behavior:"smooth"});
 }
+
 async function request(path,method="GET",body=null){
-  const headers={"Content-Type":"application/json"};if(token)headers.Authorization="Bearer "+token;
-  const options={method,headers};if(body)options.body=JSON.stringify(body);
-  const response=await fetch(API+path,options);const data=await response.json().catch(()=>({}));
-  if(!response.ok||data.success===false)throw new Error(data.error||"حدث خطأ في الاتصال");return data;
+  const headers={"Content-Type":"application/json"};
+  if(token)headers.Authorization="Bearer "+token;
+  const options={method,headers};
+  if(body)options.body=JSON.stringify(body);
+  const response=await fetch(API+path,options);
+  const data=await response.json().catch(()=>({}));
+  if(!response.ok||data.success===false)throw new Error(data.error||"حدث خطأ في الاتصال");
+  return data;
 }
+
 function showDashboard(){
-  document.getElementById("loginSection").classList.add("hidden");document.getElementById("dashboard").classList.remove("hidden");document.getElementById("logoutBtn").classList.remove("hidden");
+  document.getElementById("loginSection").classList.add("hidden");
+  document.getElementById("dashboard").classList.remove("hidden");
+  document.getElementById("logoutBtn").classList.remove("hidden");
 }
+
 function showLogin(){
-  document.getElementById("loginSection").classList.remove("hidden");document.getElementById("dashboard").classList.add("hidden");document.getElementById("logoutBtn").classList.add("hidden");
+  document.getElementById("loginSection").classList.remove("hidden");
+  document.getElementById("dashboard").classList.add("hidden");
+  document.getElementById("logoutBtn").classList.add("hidden");
 }
+
 async function loadDashboardData(){
   await loadSubjects();
   await Promise.all([loadStudents(),loadOrders()]);
 }
+
 async function login(){
-  const username=document.getElementById("username").value.trim(),password=document.getElementById("password").value;
+  const username=document.getElementById("username").value.trim();
+  const password=document.getElementById("password").value;
   if(!username||!password)return message("اكتب اسم المستخدم وكلمة المرور","err");
   try{
     const data=await request("/api/admin/login","POST",{username,password});
-    const newToken=data.token||data.access_token||data.session?.token;if(!newToken)throw new Error("لم يصل رمز الجلسة من الخادم");
-    token=newToken;sessionStorage.setItem("zm_admin_token",token);document.getElementById("password").value="";showDashboard();await loadDashboardData();message("تم تسجيل الدخول بنجاح");
+    const newToken=data.token||data.access_token||data.session?.token;
+    if(!newToken)throw new Error("لم يصل رمز الجلسة من الخادم");
+    token=newToken;
+    sessionStorage.setItem("zm_admin_token",token);
+    document.getElementById("password").value="";
+    showDashboard();
+    await loadDashboardData();
+    message("تم تسجيل الدخول بنجاح");
   }catch(e){message(e.message,"err")}
 }
+
 async function checkSession(){
   if(!token){showLogin();return}
-  try{await request("/api/admin/me");showDashboard();await loadDashboardData();}
-  catch(e){token="";sessionStorage.removeItem("zm_admin_token");showLogin();}
+  try{
+    await request("/api/admin/me");
+    showDashboard();
+    await loadDashboardData();
+  }catch(e){
+    token="";
+    sessionStorage.removeItem("zm_admin_token");
+    showLogin();
+  }
 }
+
 async function logout(){
   try{await request("/api/admin/logout","POST",{})}catch(e){}
-  token="";sessionStorage.removeItem("zm_admin_token");showLogin();message("تم تسجيل الخروج");
+  token="";
+  sessionStorage.removeItem("zm_admin_token");
+  showLogin();
+  message("تم تسجيل الخروج");
 }
+
 async function loadSubjects(){
-  try{const data=await request("/api/subjects");subjects=data.subjects||[];renderSubjects();fillSubjectOptions();await loadMaterials();}
-  catch(e){message(e.message,"err")}
-}
-function renderSubjects(){
-  const box=document.getElementById("subjectsList");if(!subjects.length){box.innerHTML="<p class='muted'>لا توجد مواد دراسية حتى الآن</p>";return}
-  box.innerHTML=subjects.map(s=>`<div class="item"><strong>${escapeHTML(s.name)}</strong><small>${escapeHTML(s.grade||"")}</small><div class="row"><button class="secondary" onclick="editSubject(${Number(s.id)})">تعديل</button><button class="danger" onclick="deleteSubject(${Number(s.id)})">حذف</button></div></div>`).join("");
-}
-function fillSubjectOptions(){
-  const options=subjects.map(s=>`<option value="${Number(s.id)}">${escapeHTML(s.name)} - ${escapeHTML(s.grade||"")}</option>`).join("");
-  document.getElementById("materialSubject").innerHTML='<option value="">كل المواد</option>'+options;document.getElementById("materialSubjectForm").innerHTML=options;
-}
-function editSubject(id){
-  const s=subjects.find(x=>Number(x.id)===Number(id));if(!s)return;
-  document.getElementById("subjectId").value=s.id;document.getElementById("subjectName").value=s.name;document.getElementById("subjectGrade").value=s.grade||"";document.getElementById("subjectFormTitle").textContent="تعديل المادة الدراسية";document.getElementById("subjectName").scrollIntoView({behavior:"smooth"});
-}
-function resetSubjectForm(){
-  document.getElementById("subjectId").value="";document.getElementById("subjectName").value="";document.getElementById("subjectGrade").value="";document.getElementById("subjectFormTitle").textContent="إضافة مادة دراسية";
-}
-async function saveSubject(){
-  const id=document.getElementById("subjectId").value,name=document.getElementById("subjectName").value.trim(),grade=document.getElementById("subjectGrade").value.trim();
-  if(!name||!grade)return message("اكتب اسم المادة والصف الدراسي","err");
-  try{await request("/api/subjects",id?"PUT":"POST",id?{id:Number(id),name,grade}:{name,grade});resetSubjectForm();await loadSubjects();message("تم حفظ المادة بنجاح");}
-  catch(e){message(e.message,"err")}
-}
-async function deleteSubject(id){
-  if(!confirm("هل أنت متأكد من حذف المادة؟"))return;
-  try{await request("/api/subjects","DELETE",{id:Number(id)});await loadSubjects();message("تم حذف المادة");}catch(e){message(e.message,"err")}
-}
-async function loadMaterials(){
-  try{const selected=document.getElementById("materialSubject").value,data=await request("/api/materials");let list=data.materials||[];if(selected)list=list.filter(m=>String(m.subject_id)===selected);renderMaterials(list);}
-  catch(e){message(e.message,"err")}
-}
-function renderMaterials(list){
-  const box=document.getElementById("materialsList");if(!list.length){box.innerHTML="<p class='muted'>لا يوجد محتوى في هذا الاختيار</p>";return}
-  box.innerHTML=list.map(m=>`<div class="item"><strong>${escapeHTML(m.title)}</strong><small>النوع: ${escapeHTML(m.type)} | السعر: ${Number(m.price)||0} جنيه | ${m.is_free?"مجاني":"مدفوع"}</small><div class="row"><button class="secondary" onclick="editMaterial(${Number(m.id)})">تعديل</button><button class="danger" onclick="deleteMaterial(${Number(m.id)})">حذف</button></div></div>`).join("");
-}
-async function editMaterial(id){
-  try{const data=await request("/api/materials"),m=(data.materials||[]).find(x=>Number(x.id)===Number(id));if(!m)return;
-    document.getElementById("materialId").value=m.id;document.getElementById("materialSubjectForm").value=m.subject_id;document.getElementById("materialTitle").value=m.title;document.getElementById("materialType").value=m.type;document.getElementById("materialPrice").value=m.price||0;document.getElementById("materialFree").checked=!!m.is_free;document.getElementById("materialFormTitle").textContent="تعديل المحتوى";document.getElementById("materialTitle").scrollIntoView({behavior:"smooth"});
+  try{
+    const data=await request("/api/subjects");
+    subjects=data.subjects||[];
+    renderSubjects();
+    fillSubjectOptions();
+    await loadMaterials();
   }catch(e){message(e.message,"err")}
 }
+
+function renderSubjects(){
+  const box=document.getElementById("subjectsList");
+  if(!subjects.length){
+    box.innerHTML="<p class='muted'>لا توجد مواد دراسية حتى الآن</p>";
+    return;
+  }
+  box.innerHTML=subjects.map(s=>`<div class="item"><strong>${escapeHTML(s.name)}</strong><small>${escapeHTML(s.grade||"")}</small><div class="row"><button class="secondary" onclick="editSubject(${Number(s.id)})">تعديل</button><button class="danger" onclick="deleteSubject(${Number(s.id)})">حذف</button></div></div>`).join("");
+}
+
+function fillSubjectOptions(){
+  const options=subjects.map(s=>`<option value="${Number(s.id)}">${escapeHTML(s.name)} - ${escapeHTML(s.grade||"")}</option>`).join("");
+  document.getElementById("materialSubject").innerHTML='<option value="">كل المواد</option>'+options;
+  document.getElementById("materialSubjectForm").innerHTML=options;
+}
+
+function editSubject(id){
+  const s=subjects.find(x=>Number(x.id)===Number(id));
+  if(!s)return;
+  document.getElementById("subjectId").value=s.id;
+  document.getElementById("subjectName").value=s.name;
+  document.getElementById("subjectGrade").value=s.grade||"";
+  document.getElementById("subjectFormTitle").textContent="تعديل المادة الدراسية";
+  document.getElementById("subjectName").scrollIntoView({behavior:"smooth"});
+}
+
+function resetSubjectForm(){
+  document.getElementById("subjectId").value="";
+  document.getElementById("subjectName").value="";
+  document.getElementById("subjectGrade").value="";
+  document.getElementById("subjectFormTitle").textContent="إضافة مادة دراسية";
+}
+
+async function saveSubject(){
+  const id=document.getElementById("subjectId").value;
+  const name=document.getElementById("subjectName").value.trim();
+  const grade=document.getElementById("subjectGrade").value.trim();
+  if(!name||!grade)return message("اكتب اسم المادة والصف الدراسي","err");
+  try{
+    await request("/api/subjects",id?"PUT":"POST",id?{id:Number(id),name,grade}:{name,grade});
+    resetSubjectForm();
+    await loadSubjects();
+    message("تم حفظ المادة بنجاح");
+  }catch(e){message(e.message,"err")}
+}
+
+async function deleteSubject(id){
+  if(!confirm("هل أنت متأكد من حذف المادة؟"))return;
+  try{
+    await request("/api/subjects","DELETE",{id:Number(id)});
+    await loadSubjects();
+    message("تم حذف المادة");
+  }catch(e){message(e.message,"err")}
+}
+
+async function loadMaterials(){
+  try{
+    const selected=document.getElementById("materialSubject").value;
+    const data=await request("/api/materials");
+    let list=data.materials||[];
+    if(selected)list=list.filter(m=>String(m.subject_id)===selected);
+    renderMaterials(list);
+  }catch(e){message(e.message,"err")}
+}
+
+function renderMaterials(list){
+  const box=document.getElementById("materialsList");
+  if(!list.length){
+    box.innerHTML="<p class='muted'>لا يوجد محتوى في هذا الاختيار</p>";
+    return;
+  }
+  box.innerHTML=list.map(m=>`<div class="item"><strong>${escapeHTML(m.title)}</strong><small>النوع: ${escapeHTML(m.type)} | السعر: ${Number(m.price)||0} جنيه | ${m.is_free?"مجاني":"مدفوع"}</small><div class="row"><button class="secondary" onclick="editMaterial(${Number(m.id)})">تعديل</button><button class="danger" onclick="deleteMaterial(${Number(m.id)})">حذف</button></div></div>`).join("");
+}
+
+async function editMaterial(id){
+  try{
+    const data=await request("/api/materials");
+    const m=(data.materials||[]).find(x=>Number(x.id)===Number(id));
+    if(!m)return;
+    document.getElementById("materialId").value=m.id;
+    document.getElementById("materialSubjectForm").value=m.subject_id;
+    document.getElementById("materialTitle").value=m.title;
+    document.getElementById("materialType").value=m.type;
+    document.getElementById("materialPrice").value=m.price||0;
+    document.getElementById("materialFree").checked=!!m.is_free;
+    document.getElementById("materialFormTitle").textContent="تعديل المحتوى";
+    document.getElementById("materialTitle").scrollIntoView({behavior:"smooth"});
+  }catch(e){message(e.message,"err")}
+}
+
 function resetMaterialForm(){
-  document.getElementById("materialId").value="";document.getElementById("materialTitle").value="";document.getElementById("materialType").value="lesson";document.getElementById("materialPrice").value="0";document.getElementById("materialFree").checked=true;document.getElementById("materialFormTitle").textContent="إضافة محتوى تعليمي";
+  document.getElementById("materialId").value="";
+  document.getElementById("materialTitle").value="";
+  document.getElementById("materialType").value="lesson";
+  document.getElementById("materialPrice").value="0";
+  document.getElementById("materialFree").checked=true;
+  document.getElementById("materialFormTitle").textContent="إضافة محتوى تعليمي";
 }
+
 async function saveMaterial(){
-  const id=document.getElementById("materialId").value,subject_id=Number(document.getElementById("materialSubjectForm").value),title=document.getElementById("materialTitle").value.trim(),type=document.getElementById("materialType").value,price=Number(document.getElementById("materialPrice").value),is_free=document.getElementById("materialFree").checked;
-  if(!subject_id||!title)return message("اختر المادة واكتب عنوان المحتوى","err");if(!Number.isFinite(price)||price<0)return message("اكتب سعرًا صحيحًا","err");
-  const body={subject_id,title,type,price,is_free};if(id)body.id=Number(id);
-  try{await request("/api/materials",id?"PUT":"POST",body);resetMaterialForm();await loadMaterials();message("تم حفظ المحتوى بنجاح");}catch(e){message(e.message,"err")}
+  const id=document.getElementById("materialId").value;
+  const subject_id=Number(document.getElementById("materialSubjectForm").value);
+  const title=document.getElementById("materialTitle").value.trim();
+  const type=document.getElementById("materialType").value;
+  const price=Number(document.getElementById("materialPrice").value);
+  const is_free=document.getElementById("materialFree").checked;
+  if(!subject_id||!title)return message("اختر المادة واكتب عنوان المحتوى","err");
+  if(!Number.isFinite(price)||price<0)return message("اكتب سعرًا صحيحًا","err");
+  const body={subject_id,title,type,price,is_free};
+  if(id)body.id=Number(id);
+  try{
+    await request("/api/materials",id?"PUT":"POST",body);
+    resetMaterialForm();
+    await loadMaterials();
+    message("تم حفظ المحتوى بنجاح");
+  }catch(e){message(e.message,"err")}
 }
+
 async function deleteMaterial(id){
   if(!confirm("هل أنت متأكد من حذف المحتوى؟"))return;
-  try{await request("/api/materials","DELETE",{id:Number(id)});await loadMaterials();message("تم حذف المحتوى");}catch(e){message(e.message,"err")}
+  try{
+    await request("/api/materials","DELETE",{id:Number(id)});
+    await loadMaterials();
+    message("تم حذف المحتوى");
+  }catch(e){message(e.message,"err")}
 }
+
 async function loadStudents(){
-  const box=document.getElementById("studentsList");box.innerHTML="<p class='muted'>جارٍ تحميل الطلاب...</p>";
+  const box=document.getElementById("studentsList");
+  box.innerHTML="<p class='muted'>جارٍ تحميل الطلاب...</p>";
   try{
-    const data=await request("/api/admin/students"),list=data.students||[];
-    if(!list.length){box.innerHTML="<p class='muted'>لا يوجد طلاب مسجلون حتى الآن</p>";return}
-    box.innerHTML=list.map(s=>`<div class="item"><strong>${escapeHTML(s.name)}</strong><small>رقم الهاتف: ${escapeHTML(s.phone||"غير مسجل")}</small><small>رقم الطالب: ${escapeHTML(s.id)}</small><br><small>تاريخ التسجيل: ${escapeHTML(s.created_at||"—")}</small></div>`).join("");
-  }catch(e){box.innerHTML=`<p class="muted">${escapeHTML(e.message)}</p>`}
+    const data=await request("/api/admin/students");
+    const list=data.students||[];
+    if(!list.length){
+      box.innerHTML="<p class='muted'>لا يوجد طلاب مسجلون حتى الآن</p>";
+      return;
+    }
+    box.innerHTML=list.map(s=>`
+      <div class="item">
+        <strong>${escapeHTML(s.name)}</strong>
+        <small>رقم الهاتف: ${escapeHTML(s.phone||"غير مسجل")}</small>
+        <small>رقم الطالب: ${escapeHTML(s.id)}</small>
+        <br><small>تاريخ التسجيل: ${escapeHTML(s.created_at||"—")}</small>
+        <div class="row">
+          <button class="danger" onclick="deleteStudent(${Number(s.id)})">حذف الطالب</button>
+        </div>
+      </div>
+    `).join("");
+  }catch(e){
+    box.innerHTML=`<p class="muted">${escapeHTML(e.message)}</p>`;
+  }
 }
+
+async function deleteStudent(id){
+  if(!confirm("هل أنت متأكد من حذف هذا الطالب؟ لن يتم الحذف إذا كانت له طلبات مرتبطة."))return;
+  try{
+    await request("/api/admin/students/"+Number(id),"DELETE");
+    await loadStudents();
+    message("تم حذف الطالب بنجاح");
+  }catch(e){
+    message(e.message,"err");
+  }
+}
+
 const orderStatusLabels={pending:"قيد المراجعة",approved:"مقبول",rejected:"مرفوض",completed:"مكتمل"};
+
 async function loadOrders(){
-  const box=document.getElementById("ordersList");box.innerHTML="<p class='muted'>جارٍ تحميل الطلبات...</p>";
+  const box=document.getElementById("ordersList");
+  box.innerHTML="<p class='muted'>جارٍ تحميل الطلبات...</p>";
   try{
-    const data=await request("/api/admin/orders"),list=data.orders||[];
-    if(!list.length){box.innerHTML="<p class='muted'>لا توجد طلبات حتى الآن</p>";return}
+    const data=await request("/api/admin/orders");
+    const list=data.orders||[];
+    if(!list.length){
+      box.innerHTML="<p class='muted'>لا توجد طلبات حتى الآن</p>";
+      return;
+    }
     box.innerHTML=list.map(o=>`<div class="item"><strong>${escapeHTML(o.material_title||"طلب محتوى")}</strong><small>الطالب: ${escapeHTML(o.student_name||"غير معروف")}</small><br><small>الهاتف: ${escapeHTML(o.phone||"—")}</small><br><small>السعر: ${Number(o.price)||0} جنيه</small><br><small>التاريخ: ${escapeHTML(o.created_at||"—")}</small><br><span class="status">الحالة: ${escapeHTML(orderStatusLabels[o.status]||o.status||"غير محددة")}</span><div class="row"><button onclick="updateOrder(${Number(o.id)},'approved')">قبول</button><button class="danger" onclick="updateOrder(${Number(o.id)},'rejected')">رفض</button><button class="secondary" onclick="updateOrder(${Number(o.id)},'completed')">مكتمل</button></div></div>`).join("");
-  }catch(e){box.innerHTML=`<p class="muted">${escapeHTML(e.message)}</p>`}
+  }catch(e){
+    box.innerHTML=`<p class="muted">${escapeHTML(e.message)}</p>`;
+  }
 }
+
 async function updateOrder(id,status){
   const prompts={approved:"تأكيد قبول الطلب؟",rejected:"تأكيد رفض الطلب؟",completed:"تأكيد إكمال الطلب؟"};
   if(!confirm(prompts[status]||"تأكيد تحديث الطلب؟"))return;
-  try{await request("/api/admin/orders/"+id,"PATCH",{status});await loadOrders();message("تم تحديث حالة الطلب");}
-  catch(e){message(e.message,"err")}
+  try{
+    await request("/api/admin/orders/"+id,"PATCH",{status});
+    await loadOrders();
+    message("تم تحديث حالة الطلب");
+  }catch(e){message(e.message,"err")}
 }
+
 function escapeHTML(value){
   return String(value??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 }
+
 checkSession();
 </script>
 </body>
