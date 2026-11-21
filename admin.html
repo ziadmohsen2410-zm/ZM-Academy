@@ -262,6 +262,7 @@ async function editMaterial(id){
     document.getElementById("materialSubjectForm").value=m.subject_id;
     document.getElementById("materialTitle").value=m.title;
     document.getElementById("materialType").value=m.type;
+    document.getElementById("materialFileUrl").value=m.file_key||"";
     document.getElementById("materialPrice").value=m.price||0;
     document.getElementById("materialFree").checked=!!m.is_free;
     document.getElementById("materialFormTitle").textContent="تعديل المحتوى";
