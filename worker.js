@@ -765,10 +765,8 @@ async function route(request, env) {
         message: "تم إنشاء حسابك بنجاح."
       }, 201);
 
-        
-} catch (error) {
+    } catch (error) {
   console.error("STUDENT_REGISTER_ERROR:", error?.message || error);
-
   // تنظيف السجلات إذا فشل إنشاء الحساب
   if (studentId) {
     try {
