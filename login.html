@@ -1,0 +1,116 @@
+
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0b1020">
+<title>دخول الطالب | ZM Academy</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;background:#0b1020;color:#f5f6fa;font-family:Arial,sans-serif;display:flex;align-items:center;justify-content:center;padding:20px}
+.card{width:100%;max-width:430px;background:#151d32;border:1px solid #34415b;border-radius:18px;padding:28px;box-shadow:0 15px 45px #0005}
+h1{text-align:center;color:#e8bd67;margin:0 0 8px}
+.sub{text-align:center;color:#aeb8cc;margin-bottom:25px}
+label{display:block;margin:15px 0 7px}
+input{width:100%;padding:14px;border-radius:9px;border:1px solid #46536c;background:#0b1020;color:white;font-size:16px}
+button{width:100%;padding:14px;margin-top:22px;border:0;border-radius:9px;background:#e8bd67;color:#171717;font-size:17px;font-weight:bold;cursor:pointer}
+button:disabled{opacity:.6}
+#message{margin-top:18px;text-align:center;line-height:1.8}
+.profile{display:none;margin-top:20px;padding:15px;background:#0b1020;border-radius:10px;line-height:2}
+a{color:#e8bd67}
+</style>
+</head>
+<body>
+<div class="card">
+<h1>ZM Academy</h1>
+<div class="sub">تسجيل دخول الطالب</div>
+
+<form id="loginForm">
+<label for="username">اسم المستخدم</label>
+<input id="username" name="username" autocomplete="username" required>
+
+<label for="password">كلمة المرور</label>
+<input id="password" name="password" type="password" autocomplete="current-password" required>
+
+<button id="submitBtn" type="submit">تسجيل الدخول</button>
+</form>
+
+<div id="message" role="status"></div>
+<div id="profile" class="profile"></div>
+</div>
+
+<script>
+const API = "https://zm-academy-api.ziadmohsen4567.workers.dev";
+
+const form = document.getElementById("loginForm");
+const message = document.getElementById("message");
+const button = document.getElementById("submitBtn");
+const profile = document.getElementById("profile");
+
+form.addEventListener("submit", async function(e){
+  e.preventDefault();
+
+  message.textContent = "جارٍ تسجيل الدخول...";
+  profile.style.display = "none";
+  button.disabled = true;
+
+  const username = document.getElementById("username").value.trim();
+  const password = document.getElementById("password").value;
+
+  try {
+    const response = await fetch(API + "/api/students/login", {
+      method: "POST",
+      headers: {"Content-Type":"application/json"},
+      body: JSON.stringify({username, password})
+    });
+
+    const data = await response.json();
+
+    if (!response.ok || !data.success) {
+      throw new Error(data.error || "تعذر تسجيل الدخول.");
+    }
+
+    localStorage.setItem("zm_student_token", data.token);
+
+    const meResponse = await fetch(API + "/api/student/me", {
+      headers: {"Authorization":"Bearer " + data.token}
+    });
+
+    const meData = await meResponse.json();
+
+    if (!meResponse.ok || !meData.success) {
+      throw new Error(meData.error || "تعذر تحميل بيانات الطالب.");
+    }
+
+    message.textContent = "تم تسجيل الدخول بنجاح.";
+
+    const name = document.createElement("div");
+    name.textContent = "أهلاً " + meData.student.name;
+
+    const grade = document.createElement("div");
+    grade.textContent = "الصف الدراسي: " + meData.student.grade;
+
+    const title = document.createElement("strong");
+    title.textContent = "المواد المسجل بها:";
+
+    profile.replaceChildren(name, grade, title);
+
+    (meData.subjects || []).forEach(subject => {
+      const item = document.createElement("div");
+      item.textContent = "• " + subject.name;
+      profile.appendChild(item);
+    });
+
+    profile.style.display = "block";
+
+  } catch(error) {
+    message.textContent = error.message || "حدث خطأ، حاول مرة أخرى.";
+    localStorage.removeItem("zm_student_token");
+  } finally {
+    button.disabled = false;
+  }
+});
+</script>
+</body>
+</html>
