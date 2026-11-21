@@ -387,6 +387,76 @@ async function route(request, env) {
         error: "Unauthorized."
       }, 401);
     }
+    
+    const deviceDecision = path.match(
+      /^\/api\/admin\/device-requests\/(\d+)\/(approve|reject)$/
+    );
+
+    if (
+      method === "POST" &&
+      deviceDecision
+    ) {
+      const deviceId = Number(deviceDecision[1]);
+      const decision = deviceDecision[2];
+
+      const device = await env.DB.prepare(
+        `SELECT id, student_id
+         FROM student_devices
+         WHERE id = ? AND status = 'pending'`
+      ).bind(deviceId).first();
+
+      if (!device) {
+        return reply(request, env, {
+          success: false,
+          error: "طلب الجهاز غير موجود أو تمت مراجعته."
+        }, 404);
+      }
+
+      if (decision === "approve") {
+        await env.DB.batch([
+          env.DB.prepare(
+            `UPDATE student_devices
+             SET status = 'rejected',
+                 reviewed_at = CURRENT_TIMESTAMP,
+                 reviewed_by = ?
+             WHERE student_id = ?
+               AND id != ?
+               AND status IN ('approved', 'pending')`
+          ).bind(session.admin_id, device.student_id, deviceId),
+
+          env.DB.prepare(
+            `UPDATE student_devices
+             SET status = 'approved',
+                 reviewed_at = CURRENT_TIMESTAMP,
+                 reviewed_by = ?
+             WHERE id = ? AND status = 'pending'`
+          ).bind(session.admin_id, deviceId),
+
+          env.DB.prepare(
+            `DELETE FROM student_sessions
+             WHERE student_id = ?`
+          ).bind(device.student_id)
+        ]);
+
+        return reply(request, env, {
+          success: true,
+          message: "Device approved."
+        });
+      }
+
+      await env.DB.prepare(
+        `UPDATE student_devices
+         SET status = 'rejected',
+             reviewed_at = CURRENT_TIMESTAMP,
+             reviewed_by = ?
+         WHERE id = ? AND status = 'pending'`
+      ).bind(session.admin_id, deviceId).run();
+
+      return reply(request, env, {
+        success: true,
+        message: "Device rejected."
+      });
+    }
 
     if (method === "GET" && path === "/api/admin/me") {
       return reply(request, env, {
@@ -572,6 +642,25 @@ async function route(request, env) {
       return reply(request, env, {
         success: true,
         materials: rows.results || []
+      });
+    }
+    
+    if (method === "GET" && path === "/api/admin/device-requests") {
+      const rows = await env.DB.prepare(
+        `SELECT d.id, d.student_id, d.device_name, d.created_at,
+                s.name AS student_name,
+                s.phone,
+                a.username
+         FROM student_devices d
+         JOIN students s ON s.id = d.student_id
+         LEFT JOIN student_accounts a ON a.student_id = d.student_id
+         WHERE d.status = 'pending'
+         ORDER BY d.created_at ASC`
+      ).all();
+
+      return reply(request, env, {
+        success: true,
+        requests: rows.results || []
       });
     }
 
