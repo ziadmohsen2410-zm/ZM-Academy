@@ -566,6 +566,33 @@ async function route(request, env) {
     }
 
     // إضافة محتوى دراسي
+    if (method === "DELETE" && path === "/api/admin/materials") {
+  const body = await readBody(request);
+  const id = Number(body?.id);
+
+  if (!Number.isInteger(id) || id < 1) {
+    return reply(request, env, {
+      success: false,
+      error: "Invalid material ID."
+    }, 400);
+  }
+
+  const result = await env.DB.prepare(
+    "DELETE FROM materials WHERE id = ?"
+  ).bind(id).run();
+
+  if (!result.meta.changes) {
+    return reply(request, env, {
+      success: false,
+      error: "Material not found."
+    }, 404);
+  }
+
+  return reply(request, env, {
+    success: true,
+    message: "Material deleted."
+  });
+    }
     if (method === "PUT" && path === "/api/admin/materials") {
   const body = await readBody(request);
   const id = Number(body?.id);
