@@ -75,8 +75,10 @@ small,.muted{color:var(--muted)}
       <input id="materialId" type="hidden">
       <label>المادة الدراسية</label><select id="materialSubjectForm"></select>
       <label>عنوان المحتوى</label><input id="materialTitle" placeholder="عنوان الدرس">
-      <label>نوع المحتوى</label>
+            <label>نوع المحتوى</label>
       <select id="materialType"><option value="lesson">درس</option><option value="video">فيديو</option><option value="pdf">ملف PDF</option></select>
+      <label>رابط الملف أو الفيديو</label>
+      <input id="materialFileUrl" type="url" placeholder="ضع رابط PDF أو الفيديو هنا">
       <label>السعر بالجنيه المصري</label><input id="materialPrice" type="number" min="0" value="0">
       <label class="check"><input id="materialFree" type="checkbox" checked> محتوى مجاني</label>
       <div class="row"><button onclick="saveMaterial()">حفظ المحتوى</button><button class="secondary" onclick="resetMaterialForm()">إلغاء</button></div>
