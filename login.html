@@ -83,26 +83,10 @@ form.addEventListener("submit", async function(e){
       throw new Error(meData.error || "تعذر تحميل بيانات الطالب.");
     }
 
-    message.textContent = "تم تسجيل الدخول بنجاح.";
+    
+message.textContent = "تم تسجيل الدخول بنجاح.";
+location.replace("./student.html");
 
-    const name = document.createElement("div");
-    name.textContent = "أهلاً " + meData.student.name;
-
-    const grade = document.createElement("div");
-    grade.textContent = "الصف الدراسي: " + meData.student.grade;
-
-    const title = document.createElement("strong");
-    title.textContent = "المواد المسجل بها:";
-
-    profile.replaceChildren(name, grade, title);
-
-    (meData.subjects || []).forEach(subject => {
-      const item = document.createElement("div");
-      item.textContent = "• " + subject.name;
-      profile.appendChild(item);
-    });
-
-    profile.style.display = "block";
 
   } catch(error) {
     message.textContent = error.message || "حدث خطأ، حاول مرة أخرى.";
