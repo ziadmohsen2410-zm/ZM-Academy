@@ -721,13 +721,13 @@ async function route(request, env) {
 
     const rows = subjectId
       ? await env.DB.prepare(
-          `SELECT id, subject_id, title, type, price, is_free
+          `SELECT id, subject_id, title, type, price, is_free, file_key
            FROM materials
            WHERE subject_id = ? AND is_free = 1
            ORDER BY id DESC`
         ).bind(subjectId).all()
       : await env.DB.prepare(
-          `SELECT id, subject_id, title, type, price, is_free
+          `SELECT id, subject_id, title, type, price, is_free, file_key
            FROM materials
            WHERE is_free = 1
            ORDER BY id DESC`
