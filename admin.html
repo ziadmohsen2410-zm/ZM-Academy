@@ -237,7 +237,7 @@ async function deleteSubject(id){
 async function loadMaterials(){
   try{
     const selected=document.getElementById("materialSubject").value;
-    const data=await request("/api/materials");
+    const data=await request("/api/admin/materials");
     let list=data.materials||[];
     if(selected)list=list.filter(m=>String(m.subject_id)===selected);
     renderMaterials(list);
