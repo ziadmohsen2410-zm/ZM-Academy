@@ -315,7 +315,7 @@ async function saveMaterial(){
 async function deleteMaterial(id){
   if(!confirm("هل أنت متأكد من حذف المحتوى؟"))return;
   try{
-    await request("/api/materials","DELETE",{id:Number(id)});
+    await request("/api/admin/materials","DELETE",{id:Number(id)});
     await loadMaterials();
     message("تم حذف المحتوى");
   }catch(e){message(e.message,"err")}
