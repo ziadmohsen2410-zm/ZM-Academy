@@ -505,17 +505,28 @@ async function route(request, env) {
     }
 
     // المواد
-    if (method === "GET" && path === "/api/admin/materials") {
-      const rows = await env.DB.prepare(
-        `SELECT id, subject_id, title, type, price, is_free
-         FROM materials ORDER BY id DESC`
-      ).all();
+      if (method === "GET" && path === "/api/materials") {
+    const subjectId = Number(url.searchParams.get("subject_id") || 0);
 
-      return reply(request, env, {
-        success: true,
-        materials: rows.results || []
-      });
-    }
+    const rows = subjectId
+      ? await env.DB.prepare(
+          `SELECT id, subject_id, title, type, price, is_free, file_key
+           FROM materials
+           WHERE subject_id = ? AND is_free = 1
+           ORDER BY id DESC`
+        ).bind(subjectId).all()
+      : await env.DB.prepare(
+          `SELECT id, subject_id, title, type, price, is_free, file_key
+           FROM materials
+           WHERE is_free = 1
+           ORDER BY id DESC`
+        ).all();
+
+    return reply(request, env, {
+      success: true,
+      materials: rows.results || []
+    });
+      }
 
     // إضافة مادة دراسية
     if (method === "POST" && path === "/api/admin/subjects") {
