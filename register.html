@@ -8,93 +8,357 @@
 <title>تسجيل طالب | ZM Academy</title>
 <style>
 *{box-sizing:border-box}
-body{margin:0;min-height:100vh;display:grid;place-items:center;padding:22px;background:radial-gradient(ellipse at top,#211b10,#09090b 65%);color:#f7f4ed;font-family:Tahoma,Arial,sans-serif}
-.panel{width:min(100%,460px);padding:30px;background:#141416;border:1px solid rgba(214,179,106,.35);border-radius:20px;box-shadow:0 20px 70px #000}
+body{
+ margin:0;min-height:100vh;padding:22px;
+ background:radial-gradient(ellipse at top,#211b10,#09090b 65%);
+ color:#f7f4ed;font-family:Tahoma,Arial,sans-serif
+}
+.panel{
+ width:min(100%,560px);margin:25px auto;padding:28px;
+ background:#141416;border:1px solid rgba(214,179,106,.35);
+ border-radius:20px;box-shadow:0 20px 70px #000
+}
 .brand{text-align:center;color:#e8ce91;font-weight:bold}
 .brand small{display:block;font-size:11px;margin-top:5px;color:#aaa}
 h1{text-align:center;font-size:25px;margin:24px 0 8px}
-.sub{text-align:center;color:#b8b2a5;font-size:14px;margin:0 0 25px}
-label{display:block;margin:16px 0 7px;color:#e8ce91;font-size:14px}
-input{width:100%;padding:14px;border-radius:10px;border:1px solid #48402e;background:#0d0d0f;color:white;font:inherit;outline:none}
-input:focus{border-color:#d6b36a}
-button,.back{display:block;width:100%;padding:14px;margin-top:22px;border:0;border-radius:10px;background:linear-gradient(135deg,#e2c47f,#b58a3d);color:#17130b;font-weight:bold;font-size:16px;text-align:center;text-decoration:none;cursor:pointer}
-button:disabled{opacity:.6}
-.back{margin-top:12px;background:transparent;border:1px solid #69552e;color:#e8ce91;font-size:14px}
+.sub{text-align:center;color:#b8b2a5;font-size:14px;margin:0 0 25px;line-height:1.8}
+label{display:block;margin:17px 0 7px;color:#e8ce91;font-size:14px}
+input,select{
+ width:100%;padding:14px;border-radius:10px;
+ border:1px solid #48402e;background:#0d0d0f;
+ color:white;font:inherit;outline:none
+}
+input:focus,select:focus{border-color:#d6b36a}
+select option{background:#141416;color:white}
+button,.back{
+ display:block;width:100%;padding:14px;margin-top:22px;
+ border:0;border-radius:10px;
+ background:linear-gradient(135deg,#e2c47f,#b58a3d);
+ color:#17130b;font-weight:bold;font-size:16px;
+ text-align:center;text-decoration:none;cursor:pointer
+}
+button:disabled{opacity:.6;cursor:not-allowed}
+.back{
+ margin-top:12px;background:transparent;
+ border:1px solid #69552e;color:#e8ce91;font-size:14px
+}
 #message{margin-top:16px;text-align:center;font-size:14px;line-height:1.8}
-.hint{color:#aaa;font-size:12px;text-align:center;margin-top:18px}
+.hint{color:#aaa;font-size:12px;text-align:center;margin-top:18px;line-height:1.8}
+.section{
+ margin-top:24px;padding:16px;
+ border:1px solid #393123;border-radius:12px;background:#101012
+}
+.section h3{margin:0 0 12px;color:#e8ce91;font-size:16px}
+.subjects{display:grid;grid-template-columns:1fr;gap:9px}
+.subject{
+ display:flex;align-items:center;gap:10px;
+ padding:12px;border:1px solid #393123;
+ border-radius:9px;color:#eee;font-size:14px
+}
+.subject input{width:18px;height:18px;accent-color:#d6b36a}
+.muted{color:#aaa;font-size:13px;line-height:1.8}
+.required{color:#e8ce91}
 </style>
 </head>
 <body>
 <main class="panel">
- <div class="brand">أكاديمية أ. زياد محسن
- <small>ZIAD MOHSEN ACADEMY</small></div>
+
+ <div class="brand">
+  أكاديمية أ. زياد محسن
+  <small>ZIAD MOHSEN ACADEMY</small>
+ </div>
+
  <h1>تسجيل طالب جديد</h1>
- <p class="sub">سجّل بياناتك للانضمام إلى الأكاديمية ومتابعة طلباتك التعليمية.</p>
+ <p class="sub">أدخل بياناتك بدقة لإنشاء حسابك ومتابعة المواد والطلبات التعليمية.</p>
 
  <form id="registerForm">
-  <label for="name">اسم الطالب بالكامل</label>
-  <input id="name" name="name" autocomplete="name" maxlength="120" required placeholder="اكتب اسمك بالكامل">
 
-  <label for="phone">رقم الهاتف</label>
-  <input id="phone" name="phone" type="tel" inputmode="tel" autocomplete="tel" maxlength="30" required placeholder="مثال: 01xxxxxxxxx">
+  <label for="name">اسم الطالب بالكامل *</label>
+  <input id="name" name="name" autocomplete="name"
+   maxlength="120" required placeholder="اكتب الاسم رباعي">
 
-  <button id="submitBtn" type="submit">تأكيد التسجيل</button>
+  <label for="phone">رقم هاتف الطالب *</label>
+  <input id="phone" name="phone" type="tel" inputmode="tel"
+   autocomplete="tel" maxlength="30" required placeholder="01xxxxxxxxx">
+
+  <label for="parent_phone">رقم هاتف ولي الأمر *</label>
+  <input id="parent_phone" name="parent_phone" type="tel"
+   inputmode="tel" maxlength="30" required placeholder="رقم هاتف ولي الأمر">
+
+  <label for="grade">الصف الدراسي *</label>
+  <select id="grade" name="grade" required>
+   <option value="">جارٍ تحميل الصفوف...</option>
+  </select>
+
+  <div class="section">
+   <h3>المواد الدراسية *</h3>
+   <div id="subjectsBox">
+    <p class="muted">اختر الصف الدراسي أولًا.</p>
+   </div>
+  </div>
+
+  <label for="school">اسم المدرسة *</label>
+  <input id="school" name="school" maxlength="160"
+   required placeholder="اكتب اسم المدرسة">
+
+  <label for="governorate">المحافظة *</label>
+  <select id="governorate" name="governorate" required>
+   <option value="">اختر المحافظة</option>
+   <option>القاهرة</option>
+   <option>الجيزة</option>
+   <option>القليوبية</option>
+   <option>الإسكندرية</option>
+   <option>البحيرة</option>
+   <option>الغربية</option>
+   <option>المنوفية</option>
+   <option>الشرقية</option>
+   <option>الدقهلية</option>
+   <option>كفر الشيخ</option>
+   <option>دمياط</option>
+   <option>بورسعيد</option>
+   <option>الإسماعيلية</option>
+   <option>السويس</option>
+   <option>شمال سيناء</option>
+   <option>جنوب سيناء</option>
+   <option>الفيوم</option>
+   <option>بني سويف</option>
+   <option>المنيا</option>
+   <option>أسيوط</option>
+   <option>سوهاج</option>
+   <option>قنا</option>
+   <option>الأقصر</option>
+   <option>أسوان</option>
+   <option>البحر الأحمر</option>
+   <option>الوادي الجديد</option>
+   <option>مطروح</option>
+  </select>
+
+  <div class="section">
+   <h3>بيانات حسابك</h3>
+
+   <label for="username">اسم المستخدم *</label>
+   <input id="username" name="username" maxlength="40"
+    required autocomplete="username" dir="ltr"
+    placeholder="مثال: ziad2026">
+
+   <p class="muted">استخدم حروفًا إنجليزية صغيرة أو أرقامًا أو . أو _ أو - فقط، من 3 إلى 40 حرفًا.</p>
+
+   <label for="password">كلمة المرور *</label>
+   <input id="password" name="password" type="password"
+    minlength="8" maxlength="200" required
+    autocomplete="new-password" placeholder="8 أحرف على الأقل">
+
+   <label for="confirmPassword">تأكيد كلمة المرور *</label>
+   <input id="confirmPassword" type="password"
+    minlength="8" maxlength="200" required
+    autocomplete="new-password" placeholder="أعد كتابة كلمة المرور">
+  </div>
+
+  <button id="submitBtn" type="submit">إنشاء حساب الطالب</button>
  </form>
 
  <div id="message" role="status" aria-live="polite"></div>
+
  <a class="back" href="./index.html">العودة للصفحة الرئيسية</a>
- <div class="hint">بياناتك تُستخدم للتسجيل والتواصل بخصوص خدمات الأكاديمية.</div>
+
+ <div class="hint">
+  جميع البيانات مطلوبة لإتمام التسجيل.
+  احتفظ باسم المستخدم وكلمة المرور ولا تشاركهما مع الآخرين.
+ </div>
+
 </main>
 
 <script>
 const API="https://zm-academy-api.ziadmohsen4567.workers.dev";
+
 const form=document.getElementById("registerForm");
 const btn=document.getElementById("submitBtn");
 const msg=document.getElementById("message");
+const gradeSelect=document.getElementById("grade");
+const subjectsBox=document.getElementById("subjectsBox");
+
+let allSubjects=[];
+
+function showMessage(text,type="error"){
+ msg.style.color=type==="success"?"#a8e6b0":"#ffb6a8";
+ msg.textContent=text;
+}
+
+function escapeHTML(value){
+ return String(value).replace(/[&<>"']/g,char=>({
+  "&":"&amp;",
+  "<":"&lt;",
+  ">":"&gt;",
+  '"':"&quot;",
+  "'":"&#39;"
+ }[char]));
+}
+
+async function loadSubjects(){
+ try{
+  const response=await fetch(API+"/api/subjects");
+  const data=await response.json();
+
+  if(!response.ok||!data.success){
+   throw new Error("تعذر تحميل الصفوف والمواد.");
+  }
+
+  allSubjects=data.subjects||[];
+
+  const grades=[...new Set(
+   allSubjects.map(s=>String(s.grade||"").trim()).filter(Boolean)
+  )];
+
+  gradeSelect.innerHTML=
+   '<option value="">اختر الصف الدراسي</option>'+
+   grades.map(g=>
+    `<option value="${escapeHTML(g)}">${escapeHTML(g)}</option>`
+   ).join("");
+
+  if(!grades.length){
+   gradeSelect.innerHTML='<option value="">لا توجد صفوف متاحة حاليًا</option>';
+   subjectsBox.innerHTML='<p class="muted">لا توجد مواد مسجلة بعد. يرجى التواصل مع الإدارة.</p>';
+  }
+
+ }catch(error){
+  gradeSelect.innerHTML='<option value="">تعذر تحميل الصفوف</option>';
+  subjectsBox.innerHTML='<p class="muted">تعذر الاتصال بالخادم لتحميل المواد.</p>';
+ }
+}
+
+function renderSubjects(){
+ const grade=gradeSelect.value;
+
+ const list=allSubjects.filter(s=>String(s.grade||"").trim()===grade);
+
+ if(!grade){
+  subjectsBox.innerHTML='<p class="muted">اختر الصف الدراسي أولًا.</p>';
+  return;
+ }
+
+ if(!list.length){
+  subjectsBox.innerHTML='<p class="muted">لا توجد مواد مضافة لهذا الصف حتى الآن.</p>';
+  return;
+ }
+
+ subjectsBox.innerHTML=
+  '<div class="subjects">'+
+  list.map(s=>`
+   <label class="subject">
+    <input type="checkbox" name="subjects" value="${Number(s.id)}">
+    <span>${escapeHTML(s.name)}</span>
+   </label>
+  `).join("")+
+  '</div>';
+}
+
+gradeSelect.addEventListener("change",renderSubjects);
 
 form.addEventListener("submit",async e=>{
  e.preventDefault();
+ msg.textContent="";
 
  const name=document.getElementById("name").value.trim();
  const phone=document.getElementById("phone").value.trim();
+ const parent_phone=document.getElementById("parent_phone").value.trim();
+ const grade=gradeSelect.value;
+ const school=document.getElementById("school").value.trim();
+ const governorate=document.getElementById("governorate").value;
+ const username=document.getElementById("username").value.trim().toLowerCase();
+ const password=document.getElementById("password").value;
+ const confirmPassword=document.getElementById("confirmPassword").value;
 
- if(name.length<2||phone.replace(/\s+/g,"").length<8){
-  msg.style.color="#ffb6a8";
-  msg.textContent="تأكد من كتابة الاسم ورقم هاتف صحيح.";
+ const subjects=[...document.querySelectorAll(
+  'input[name="subjects"]:checked'
+ )].map(input=>Number(input.value));
+
+ if(name.length<2){
+  showMessage("اكتب اسم الطالب بشكل صحيح.");
+  return;
+ }
+
+ if(phone.replace(/\s+/g,"").length<8||
+    parent_phone.replace(/\s+/g,"").length<8){
+  showMessage("تأكد من كتابة رقمي الهاتف بشكل صحيح.");
+  return;
+ }
+
+ if(!grade||!school||!governorate){
+  showMessage("أكمل جميع البيانات المطلوبة.");
+  return;
+ }
+
+ if(subjects.length===0){
+  showMessage("اختر مادة دراسية واحدة على الأقل.");
+  return;
+ }
+
+ if(!/^[a-z0-9_.-]{3,40}$/.test(username)){
+  showMessage("اسم المستخدم يجب أن يكون من 3 إلى 40 حرفًا إنجليزيًا أو رقمًا.");
+  return;
+ }
+
+ if(password.length<8){
+  showMessage("كلمة المرور يجب ألا تقل عن 8 أحرف.");
+  return;
+ }
+
+ if(password!==confirmPassword){
+  showMessage("كلمتا المرور غير متطابقتين.");
   return;
  }
 
  btn.disabled=true;
- btn.textContent="جارٍ التسجيل...";
- msg.textContent="";
-
+ btn.textContent="جارٍ إنشاء الحساب...";
+ 
  try{
-  const res=await fetch(API+"/api/students/register",{
+  const response=await fetch(API+"/api/students/register",{
    method:"POST",
    headers:{"Content-Type":"application/json"},
-   body:JSON.stringify({name,phone})
+   body:JSON.stringify({
+    name,
+    phone,
+    parent_phone,
+    grade,
+    school,
+    governorate,
+    subjects,
+    username,
+    password
+   })
   });
 
-  const data=await res.json();
+  const data=await response.json();
 
-  if(!res.ok||!data.success){
+  if(!response.ok||!data.success){
    throw new Error(data.error||"تعذر إتمام التسجيل.");
   }
 
-  msg.style.color="#a8e6b0";
-  msg.textContent="تم تسجيلك بنجاح! رقم تسجيلك: "+data.student_id+" — احتفظ به عند التواصل مع الأكاديمية.";
   form.reset();
+  renderSubjects();
 
- }catch(err){
-  msg.style.color="#ffb6a8";
-  msg.textContent=err.message==="Failed to fetch"
-   ?"تعذر الاتصال بالخادم. حاول مرة أخرى بعد قليل."
-   :err.message;
+  showMessage(
+   "تم إنشاء حسابك بنجاح. رقم الطالب: "+
+   data.student_id+
+   " — اسم المستخدم: "+
+   data.username+
+   ". احتفظ ببيانات الدخول.",
+   "success"
+  );
+
+ }catch(error){
+  showMessage(
+   error.message==="Failed to fetch"
+    ?"تعذر الاتصال بالخادم. حاول مرة أخرى."
+    :error.message
+  );
  }finally{
   btn.disabled=false;
-  btn.textContent="تأكيد التسجيل";
+  btn.textContent="إنشاء حساب الطالب";
  }
 });
+
+loadSubjects();
 </script>
 </body>
 </html>
