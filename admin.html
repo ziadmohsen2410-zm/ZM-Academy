@@ -305,7 +305,7 @@ async function saveMaterial(){
   if(id)body.id=Number(id);
 
   try{
-    await request("/api/materials",id?"PUT":"POST",body);
+    await request("/api/admin/materials",id?"PUT":"POST",body);
     resetMaterialForm();
     await loadMaterials();
     message("تم حفظ المحتوى بنجاح");
