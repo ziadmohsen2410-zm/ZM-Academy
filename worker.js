@@ -766,34 +766,27 @@ async function route(request, env) {
       }, 201);
 
     } catch (error) {
-  console.error("STUDENT_REGISTER_ERROR:", error?.message || error);
-  // تنظيف السجلات إذا فشل إنشاء الحساب
-  if (studentId) {
-    try {
-      await env.DB.batch([
-        env.DB.prepare(
-          "DELETE FROM student_subjects WHERE student_id = ?"
-        ).bind(studentId),
+      console.error("STUDENT_REGISTER_ERROR:", error?.message || error);
 
-        env.DB.prepare(
-          "DELETE FROM student_accounts WHERE student_id = ?"
-        ).bind(studentId),
+      if (studentId) {
+        try {
+          await env.DB.batch([
+            env.DB.prepare(
+              "DELETE FROM student_subjects WHERE student_id = ?"
+            ).bind(studentId),
 
-        env.DB.prepare(
-          "DELETE FROM students WHERE id = ?"
-        ).bind(studentId)
-      ]);
-    } catch (cleanupError) {
-      console.error("STUDENT_CLEANUP_ERROR:", cleanupError?.message || cleanupError);
-    }
-  }
+            env.DB.prepare(
+              "DELETE FROM student_accounts WHERE student_id = ?"
+            ).bind(studentId),
 
-  return reply(request, env, {
-    success: false,
-    error: "خطأ التسجيل: " + String(error?.message || error)
-  }, 500);
-}
-
+            env.DB.prepare(
+              "DELETE FROM students WHERE id = ?"
+            ).bind(studentId)
+          ]);
+        } catch (cleanupError) {
+          console.error("STUDENT_CLEANUP_ERROR:", cleanupError?.message || cleanupError);
+        }
+      }
 
       return reply(request, env, {
         success: false,
