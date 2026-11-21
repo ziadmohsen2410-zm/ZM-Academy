@@ -283,12 +283,25 @@ async function saveMaterial(){
   const subject_id=Number(document.getElementById("materialSubjectForm").value);
   const title=document.getElementById("materialTitle").value.trim();
   const type=document.getElementById("materialType").value;
+  const file_key=document.getElementById("materialFileUrl").value.trim();
   const price=Number(document.getElementById("materialPrice").value);
   const is_free=document.getElementById("materialFree").checked;
+
   if(!subject_id||!title)return message("اختر المادة واكتب عنوان المحتوى","err");
   if(!Number.isFinite(price)||price<0)return message("اكتب سعرًا صحيحًا","err");
-  const body={subject_id,title,type,price,is_free};
+
+  if(file_key){
+    try{
+      const fileUrl=new URL(file_key);
+      if(fileUrl.protocol!=="https:")throw new Error();
+    }catch(e){
+      return message("اكتب رابطًا صحيحًا يبدأ بـ https://","err");
+    }
+  }
+
+  const body={subject_id,title,type,price,is_free,file_key:file_key||null};
   if(id)body.id=Number(id);
+
   try{
     await request("/api/materials",id?"PUT":"POST",body);
     resetMaterialForm();
