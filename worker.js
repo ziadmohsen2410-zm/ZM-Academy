@@ -1095,28 +1095,15 @@ async function route(request, env) {
            WHERE student_id = ?`
         ).bind(account.student_id).first();
 
-        if (deviceCount.total === 0) {
-          await env.DB.prepare(
-            `INSERT INTO student_devices
-             (student_id, device_token_hash, device_name, status)
-             VALUES (?, ?, ?, 'approved')`
-          ).bind(
-            account.student_id,
-            deviceTokenHash,
-            deviceName
-          ).run();
-        } else {
-          await env.DB.prepare(
-            `INSERT INTO student_devices
-             (student_id, device_token_hash, device_name, status)
-             VALUES (?, ?, ?, 'pending')`
-          ).bind(
-            account.student_id,
-            deviceTokenHash,
-            deviceName
-          ).run();
-        }
-      }
+        await env.DB.prepare(
+  `INSERT INTO student_devices
+   (student_id, device_token_hash, device_name, status)
+   VALUES (?, ?, ?, 'pending')`
+).bind(
+  account.student_id,
+  deviceTokenHash,
+  deviceName
+).run();
 
       return reply(request, env, {
         success: false,
