@@ -43,12 +43,17 @@ button{border:0;border-radius:9px;padding:11px 18px;background:#e8bd67;color:#17
     </div>
 
     <div class="card">
-      <h2>المذكرات والمحتوى المجاني</h2>
-      <div id="materials"></div>
-    </div>
+  <h2>المحتوى المجاني</h2>
+  <div id="freeMaterials"></div>
+</div>
+
+<div class="card">
+  <h2>المذكرات المتاحة للشراء</h2>
+  <div id="paidMaterials"></div>
+</div>
 
     <div class="card">
-      <h2>مشترياتي المعتمدة</h2>
+      <h2>طلباتي ومشترياتي</h2>
       <div id="purchases"></div>
     </div>
 
@@ -113,10 +118,10 @@ async function loadDashboard() {
 
   try {
     const [me, purchases, materialsData] = await Promise.all([
-      api("/api/student/me"),
-      api("/api/student/purchases"),
-      fetch(API + "/api/materials").then(r => r.json())
-    ]);
+  api("/api/student/me"),
+  api("/api/student/purchases"),
+  api("/api/materials")
+]);
 
     const student = me.student;
     const subjects = me.subjects || [];
@@ -137,26 +142,41 @@ async function loadDashboard() {
       subjectIds.includes(Number(m.subject_id))
     );
 
-    showList("materials", myMaterials,
-      "لا يوجد محتوى مجاني متاح حاليًا.", (div, m) => {
-        const title = document.createElement("strong");
-        title.textContent = m.title;
+    
+    const freeMaterials = myMaterials.filter(m => Number(m.is_free) === 1);
+    const paidMaterials = myMaterials.filter(m => Number(m.is_free) === 0);
 
-        const type = document.createElement("div");
-        type.className = "muted";
-        type.textContent = m.type || "محتوى تعليمي";
+    function renderMaterial(div, m) {
+      const title = document.createElement("strong");
+      title.textContent = m.title;
 
-        div.append(title, type);if (m.file_key) {
-  const link = document.createElement("a");
-  link.href = m.file_key;
-  link.target = "_blank";
-  link.rel = "noopener noreferrer";
-  link.textContent = "فتح المحتوى";
-  link.className = "btn";
-  div.append(link);
-        }
-      }
+      const type = document.createElement("div");
+      type.className = "muted";
+      type.textContent = m.type || "محتوى تعليمي";
+
+      const price = document.createElement("div");
+      price.className = "muted";
+      price.textContent = Number(m.is_free) === 1
+        ? "مجاني"
+        : "السعر: " + m.price + " جنيه";
+
+      div.append(title, type, price);
+    }
+
+    showList(
+      "freeMaterials",
+      freeMaterials,
+      "لا يوجد محتوى مجاني متاح حاليًا.",
+      renderMaterial
     );
+
+    showList(
+      "paidMaterials",
+      paidMaterials,
+      "لا توجد مذكرات متاحة للشراء حاليًا.",
+      renderMaterial
+    );
+
 
     showList("purchases", purchases.purchases,
       "لا توجد مشتريات معتمدة حتى الآن.", (div, p) => {
@@ -168,8 +188,16 @@ async function loadDashboard() {
         subject.textContent = "المادة: " + p.subject_name;
 
         const status = document.createElement("div");
-        status.textContent = "حالة الطلب: " +
-          (p.status === "approved" ? "تمت الموافقة" : "مكتمل");
+
+const statusNames = {
+  pending: "قيد المراجعة",
+  approved: "تمت الموافقة",
+  completed: "مكتمل",
+  rejected: "مرفوض"
+};
+
+status.textContent = "حالة الطلب: " +
+  (statusNames[p.status] || "غير معروف");
 
         div.append(title, subject, status);
       }
