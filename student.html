@@ -90,9 +90,16 @@ function showList(id, items, emptyText, render) {
   });
 }
 
-async function api(path) {
+
+async function api(path, options = {}) {
   const response = await fetch(API + path, {
-    headers: {"Authorization": "Bearer " + token}
+    ...options,
+    method: options.method || "GET",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": "Bearer " + token,
+      ...(options.headers || {})
+    }
   });
 
   const data = await response.json();
@@ -104,13 +111,16 @@ async function api(path) {
   }
 
   if (!response.ok || !data.success) {
-    throw new Error(data.error || "تعذر تحميل البيانات.");
+    const error = new Error(data.error || "تعذر تنفيذ الطلب.");
+    error.code = data.code;
+    error.status = response.status;
+    throw error;
   }
 
   return data;
 }
 
-async function loadDashboard() {
+  async function loadDashboard() {
   if (!token) {
     location.replace("./login.html");
     return;
@@ -118,11 +128,10 @@ async function loadDashboard() {
 
   try {
     const [me, purchases, materialsData] = await Promise.all([
-  api("/api/student/me"),
-  api("/api/student/purchases"),
-  api("/api/materials")
-]);
-
+      api("/api/student/me"),
+      api("/api/student/purchases"),
+      api("/api/materials")
+    ]);
     const student = me.student;
     const subjects = me.subjects || [];
     const materials = materialsData.materials || [];
@@ -142,7 +151,6 @@ async function loadDashboard() {
       subjectIds.includes(Number(m.subject_id))
     );
 
-    
     const freeMaterials = myMaterials.filter(m => Number(m.is_free) === 1);
     const paidMaterials = myMaterials.filter(m => Number(m.is_free) === 0);
 
@@ -161,6 +169,39 @@ async function loadDashboard() {
         : "السعر: " + m.price + " جنيه";
 
       div.append(title, type, price);
+
+      if (Number(m.is_free) === 0) {
+        const button = document.createElement("button");
+        button.textContent = "طلب شراء المذكرة";
+
+        button.addEventListener("click", async () => {
+  button.disabled = true;
+  button.textContent = "جارٍ إرسال الطلب...";
+
+  try {
+    await api("/api/orders", {
+      method: "POST",
+      body: JSON.stringify({ material_id: Number(m.id) })
+    });
+
+    button.textContent = "طلبك قيد المراجعة";
+    button.disabled = true;
+    message.textContent = "تم إرسال طلب الشراء بنجاح.";
+
+  } catch (error) {
+    message.textContent = error.message;
+    button.disabled = false;
+    button.textContent = "طلب شراء المذكرة";
+
+    if (error.status === 409) {
+      button.textContent = "لديك طلب شراء بالفعل";
+      button.disabled = true;
+    }
+  }
+});
+
+div.appendChild(button);
+      }
     }
 
     showList(
@@ -176,7 +217,6 @@ async function loadDashboard() {
       "لا توجد مذكرات متاحة للشراء حاليًا.",
       renderMaterial
     );
-
 
     showList("purchases", purchases.purchases,
       "لا توجد مشتريات معتمدة حتى الآن.", (div, p) => {
@@ -215,7 +255,9 @@ document.getElementById("logoutBtn").addEventListener("click", async () => {
   try {
     await fetch(API + "/api/student/logout", {
       method: "POST",
-      headers: {"Authorization": "Bearer " + token}
+      headers: {
+        "Authorization": "Bearer " + token
+      }
     });
   } catch (e) {}
 
