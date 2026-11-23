@@ -766,17 +766,16 @@ async function route(request, env) {
     // قائمة الطلاب بالتفاصيل الجديدة
     if (method === "GET" && path === "/api/admin/students") {
       const rows = await env.DB.prepare(
-        `SELECT s.id, s.name, s.phone, s.parent_phone,
-                s.grade, s.school, s.governorate,
-                s.created_at, a.username,
-                (SELECT GROUP_CONCAT(sub.name, '، ')
-                 FROM student_subjects ss
-                 JOIN subjects sub ON sub.id = ss.subject_id
-                 WHERE ss.student_id = s.id) AS selected_subjects
-         FROM students s
-         LEFT JOIN student_accounts a ON a.student_id = s.id
-         ORDER BY s.id DESC LIMIT 1000`
-      ).all();
+  `SELECT o.id, o.status, o.created_at,
+          s.name AS student_name, s.phone,
+          m.title AS material_title, m.price
+   FROM orders o
+   JOIN students s ON s.id = o.student_id
+   JOIN materials m ON m.id = o.material_id
+   WHERE o.status = 'pending'
+   ORDER BY o.id DESC
+   LIMIT 500`
+).all();
 
       return reply(request, env, {
         success: true,
