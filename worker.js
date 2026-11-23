@@ -657,19 +657,23 @@ async function route(request, env) {
     const subjectId = Number(url.searchParams.get("subject_id") || 0);
 
     const rows = subjectId
-      ? await env.DB.prepare(
-          `SELECT id, subject_id, title, type, price, is_free, file_key
-           FROM materials
-           WHERE subject_id = ? AND is_free = 1
-           ORDER BY id DESC`
-        ).bind(subjectId).all()
-      : await env.DB.prepare(
-          `SELECT id, subject_id, title, type, price, is_free, file_key
-           FROM materials
-           WHERE is_free = 1
-           ORDER BY id DESC`
-        ).all();
-
+  ? await env.DB.prepare(
+      `SELECT m.id, m.subject_id, m.title, m.type, m.price, m.is_free
+       FROM materials m
+       JOIN student_subjects ss
+         ON ss.subject_id = m.subject_id
+       WHERE ss.student_id = ?
+         AND m.subject_id = ?
+       ORDER BY m.id DESC`
+    ).bind(session.student_id, subjectId).all()
+  : await env.DB.prepare(
+      `SELECT m.id, m.subject_id, m.title, m.type, m.price, m.is_free
+       FROM materials m
+       JOIN student_subjects ss
+         ON ss.subject_id = m.subject_id
+       WHERE ss.student_id = ?
+       ORDER BY m.id DESC`
+    ).bind(session.student_id).all();
     return reply(request, env, {
       success: true,
       materials: rows.results || []
@@ -961,8 +965,8 @@ if (method === "PUT" && path === "/api/admin/materials") {
       }
 
       const subject = await env.DB.prepare(
-        "SELECT id FROM subjects WHERE id = ?"
-      ).bind(subjectId).first();
+  "SELECT id FROM subjects WHERE id = ?"
+).bind(subjectId).first();
 
       if (!subject) {
         return reply(request, env, {
