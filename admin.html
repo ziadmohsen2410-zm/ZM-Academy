@@ -452,7 +452,7 @@ async function loadOrders(){
   box.innerHTML="<p class='muted'>جارٍ تحميل الطلبات...</p>";
   try{
     const data=await request("/api/admin/orders");
-    const list=data.orders||[];
+    const list=(data.orders||[]).filter(o=>o.status==="pending");
     if(!list.length){
       box.innerHTML="<p class='muted'>لا توجد طلبات حتى الآن</p>";
       return;
