@@ -927,39 +927,37 @@ async function route(request, env) {
     });
   }
 
-  
-  // المحتوى المجاني فقط - للطلاب المسجلين
-  if (method === "GET" && path === "/api/materials") {
-    const session = await studentSession(request, env);
+  // المحتوى الدراسي المتاح للطالب المسجل
+if (method === "GET" && path === "/api/materials") {
+  const session = await studentSession(request, env);
 
-    if (!session) {
-      return reply(request, env, {
-        success: false,
-        error: "يجب تسجيل الدخول لعرض المحتوى الدراسي."
-      }, 401);
-    }
-
-    const subjectId = Number(url.searchParams.get("subject_id") || 0);
-
-    const rows = subjectId
-      ? await env.DB.prepare(
-          `SELECT id, subject_id, title, type, price, is_free, file_key
-           FROM materials
-           WHERE subject_id = ? AND is_free = 1
-           ORDER BY id DESC`
-        ).bind(subjectId).all()
-      : await env.DB.prepare(
-          `SELECT id, subject_id, title, type, price, is_free, file_key
-           FROM materials
-           WHERE is_free = 1
-           ORDER BY id DESC`
-        ).all();
-
+  if (!session) {
     return reply(request, env, {
-      success: true,
-      materials: rows.results || []
-    });
+      success: false,
+      error: "يجب تسجيل الدخول لعرض المحتوى الدراسي."
+    }, 401);
   }
+
+  const subjectId = Number(url.searchParams.get("subject_id") || 0);
+
+  const rows = subjectId
+    ? await env.DB.prepare(
+        `SELECT id, subject_id, title, type, price, is_free
+         FROM materials
+         WHERE subject_id = ?
+         ORDER BY id DESC`
+      ).bind(subjectId).all()
+    : await env.DB.prepare(
+        `SELECT id, subject_id, title, type, price, is_free
+         FROM materials
+         ORDER BY id DESC`
+      ).all();
+
+  return reply(request, env, {
+    success: true,
+    materials: rows.results || []
+  });
+}
 
   // تسجيل طالب جديد وإنشاء حسابه
   if (method === "POST" && path === "/api/students/register") {
