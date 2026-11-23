@@ -1363,6 +1363,28 @@ const tokenHash = await sha256(token);
       }, 400);
     }
 
+    
+    // منع تكرار طلب الشراء
+    const existingOrder = await env.DB.prepare(
+      `SELECT id, status
+       FROM orders
+       WHERE student_id = ?
+       AND material_id = ?
+       AND status IN ('pending', 'approved', 'completed')
+       LIMIT 1`
+    ).bind(session.student_id, materialId).first();
+
+    if (existingOrder) {
+      return reply(request, env, {
+        success: false,
+        code: "ORDER_ALREADY_EXISTS",
+        status: existingOrder.status,
+        error: existingOrder.status === "pending"
+          ? "لديك طلب شراء قيد المراجعة بالفعل."
+          : "هذا المحتوى موجود بالفعل ضمن مشترياتك."
+      }, 409);
+    }
+
     const result = await env.DB.prepare(
       `INSERT INTO orders
        (student_id, material_id, status)
@@ -1375,6 +1397,7 @@ const tokenHash = await sha256(token);
       status: "pending"
     }, 201);
   }
+
 
   return reply(request, env, {
     success: false,
