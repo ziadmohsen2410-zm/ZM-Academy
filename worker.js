@@ -857,12 +857,12 @@ if (method === "POST" && path === "/api/admin/upload") {
       message: "File uploaded successfully."
     }, 201);
 
-  } catch (error) {
+    } catch (error) {
     console.error("File upload error:", error);
 
     return reply(request, env, {
       success: false,
-      error: "File upload failed."
+      error: error?.message || "Unknown upload error."
     }, 500);
   }
 }
