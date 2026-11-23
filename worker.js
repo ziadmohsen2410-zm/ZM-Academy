@@ -829,7 +829,19 @@ async function route(request, env) {
         }
 
         const contentType = file.type;
-        const bytes = new Uint8Array(await file.arrayBuffer());
+const bytes = new Uint8Array(await file.arrayBuffer());
+
+const isPDF =
+  contentType === "application/pdf" &&
+  bytes.length >= 5 &&
+  new TextDecoder().decode(bytes.slice(0, 5)) === "%PDF-";
+
+if (!isPDF) {
+  return reply(request, env, {
+    success: false,
+    error: "يجب اختيار ملف PDF صحيح."
+  }, 400);
+}
 
         const fileKey = await uploadToGitHub(
           env,
