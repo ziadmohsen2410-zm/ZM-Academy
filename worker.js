@@ -927,8 +927,18 @@ async function route(request, env) {
     });
   }
 
-  // المحتوى المجاني فقط
+  
+  // المحتوى المجاني فقط - للطلاب المسجلين
   if (method === "GET" && path === "/api/materials") {
+    const session = await studentSession(request, env);
+
+    if (!session) {
+      return reply(request, env, {
+        success: false,
+        error: "يجب تسجيل الدخول لعرض المحتوى الدراسي."
+      }, 401);
+    }
+
     const subjectId = Number(url.searchParams.get("subject_id") || 0);
 
     const rows = subjectId
