@@ -1224,6 +1224,7 @@ async function route(request, env) {
         error: "هذا الجهاز يحتاج إلى موافقة المدرس قبل تسجيل الدخول."
       }, 403);
     }
+    }
 
     const token = randomToken();
     const tokenHash = await sha256(token);
