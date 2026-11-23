@@ -1188,46 +1188,43 @@ async function route(request, env) {
       }, 403);
     }
 
-    if (existingDevice?.status === "approved") {
-      // الجهاز معتمد بالفعل
-    } else {
-      if (existingDevice?.status === "rejected") {
-        await env.DB.prepare(
-          `UPDATE student_devices
-           SET status = 'pending',
-               device_name = ?,
-               created_at = CURRENT_TIMESTAMP,
-               reviewed_at = NULL,
-               reviewed_by = NULL
-           WHERE id = ?`
-        ).bind(deviceName, existingDevice.id).run();
-      } else if (!existingDevice) {
-        const deviceCount = await env.DB.prepare(
-          `SELECT COUNT(*) AS total
-           FROM student_devices
-           WHERE student_id = ?`
-        ).bind(account.student_id).first();
+    
+if (existingDevice?.status === "approved") {
+  // الجهاز معتمد بالفعل
+} else {
+  if (existingDevice?.status === "rejected") {
+    await env.DB.prepare(
+      `UPDATE student_devices
+       SET status = 'pending',
+           device_name = ?,
+           created_at = CURRENT_TIMESTAMP,
+           reviewed_at = NULL,
+           reviewed_by = NULL
+       WHERE id = ?`
+    ).bind(deviceName, existingDevice.id).run();
 
-        await env.DB.prepare(
-  `INSERT INTO student_devices
-   (student_id, device_token_hash, device_name, status)
-   VALUES (?, ?, ?, 'pending')`
-).bind(
-  account.student_id,
-  deviceTokenHash,
-  deviceName
-).run();
+  } else if (!existingDevice) {
+    await env.DB.prepare(
+      `INSERT INTO student_devices
+       (student_id, device_token_hash, device_name, status)
+       VALUES (?, ?, ?, 'pending')`
+    ).bind(
+      account.student_id,
+      deviceTokenHash,
+      deviceName
+    ).run();
+  }
 
-      return reply(request, env, {
-        success: false,
-        code: "DEVICE_APPROVAL_REQUIRED",
-        error: "هذا الجهاز يحتاج إلى موافقة المدرس قبل تسجيل الدخول."
-      }, 403);
-    }
-    }
+  return reply(request, env, {
+    success: false,
+    code: "DEVICE_APPROVAL_REQUIRED",
+    error: "هذا الجهاز يحتاج إلى موافقة المدرس قبل تسجيل الدخول."
+  }, 403);
+}
 
-    const token = randomToken();
-    const tokenHash = await sha256(token);
+const token = randomToken();
+const tokenHash = await sha256(token);
+
 
     await env.DB.prepare(
       `INSERT INTO student_sessions
