@@ -1286,19 +1286,18 @@ const tokenHash = await sha256(token);
         subjects: subjects.results || []
       });
     }
-
-    // المشتريات المعتمدة والمكتملة
+    
+    // طلبات الطالب ومشترياته
     if (method === "GET" && path === "/api/student/purchases") {
       const rows = await env.DB.prepare(
         `SELECT o.id AS order_id, o.status, o.created_at,
                 m.id AS material_id, m.title, m.type,
-                m.price, m.file_key,
+                m.price,
                 sub.name AS subject_name
          FROM orders o
          JOIN materials m ON m.id = o.material_id
          JOIN subjects sub ON sub.id = m.subject_id
          WHERE o.student_id = ?
-         AND o.status IN ('approved', 'completed')
          ORDER BY o.id DESC`
       ).bind(session.student_id).all();
 
