@@ -1327,45 +1327,50 @@ const tokenHash = await sha256(token);
     }, 404);
   }
 
-  // إنشاء طلب شراء بالطريقة القديمة
+  // إنشاء طلب شراء - للطالب المسجل فقط
   if (method === "POST" && path === "/api/orders") {
-    const body = await readBody(request);
+    const session = await studentSession(request, env);
 
-    const studentId = Number(body?.student_id);
-    const materialId = Number(body?.material_id);
-
-    if (
-      !Number.isInteger(studentId) ||
-      !Number.isInteger(materialId) ||
-      studentId < 1 ||
-      materialId < 1
-    ) {
+    if (!session) {
       return reply(request, env, {
         success: false,
-        error: "student_id and material_id are required."
+        error: "يجب تسجيل الدخول لإنشاء طلب شراء."
+      }, 401);
+    }
+
+    const body = await readBody(request);
+    const materialId = Number(body?.material_id);
+
+    if (!Number.isInteger(materialId) || materialId < 1) {
+      return reply(request, env, {
+        success: false,
+        error: "رقم المحتوى غير صحيح."
       }, 400);
     }
 
-    const student = await env.DB.prepare(
-      "SELECT id FROM students WHERE id = ?"
-    ).bind(studentId).first();
-
     const material = await env.DB.prepare(
-      "SELECT id FROM materials WHERE id = ?"
+      "SELECT id, is_free FROM materials WHERE id = ?"
     ).bind(materialId).first();
 
-    if (!student || !material) {
+    if (!material) {
       return reply(request, env, {
         success: false,
-        error: "Student or material not found."
+        error: "المحتوى غير موجود."
       }, 404);
+    }
+
+    if (Number(material.is_free) === 1) {
+      return reply(request, env, {
+        success: false,
+        error: "هذا المحتوى مجاني ولا يحتاج إلى طلب شراء."
+      }, 400);
     }
 
     const result = await env.DB.prepare(
       `INSERT INTO orders
        (student_id, material_id, status)
        VALUES (?, ?, 'pending')`
-    ).bind(studentId, materialId).run();
+    ).bind(session.student_id, materialId).run();
 
     return reply(request, env, {
       success: true,
