@@ -270,8 +270,12 @@ async function uploadToGitHub(env, fileBytes, fileName, contentType) {
   );
 
   if (!response.ok) {
-    throw new Error("GitHub storage upload failed: " + response.status);
-  }
+  const details = await response.text();
+  throw new Error(
+    "GitHub storage upload failed: " +
+    response.status + " - " + details
+  );
+}
 
   return path;
 }
