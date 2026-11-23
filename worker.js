@@ -1,6 +1,9 @@
-
 const SESSION_DAYS = 7;
 const PBKDF2_ITERATIONS = 100000;
+const MAX_FILE_SIZE = 8 * 1024 * 1024;
+const MAX_PRICE = 1000000;
+const GITHUB_REPO = "ziadmohsen2410-zm/ZM-Academy-Storage";
+const GITHUB_API = "https://api.github.com/repos/" + GITHUB_REPO + "/contents";
 
 function json(data, status = 200, headers = {}) {
   return new Response(JSON.stringify(data), {
@@ -16,17 +19,23 @@ function json(data, status = 200, headers = {}) {
 function corsHeaders(request, env) {
   const origin = request.headers.get("Origin") || "";
   const allowed = (env.ALLOWED_ORIGINS || "*")
-    .split(",").map(x => x.trim()).filter(Boolean);
+    .split(",")
+    .map((x) => x.trim())
+    .filter(Boolean);
   const allowOrigin =
     allowed.includes("*") || allowed.includes(origin)
-      ? (allowed.includes("*") ? "*" : origin)
+      ? allowed.includes("*")
+        ? "*"
+        : origin
       : "";
 
   return {
-    ...(allowOrigin ? {
-      "access-control-allow-origin": allowOrigin,
-      "vary": "Origin"
-    } : {}),
+    ...(allowOrigin
+      ? {
+          "access-control-allow-origin": allowOrigin,
+          vary: "Origin",
+        }
+      : {}),
     "access-control-allow-methods": "GET, POST, PUT, PATCH, DELETE, OPTIONS",
     "access-control-allow-headers": "Content-Type, Authorization",
     "access-control-max-age": "86400",
@@ -46,9 +55,7 @@ async function readBody(request) {
 }
 
 function clean(value, max = 200) {
-  return typeof value === "string"
-    ? value.trim().slice(0, max)
-    : "";
+  return typeof value === "string" ? value.trim().slice(0, max) : "";
 }
 
 function randomToken(bytes = 32) {
@@ -56,21 +63,40 @@ function randomToken(bytes = 32) {
 }
 
 function toBase64Url(bytes) {
-  let binary = "";
-  for (const byte of bytes) {
-    binary += String.fromCharCode(byte);
-  }
-  return btoa(binary)
+  return bytesToBase64(bytes)
     .replace(/\+/g, "-")
     .replace(/\//g, "_")
     .replace(/=+$/g, "");
 }
 
+// Faster than building one huge string char-by-char (important for 8 MB files).
+function bytesToBase64(bytes) {
+  let binary = "";
+  const chunk = 0x8000;
+  for (let i = 0; i < bytes.length; i += chunk) {
+    binary += String.fromCharCode(...bytes.subarray(i, i + chunk));
+  }
+  return btoa(binary);
+}
+
 function fromBase64Url(value) {
-  const padded = value.replace(/-/g, "+").replace(/_/g, "/") +
-    "=".repeat((4 - value.length % 4) % 4);
+  const padded =
+    String(value || "").replace(/-/g, "+").replace(/_/g, "/") +
+    "=".repeat((4 - (String(value || "").length % 4)) % 4);
   const binary = atob(padded);
-  return Uint8Array.from(binary, c => c.charCodeAt(0));
+  return Uint8Array.from(binary, (c) => c.charCodeAt(0));
+}
+
+// Constant-time-ish comparison for secrets (setup key, password hashes).
+function safeEqual(a, b) {
+  const aa = String(a ?? "");
+  const bb = String(b ?? "");
+  if (aa.length !== bb.length) return false;
+  let diff = 0;
+  for (let i = 0; i < aa.length; i++) {
+    diff |= aa.charCodeAt(i) ^ bb.charCodeAt(i);
+  }
+  return diff === 0;
 }
 
 async function sha256(value) {
@@ -98,22 +124,22 @@ async function passwordHash(
       name: "PBKDF2",
       hash: "SHA-256",
       salt,
-      iterations: PBKDF2_ITERATIONS
+      iterations: PBKDF2_ITERATIONS,
     },
     key,
     256
   );
 
-  return `pbkdf2$${PBKDF2_ITERATIONS}$${toBase64Url(salt)}$${toBase64Url(new Uint8Array(bits))}`;
+  return `pbkdf2$${PBKDF2_ITERATIONS}$${toBase64Url(salt)}$${toBase64Url(
+    new Uint8Array(bits)
+  )}`;
 }
 
 async function verifyPassword(password, stored) {
   try {
     const parts = String(stored || "").split("$");
 
-    if (parts.length !== 4 || parts[0] !== "pbkdf2") {
-      return false;
-    }
+    if (parts.length !== 4 || parts[0] !== "pbkdf2") return false;
 
     const iterations = Number(parts[1]);
 
@@ -136,27 +162,25 @@ async function verifyPassword(password, stored) {
       ["deriveBits"]
     );
 
-    const bits = new Uint8Array(await crypto.subtle.deriveBits(
-      {
-        name: "PBKDF2",
-        hash: "SHA-256",
-        salt,
-        iterations
-      },
-      key,
-      expected.length * 8
-    ));
+    const bits = new Uint8Array(
+      await crypto.subtle.deriveBits(
+        {
+          name: "PBKDF2",
+          hash: "SHA-256",
+          salt,
+          iterations,
+        },
+        key,
+        expected.length * 8
+      )
+    );
 
-    if (bits.length !== expected.length) {
-      return false;
-    }
+    if (bits.length !== expected.length) return false;
 
     let diff = 0;
-
     for (let i = 0; i < bits.length; i++) {
       diff |= bits[i] ^ expected[i];
     }
-
     return diff === 0;
   } catch {
     return false;
@@ -165,9 +189,7 @@ async function verifyPassword(password, stored) {
 
 function bearer(request) {
   const value = request.headers.get("Authorization") || "";
-  return value.startsWith("Bearer ")
-    ? value.slice(7).trim()
-    : "";
+  return value.startsWith("Bearer ") ? value.slice(7).trim() : "";
 }
 
 async function adminSession(request, env) {
@@ -181,8 +203,10 @@ async function adminSession(request, env) {
      FROM admin_sessions s
      JOIN admin_users a ON a.id = s.admin_id
      WHERE s.token_hash = ?
-     AND s.expires_at > datetime('now')`
-  ).bind(tokenHash).first();
+       AND s.expires_at > datetime('now')`
+  )
+    .bind(tokenHash)
+    .first();
 
   return row ? { ...row, tokenHash } : null;
 }
@@ -197,6 +221,9 @@ async function studentSession(request, env) {
 
   const tokenHash = await sha256(token);
 
+  // ملاحظة: لم نعد نرفض الجلسة لمجرد وجود طلب جهاز قيد الانتظار.
+  // طلب جهاز جديد يمنع تسجيل الدخول من جهاز آخر، لكنه لا يقطع جلسة
+  // جهاز معتمد بالفعل. عند الموافقة على جهاز جديد يتم حذف كل الجلسات.
   const row = await env.DB.prepare(
     `SELECT ss.id, ss.student_id, s.name, s.phone
      FROM student_sessions ss
@@ -206,18 +233,42 @@ async function studentSession(request, env) {
       AND d.device_token_hash = ss.device_token_hash
       AND d.status = 'approved'
      WHERE ss.token_hash = ?
-       AND ss.expires_at > datetime('now')
-       AND NOT EXISTS (
-         SELECT 1
-         FROM student_devices pending
-         WHERE pending.student_id = ss.student_id
-           AND pending.status = 'pending'
-       )`
-  ).bind(tokenHash).first();
+       AND ss.expires_at > datetime('now')`
+  )
+    .bind(tokenHash)
+    .first();
 
   return row ? { ...row, tokenHash } : null;
 }
 
+async function purgeExpiredSessions(env) {
+  try {
+    await Promise.all([
+      env.DB.prepare(
+        "DELETE FROM admin_sessions WHERE expires_at <= datetime('now')"
+      ).run(),
+      env.DB.prepare(
+        "DELETE FROM student_sessions WHERE expires_at <= datetime('now')"
+      ).run(),
+    ]);
+  } catch (error) {
+    console.error("SESSION_PURGE_ERROR:", error?.message || error);
+  }
+}
+
+function githubContentsUrl(fileKey) {
+  const encodedPath = fileKey.split("/").map(encodeURIComponent).join("/");
+  return `${GITHUB_API}/${encodedPath}`;
+}
+
+function githubHeaders(env, accept = "application/vnd.github+json") {
+  return {
+    Authorization: `Bearer ${env.GITHUB_STORAGE_TOKEN}`,
+    Accept: accept,
+    "User-Agent": "ZM-Academy",
+    "X-GitHub-Api-Version": "2022-11-28",
+  };
+}
 
 async function uploadToGitHub(env, fileBytes, fileName, contentType) {
   if (!env.GITHUB_STORAGE_TOKEN) {
@@ -228,82 +279,114 @@ async function uploadToGitHub(env, fileBytes, fileName, contentType) {
     "application/pdf",
     "image/jpeg",
     "image/png",
-    "image/webp"
+    "image/webp",
   ];
 
   if (!allowedTypes.includes(contentType)) {
     throw new Error("File type is not allowed.");
   }
 
-  if (fileBytes.length > 8 * 1024 * 1024) {
+  if (fileBytes.length > MAX_FILE_SIZE) {
     throw new Error("File size must not exceed 8 MB.");
   }
 
-  const safeName = fileName
-    .replace(/[^a-zA-Z0-9._-]/g, "_")
-    .slice(-100);
+  const safeName =
+    fileName
+      .replace(/[^a-zA-Z0-9._-]/g, "_")
+      .slice(-100) || "file";
 
   const path = `materials/${crypto.randomUUID()}-${safeName}`;
 
-  let binary = "";
-  for (const byte of fileBytes) {
-    binary += String.fromCharCode(byte);
+  const response = await fetch(githubContentsUrl(path), {
+    method: "PUT",
+    headers: {
+      ...githubHeaders(env),
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      message: `Upload academy file: ${safeName}`,
+      content: bytesToBase64(fileBytes),
+    }),
+  });
+
+  if (!response.ok) {
+    const responseText = await response.text();
+    console.error("GitHub status:", response.status);
+    console.error("GitHub response:", responseText.slice(0, 500));
+
+    throw new Error(
+      "GitHub storage upload failed: " +
+        response.status +
+        " - " +
+        responseText.slice(0, 500)
+    );
   }
-
-  const content = btoa(binary);
-
-  const response = await fetch(
-    `https://api.github.com/repos/ziadmohsen2410-zm/ZM-Academy-Storage/contents/${path}`,
-    {
-      method: "PUT",
-      headers: {
-        "Authorization": `Bearer ${env.GITHUB_STORAGE_TOKEN}`,
-        "Accept": "application/vnd.github+json",
-        "User-Agent": "ZM-Academy",
-        "X-GitHub-Api-Version": "2022-11-28",
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        message: `Upload academy file: ${safeName}`,
-        content
-      })
-    }
-  );
-
-  const responseText = await response.text();
-
-if (!response.ok) {
-  console.error("GitHub status:", response.status);
-  console.error("GitHub response:", responseText);
-
-  throw new Error(
-    "GitHub storage upload failed: " +
-    response.status + " - " +
-    responseText.slice(0, 500)
-  );
-}
 
   return path;
 }
 
+// حذف الملف من التخزين عند حذف المحتوى (يمنع تراكم الملفات).
+// أي فشل هنا لا يمنع حذف سجل المحتوى من قاعدة البيانات.
+async function deleteFromGitHub(env, fileKey) {
+  if (!env.GITHUB_STORAGE_TOKEN) return;
+  if (
+    !fileKey ||
+    !fileKey.startsWith("materials/") ||
+    fileKey.includes("..")
+  ) {
+    return;
+  }
+
+  const url = githubContentsUrl(fileKey);
+
+  const current = await fetch(url, { headers: githubHeaders(env) });
+  if (!current.ok) return;
+
+  const meta = await current.json();
+  if (!meta?.sha) return;
+
+  const removed = await fetch(url, {
+    method: "DELETE",
+    headers: {
+      ...githubHeaders(env),
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      message: `Delete academy file: ${fileKey}`,
+      sha: meta.sha,
+    }),
+  });
+
+  if (!removed.ok) {
+    console.error("GitHub delete failed:", removed.status);
+  }
+}
+
 async function route(request, env) {
+  const method = request.method.toUpperCase();
+
+  // Preflight يجب أن يعمل حتى لو كانت قاعدة البيانات غير مهيأة.
+  if (method === "OPTIONS") {
+    return new Response(null, {
+      status: 204,
+      headers: corsHeaders(request, env),
+    });
+  }
+
   if (!env.DB) {
-    return reply(request, env, {
-      success: false,
-      error: "Database binding DB is missing."
-    }, 500);
+    return reply(
+      request,
+      env,
+      {
+        success: false,
+        error: "Database binding DB is missing.",
+      },
+      500
+    );
   }
 
   const url = new URL(request.url);
   const path = url.pathname.replace(/\/+$/, "") || "/";
-  const method = request.method.toUpperCase();
-
-  if (method === "OPTIONS") {
-    return new Response(null, {
-      status: 204,
-      headers: corsHeaders(request, env)
-    });
-  }
 
   // فحص اتصال قاعدة البيانات
   if (method === "GET" && path === "/api/health") {
@@ -312,48 +395,68 @@ async function route(request, env) {
 
       return reply(request, env, {
         success: true,
-        database: "connected"
+        database: "connected",
       });
     } catch {
-      return reply(request, env, {
-        success: false,
-        database: "error"
-      }, 500);
+      return reply(
+        request,
+        env,
+        {
+          success: false,
+          database: "error",
+        },
+        500
+      );
     }
   }
 
   // إنشاء حساب الإدارة لأول مرة
   if (method === "POST" && path === "/api/admin/setup") {
-    if (!env.ADMIN_SETUP_KEY) {
-      return reply(request, env, {
-        success: false,
-        error: "Admin setup is not configured."
-      }, 503);
+    const setupKey = String(env.ADMIN_SETUP_KEY || "").trim();
+    if (!setupKey) {
+      return reply(
+        request,
+        env,
+        {
+          success: false,
+          error: "Admin setup is not configured.",
+        },
+        503
+      );
     }
 
     const body = await readBody(request);
 
-    if (!body || clean(body.setupKey, 300) !== env.ADMIN_SETUP_KEY) {
-      return reply(request, env, {
-        success: false,
-        error: "Invalid setup key."
-      }, 403);
+    if (!safeEqual(clean(body?.setupKey, 300), setupKey)) {
+      return reply(
+        request,
+        env,
+        {
+          success: false,
+          error: "Invalid setup key.",
+        },
+        403
+      );
     }
 
-    const username = clean(body.username, 60);
-    const password = typeof body.password === "string"
-      ? body.password
-      : "";
+    const username = clean(body?.username, 60);
+    const password = typeof body?.password === "string" ? body.password : "";
 
     if (
       !/^[A-Za-z0-9_.-]{3,60}$/.test(username) ||
       password.length < 12 ||
       password.length > 200
     ) {
-      return reply(request, env, {
-        success: false,
-        error: "Username must be 3-60 characters; password must be at least 12 characters."
-      }, 400);
+      return reply(
+        request,
+        env,
+        {
+          success: false,
+          error:
+            "Username must be 3-60 characters; password must be at least 12 characters.",
+        },
+        400
+      );
     }
 
     const count = await env.DB.prepare(
@@ -361,55 +464,98 @@ async function route(request, env) {
     ).first();
 
     if ((count?.n || 0) > 0) {
-      return reply(request, env, {
-        success: false,
-        error: "An admin already exists. Setup is closed."
-      }, 409);
+      return reply(
+        request,
+        env,
+        {
+          success: false,
+          error: "An admin already exists. Setup is closed.",
+        },
+        409
+      );
     }
 
     const hash = await passwordHash(password);
 
     try {
-      await env.DB.prepare(
-        "INSERT INTO admin_users (username, password_hash) VALUES (?, ?)"
-      ).bind(username, hash).run();
+      // إدراج مشروط ذري لمنع إنشاء أكثر من أدمن في طلبين متزامنين.
+      const result = await env.DB.prepare(
+        `INSERT INTO admin_users (username, password_hash)
+         SELECT ?, ? WHERE NOT EXISTS (SELECT 1 FROM admin_users)`
+      )
+        .bind(username, hash)
+        .run();
 
-      return reply(request, env, {
-        success: true,
-        message: "Admin account created. You can now sign in."
-      }, 201);
+      if (!(result.meta?.changes || 0)) {
+        return reply(
+          request,
+          env,
+          {
+            success: false,
+            error: "An admin already exists. Setup is closed.",
+          },
+          409
+        );
+      }
+
+      return reply(
+        request,
+        env,
+        {
+          success: true,
+          message: "Admin account created. You can now sign in.",
+        },
+        201
+      );
     } catch {
-      return reply(request, env, {
-        success: false,
-        error: "Could not create admin account."
-      }, 500);
+      return reply(
+        request,
+        env,
+        {
+          success: false,
+          error: "Could not create admin account.",
+        },
+        500
+      );
     }
   }
 
   // تسجيل دخول الإدارة
   if (method === "POST" && path === "/api/admin/login") {
+    await purgeExpiredSessions(env);
+
     const body = await readBody(request);
     const username = clean(body?.username, 60);
-    const password = typeof body?.password === "string"
-      ? body.password
-      : "";
+    const password = typeof body?.password === "string" ? body.password : "";
 
     if (!username || !password) {
-      return reply(request, env, {
-        success: false,
-        error: "Username and password are required."
-      }, 400);
+      return reply(
+        request,
+        env,
+        {
+          success: false,
+          error: "Username and password are required.",
+        },
+        400
+      );
     }
 
     const admin = await env.DB.prepare(
       "SELECT id, username, password_hash FROM admin_users WHERE username = ?"
-    ).bind(username).first();
+    )
+      .bind(username)
+      .first();
 
     if (!admin || !(await verifyPassword(password, admin.password_hash))) {
-      return reply(request, env, {
-        success: false,
-        error: "Invalid username or password."
-      }, 401);
+      return reply(
+        request,
+        env,
+        {
+          success: false,
+          error: "Invalid username or password.",
+        },
+        401
+      );
     }
 
     const token = randomToken();
@@ -419,7 +565,9 @@ async function route(request, env) {
       `INSERT INTO admin_sessions
        (token_hash, expires_at, admin_id)
        VALUES (?, datetime('now', ?), ?)`
-    ).bind(tokenHash, `+${SESSION_DAYS} days`, admin.id).run();
+    )
+      .bind(tokenHash, `+${SESSION_DAYS} days`, admin.id)
+      .run();
 
     return reply(request, env, {
       success: true,
@@ -427,8 +575,8 @@ async function route(request, env) {
       expiresInDays: SESSION_DAYS,
       admin: {
         id: admin.id,
-        username: admin.username
-      }
+        username: admin.username,
+      },
     });
   }
 
@@ -439,31 +587,38 @@ async function route(request, env) {
     if (session) {
       await env.DB.prepare(
         "DELETE FROM admin_sessions WHERE token_hash = ?"
-      ).bind(session.tokenHash).run();
+      )
+        .bind(session.tokenHash)
+        .run();
     }
 
     return reply(request, env, { success: true });
   }
 
   // جميع مسارات الإدارة محمية
-  if (path.startsWith("/api/admin/") || path === "/api/admin/me") {
+  if (
+    path.startsWith("/api/admin/") ||
+    (path === "/api/subjects" && ["POST", "PUT", "DELETE"].includes(method))
+  ) {
     const session = await requireAdmin(request, env);
 
     if (!session) {
-      return reply(request, env, {
-        success: false,
-        error: "Unauthorized."
-      }, 401);
+      return reply(
+        request,
+        env,
+        {
+          success: false,
+          error: "Unauthorized.",
+        },
+        401
+      );
     }
-    
+
     const deviceDecision = path.match(
       /^\/api\/admin\/device-requests\/(\d+)\/(approve|reject)$/
     );
 
-    if (
-      method === "POST" &&
-      deviceDecision
-    ) {
+    if (method === "POST" && deviceDecision) {
       const deviceId = Number(deviceDecision[1]);
       const decision = deviceDecision[2];
 
@@ -471,13 +626,20 @@ async function route(request, env) {
         `SELECT id, student_id
          FROM student_devices
          WHERE id = ? AND status = 'pending'`
-      ).bind(deviceId).first();
+      )
+        .bind(deviceId)
+        .first();
 
       if (!device) {
-        return reply(request, env, {
-          success: false,
-          error: "طلب الجهاز غير موجود أو تمت مراجعته."
-        }, 404);
+        return reply(
+          request,
+          env,
+          {
+            success: false,
+            error: "طلب الجهاز غير موجود أو تمت مراجعته.",
+          },
+          404
+        );
       }
 
       if (decision === "approve") {
@@ -501,14 +663,13 @@ async function route(request, env) {
           ).bind(session.admin_id, deviceId),
 
           env.DB.prepare(
-            `DELETE FROM student_sessions
-             WHERE student_id = ?`
-          ).bind(device.student_id)
+            "DELETE FROM student_sessions WHERE student_id = ?"
+          ).bind(device.student_id),
         ]);
 
         return reply(request, env, {
           success: true,
-          message: "Device approved."
+          message: "Device approved.",
         });
       }
 
@@ -518,11 +679,13 @@ async function route(request, env) {
              reviewed_at = CURRENT_TIMESTAMP,
              reviewed_by = ?
          WHERE id = ? AND status = 'pending'`
-      ).bind(session.admin_id, deviceId).run();
+      )
+        .bind(session.admin_id, deviceId)
+        .run();
 
       return reply(request, env, {
         success: true,
-        message: "Device rejected."
+        message: "Device rejected.",
       });
     }
 
@@ -531,8 +694,8 @@ async function route(request, env) {
         success: true,
         admin: {
           id: session.admin_id,
-          username: session.username
-        }
+          username: session.username,
+        },
       });
     }
 
@@ -550,7 +713,7 @@ async function route(request, env) {
 
       return reply(request, env, {
         success: true,
-        orders: rows.results || []
+        orders: rows.results || [],
       });
     }
 
@@ -562,19 +725,38 @@ async function route(request, env) {
       const status = clean(body?.status, 30);
 
       if (!["pending", "approved", "rejected", "completed"].includes(status)) {
-        return reply(request, env, {
-          success: false,
-          error: "Invalid order status."
-        }, 400);
+        return reply(
+          request,
+          env,
+          {
+            success: false,
+            error: "Invalid order status.",
+          },
+          400
+        );
       }
 
       const result = await env.DB.prepare(
         "UPDATE orders SET status = ? WHERE id = ?"
-      ).bind(status, Number(orderStatus[1])).run();
+      )
+        .bind(status, Number(orderStatus[1]))
+        .run();
+
+      if (!(result.meta?.changes || 0)) {
+        return reply(
+          request,
+          env,
+          {
+            success: false,
+            error: "Order not found.",
+          },
+          404
+        );
+      }
 
       return reply(request, env, {
         success: true,
-        changed: result.meta?.changes || 0
+        changed: result.meta?.changes || 0,
       });
     }
 
@@ -595,124 +777,238 @@ async function route(request, env) {
 
       return reply(request, env, {
         success: true,
-        students: rows.results || []
+        students: rows.results || [],
       });
     }
 
     // حذف طالب مع الحفاظ على سجل الطلبات
-    if (
-      method === "DELETE" &&
-      /^\/api\/admin\/students\/\d+$/.test(path)
-    ) {
+    if (method === "DELETE" && /^\/api\/admin\/students\/\d+$/.test(path)) {
       const studentId = Number(path.split("/").pop());
 
       const student = await env.DB.prepare(
         "SELECT id FROM students WHERE id = ?"
-      ).bind(studentId).first();
+      )
+        .bind(studentId)
+        .first();
 
       if (!student) {
-        return reply(request, env, {
-          success: false,
-          error: "الطالب غير موجود."
-        }, 404);
+        return reply(
+          request,
+          env,
+          {
+            success: false,
+            error: "الطالب غير موجود.",
+          },
+          404
+        );
       }
 
       const linkedOrders = await env.DB.prepare(
         "SELECT COUNT(*) AS n FROM orders WHERE student_id = ?"
-      ).bind(studentId).first();
+      )
+        .bind(studentId)
+        .first();
 
       if ((linkedOrders?.n || 0) > 0) {
-        return reply(request, env, {
-          success: false,
-          error: "لا يمكن حذف الطالب لوجود طلبات مرتبطة به. احتفظ بسجل الطلبات."
-        }, 409);
+        return reply(
+          request,
+          env,
+          {
+            success: false,
+            error:
+              "لا يمكن حذف الطالب لوجود طلبات مرتبطة به. احتفظ بسجل الطلبات.",
+          },
+          409
+        );
       }
 
       await env.DB.batch([
         env.DB.prepare(
           "DELETE FROM student_sessions WHERE student_id = ?"
         ).bind(studentId),
-
+        env.DB.prepare(
+          "DELETE FROM student_devices WHERE student_id = ?"
+        ).bind(studentId),
         env.DB.prepare(
           "DELETE FROM student_subjects WHERE student_id = ?"
         ).bind(studentId),
-
         env.DB.prepare(
           "DELETE FROM student_accounts WHERE student_id = ?"
         ).bind(studentId),
-
-        env.DB.prepare(
-          "DELETE FROM students WHERE id = ?"
-        ).bind(studentId)
+        env.DB.prepare("DELETE FROM students WHERE id = ?").bind(studentId),
       ]);
 
       return reply(request, env, {
         success: true,
-        deleted: studentId
+        deleted: studentId,
       });
     }
 
-    // المواد
-      if (method === "GET" && path === "/api/materials") {
-    const subjectId = Number(url.searchParams.get("subject_id") || 0);
-
-    const rows = subjectId
-      ? await env.DB.prepare(
-          `SELECT id, subject_id, title, type, price, is_free, file_key
-           FROM materials
-           WHERE subject_id = ? AND is_free = 1
-           ORDER BY id DESC`
-        ).bind(subjectId).all()
-      : await env.DB.prepare(
-          `SELECT id, subject_id, title, type, price, is_free, file_key
-           FROM materials
-           WHERE is_free = 1
-           ORDER BY id DESC`
-        ).all();
-
-    return reply(request, env, {
-      success: true,
-      materials: rows.results || []
-    });
-      }
-
     // إضافة مادة دراسية
-    if (method === "POST" && path === "/api/admin/subjects") {
+    if (
+      method === "POST" &&
+      (path === "/api/admin/subjects" || path === "/api/subjects")
+    ) {
       const body = await readBody(request);
       const name = clean(body?.name, 120);
       const grade = clean(body?.grade, 80);
 
       if (!name || !grade) {
-        return reply(request, env, {
-          success: false,
-          error: "Subject name and grade are required."
-        }, 400);
+        return reply(
+          request,
+          env,
+          {
+            success: false,
+            error: "Subject name and grade are required.",
+          },
+          400
+        );
       }
 
       const result = await env.DB.prepare(
         "INSERT INTO subjects (name, grade) VALUES (?, ?)"
-      ).bind(name, grade).run();
+      )
+        .bind(name, grade)
+        .run();
+
+      return reply(
+        request,
+        env,
+        {
+          success: true,
+          id: result.meta.last_row_id,
+        },
+        201
+      );
+    }
+
+    // تعديل مادة دراسية
+    if (method === "PUT" && path === "/api/subjects") {
+      const body = await readBody(request);
+      const id = Number(body?.id);
+      const name = clean(body?.name, 120);
+      const grade = clean(body?.grade, 80);
+
+      if (!Number.isInteger(id) || id < 1 || !name || !grade) {
+        return reply(
+          request,
+          env,
+          {
+            success: false,
+            error: "بيانات المادة غير صحيحة.",
+          },
+          400
+        );
+      }
+
+      const result = await env.DB.prepare(
+        "UPDATE subjects SET name = ?, grade = ? WHERE id = ?"
+      )
+        .bind(name, grade, id)
+        .run();
+
+      if (!(result.meta?.changes || 0)) {
+        return reply(
+          request,
+          env,
+          {
+            success: false,
+            error: "المادة غير موجودة.",
+          },
+          404
+        );
+      }
 
       return reply(request, env, {
         success: true,
-        id: result.meta.last_row_id
-      }, 201);
+        message: "تم تعديل المادة بنجاح.",
+      });
     }
 
-        // عرض جميع المحتويات للإدارة
+    // حذف مادة دراسية دون حذف سجلات الطلاب أو المحتوى المرتبط بها
+    if (method === "DELETE" && path === "/api/subjects") {
+      const body = await readBody(request);
+      const id = Number(body?.id);
+
+      if (!Number.isInteger(id) || id < 1) {
+        return reply(
+          request,
+          env,
+          {
+            success: false,
+            error: "رقم المادة غير صحيح.",
+          },
+          400
+        );
+      }
+
+      const subject = await env.DB.prepare(
+        "SELECT id FROM subjects WHERE id = ?"
+      )
+        .bind(id)
+        .first();
+
+      if (!subject) {
+        return reply(
+          request,
+          env,
+          {
+            success: false,
+            error: "المادة غير موجودة.",
+          },
+          404
+        );
+      }
+
+      const [studentLinks, materials] = await Promise.all([
+        env.DB.prepare(
+          "SELECT COUNT(*) AS n FROM student_subjects WHERE subject_id = ?"
+        )
+          .bind(id)
+          .first(),
+        env.DB.prepare(
+          "SELECT COUNT(*) AS n FROM materials WHERE subject_id = ?"
+        )
+          .bind(id)
+          .first(),
+      ]);
+
+      if ((studentLinks?.n || 0) > 0 || (materials?.n || 0) > 0) {
+        return reply(
+          request,
+          env,
+          {
+            success: false,
+            error: "لا يمكن حذف المادة لارتباطها بطلاب أو محتوى دراسي.",
+          },
+          409
+        );
+      }
+
+      await env.DB.prepare("DELETE FROM subjects WHERE id = ?").bind(id).run();
+
+      return reply(request, env, {
+        success: true,
+        message: "تم حذف المادة بنجاح.",
+      });
+    }
+
+    // عرض جميع المحتويات للإدارة
     if (method === "GET" && path === "/api/admin/materials") {
       const rows = await env.DB.prepare(
-        `SELECT id, subject_id, title, type, price, is_free, file_key
-         FROM materials
-         ORDER BY id DESC`
+        `SELECT m.id, m.subject_id, m.title, m.type, m.price, m.is_free,
+                m.file_key, sub.name AS subject_name, sub.grade
+         FROM materials m
+         LEFT JOIN subjects sub ON sub.id = m.subject_id
+         ORDER BY m.id DESC`
       ).all();
 
       return reply(request, env, {
         success: true,
-        materials: rows.results || []
+        materials: rows.results || [],
       });
     }
-    
+
     if (method === "GET" && path === "/api/admin/device-requests") {
       const rows = await env.DB.prepare(
         `SELECT d.id, d.student_id, d.device_name, d.created_at,
@@ -728,213 +1024,259 @@ async function route(request, env) {
 
       return reply(request, env, {
         success: true,
-        requests: rows.results || []
+        requests: rows.results || [],
+      });
+    }
+
+    // حذف محتوى دراسي
+    if (method === "DELETE" && path === "/api/admin/materials") {
+      const body = await readBody(request);
+      const id = Number(body?.id);
+
+      if (!Number.isInteger(id) || id < 1) {
+        return reply(
+          request,
+          env,
+          {
+            success: false,
+            error: "Invalid material ID.",
+          },
+          400
+        );
+      }
+
+      const existing = await env.DB.prepare(
+        "SELECT file_key FROM materials WHERE id = ?"
+      )
+        .bind(id)
+        .first();
+
+      if (!existing) {
+        return reply(
+          request,
+          env,
+          {
+            success: false,
+            error: "Material not found.",
+          },
+          404
+        );
+      }
+
+      // لا نحذف محتوى عليه طلبات حتى لا نكسر سجل المشتريات.
+      const linkedOrders = await env.DB.prepare(
+        "SELECT COUNT(*) AS n FROM orders WHERE material_id = ?"
+      )
+        .bind(id)
+        .first();
+
+      if ((linkedOrders?.n || 0) > 0) {
+        return reply(
+          request,
+          env,
+          {
+            success: false,
+            error: "لا يمكن حذف المحتوى لوجود طلبات مرتبطة به.",
+          },
+          409
+        );
+      }
+
+      const result = await env.DB.prepare(
+        "DELETE FROM materials WHERE id = ?"
+      )
+        .bind(id)
+        .run();
+
+      if (!(result.meta?.changes || 0)) {
+        return reply(
+          request,
+          env,
+          {
+            success: false,
+            error: "Material not found.",
+          },
+          404
+        );
+      }
+
+      if (existing.file_key) {
+        try {
+          await deleteFromGitHub(env, existing.file_key);
+        } catch (error) {
+          console.error("GITHUB_DELETE_ERROR:", error?.message || error);
+        }
+      }
+
+      return reply(request, env, {
+        success: true,
+        message: "Material deleted.",
+      });
+    }
+
+    // رفع ملف PDF إلى التخزين الخاص
+    if (method === "POST" && path === "/api/admin/upload") {
+      try {
+        const form = await request.formData();
+        const file = form.get("file");
+
+        if (!file || typeof file.arrayBuffer !== "function") {
+          return reply(
+            request,
+            env,
+            {
+              success: false,
+              error: "Please select a file.",
+            },
+            400
+          );
+        }
+
+        if (file.size < 1 || file.size > MAX_FILE_SIZE) {
+          return reply(
+            request,
+            env,
+            {
+              success: false,
+              error: "Maximum file size is 8 MB.",
+            },
+            400
+          );
+        }
+
+        const contentType = file.type;
+        const bytes = new Uint8Array(await file.arrayBuffer());
+
+        const isPDF =
+          contentType === "application/pdf" &&
+          bytes.length >= 5 &&
+          new TextDecoder().decode(bytes.slice(0, 5)) === "%PDF-";
+
+        if (!isPDF) {
+          return reply(
+            request,
+            env,
+            {
+              success: false,
+              error: "يجب اختيار ملف PDF صحيح.",
+            },
+            400
+          );
+        }
+
+        const fileKey = await uploadToGitHub(env, bytes, file.name, contentType);
+
+        return reply(
+          request,
+          env,
+          {
+            success: true,
+            file_key: fileKey,
+            message: "File uploaded successfully.",
+          },
+          201
+        );
+      } catch (error) {
+        console.error("File upload error:", error);
+
+        return reply(
+          request,
+          env,
+          {
+            success: false,
+            error:
+              "تعذر رفع الملف إلى التخزين. تحقق من إعدادات التخزين وحاول مرة أخرى.",
+          },
+          500
+        );
+      }
+    }
+
+    // تعديل محتوى دراسي
+    if (method === "PUT" && path === "/api/admin/materials") {
+      const body = await readBody(request);
+      const id = Number(body?.id);
+      const subjectId = Number(body?.subject_id);
+      const title = clean(body?.title, 180);
+      const type = clean(body?.type, 40);
+      const price = Number(body?.price ?? 0);
+      const isFree =
+        body?.is_free === false || Number(body?.is_free) === 0 ? 0 : 1;
+
+      if (
+        !Number.isInteger(id) ||
+        id < 1 ||
+        !Number.isInteger(subjectId) ||
+        subjectId < 1 ||
+        !title ||
+        !type ||
+        !Number.isFinite(price) ||
+        price < 0 ||
+        price > MAX_PRICE
+      ) {
+        return reply(
+          request,
+          env,
+          {
+            success: false,
+            error: "Invalid material data.",
+          },
+          400
+        );
+      }
+
+      const [existing, subject] = await Promise.all([
+        env.DB.prepare("SELECT file_key FROM materials WHERE id = ?")
+          .bind(id)
+          .first(),
+        env.DB.prepare("SELECT id FROM subjects WHERE id = ?")
+          .bind(subjectId)
+          .first(),
+      ]);
+
+      if (!existing) {
+        return reply(
+          request,
+          env,
+          {
+            success: false,
+            error: "Material not found.",
+          },
+          404
+        );
+      }
+
+      if (!subject) {
+        return reply(
+          request,
+          env,
+          {
+            success: false,
+            error: "Subject not found.",
+          },
+          404
+        );
+      }
+
+      const newFileKey = clean(body?.file_key, 500);
+      const fileKey = newFileKey || existing.file_key || null;
+
+      await env.DB.prepare(
+        `UPDATE materials
+         SET subject_id = ?, title = ?, type = ?, price = ?,
+             is_free = ?, file_key = ?
+         WHERE id = ?`
+      )
+        .bind(subjectId, title, type, price, isFree, fileKey, id)
+        .run();
+
+      return reply(request, env, {
+        success: true,
+        message: "Material updated.",
       });
     }
 
     // إضافة محتوى دراسي
-    if (method === "DELETE" && path === "/api/admin/materials") {
-  const body = await readBody(request);
-  const id = Number(body?.id);
-
-  if (!Number.isInteger(id) || id < 1) {
-    return reply(request, env, {
-      success: false,
-      error: "Invalid material ID."
-    }, 400);
-  }
-
-  const result = await env.DB.prepare(
-    "DELETE FROM materials WHERE id = ?"
-  ).bind(id).run();
-
-  if (!result.meta.changes) {
-    return reply(request, env, {
-      success: false,
-      error: "Material not found."
-    }, 404);
-  }
-
-  return reply(request, env, {
-    success: true,
-    message: "Material deleted."
-  });
-    }
-    if (method === "PUT" && path === "/api/admin/materials") {
-  const body = await readBody(request);
-  const id = Number(body?.id);
-  const subjectId = Number(body?.subject_id);
-  const title = clean(body?.title, 180);
-  const type = clean(body?.type, 40);
-  const price = Number(body?.price ?? 0);
-  const isFree =
-    body?.is_free === false || Number(body?.is_free) === 0 ? 0 : 1;
-
-  if (
-    !Number.isInteger(id) || id < 1 ||
-    !Number.isInteger(subjectId) || subjectId < 1 ||
-    !title || !type ||
-    !Number.isFinite(price) || price < 0
-  ) {
-    return reply(request, env, {
-      success: false,
-      error: "Invalid material data."
-    }, 400);
-  }
-
-  const result = await env.DB.prepare(
-    `UPDATE materials
-     SET subject_id = ?, title = ?, type = ?, price = ?,
-         is_free = ?, file_key = ?
-     WHERE id = ?`
-  ).bind(
-    subjectId,
-    title,
-    type,
-    price,
-    isFree,
-    clean(body?.file_key, 500) || null,
-    id
-  ).run();
-
-  if (!result.meta.changes) {
-    return reply(request, env, {
-      success: false,
-      error: "Material not found."
-    }, 404);
-  }
-
-  return reply(request, env, {
-    success: true,
-    message: "Material updated."
-  });
-}
-    
-    
-if (method === "POST" && path === "/api/admin/upload") {
-  const admin = await requireAdmin(request, env);
-
-  if (!admin) {
-    return reply(request, env, {
-      success: false,
-      error: "Unauthorized."
-    }, 401);
-  }
-
-  try {
-    const form = await request.formData();
-    const file = form.get("file");
-
-    if (!file || typeof file.arrayBuffer !== "function") {
-      return reply(request, env, {
-        success: false,
-        error: "Please select a file."
-      }, 400);
-    }
-
-    if (file.size < 1 || file.size > 8 * 1024 * 1024) {
-      return reply(request, env, {
-        success: false,
-        error: "Maximum file size is 8 MB."
-      }, 400);
-    }
-
-    const contentType = file.type;
-    const bytes = new Uint8Array(await file.arrayBuffer());
-
-    const isPDF =
-      contentType === "application/pdf" &&
-      bytes.length >= 5 &&
-      new TextDecoder().decode(bytes.slice(0, 5)) === "%PDF-";
-
-    if (!isPDF) {
-      return reply(request, env, {
-        success: false,
-        error: "يجب اختيار ملف PDF صحيح."
-      }, 400);
-    }
-
-    const fileKey = await uploadToGitHub(
-      env,
-      bytes,
-      file.name,
-      contentType
-    );
-
-    return reply(request, env, {
-      success: true,
-      file_key: fileKey,
-      message: "File uploaded successfully."
-    }, 201);
-
-    } catch (error) {
-    console.error("File upload error:", error);
-
-    return reply(request, env, {
-      success: false,
-      error: error?.message || "Unknown upload error."
-    }, 500);
-  }
-}
-
-    
-if (method === "PUT" && path === "/api/admin/materials") {
-  const body = await readBody(request);
-  const id = Number(body?.id);
-  const subjectId = Number(body?.subject_id);
-  const title = clean(body?.title, 180);
-  const type = clean(body?.type, 40);
-  const price = Number(body?.price ?? 0);
-  const isFree =
-    body?.is_free === false || Number(body?.is_free) === 0 ? 0 : 1;
-
-  if (
-    !Number.isInteger(id) || id < 1 ||
-    !Number.isInteger(subjectId) || subjectId < 1 ||
-    !title || !type ||
-    !Number.isFinite(price) || price < 0
-  ) {
-    return reply(request, env, {
-      success: false,
-      error: "Invalid material data."
-    }, 400);
-  }
-
-  const existing = await env.DB.prepare(
-    "SELECT file_key FROM materials WHERE id = ?"
-  ).bind(id).first();
-
-  if (!existing) {
-    return reply(request, env, {
-      success: false,
-      error: "Material not found."
-    }, 404);
-  }
-
-  const newFileKey = clean(body?.file_key, 500);
-  const fileKey = newFileKey || existing.file_key || null;
-
-  await env.DB.prepare(
-    `UPDATE materials
-     SET subject_id = ?, title = ?, type = ?, price = ?,
-         is_free = ?, file_key = ?
-     WHERE id = ?`
-  ).bind(
-    subjectId,
-    title,
-    type,
-    price,
-    isFree,
-    fileKey,
-    id
-  ).run();
-
-  return reply(request, env, {
-    success: true,
-    message: "Material updated."
-  });
-}
-
     if (method === "POST" && path === "/api/admin/materials") {
       const body = await readBody(request);
       const subjectId = Number(body?.subject_id);
@@ -942,9 +1284,7 @@ if (method === "PUT" && path === "/api/admin/materials") {
       const type = clean(body?.type, 40);
       const price = Number(body?.price ?? 0);
       const isFree =
-        body?.is_free === false || Number(body?.is_free) === 0
-          ? 0
-          : 1;
+        body?.is_free === false || Number(body?.is_free) === 0 ? 0 : 1;
 
       if (
         !Number.isInteger(subjectId) ||
@@ -952,48 +1292,74 @@ if (method === "PUT" && path === "/api/admin/materials") {
         !title ||
         !type ||
         !Number.isFinite(price) ||
-        price < 0
+        price < 0 ||
+        price > MAX_PRICE
       ) {
-        return reply(request, env, {
-          success: false,
-          error: "Valid subject_id, title, type and non-negative price are required."
-        }, 400);
+        return reply(
+          request,
+          env,
+          {
+            success: false,
+            error:
+              "Valid subject_id, title, type and non-negative price are required.",
+          },
+          400
+        );
       }
 
       const subject = await env.DB.prepare(
         "SELECT id FROM subjects WHERE id = ?"
-      ).bind(subjectId).first();
+      )
+        .bind(subjectId)
+        .first();
 
       if (!subject) {
-        return reply(request, env, {
-          success: false,
-          error: "Subject not found."
-        }, 404);
+        return reply(
+          request,
+          env,
+          {
+            success: false,
+            error: "Subject not found.",
+          },
+          404
+        );
       }
 
       const result = await env.DB.prepare(
         `INSERT INTO materials
          (subject_id, title, type, price, is_free, file_key)
          VALUES (?, ?, ?, ?, ?, ?)`
-      ).bind(
-        subjectId,
-        title,
-        type,
-        price,
-        isFree,
-        clean(body?.file_key, 500) || null
-      ).run();
+      )
+        .bind(
+          subjectId,
+          title,
+          type,
+          price,
+          isFree,
+          clean(body?.file_key, 500) || null
+        )
+        .run();
 
-      return reply(request, env, {
-        success: true,
-        id: result.meta.last_row_id
-      }, 201);
+      return reply(
+        request,
+        env,
+        {
+          success: true,
+          id: result.meta.last_row_id,
+        },
+        201
+      );
     }
 
-    return reply(request, env, {
-      success: false,
-      error: "Admin endpoint not found."
-    }, 404);
+    return reply(
+      request,
+      env,
+      {
+        success: false,
+        error: "Admin endpoint not found.",
+      },
+      404
+    );
   }
 
   // المواد والصفوف المتاحة للتسجيل
@@ -1004,41 +1370,53 @@ if (method === "PUT" && path === "/api/admin/materials") {
 
     return reply(request, env, {
       success: true,
-      subjects: rows.results || []
+      subjects: rows.results || [],
     });
   }
 
   // المحتوى الدراسي المتاح للطالب المسجل
-if (method === "GET" && path === "/api/materials") {
-  const session = await studentSession(request, env);
+  if (method === "GET" && path === "/api/materials") {
+    const session = await studentSession(request, env);
 
-  if (!session) {
+    if (!session) {
+      return reply(
+        request,
+        env,
+        {
+          success: false,
+          error: "يجب تسجيل الدخول لعرض المحتوى الدراسي.",
+        },
+        401
+      );
+    }
+
+    const subjectId = Number(url.searchParams.get("subject_id") || 0);
+
+    const rows = subjectId
+      ? await env.DB.prepare(
+          `SELECT m.id, m.subject_id, m.title, m.type, m.price, m.is_free
+           FROM materials m
+           JOIN student_subjects ss ON ss.subject_id = m.subject_id
+           WHERE ss.student_id = ? AND m.subject_id = ?
+           ORDER BY m.id DESC`
+        )
+          .bind(session.student_id, subjectId)
+          .all()
+      : await env.DB.prepare(
+          `SELECT m.id, m.subject_id, m.title, m.type, m.price, m.is_free
+           FROM materials m
+           JOIN student_subjects ss ON ss.subject_id = m.subject_id
+           WHERE ss.student_id = ?
+           ORDER BY m.id DESC`
+        )
+          .bind(session.student_id)
+          .all();
+
     return reply(request, env, {
-      success: false,
-      error: "يجب تسجيل الدخول لعرض المحتوى الدراسي."
-    }, 401);
+      success: true,
+      materials: rows.results || [],
+    });
   }
-
-  const subjectId = Number(url.searchParams.get("subject_id") || 0);
-
-  const rows = subjectId
-    ? await env.DB.prepare(
-        `SELECT id, subject_id, title, type, price, is_free
-         FROM materials
-         WHERE subject_id = ?
-         ORDER BY id DESC`
-      ).bind(subjectId).all()
-    : await env.DB.prepare(
-        `SELECT id, subject_id, title, type, price, is_free
-         FROM materials
-         ORDER BY id DESC`
-      ).all();
-
-  return reply(request, env, {
-    success: true,
-    materials: rows.results || []
-  });
-}
 
   // تسجيل طالب جديد وإنشاء حسابه
   if (method === "POST" && path === "/api/students/register") {
@@ -1052,16 +1430,16 @@ if (method === "GET" && path === "/api/materials") {
     const governorate = clean(body?.governorate, 80);
     const username = clean(body?.username, 40).toLowerCase();
 
-    const password = typeof body?.password === "string"
-      ? body.password
-      : "";
+    const password = typeof body?.password === "string" ? body.password : "";
 
     const subjectIds = Array.isArray(body?.subjects)
-      ? [...new Set(
-          body.subjects
-            .map(Number)
-            .filter(x => Number.isInteger(x) && x > 0)
-        )]
+      ? [
+          ...new Set(
+            body.subjects
+              .map(Number)
+              .filter((x) => Number.isInteger(x) && x > 0)
+          ),
+        ]
       : [];
 
     if (
@@ -1076,50 +1454,74 @@ if (method === "GET" && path === "/api/materials") {
       password.length > 200 ||
       subjectIds.length < 1
     ) {
-      return reply(request, env, {
-        success: false,
-        error: "تأكد من إدخال جميع البيانات بشكل صحيح، واختر مادة واحدة على الأقل. اسم المستخدم من 3 إلى 40 حرفًا إنجليزيًا أو رقمًا، وكلمة المرور 8 أحرف على الأقل."
-      }, 400);
+      return reply(
+        request,
+        env,
+        {
+          success: false,
+          error:
+            "تأكد من إدخال جميع البيانات بشكل صحيح، واختر مادة واحدة على الأقل. اسم المستخدم من 3 إلى 40 حرفًا إنجليزيًا أو رقمًا، وكلمة المرور 8 أحرف على الأقل.",
+        },
+        400
+      );
     }
 
-    // منع تكرار رقم الطالب
     const existingPhone = await env.DB.prepare(
       "SELECT id FROM students WHERE phone = ?"
-    ).bind(phone).first();
+    )
+      .bind(phone)
+      .first();
 
     if (existingPhone) {
-      return reply(request, env, {
-        success: false,
-        error: "رقم الطالب مسجل بالفعل. تواصل مع الإدارة للمساعدة."
-      }, 409);
+      return reply(
+        request,
+        env,
+        {
+          success: false,
+          error: "رقم الطالب مسجل بالفعل. تواصل مع الإدارة للمساعدة.",
+        },
+        409
+      );
     }
 
-    // منع تكرار اسم المستخدم
     const existingUsername = await env.DB.prepare(
       "SELECT id FROM student_accounts WHERE username = ?"
-    ).bind(username).first();
+    )
+      .bind(username)
+      .first();
 
     if (existingUsername) {
-      return reply(request, env, {
-        success: false,
-        error: "اسم المستخدم مستخدم بالفعل، اختر اسمًا آخر."
-      }, 409);
+      return reply(
+        request,
+        env,
+        {
+          success: false,
+          error: "اسم المستخدم مستخدم بالفعل، اختر اسمًا آخر.",
+        },
+        409
+      );
     }
 
-    // التأكد أن كل المواد تابعة للصف المختار
     const placeholders = subjectIds.map(() => "?").join(",");
 
     const validSubjects = await env.DB.prepare(
       `SELECT id FROM subjects
        WHERE grade = ?
        AND id IN (${placeholders})`
-    ).bind(grade, ...subjectIds).all();
+    )
+      .bind(grade, ...subjectIds)
+      .all();
 
     if ((validSubjects.results || []).length !== subjectIds.length) {
-      return reply(request, env, {
-        success: false,
-        error: "يوجد اختيار مادة غير تابع للصف الدراسي المحدد."
-      }, 400);
+      return reply(
+        request,
+        env,
+        {
+          success: false,
+          error: "يوجد اختيار مادة غير تابع للصف الدراسي المحدد.",
+        },
+        400
+      );
     }
 
     let studentId = null;
@@ -1129,14 +1531,9 @@ if (method === "GET" && path === "/api/materials") {
         `INSERT INTO students
          (name, phone, parent_phone, grade, school, governorate)
          VALUES (?, ?, ?, ?, ?, ?)`
-      ).bind(
-        name,
-        phone,
-        parentPhone,
-        grade,
-        school,
-        governorate
-      ).run();
+      )
+        .bind(name, phone, parentPhone, grade, school, governorate)
+        .run();
 
       studentId = studentResult.meta.last_row_id;
 
@@ -1149,24 +1546,28 @@ if (method === "GET" && path === "/api/materials") {
            VALUES (?, ?, ?)`
         ).bind(studentId, username, hash),
 
-        ...subjectIds.map(subjectId =>
+        ...subjectIds.map((subjectId) =>
           env.DB.prepare(
             `INSERT INTO student_subjects
              (student_id, subject_id)
              VALUES (?, ?)`
           ).bind(studentId, subjectId)
-        )
+        ),
       ];
 
       await env.DB.batch(statements);
 
-      return reply(request, env, {
-        success: true,
-        student_id: studentId,
-        username,
-        message: "تم إنشاء حسابك بنجاح."
-      }, 201);
-
+      return reply(
+        request,
+        env,
+        {
+          success: true,
+          student_id: studentId,
+          username,
+          message: "تم إنشاء حسابك بنجاح.",
+        },
+        201
+      );
     } catch (error) {
       console.error("STUDENT_REGISTER_ERROR:", error?.message || error);
 
@@ -1176,69 +1577,88 @@ if (method === "GET" && path === "/api/materials") {
             env.DB.prepare(
               "DELETE FROM student_subjects WHERE student_id = ?"
             ).bind(studentId),
-
             env.DB.prepare(
               "DELETE FROM student_accounts WHERE student_id = ?"
             ).bind(studentId),
-
-            env.DB.prepare(
-              "DELETE FROM students WHERE id = ?"
-            ).bind(studentId)
+            env.DB.prepare("DELETE FROM students WHERE id = ?").bind(
+              studentId
+            ),
           ]);
         } catch (cleanupError) {
-          console.error("STUDENT_CLEANUP_ERROR:", cleanupError?.message || cleanupError);
+          console.error(
+            "STUDENT_CLEANUP_ERROR:",
+            cleanupError?.message || cleanupError
+          );
         }
       }
 
-      return reply(request, env, {
-        success: false,
-        error: "خطأ التسجيل: " + String(error?.message || error)
-      }, 500);
+      return reply(
+        request,
+        env,
+        {
+          success: false,
+          error:
+            "تعذر إتمام التسجيل بسبب خطأ داخلي. حاول مرة أخرى أو تواصل مع الإدارة.",
+        },
+        500
+      );
     }
   }
 
   // تسجيل دخول الطالب
-  
   if (method === "POST" && path === "/api/students/login") {
+    await purgeExpiredSessions(env);
+
     const body = await readBody(request);
 
     const username = clean(body?.username, 40).toLowerCase();
-    const password = typeof body?.password === "string"
-      ? body.password
-      : "";
-    const deviceToken = typeof body?.deviceToken === "string"
-      ? body.deviceToken.trim()
-      : "";
+    const password = typeof body?.password === "string" ? body.password : "";
+    const deviceToken =
+      typeof body?.deviceToken === "string" ? body.deviceToken.trim() : "";
     const deviceName = clean(body?.deviceName, 100) || "جهاز غير معروف";
 
     if (!username || !password) {
-      return reply(request, env, {
-        success: false,
-        error: "أدخل اسم المستخدم وكلمة المرور."
-      }, 400);
+      return reply(
+        request,
+        env,
+        {
+          success: false,
+          error: "أدخل اسم المستخدم وكلمة المرور.",
+        },
+        400
+      );
     }
 
     if (deviceToken.length < 32 || deviceToken.length > 200) {
-      return reply(request, env, {
-        success: false,
-        error: "تعذر التعرف على الجهاز. حدّث الصفحة وحاول مرة أخرى."
-      }, 400);
+      return reply(
+        request,
+        env,
+        {
+          success: false,
+          error: "تعذر التعرف على الجهاز. حدّث الصفحة وحاول مرة أخرى.",
+        },
+        400
+      );
     }
 
     const account = await env.DB.prepare(
       `SELECT id, student_id, password_hash
        FROM student_accounts
        WHERE username = ?`
-    ).bind(username).first();
+    )
+      .bind(username)
+      .first();
 
-    if (
-      !account ||
-      !(await verifyPassword(password, account.password_hash))
-    ) {
-      return reply(request, env, {
-        success: false,
-        error: "اسم المستخدم أو كلمة المرور غير صحيحة."
-      }, 401);
+    if (!account || !(await verifyPassword(password, account.password_hash))) {
+      return reply(
+        request,
+        env,
+        {
+          success: false,
+          error: "اسم المستخدم أو كلمة المرور غير صحيحة.",
+        },
+        401
+      );
     }
 
     const deviceTokenHash = await sha256(deviceToken);
@@ -1248,16 +1668,20 @@ if (method === "GET" && path === "/api/materials") {
        FROM student_devices
        WHERE student_id = ?
          AND device_token_hash = ?`
-    ).bind(account.student_id, deviceTokenHash).first();
+    )
+      .bind(account.student_id, deviceTokenHash)
+      .first();
 
     const pending = await env.DB.prepare(
       `SELECT COUNT(*) AS total
        FROM student_devices
        WHERE student_id = ?
          AND status = 'pending'`
-    ).bind(account.student_id).first();
+    )
+      .bind(account.student_id)
+      .first();
 
-    if (pending.total > 0) {
+    if ((pending?.total || 0) > 0) {
       if (existingDevice?.status === "rejected") {
         await env.DB.prepare(
           `UPDATE student_devices
@@ -1267,69 +1691,90 @@ if (method === "GET" && path === "/api/materials") {
                reviewed_at = NULL,
                reviewed_by = NULL
            WHERE id = ?`
-        ).bind(deviceName, existingDevice.id).run();
+        )
+          .bind(deviceName, existingDevice.id)
+          .run();
       }
 
-      return reply(request, env, {
-        success: false,
-        code: "DEVICE_APPROVAL_REQUIRED",
-        error: "الحساب متوقف مؤقتًا لحين مراجعة طلب اعتماد الجهاز. برجاء التواصل مع المدرس."
-      }, 403);
+      return reply(
+        request,
+        env,
+        {
+          success: false,
+          code: "DEVICE_APPROVAL_REQUIRED",
+          error:
+            "الحساب متوقف مؤقتًا لحين مراجعة طلب اعتماد الجهاز. برجاء التواصل مع المدرس.",
+        },
+        403
+      );
     }
 
-    
-if (existingDevice?.status === "approved") {
-  // الجهاز معتمد بالفعل
-} else {
-  if (existingDevice?.status === "rejected") {
-    await env.DB.prepare(
-      `UPDATE student_devices
-       SET status = 'pending',
-           device_name = ?,
-           created_at = CURRENT_TIMESTAMP,
-           reviewed_at = NULL,
-           reviewed_by = NULL
-       WHERE id = ?`
-    ).bind(deviceName, existingDevice.id).run();
+    if (existingDevice?.status !== "approved") {
+      if (existingDevice?.status === "rejected") {
+        await env.DB.prepare(
+          `UPDATE student_devices
+           SET status = 'pending',
+               device_name = ?,
+               created_at = CURRENT_TIMESTAMP,
+               reviewed_at = NULL,
+               reviewed_by = NULL
+           WHERE id = ?`
+        )
+          .bind(deviceName, existingDevice.id)
+          .run();
+      } else if (!existingDevice) {
+        // إدراج مشروط ذري لتجنب طلبين متطابقين عند طلبات متزامنة.
+        await env.DB.prepare(
+          `INSERT INTO student_devices
+           (student_id, device_token_hash, device_name, status)
+           SELECT ?, ?, ?, 'pending'
+           WHERE NOT EXISTS (
+             SELECT 1 FROM student_devices
+             WHERE student_id = ? AND device_token_hash = ?
+           )`
+        )
+          .bind(
+            account.student_id,
+            deviceTokenHash,
+            deviceName,
+            account.student_id,
+            deviceTokenHash
+          )
+          .run();
+      }
 
-  } else if (!existingDevice) {
-    await env.DB.prepare(
-      `INSERT INTO student_devices
-       (student_id, device_token_hash, device_name, status)
-       VALUES (?, ?, ?, 'pending')`
-    ).bind(
-      account.student_id,
-      deviceTokenHash,
-      deviceName
-    ).run();
-  }
+      return reply(
+        request,
+        env,
+        {
+          success: false,
+          code: "DEVICE_APPROVAL_REQUIRED",
+          error: "هذا الجهاز يحتاج إلى موافقة المدرس قبل تسجيل الدخول.",
+        },
+        403
+      );
+    }
 
-  return reply(request, env, {
-    success: false,
-    code: "DEVICE_APPROVAL_REQUIRED",
-    error: "هذا الجهاز يحتاج إلى موافقة المدرس قبل تسجيل الدخول."
-  }, 403);
-}
-
-const token = randomToken();
-const tokenHash = await sha256(token);
-
+    const token = randomToken();
+    const tokenHash = await sha256(token);
 
     await env.DB.prepare(
       `INSERT INTO student_sessions
        (student_id, token_hash, device_token_hash, expires_at)
        VALUES (?, ?, ?, datetime('now', ?))`
-    ).bind(
-      account.student_id,
-      tokenHash,
-      deviceTokenHash,
-      `+${SESSION_DAYS} days`
-    ).run();
+    )
+      .bind(
+        account.student_id,
+        tokenHash,
+        deviceTokenHash,
+        `+${SESSION_DAYS} days`
+      )
+      .run();
 
     return reply(request, env, {
       success: true,
       token,
-      expiresInDays: SESSION_DAYS
+      expiresInDays: SESSION_DAYS,
     });
   }
 
@@ -1338,29 +1783,44 @@ const tokenHash = await sha256(token);
     const session = await studentSession(request, env);
 
     if (!session) {
-      return reply(request, env, {
-        success: false,
-        error: "يلزم تسجيل الدخول."
-      }, 401);
+      return reply(
+        request,
+        env,
+        {
+          success: false,
+          error: "يلزم تسجيل الدخول.",
+        },
+        401
+      );
     }
 
     // عرض ملف PDF داخل المنصة بعد التحقق من صلاحية الطالب
-    const materialViewMatch = path.match(/^\/api\/student\/materials\/(\d+)\/view$/);
+    const materialViewMatch = path.match(
+      /^\/api\/student\/materials\/(\d+)\/view$/
+    );
 
     if (method === "GET" && materialViewMatch) {
       const materialId = Number(materialViewMatch[1]);
 
       const material = await env.DB.prepare(
-        `SELECT id, title, is_free, file_key
-         FROM materials
-         WHERE id = ?`
-      ).bind(materialId).first();
+        `SELECT m.id, m.title, m.is_free, m.file_key
+         FROM materials m
+         JOIN student_subjects ss ON ss.subject_id = m.subject_id
+         WHERE m.id = ? AND ss.student_id = ?`
+      )
+        .bind(materialId, session.student_id)
+        .first();
 
       if (!material) {
-        return reply(request, env, {
-          success: false,
-          error: "المحتوى غير موجود."
-        }, 404);
+        return reply(
+          request,
+          env,
+          {
+            success: false,
+            error: "المحتوى غير موجود.",
+          },
+          404
+        );
       }
 
       const isFree = Number(material.is_free) === 1;
@@ -1374,70 +1834,89 @@ const tokenHash = await sha256(token);
              AND material_id = ?
              AND status IN ('approved', 'completed')
            LIMIT 1`
-        ).bind(session.student_id, materialId).first();
+        )
+          .bind(session.student_id, materialId)
+          .first();
 
         hasPurchase = Boolean(purchase);
       }
 
       if (!isFree && !hasPurchase) {
-        return reply(request, env, {
-          success: false,
-          error: "هذا المحتوى غير متاح. يجب اعتماد طلب الشراء أولاً."
-        }, 403);
+        return reply(
+          request,
+          env,
+          {
+            success: false,
+            error: "هذا المحتوى غير متاح. يجب اعتماد طلب الشراء أولاً.",
+          },
+          403
+        );
       }
 
       const fileKey = clean(material.file_key, 500);
 
-      if (!fileKey || !fileKey.startsWith("materials/") || fileKey.includes("..")) {
-        return reply(request, env, {
-          success: false,
-          error: "لم يتم ربط ملف PDF بهذا المحتوى بعد."
-        }, 404);
+      if (
+        !fileKey ||
+        !fileKey.startsWith("materials/") ||
+        fileKey.includes("..")
+      ) {
+        return reply(
+          request,
+          env,
+          {
+            success: false,
+            error: "لم يتم ربط ملف PDF بهذا المحتوى بعد.",
+          },
+          404
+        );
       }
 
       if (!env.GITHUB_STORAGE_TOKEN) {
-        return reply(request, env, {
-          success: false,
-          error: "خدمة عرض الملفات غير مهيأة."
-        }, 503);
+        return reply(
+          request,
+          env,
+          {
+            success: false,
+            error: "خدمة عرض الملفات غير مهيأة.",
+          },
+          503
+        );
       }
 
-      const encodedPath = fileKey.split("/").map(encodeURIComponent).join("/");
-      const githubResponse = await fetch(
-        `https://api.github.com/repos/ziadmohsen2410-zm/ZM-Academy-Storage/contents/${encodedPath}`,
-        {
-          method: "GET",
-          headers: {
-            "Authorization": `Bearer ${env.GITHUB_STORAGE_TOKEN}`,
-            "Accept": "application/vnd.github.raw",
-            "User-Agent": "ZM-Academy",
-            "X-GitHub-Api-Version": "2022-11-28"
-          }
-        }
-      );
+      const githubResponse = await fetch(githubContentsUrl(fileKey), {
+        method: "GET",
+        headers: githubHeaders(env, "application/vnd.github.raw"),
+      });
 
       if (!githubResponse.ok) {
         const details = await githubResponse.text();
-        console.error("GitHub PDF view error:", githubResponse.status, details.slice(0, 300));
-        return reply(request, env, {
-          success: false,
-          error: "تعذر جلب ملف المذكرة من التخزين الخاص."
-        }, 502);
+        console.error(
+          "GitHub PDF view error:",
+          githubResponse.status,
+          details.slice(0, 300)
+        );
+        return reply(
+          request,
+          env,
+          {
+            success: false,
+            error: "تعذر جلب ملف المذكرة من التخزين الخاص.",
+          },
+          502
+        );
       }
-
-      const responseHeaders = {
-        ...corsHeaders(request, env),
-        "Content-Type": "application/pdf",
-        "Content-Disposition": 'inline; filename="zm-academy-material.pdf"',
-        "Cache-Control": "private, no-store, no-cache, must-revalidate",
-        "Pragma": "no-cache",
-        "X-Content-Type-Options": "nosniff",
-        "Cross-Origin-Resource-Policy": "cross-origin"
-      };
 
       return new Response(githubResponse.body, {
         status: 200,
-        headers: responseHeaders
+        headers: {
+          ...corsHeaders(request, env),
+          "Content-Type": "application/pdf",
+          "Content-Disposition": 'inline; filename="zm-academy-material.pdf"',
+          "Cache-Control": "private, no-store, no-cache, must-revalidate",
+          Pragma: "no-cache",
+          "X-Content-Type-Options": "nosniff",
+          "Cross-Origin-Resource-Policy": "cross-origin",
+        },
       });
     }
 
@@ -1448,7 +1927,9 @@ const tokenHash = await sha256(token);
                 grade, school, governorate, created_at
          FROM students
          WHERE id = ?`
-      ).bind(session.student_id).first();
+      )
+        .bind(session.student_id)
+        .first();
 
       const subjects = await env.DB.prepare(
         `SELECT sub.id, sub.name, sub.grade
@@ -1456,15 +1937,17 @@ const tokenHash = await sha256(token);
          JOIN subjects sub ON sub.id = ss.subject_id
          WHERE ss.student_id = ?
          ORDER BY sub.name`
-      ).bind(session.student_id).all();
+      )
+        .bind(session.student_id)
+        .all();
 
       return reply(request, env, {
         success: true,
         student,
-        subjects: subjects.results || []
+        subjects: subjects.results || [],
       });
     }
-    
+
     // طلبات الطالب ومشترياته
     if (method === "GET" && path === "/api/student/purchases") {
       const rows = await env.DB.prepare(
@@ -1477,11 +1960,13 @@ const tokenHash = await sha256(token);
          JOIN subjects sub ON sub.id = m.subject_id
          WHERE o.student_id = ?
          ORDER BY o.id DESC`
-      ).bind(session.student_id).all();
+      )
+        .bind(session.student_id)
+        .all();
 
       return reply(request, env, {
         success: true,
-        purchases: rows.results || []
+        purchases: rows.results || [],
       });
     }
 
@@ -1489,17 +1974,24 @@ const tokenHash = await sha256(token);
     if (method === "POST" && path === "/api/student/logout") {
       await env.DB.prepare(
         "DELETE FROM student_sessions WHERE token_hash = ?"
-      ).bind(session.tokenHash).run();
+      )
+        .bind(session.tokenHash)
+        .run();
 
       return reply(request, env, {
-        success: true
+        success: true,
       });
     }
 
-    return reply(request, env, {
-      success: false,
-      error: "Student endpoint not found."
-    }, 404);
+    return reply(
+      request,
+      env,
+      {
+        success: false,
+        error: "Student endpoint not found.",
+      },
+      404
+    );
   }
 
   // إنشاء طلب شراء - للطالب المسجل فقط
@@ -1507,80 +1999,141 @@ const tokenHash = await sha256(token);
     const session = await studentSession(request, env);
 
     if (!session) {
-      return reply(request, env, {
-        success: false,
-        error: "يجب تسجيل الدخول لإنشاء طلب شراء."
-      }, 401);
+      return reply(
+        request,
+        env,
+        {
+          success: false,
+          error: "يجب تسجيل الدخول لإنشاء طلب شراء.",
+        },
+        401
+      );
     }
 
     const body = await readBody(request);
     const materialId = Number(body?.material_id);
 
     if (!Number.isInteger(materialId) || materialId < 1) {
-      return reply(request, env, {
-        success: false,
-        error: "رقم المحتوى غير صحيح."
-      }, 400);
+      return reply(
+        request,
+        env,
+        {
+          success: false,
+          error: "رقم المحتوى غير صحيح.",
+        },
+        400
+      );
     }
 
     const material = await env.DB.prepare(
-      "SELECT id, is_free FROM materials WHERE id = ?"
-    ).bind(materialId).first();
+            `SELECT m.id, m.is_free
+       FROM materials m
+       JOIN student_subjects ss ON ss.subject_id = m.subject_id
+       WHERE m.id = ? AND ss.student_id = ?`
+    )
+      .bind(materialId, session.student_id)
+      .first();
 
     if (!material) {
-      return reply(request, env, {
-        success: false,
-        error: "المحتوى غير موجود."
-      }, 404);
+      return reply(
+        request,
+        env,
+        {
+          success: false,
+          error: "المحتوى غير موجود.",
+        },
+        404
+      );
     }
 
     if (Number(material.is_free) === 1) {
-      return reply(request, env, {
-        success: false,
-        error: "هذا المحتوى مجاني ولا يحتاج إلى طلب شراء."
-      }, 400);
+      return reply(
+        request,
+        env,
+        {
+          success: false,
+          error: "هذا المحتوى مجاني ولا يحتاج إلى طلب شراء.",
+        },
+        400
+      );
     }
 
-    
-    // منع تكرار طلب الشراء
-    const existingOrder = await env.DB.prepare(
+    const duplicate = await env.DB.prepare(
       `SELECT id, status
        FROM orders
        WHERE student_id = ?
-       AND material_id = ?
-       AND status IN ('pending', 'approved', 'completed')
+         AND material_id = ?
+         AND status IN ('pending', 'approved', 'completed')
        LIMIT 1`
-    ).bind(session.student_id, materialId).first();
+    )
+      .bind(session.student_id, materialId)
+      .first();
 
-    if (existingOrder) {
-      return reply(request, env, {
-        success: false,
-        code: "ORDER_ALREADY_EXISTS",
-        status: existingOrder.status,
-        error: existingOrder.status === "pending"
-          ? "لديك طلب شراء قيد المراجعة بالفعل."
-          : "هذا المحتوى موجود بالفعل ضمن مشترياتك."
-      }, 409);
+    if (duplicate) {
+      return reply(
+        request,
+        env,
+        {
+          success: false,
+          code: "ORDER_ALREADY_EXISTS",
+          status: duplicate.status,
+          error:
+            duplicate.status === "pending"
+              ? "لديك طلب شراء قيد المراجعة بالفعل."
+              : "هذا المحتوى موجود بالفعل ضمن مشترياتك.",
+        },
+        409
+      );
     }
 
+    // إدراج ذري مشروط: حتى لو وصل طلبان متزامنان لن يتكرر الطلب.
     const result = await env.DB.prepare(
-      `INSERT INTO orders
-       (student_id, material_id, status)
-       VALUES (?, ?, 'pending')`
-    ).bind(session.student_id, materialId).run();
+      `INSERT INTO orders (student_id, material_id, status)
+       SELECT ?, ?, 'pending'
+       WHERE NOT EXISTS (
+         SELECT 1 FROM orders
+         WHERE student_id = ?
+           AND material_id = ?
+           AND status IN ('pending', 'approved', 'completed')
+       )`
+    )
+      .bind(session.student_id, materialId, session.student_id, materialId)
+      .run();
 
-    return reply(request, env, {
-      success: true,
-      order_id: result.meta.last_row_id,
-      status: "pending"
-    }, 201);
+    if (!(result.meta?.changes || 0)) {
+      return reply(
+        request,
+        env,
+        {
+          success: false,
+          code: "ORDER_ALREADY_EXISTS",
+          error: "لديك طلب شراء قيد المراجعة بالفعل.",
+        },
+        409
+      );
+    }
+
+    return reply(
+      request,
+      env,
+      {
+        success: true,
+        order_id: result.meta.last_row_id,
+        status: "pending",
+      },
+      201
+    );
   }
 
-
-  return reply(request, env, {
-    success: false,
-    error: "Not found."
-  }, 404);
+  return reply(
+    request,
+    env,
+    {
+      success: false,
+      error: "Not found.",
+    },
+    404
+  );
 }
 
 export default {
@@ -1590,11 +2143,16 @@ export default {
     } catch (error) {
       console.error("Worker Error:", error);
 
-      return reply(request, env, {
-        success: false,
-        error: "Internal server error.",
-        debug: String(error?.message || error)
-      }, 500);
+      return reply(
+        request,
+        env,
+        {
+          success: false,
+          error: "Internal server error.",
+        },
+        500
+      );
     }
   },
 };
+      
