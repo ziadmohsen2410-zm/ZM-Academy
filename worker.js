@@ -821,50 +821,62 @@ async function route(request, env) {
           }, 400);
         }
 
-        if (file.size < 1 || file.size > 8 * 1024 * 1024) {
-          return reply(request, env, {
-            success: false,
-            error: "Maximum file size is 8 MB."
-          }, 400);
-        }
+if (method === "PUT" && path === "/api/admin/materials") {
+  const body = await readBody(request);
+  const id = Number(body?.id);
+  const subjectId = Number(body?.subject_id);
+  const title = clean(body?.title, 180);
+  const type = clean(body?.type, 40);
+  const price = Number(body?.price ?? 0);
+  const isFree =
+    body?.is_free === false || Number(body?.is_free) === 0 ? 0 : 1;
 
-        const contentType = file.type;
-const bytes = new Uint8Array(await file.arrayBuffer());
+  if (
+    !Number.isInteger(id) || id < 1 ||
+    !Number.isInteger(subjectId) || subjectId < 1 ||
+    !title || !type ||
+    !Number.isFinite(price) || price < 0
+  ) {
+    return reply(request, env, {
+      success: false,
+      error: "Invalid material data."
+    }, 400);
+  }
 
-const isPDF =
-  contentType === "application/pdf" &&
-  bytes.length >= 5 &&
-  new TextDecoder().decode(bytes.slice(0, 5)) === "%PDF-";
+  const existing = await env.DB.prepare(
+    "SELECT file_key FROM materials WHERE id = ?"
+  ).bind(id).first();
 
-if (!isPDF) {
+  if (!existing) {
+    return reply(request, env, {
+      success: false,
+      error: "Material not found."
+    }, 404);
+  }
+
+  const newFileKey = clean(body?.file_key, 500);
+  const fileKey = newFileKey || existing.file_key || null;
+
+  await env.DB.prepare(
+    `UPDATE materials
+     SET subject_id = ?, title = ?, type = ?, price = ?,
+         is_free = ?, file_key = ?
+     WHERE id = ?`
+  ).bind(
+    subjectId,
+    title,
+    type,
+    price,
+    isFree,
+    fileKey,
+    id
+  ).run();
+
   return reply(request, env, {
-    success: false,
-    error: "يجب اختيار ملف PDF صحيح."
-  }, 400);
+    success: true,
+    message: "Material updated."
+  });
 }
-
-        const fileKey = await uploadToGitHub(
-          env,
-          bytes,
-          file.name,
-          contentType
-        );
-
-        return reply(request, env, {
-          success: true,
-          file_key: fileKey,
-          message: "File uploaded successfully."
-        }, 201);
-
-      } catch (error) {
-        console.error("File upload error:", error);
-
-        return reply(request, env, {
-          success: false,
-          error: "File upload failed."
-        }, 500);
-      }
-    }
 
     if (method === "POST" && path === "/api/admin/materials") {
       const body = await readBody(request);
