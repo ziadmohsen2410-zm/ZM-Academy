@@ -657,23 +657,19 @@ async function route(request, env) {
     const subjectId = Number(url.searchParams.get("subject_id") || 0);
 
     const rows = subjectId
-  ? await env.DB.prepare(
-      `SELECT m.id, m.subject_id, m.title, m.type, m.price, m.is_free
-       FROM materials m
-       JOIN student_subjects ss
-         ON ss.subject_id = m.subject_id
-       WHERE ss.student_id = ?
-         AND m.subject_id = ?
-       ORDER BY m.id DESC`
-    ).bind(session.student_id, subjectId).all()
-  : await env.DB.prepare(
-      `SELECT m.id, m.subject_id, m.title, m.type, m.price, m.is_free
-       FROM materials m
-       JOIN student_subjects ss
-         ON ss.subject_id = m.subject_id
-       WHERE ss.student_id = ?
-       ORDER BY m.id DESC`
-    ).bind(session.student_id).all();
+      ? await env.DB.prepare(
+          `SELECT id, subject_id, title, type, price, is_free, file_key
+           FROM materials
+           WHERE subject_id = ? AND is_free = 1
+           ORDER BY id DESC`
+        ).bind(subjectId).all()
+      : await env.DB.prepare(
+          `SELECT id, subject_id, title, type, price, is_free, file_key
+           FROM materials
+           WHERE is_free = 1
+           ORDER BY id DESC`
+        ).all();
+
     return reply(request, env, {
       success: true,
       materials: rows.results || []
@@ -965,8 +961,8 @@ if (method === "PUT" && path === "/api/admin/materials") {
       }
 
       const subject = await env.DB.prepare(
-  "SELECT id FROM subjects WHERE id = ?"
-).bind(subjectId).first();
+        "SELECT id FROM subjects WHERE id = ?"
+      ).bind(subjectId).first();
 
       if (!subject) {
         return reply(request, env, {
@@ -1346,6 +1342,103 @@ const tokenHash = await sha256(token);
         success: false,
         error: "يلزم تسجيل الدخول."
       }, 401);
+    }
+
+    // عرض ملف PDF داخل المنصة بعد التحقق من صلاحية الطالب
+    const materialViewMatch = path.match(/^\/api\/student\/materials\/(\d+)\/view$/);
+
+    if (method === "GET" && materialViewMatch) {
+      const materialId = Number(materialViewMatch[1]);
+
+      const material = await env.DB.prepare(
+        `SELECT id, title, is_free, file_key
+         FROM materials
+         WHERE id = ?`
+      ).bind(materialId).first();
+
+      if (!material) {
+        return reply(request, env, {
+          success: false,
+          error: "المحتوى غير موجود."
+        }, 404);
+      }
+
+      const isFree = Number(material.is_free) === 1;
+      let hasPurchase = false;
+
+      if (!isFree) {
+        const purchase = await env.DB.prepare(
+          `SELECT id
+           FROM orders
+           WHERE student_id = ?
+             AND material_id = ?
+             AND status IN ('approved', 'completed')
+           LIMIT 1`
+        ).bind(session.student_id, materialId).first();
+
+        hasPurchase = Boolean(purchase);
+      }
+
+      if (!isFree && !hasPurchase) {
+        return reply(request, env, {
+          success: false,
+          error: "هذا المحتوى غير متاح. يجب اعتماد طلب الشراء أولاً."
+        }, 403);
+      }
+
+      const fileKey = clean(material.file_key, 500);
+
+      if (!fileKey || !fileKey.startsWith("materials/") || fileKey.includes("..")) {
+        return reply(request, env, {
+          success: false,
+          error: "لم يتم ربط ملف PDF بهذا المحتوى بعد."
+        }, 404);
+      }
+
+      if (!env.GITHUB_STORAGE_TOKEN) {
+        return reply(request, env, {
+          success: false,
+          error: "خدمة عرض الملفات غير مهيأة."
+        }, 503);
+      }
+
+      const encodedPath = fileKey.split("/").map(encodeURIComponent).join("/");
+      const githubResponse = await fetch(
+        `https://api.github.com/repos/ziadmohsen2410-zm/ZM-Academy-Storage/contents/${encodedPath}`,
+        {
+          method: "GET",
+          headers: {
+            "Authorization": `Bearer ${env.GITHUB_STORAGE_TOKEN}`,
+            "Accept": "application/vnd.github.raw",
+            "User-Agent": "ZM-Academy",
+            "X-GitHub-Api-Version": "2022-11-28"
+          }
+        }
+      );
+
+      if (!githubResponse.ok) {
+        const details = await githubResponse.text();
+        console.error("GitHub PDF view error:", githubResponse.status, details.slice(0, 300));
+        return reply(request, env, {
+          success: false,
+          error: "تعذر جلب ملف المذكرة من التخزين الخاص."
+        }, 502);
+      }
+
+      const responseHeaders = {
+        ...corsHeaders(request, env),
+        "Content-Type": "application/pdf",
+        "Content-Disposition": 'inline; filename="zm-academy-material.pdf"',
+        "Cache-Control": "private, no-store, no-cache, must-revalidate",
+        "Pragma": "no-cache",
+        "X-Content-Type-Options": "nosniff",
+        "Cross-Origin-Resource-Policy": "cross-origin"
+      };
+
+      return new Response(githubResponse.body, {
+        status: 200,
+        headers: responseHeaders
+      });
     }
 
     // بيانات الطالب ومواده
