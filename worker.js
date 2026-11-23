@@ -705,14 +705,16 @@ async function route(request, env) {
     // الطلبات
     if (method === "GET" && path === "/api/admin/orders") {
       const rows = await env.DB.prepare(
-        `SELECT o.id, o.status, o.created_at,
-                s.name AS student_name, s.phone,
-                m.title AS material_title, m.price
-         FROM orders o
-         JOIN students s ON s.id = o.student_id
-         JOIN materials m ON m.id = o.material_id
-         ORDER BY o.id DESC LIMIT 500`
-      ).all();
+  `SELECT o.id, o.status, o.created_at,
+          s.name AS student_name, s.phone,
+          m.title AS material_title, m.price
+   FROM orders o
+   JOIN students s ON s.id = o.student_id
+   JOIN materials m ON m.id = o.material_id
+   WHERE o.status = 'pending'
+   ORDER BY o.id DESC
+   LIMIT 500`
+).all();
 
       return reply(request, env, {
         success: true,
