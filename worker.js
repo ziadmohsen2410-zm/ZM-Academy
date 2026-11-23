@@ -221,9 +221,6 @@ async function studentSession(request, env) {
 
   const tokenHash = await sha256(token);
 
-  // ملاحظة: لم نعد نرفض الجلسة لمجرد وجود طلب جهاز قيد الانتظار.
-  // طلب جهاز جديد يمنع تسجيل الدخول من جهاز آخر، لكنه لا يقطع جلسة
-  // جهاز معتمد بالفعل. عند الموافقة على جهاز جديد يتم حذف كل الجلسات.
   const row = await env.DB.prepare(
     `SELECT ss.id, ss.student_id, s.name, s.phone
      FROM student_sessions ss
@@ -233,7 +230,13 @@ async function studentSession(request, env) {
       AND d.device_token_hash = ss.device_token_hash
       AND d.status = 'approved'
      WHERE ss.token_hash = ?
-       AND ss.expires_at > datetime('now')`
+       AND ss.expires_at > datetime('now')
+       AND NOT EXISTS (
+         SELECT 1
+         FROM student_devices pending
+         WHERE pending.student_id = ss.student_id
+           AND pending.status = 'pending'
+       )`
   )
     .bind(tokenHash)
     .first();
