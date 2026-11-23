@@ -77,8 +77,17 @@ small,.muted{color:var(--muted)}
       <label>عنوان المحتوى</label><input id="materialTitle" placeholder="عنوان الدرس">
             <label>نوع المحتوى</label>
       <select id="materialType"><option value="lesson">درس</option><option value="video">فيديو</option><option value="pdf">ملف PDF</option></select>
-      <label>رابط الملف أو الفيديو</label>
-      <input id="materialFileUrl" type="url" placeholder="ضع رابط PDF أو الفيديو هنا">
+      <label>رابط الفيديو أو الملف الخارجي</label>
+<input id="materialFileUrl" type="url" placeholder="ضع رابط الفيديو هنا">
+
+<label>رفع ملف PDF من الجهاز (حد أقصى 8 ميجابايت)</label>
+<input
+  id="materialFile"
+  type="file"
+  accept="application/pdf,.pdf"
+>
+<input id="materialExistingFileKey" type="hidden">
+<p class="muted">يمكنك رفع مذكرة PDF مباشرة من هاتفك.</p>
       <label>السعر بالجنيه المصري</label><input id="materialPrice" type="number" min="0" value="0">
       <label class="check"><input id="materialFree" type="checkbox" checked> محتوى مجاني</label>
       <div class="row"><button onclick="saveMaterial()">حفظ المحتوى</button><button class="secondary" onclick="resetMaterialForm()">إلغاء</button></div>
@@ -266,21 +275,33 @@ function renderMaterials(list){
   box.innerHTML=list.map(m=>`<div class="item"><strong>${escapeHTML(m.title)}</strong><small>النوع: ${escapeHTML(m.type)} | السعر: ${Number(m.price)||0} جنيه | ${m.is_free?"مجاني":"مدفوع"}</small><div class="row"><button class="secondary" onclick="editMaterial(${Number(m.id)})">تعديل</button><button class="danger" onclick="deleteMaterial(${Number(m.id)})">حذف</button></div></div>`).join("");
 }
 
+
 async function editMaterial(id){
   try{
     const data=await request("/api/admin/materials");
     const m=(data.materials||[]).find(x=>Number(x.id)===Number(id));
     if(!m)return;
+
     document.getElementById("materialId").value=m.id;
     document.getElementById("materialSubjectForm").value=m.subject_id;
     document.getElementById("materialTitle").value=m.title;
     document.getElementById("materialType").value=m.type;
-    document.getElementById("materialFileUrl").value=m.file_key||"";
+
+    document.getElementById("materialExistingFileKey").value =
+      m.file_key && !/^https?:\/\//i.test(m.file_key) ? m.file_key : "";
+
+    document.getElementById("materialFileUrl").value =
+      m.file_key && /^https?:\/\//i.test(m.file_key) ? m.file_key : "";
+
+    document.getElementById("materialFile").value="";
     document.getElementById("materialPrice").value=m.price||0;
     document.getElementById("materialFree").checked=!!m.is_free;
     document.getElementById("materialFormTitle").textContent="تعديل المحتوى";
     document.getElementById("materialTitle").scrollIntoView({behavior:"smooth"});
-  }catch(e){message(e.message,"err")}
+
+  }catch(e){
+    message(e.message,"err");
+  }
 }
 
 function resetMaterialForm(){
@@ -288,42 +309,95 @@ function resetMaterialForm(){
   document.getElementById("materialTitle").value="";
   document.getElementById("materialType").value="lesson";
   document.getElementById("materialFileUrl").value="";
+  document.getElementById("materialFile").value="";
+  document.getElementById("materialExistingFileKey").value="";
   document.getElementById("materialPrice").value="0";
   document.getElementById("materialFree").checked=true;
   document.getElementById("materialFormTitle").textContent="إضافة محتوى تعليمي";
 }
+
 
 async function saveMaterial(){
   const id=document.getElementById("materialId").value;
   const subject_id=Number(document.getElementById("materialSubjectForm").value);
   const title=document.getElementById("materialTitle").value.trim();
   const type=document.getElementById("materialType").value;
-  const file_key=document.getElementById("materialFileUrl").value.trim();
+  const selectedFile=document.getElementById("materialFile").files[0];
+  const externalUrl=document.getElementById("materialFileUrl").value.trim();
+  const existingKey=document.getElementById("materialExistingFileKey").value;
   const price=Number(document.getElementById("materialPrice").value);
   const is_free=document.getElementById("materialFree").checked;
 
-  if(!subject_id||!title)return message("اختر المادة واكتب عنوان المحتوى","err");
-  if(!Number.isFinite(price)||price<0)return message("اكتب سعرًا صحيحًا","err");
+  if(!subject_id||!title)
+    return message("اختر المادة واكتب عنوان المحتوى","err");
 
-  if(file_key){
+  if(!Number.isFinite(price)||price<0)
+    return message("اكتب سعرًا صحيحًا","err");
+
+  if(selectedFile){
+    if(selectedFile.type!=="application/pdf" || selectedFile.size>8*1024*1024)
+      return message("اختر ملف PDF لا يتجاوز 8 ميجابايت","err");
+  }
+
+  if(externalUrl){
     try{
-      const fileUrl=new URL(file_key);
-      if(fileUrl.protocol!=="https:")throw new Error();
+      const parsedUrl=new URL(externalUrl);
+      if(parsedUrl.protocol!=="https:")throw new Error();
     }catch(e){
       return message("اكتب رابطًا صحيحًا يبدأ بـ https://","err");
     }
   }
 
-  const body={subject_id,title,type,price,is_free,file_key:file_key||null};
-  if(id)body.id=Number(id);
+  if(selectedFile && externalUrl)
+    return message("ارفع ملف PDF أو ضع رابطًا خارجيًا، وليس الاثنين معًا","err");
+
+  let file_key=existingKey || externalUrl || null;
 
   try{
+    if(selectedFile){
+      message("جارٍ رفع ملف PDF...");
+
+      const formData=new FormData();
+      formData.append("file",selectedFile);
+
+      const uploadResponse=await fetch(API+"/api/admin/upload",{
+        method:"POST",
+        headers:{Authorization:"Bearer "+token},
+        body:formData
+      });
+
+      const uploadData=await uploadResponse.json().catch(()=>({}));
+
+      if(!uploadResponse.ok || !uploadData.success)
+        throw new Error(uploadData.error||"فشل رفع ملف PDF");
+
+      file_key=uploadData.file_key;
+    }
+
+    message("جارٍ حفظ المحتوى...");
+
+    const body={
+      subject_id,
+      title,
+      type,
+      price,
+      is_free,
+      file_key
+    };
+
+    if(id)body.id=Number(id);
+
     await request("/api/admin/materials",id?"PUT":"POST",body);
+
     resetMaterialForm();
     await loadMaterials();
     message("تم حفظ المحتوى بنجاح");
-  }catch(e){message(e.message,"err")}
+
+  }catch(e){
+    message(e.message,"err");
+  }
 }
+
 
 async function deleteMaterial(id){
   if(!confirm("هل أنت متأكد من حذف المحتوى؟"))return;
