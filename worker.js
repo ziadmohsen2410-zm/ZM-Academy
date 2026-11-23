@@ -259,6 +259,7 @@ async function uploadToGitHub(env, fileBytes, fileName, contentType) {
       headers: {
         "Authorization": `Bearer ${env.GITHUB_STORAGE_TOKEN}`,
         "Accept": "application/vnd.github+json",
+        "User-Agent": "ZM-Academy",
         "X-GitHub-Api-Version": "2022-11-28",
         "Content-Type": "application/json"
       },
