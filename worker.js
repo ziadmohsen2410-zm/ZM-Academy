@@ -800,27 +800,74 @@ async function route(request, env) {
   });
 }
     
-    if (method === "POST" && path === "/api/admin/upload") {
-      const admin = await requireAdmin(request, env);
+    
+if (method === "POST" && path === "/api/admin/upload") {
+  const admin = await requireAdmin(request, env);
 
-      if (!admin) {
-        return reply(request, env, {
-          success: false,
-          error: "Unauthorized."
-        }, 401);
-      }
+  if (!admin) {
+    return reply(request, env, {
+      success: false,
+      error: "Unauthorized."
+    }, 401);
+  }
 
-      try {
-        const form = await request.formData();
-        const file = form.get("file");
+  try {
+    const form = await request.formData();
+    const file = form.get("file");
 
-        if (!file || typeof file.arrayBuffer !== "function") {
-          return reply(request, env, {
-            success: false,
-            error: "Please select a file."
-          }, 400);
-        }
+    if (!file || typeof file.arrayBuffer !== "function") {
+      return reply(request, env, {
+        success: false,
+        error: "Please select a file."
+      }, 400);
+    }
 
+    if (file.size < 1 || file.size > 8 * 1024 * 1024) {
+      return reply(request, env, {
+        success: false,
+        error: "Maximum file size is 8 MB."
+      }, 400);
+    }
+
+    const contentType = file.type;
+    const bytes = new Uint8Array(await file.arrayBuffer());
+
+    const isPDF =
+      contentType === "application/pdf" &&
+      bytes.length >= 5 &&
+      new TextDecoder().decode(bytes.slice(0, 5)) === "%PDF-";
+
+    if (!isPDF) {
+      return reply(request, env, {
+        success: false,
+        error: "يجب اختيار ملف PDF صحيح."
+      }, 400);
+    }
+
+    const fileKey = await uploadToGitHub(
+      env,
+      bytes,
+      file.name,
+      contentType
+    );
+
+    return reply(request, env, {
+      success: true,
+      file_key: fileKey,
+      message: "File uploaded successfully."
+    }, 201);
+
+  } catch (error) {
+    console.error("File upload error:", error);
+
+    return reply(request, env, {
+      success: false,
+      error: "File upload failed."
+    }, 500);
+  }
+}
+
+    
 if (method === "PUT" && path === "/api/admin/materials") {
   const body = await readBody(request);
   const id = Number(body?.id);
