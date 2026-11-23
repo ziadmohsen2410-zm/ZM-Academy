@@ -218,6 +218,64 @@ async function studentSession(request, env) {
   return row ? { ...row, tokenHash } : null;
 }
 
+
+async function uploadToGitHub(env, fileBytes, fileName, contentType) {
+  if (!env.GITHUB_STORAGE_TOKEN) {
+    throw new Error("GitHub storage token is missing.");
+  }
+
+  const allowedTypes = [
+    "application/pdf",
+    "image/jpeg",
+    "image/png",
+    "image/webp"
+  ];
+
+  if (!allowedTypes.includes(contentType)) {
+    throw new Error("File type is not allowed.");
+  }
+
+  if (fileBytes.length > 8 * 1024 * 1024) {
+    throw new Error("File size must not exceed 8 MB.");
+  }
+
+  const safeName = fileName
+    .replace(/[^a-zA-Z0-9._-]/g, "_")
+    .slice(-100);
+
+  const path = `materials/${crypto.randomUUID()}-${safeName}`;
+
+  let binary = "";
+  for (const byte of fileBytes) {
+    binary += String.fromCharCode(byte);
+  }
+
+  const content = btoa(binary);
+
+  const response = await fetch(
+    `https://api.github.com/repos/ziadmohsen2410-zm/ZM-Academy-Storage/contents/${path}`,
+    {
+      method: "PUT",
+      headers: {
+        "Authorization": `Bearer ${env.GITHUB_STORAGE_TOKEN}`,
+        "Accept": "application/vnd.github+json",
+        "X-GitHub-Api-Version": "2022-11-28",
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        message: `Upload academy file: ${safeName}`,
+        content
+      })
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error("GitHub storage upload failed: " + response.status);
+  }
+
+  return path;
+}
+
 async function route(request, env) {
   if (!env.DB) {
     return reply(request, env, {
