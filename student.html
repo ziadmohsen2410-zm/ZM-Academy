@@ -667,9 +667,10 @@ async function loadDashboard(){
   $("welcome").textContent="أهلاً "+(student.name||"بك");
   $("studentInfo").textContent="الصف الدراسي: "+(student.grade||"غير محدد");
 
-  $("accountSummary").textContent=
+$("accountSummary").textContent=
    "عدد المواد المسجلة: "+subjects.length+
-"عدد طلباتك: "+purchaseList.filter(p=>!Number(p.is_hidden)).length;
+   " | عدد طلباتك ومشترياتك الظاهرة: "+
+   purchaseList.filter(p=>!Number(p.is_hidden)).length;
 
   showList("subjects",subjects,"لا توجد مواد مسجلة.",(div,s)=>{
    div.textContent=s.name;
@@ -704,11 +705,49 @@ async function loadDashboard(){
     button.textContent="فتح المذكرة";
     button.addEventListener("click",()=>openPdf(m.id,m.title));
     div.appendChild(button);
-   }else{
-    const button=document.createElement("button");
-    button.textContent="طلب شراء المذكرة";
+    return;
+   }
 
-    button.addEventListener("click",async()=>{
+   // نبحث عن كل طلبات الطالب الخاصة بهذه المذكرة
+   // بما فيها المشتريات التي أخفاها من قائمته
+   const relatedPurchases=purchaseList.filter(
+    p=>Number(p.material_id)===Number(m.id)
+   );
+
+   // الشراء المعتمد أو المكتمل يظل محفوظًا حتى بعد الإخفاء
+   const owned=relatedPurchases.find(
+    p=>p.status==="approved"||p.status==="completed"
+   );
+
+   // الطلب قيد المراجعة لا يسمح بطلب شراء جديد
+   const pending=relatedPurchases.find(
+    p=>p.status==="pending"
+   );
+
+   if(owned){
+    const button=document.createElement("button");
+    button.textContent="فتح المذكرة";
+    button.addEventListener("click",()=>{
+     openPdf(m.id,m.title);
+    });
+    div.appendChild(button);
+    return;
+   }
+
+   if(pending){
+    const button=document.createElement("button");
+    button.textContent="طلبك قيد المراجعة";
+    button.disabled=true;
+    div.appendChild(button);
+    return;
+   }
+
+   // لا يوجد شراء معتمد أو طلب معلق:
+   // يمكن للطالب طلب المذكرة، حتى لو كان طلبه السابق مرفوضًا
+   const button=document.createElement("button");
+   button.textContent="طلب شراء المذكرة";
+
+   button.addEventListener("click",async()=>{
      button.disabled=true;
      button.textContent="جارٍ إرسال الطلب...";
 
@@ -718,8 +757,9 @@ async function loadDashboard(){
        body:JSON.stringify({material_id:Number(m.id)})
       });
 
-      button.textContent="طلبك قيد المراجعة";
       message.textContent="تم إرسال طلب الشراء بنجاح.";
+      await loadDashboard();
+
      }catch(error){
       message.textContent=error.message;
       button.disabled=false;
@@ -730,11 +770,10 @@ async function loadDashboard(){
        button.disabled=true;
       }
      }
-    });
+   });
 
-    div.appendChild(button);
-   }
-  }
+   div.appendChild(button);
+}
 
   showList(
    "freeMaterials",freeMaterials,
