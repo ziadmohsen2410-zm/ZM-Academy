@@ -42,6 +42,44 @@ section{padding:72px 0}.section-head{text-align:center;margin-bottom:35px}.secti
 footer{padding:28px 0;color:#aaa;border-top:1px solid var(--line);font-size:12px}.footer-row{display:flex;justify-content:space-between;gap:15px;flex-wrap:wrap}
 .notice{border:1px dashed var(--line);border-radius:12px;padding:14px;color:#c9c0b0;font-size:12px;margin-top:18px}
 @media(max-width:800px){.links{display:none;position:absolute;top:78px;right:4%;left:4%;padding:16px;background:#151518;border:1px solid var(--line);border-radius:12px;flex-direction:column;align-items:stretch}.links.show{display:flex}.menu{display:block}.nav>.btn{display:none}.hero{padding:48px 0}.hero-grid{grid-template-columns:1fr;gap:32px}.portrait-wrap{max-width:330px;grid-row:1}.hero-copy{text-align:center}.hero-copy p{margin:auto}.hero-actions{justify-content:center}.cards{grid-template-columns:1fr}.about-grid{grid-template-columns:1fr;text-align:center}.logo-large{max-width:230px;margin:auto}.chips{justify-content:center}.steps{grid-template-columns:1fr}section{padding:54px 0}}
+
+/* ZM Academy visual refinement: dual themes + subtle motion */
+:root{color-scheme:dark;--bg:#09090b;--panel:#131316;--panel2:#1b1915;--gold:#d6b36a;--gold2:#f0d99d;--text:#f7f4ed;--muted:#b8b2a5;--line:rgba(214,179,106,.22);--surface:#111113;--surface-2:#171719;--header:rgba(9,9,11,.92);--body-copy:#d2cabb;--soft-copy:#c8c1b4}
+html{background:var(--bg)}body{background:var(--bg);color:var(--text);transition:background-color .28s ease,color .28s ease}
+header{background:var(--header);transition:background-color .28s ease,border-color .28s ease}
+.theme-toggle{display:inline-flex;align-items:center;justify-content:center;gap:7px;min-height:40px;padding:8px 12px;border:1px solid var(--line);border-radius:999px;background:var(--panel);color:var(--gold2);font:700 12px 'Cairo',Tahoma,sans-serif;cursor:pointer;white-space:nowrap;transition:transform .2s ease,border-color .2s ease,background .2s ease}
+.theme-toggle:hover{transform:translateY(-2px);border-color:var(--gold);background:var(--panel2)}.theme-icon{font-size:16px;line-height:1}
+.btn,.card,.step,.notice,.chip,.icon,.portrait,.logo-large{transition:background-color .28s ease,color .28s ease,border-color .28s ease,box-shadow .28s ease,transform .25s ease}
+.btn:hover{transform:translateY(-2px);box-shadow:0 8px 22px rgba(181,138,61,.2)}
+.card{background:linear-gradient(145deg,var(--surface-2),var(--surface));}
+.step{background:var(--panel)}
+.hero{background:radial-gradient(ellipse at 15% 30%,rgba(177,130,49,.18),transparent 45%),linear-gradient(120deg,var(--bg),var(--panel2));}
+.hero-copy,.section-head,.about-copy,.cta,.card,.step{animation:zmFadeUp .65s both}
+.portrait-wrap{animation:zmFloat 7s ease-in-out infinite}
+@keyframes zmFadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+@keyframes zmFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}
+body[data-theme="light"]{color-scheme:light;--bg:#f7f5ef;--panel:#fffdf8;--panel2:#eee7d8;--text:#28251f;--muted:#716b60;--line:rgba(155,116,47,.25);--surface:#fffefa;--surface-2:#ffffff;--header:rgba(255,253,248,.94);--body-copy:#514b40;--soft-copy:#625b50;background:var(--bg);color:var(--text)}
+body[data-theme="light"] .links{color:#514b40}
+body[data-theme="light"] .links a:hover{color:#946d28}
+body[data-theme="light"] .hero{background:radial-gradient(ellipse at 15% 30%,rgba(214,179,106,.23),transparent 45%),linear-gradient(120deg,#f8f5ed,#eee5d2)}
+body[data-theme="light"] .hero h1{color:#29251e}
+body[data-theme="light"] .hero p{color:#5c5549}
+body[data-theme="light"] .hero:after{background-image:linear-gradient(90deg,transparent 49.8%,rgba(155,116,47,.09) 50%,transparent 50.2%)}
+body[data-theme="light"] .about{background:#eee9de}
+body[data-theme="light"] .about-copy p{color:#5d564b}
+body[data-theme="light"] .card{background:linear-gradient(145deg,#fffefa,#f4f0e7);color:#28251f}
+body[data-theme="light"] .step{background:#fffefa;color:#28251f}
+body[data-theme="light"] .cta{background:radial-gradient(ellipse at center,rgba(214,179,106,.2),transparent 65%),#f1ecdf}
+body[data-theme="light"] .notice{color:#625b50;background:rgba(255,255,255,.55)}
+body[data-theme="light"] footer{color:#716b60}
+body[data-theme="light"] .links.show{background:#fffdf8}
+body[data-theme="light"] .menu{color:#946d28}
+body[data-theme="light"] .theme-toggle{background:#fff;color:#76551d}
+body[data-theme="light"] .quote,body[data-theme="light"] .chip,body[data-theme="light"] .card .more{color:#87621f}
+body[data-theme="light"] .icon{background:rgba(155,116,47,.12);color:#87621f}
+@media(max-width:800px){.theme-toggle{margin-inline-start:auto;padding:7px 10px}.theme-label{display:none}.nav{gap:10px}}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
+
 </style>
 </head>
 <body>
@@ -49,6 +87,7 @@ footer{padding:28px 0;color:#aaa;border-top:1px solid var(--line);font-size:12px
  <div class="container nav">
   <a class="brand" href="#home"><img src="https://raw.githubusercontent.com/ziadmohsen2410-zm/ZM-Academy/main/Picsart_26-11-24_10-49-15-125.png" alt="شعار أكاديمية زياد محسن"><span>ZM Academy<small>ZIAD MOHSEN ACADEMY</small></span></a>
   <button class="menu" onclick="document.querySelector('.links').classList.toggle('show')" aria-label="فتح القائمة">☰</button>
+  <button class="theme-toggle" id="themeToggle" type="button" aria-label="تفعيل الوضع الفاتح" title="تغيير المظهر"><span class="theme-icon" aria-hidden="true">☀</span><span class="theme-label">الوضع الفاتح</span></button>
   <nav class="links">
    <a href="#home">الرئيسية</a><a href="#subjects">المواد الدراسية</a><a href="#curriculum">المنهج</a><a href="#library">المكتبة</a><a href="#about">عن الأستاذ</a><a href="#join">انضم إلينا</a>
   </nav>
@@ -143,6 +182,30 @@ footer{padding:28px 0;color:#aaa;border-top:1px solid var(--line);font-size:12px
 </main>
 <footer><div class="container footer-row"><span>© <span id="year"></span> Ziad Mohsen Academy</span><span>معًا نحو تفكير أعمق.. ومستقبل أفضل</span></div></footer>
 <script>document.getElementById('year').textContent=new Date().getFullYear();document.querySelectorAll('.links a').forEach(a=>a.addEventListener('click',()=>document.querySelector('.links').classList.remove('show')));</script>
+
+<script>
+(() => {
+  const key = 'zm-academy-theme';
+  const saved = (() => { try { return localStorage.getItem(key); } catch (_) { return null; } })();
+  const initial = saved === 'light' ? 'light' : 'dark';
+  document.body.dataset.theme = initial;
+  const button = document.getElementById('themeToggle');
+  const icon = button?.querySelector('.theme-icon');
+  const label = button?.querySelector('.theme-label');
+  const meta = document.querySelector('meta[name="theme-color"]');
+  function paint(theme) {
+    document.body.dataset.theme = theme;
+    const light = theme === 'light';
+    if (icon) icon.textContent = light ? '☾' : '☀';
+    if (label) label.textContent = light ? 'الوضع الداكن' : 'الوضع الفاتح';
+    if (button) button.setAttribute('aria-label', light ? 'تفعيل الوضع الداكن' : 'تفعيل الوضع الفاتح');
+    if (meta) meta.setAttribute('content', light ? '#f7f5ef' : '#0b0b0d');
+    try { localStorage.setItem(key, theme); } catch (_) {}
+  }
+  paint(initial);
+  button?.addEventListener('click', () => paint(document.body.dataset.theme === 'light' ? 'dark' : 'light'));
+})();
+</script>
 
 <script>
 if ("serviceWorker" in navigator && location.protocol !== "file:") {
