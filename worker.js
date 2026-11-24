@@ -1567,7 +1567,7 @@ const rows = await env.DB.prepare(`
     });
   }
   
-  // المحتوى الدراسي المتاح للطالب المسجل
+    // المحتوى الدراسي المتاح للطالب المسجل
   if (method === "GET" && path === "/api/materials") {
     const session = await studentSession(request, env);
 
@@ -1583,6 +1583,8 @@ const rows = await env.DB.prepare(`
       );
     }
 
+    await ensureArchivedSubjectsTable(env);
+
     const subjectId = Number(url.searchParams.get("subject_id") || 0);
 
     const rows = subjectId
@@ -1590,7 +1592,11 @@ const rows = await env.DB.prepare(`
           `SELECT m.id, m.subject_id, m.title, m.type, m.price, m.is_free
            FROM materials m
            JOIN student_subjects ss ON ss.subject_id = m.subject_id
-           WHERE ss.student_id = ? AND m.subject_id = ?
+           WHERE ss.student_id = ?
+             AND m.subject_id = ?
+             AND m.subject_id NOT IN (
+               SELECT subject_id FROM archived_subjects
+             )
            ORDER BY m.id DESC`
         )
           .bind(session.student_id, subjectId)
@@ -1600,6 +1606,9 @@ const rows = await env.DB.prepare(`
            FROM materials m
            JOIN student_subjects ss ON ss.subject_id = m.subject_id
            WHERE ss.student_id = ?
+             AND m.subject_id NOT IN (
+               SELECT subject_id FROM archived_subjects
+             )
            ORDER BY m.id DESC`
         )
           .bind(session.student_id)
