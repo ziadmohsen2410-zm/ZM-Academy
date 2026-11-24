@@ -1952,27 +1952,93 @@ async function route(request, env) {
       });
     }
 
-    // طلبات الطالب ومشترياته
-    if (method === "GET" && path === "/api/student/purchases") {
-      const rows = await env.DB.prepare(
-        `SELECT o.id AS order_id, o.status, o.created_at,
-                m.id AS material_id, m.title, m.type,
-                m.price,
-                sub.name AS subject_name
-         FROM orders o
-         JOIN materials m ON m.id = o.material_id
-         JOIN subjects sub ON sub.id = m.subject_id
-         WHERE o.student_id = ?
-         ORDER BY o.id DESC`
-      )
-        .bind(session.student_id)
-        .all();
+// طلبات الطالب ومشترياته مع تحديد العناصر المخفية
+if (method === "GET" && path === "/api/student/purchases") {
+  const rows = await env.DB.prepare(
+    `SELECT o.id AS order_id, o.status, o.created_at,
+            m.id AS material_id, m.title, m.type,
+            m.price,
+            sub.name AS subject_name,
+            CASE WHEN h.order_id IS NULL THEN 0 ELSE 1 END AS is_hidden
+     FROM orders o
+     JOIN materials m ON m.id = o.material_id
+     JOIN subjects sub ON sub.id = m.subject_id
+     LEFT JOIN student_hidden_purchases h
+       ON h.order_id = o.id
+      AND h.student_id = o.student_id
+     WHERE o.student_id = ?
+     ORDER BY o.id DESC`
+  )
+    .bind(session.student_id)
+    .all();
 
-      return reply(request, env, {
-        success: true,
-        purchases: rows.results || [],
-      });
-    }
+  return reply(request, env, {
+    success: true,
+    purchases: rows.results || [],
+  });
+}
+
+// حذف الطلب المرفوض أو إخفاء عملية الشراء
+const studentPurchaseDelete = path.match(
+  /^\/api\/student\/purchases\/(\d+)$/
+);
+
+if (method === "DELETE" && studentPurchaseDelete) {
+  const orderId = Number(studentPurchaseDelete[1]);
+
+  const order = await env.DB.prepare(
+    `SELECT id, status
+     FROM orders
+     WHERE id = ? AND student_id = ?`
+  )
+    .bind(orderId, session.student_id)
+    .first();
+
+  if (!order) {
+    return reply(request, env, {
+      success: false,
+      error: "الطلب غير موجود.",
+    }, 404);
+  }
+
+  // الطلب المرفوض: حذف سجل الطلب نفسه
+  if (order.status === "rejected") {
+    await env.DB.prepare(
+      `DELETE FROM orders
+       WHERE id = ? AND student_id = ? AND status = 'rejected'`
+    )
+      .bind(orderId, session.student_id)
+      .run();
+
+    return reply(request, env, {
+      success: true,
+      action: "deleted",
+      message: "تم حذف الطلب المرفوض.",
+    });
+  }
+
+  // الطلب المعتمد أو المكتمل: إخفاؤه فقط مع الاحتفاظ بحق الشراء
+  if (order.status === "approved" || order.status === "completed") {
+    await env.DB.prepare(
+      `INSERT OR IGNORE INTO student_hidden_purchases
+       (student_id, order_id)
+       VALUES (?, ?)`
+    )
+      .bind(session.student_id, orderId)
+      .run();
+
+    return reply(request, env, {
+      success: true,
+      action: "hidden",
+      message: "تمت إزالة المشتراة من القائمة.",
+    });
+  }
+
+  return reply(request, env, {
+    success: false,
+    error: "لا يمكن حذف طلب قيد المراجعة.",
+  }, 409);
+}
 
     // تسجيل خروج الطالب
     if (method === "POST" && path === "/api/student/logout") {
