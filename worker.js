@@ -478,6 +478,16 @@ function validStudentPhoto(bytes, contentType) {
   return false;
 }
 
+// إنشاء جدول أرشيف المواد دون المساس بالبيانات القديمة
+async function ensureArchivedSubjectsTable(env) {
+  await env.DB.prepare(`
+    CREATE TABLE IF NOT EXISTS archived_subjects (
+      subject_id INTEGER PRIMARY KEY,
+      archived_at TEXT DEFAULT CURRENT_TIMESTAMP
+    )
+  `).run();
+}
+
 async function route(request, env) {
   const method = request.method.toUpperCase();
 
@@ -961,6 +971,65 @@ async function route(request, env) {
       });
     }
 
+    // عرض المواد للإدارة بما فيها المؤرشفة
+if (method === "GET" && path === "/api/admin/subjects") {
+  await ensureArchivedSubjectsTable(env);
+
+  const rows = await env.DB.prepare(`
+    SELECT s.id, s.name, s.grade,
+           CASE WHEN a.subject_id IS NULL THEN 0 ELSE 1 END AS is_archived
+    FROM subjects s
+    LEFT JOIN archived_subjects a ON a.subject_id = s.id
+    ORDER BY is_archived ASC, s.grade, s.name
+  `).all();
+
+  return reply(request, env, {
+    success: true,
+    subjects: rows.results || []
+  });
+}
+
+// أرشفة مادة أو استعادتها
+const subjectArchiveMatch = path.match(
+  /^\/api\/admin\/subjects\/(\d+)\/(archive|restore)$/
+);
+
+if (method === "POST" && subjectArchiveMatch) {
+  await ensureArchivedSubjectsTable(env);
+
+  const subjectId = Number(subjectArchiveMatch[1]);
+  const action = subjectArchiveMatch[2];
+
+  const subject = await env.DB.prepare(
+    "SELECT id FROM subjects WHERE id = ?"
+  ).bind(subjectId).first();
+
+  if (!subject) {
+    return reply(request, env, {
+      success: false,
+      error: "المادة غير موجودة."
+    }, 404);
+  }
+
+  if (action === "archive") {
+    await env.DB.prepare(`
+      INSERT OR IGNORE INTO archived_subjects (subject_id)
+      VALUES (?)
+    `).bind(subjectId).run();
+  } else {
+    await env.DB.prepare(
+      "DELETE FROM archived_subjects WHERE subject_id = ?"
+    ).bind(subjectId).run();
+  }
+
+  return reply(request, env, {
+    success: true,
+    message: action === "archive"
+      ? "تمت أرشفة المادة بنجاح."
+      : "تمت استعادة المادة بنجاح."
+  });
+}
+    
     // إضافة مادة دراسية
     if (
       method === "POST" &&
@@ -1481,16 +1550,23 @@ async function route(request, env) {
 
   // المواد والصفوف المتاحة للتسجيل
   if (method === "GET" && path === "/api/subjects") {
-    const rows = await env.DB.prepare(
-      "SELECT id, name, grade FROM subjects ORDER BY grade, name"
-    ).all();
+    await ensureArchivedSubjectsTable(env);
 
+const rows = await env.DB.prepare(`
+  SELECT id, name, grade
+  FROM subjects
+  WHERE id NOT IN (
+    SELECT subject_id FROM archived_subjects
+  )
+  ORDER BY grade, name
+`).all();
+    
     return reply(request, env, {
       success: true,
       subjects: rows.results || [],
     });
   }
-
+  
   // المحتوى الدراسي المتاح للطالب المسجل
   if (method === "GET" && path === "/api/materials") {
     const session = await studentSession(request, env);
