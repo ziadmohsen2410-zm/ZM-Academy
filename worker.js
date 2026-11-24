@@ -1614,6 +1614,7 @@ const rows = await env.DB.prepare(`
     }
 
     await ensureArchivedSubjectsTable(env);
+await ensureArchivedMaterialsTable(env);
 
     const subjectId = Number(url.searchParams.get("subject_id") || 0);
 
