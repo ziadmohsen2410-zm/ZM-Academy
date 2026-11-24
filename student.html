@@ -20,6 +20,71 @@ h2{color:#e8bd67;font-size:19px;margin:0 0 12px}
 button{border:0;border-radius:9px;padding:11px 18px;background:#e8bd67;color:#171717;font-weight:bold;cursor:pointer}
 #message{padding:12px;text-align:center}
 .hidden{display:none}
+  
+/* عارض المذكرات */
+#pdfViewer{
+  position:fixed;
+  inset:0;
+  z-index:9999;
+  background:#080d19;
+  overflow:auto;
+  padding:12px;
+}
+#pdfViewer.hidden{display:none}
+.viewerTop{
+  position:sticky;
+  top:0;
+  z-index:5;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  background:#111a2d;
+  padding:12px;
+  border:1px solid #34415c;
+  border-radius:10px;
+  margin-bottom:12px;
+}
+.viewerTop strong{color:#e8bd67}
+.viewerPages{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:14px;
+}
+.pdfPage{
+  position:relative;
+  background:#fff;
+  max-width:100%;
+  overflow:hidden;
+  box-shadow:0 3px 15px #0008;
+}
+.pdfPage canvas{
+  display:block;
+  max-width:100%;
+  height:auto;
+}
+.pdfWatermark{
+  position:absolute;
+  inset:0;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  pointer-events:none;
+  overflow:hidden;
+  color:rgba(150,30,30,.18);
+  font-size:clamp(22px,5vw,42px);
+  font-weight:bold;
+  transform:rotate(-32deg);
+  text-align:center;
+  user-select:none;
+}
+.viewerMessage{
+  color:#f5f6fa;
+  text-align:center;
+  padding:20px;
+}
+
 </style>
 </head>
 <body>
@@ -63,6 +128,17 @@ button{border:0;border-radius:9px;padding:11px 18px;background:#e8bd67;color:#17
     </div>
   </section>
 </main>
+
+<div id="pdfViewer" class="hidden">
+  <div class="viewerTop">
+    <strong id="viewerTitle">عرض المذكرة</strong>
+    <button type="button" id="closePdfBtn">إغلاق</button>
+  </div>
+  <div id="viewerMessage" class="viewerMessage">
+    جارٍ تجهيز المذكرة...
+  </div>
+  <div id="viewerPages" class="viewerPages"></div>
+</div>
 
 <script>
 const API = "https://zm-academy-api.ziadmohsen4567.workers.dev";
