@@ -1180,16 +1180,22 @@ if (method === "POST" && subjectArchiveMatch) {
         message: "تم حذف المادة بنجاح.",
       });
     }
-
-    // عرض جميع المحتويات للإدارة
+    // عرض جميع المحتويات للإدارة بما فيها المؤرشفة
     if (method === "GET" && path === "/api/admin/materials") {
-      const rows = await env.DB.prepare(
-        `SELECT m.id, m.subject_id, m.title, m.type, m.price, m.is_free,
-                m.file_key, sub.name AS subject_name, sub.grade
-         FROM materials m
-         LEFT JOIN subjects sub ON sub.id = m.subject_id
-         ORDER BY m.id DESC`
-      ).all();
+      await ensureArchivedMaterialsTable(env);
+
+      const rows = await env.DB.prepare(`
+        SELECT m.id, m.subject_id, m.title, m.type, m.price, m.is_free,
+               m.file_key, sub.name AS subject_name, sub.grade,
+               CASE
+                 WHEN a.material_id IS NULL THEN 0
+                 ELSE 1
+               END AS is_archived
+        FROM materials m
+        LEFT JOIN subjects sub ON sub.id = m.subject_id
+        LEFT JOIN archived_materials a ON a.material_id = m.id
+        ORDER BY is_archived ASC, m.id DESC
+      `).all();
 
       return reply(request, env, {
         success: true,
@@ -1197,22 +1203,44 @@ if (method === "POST" && subjectArchiveMatch) {
       });
     }
 
-    if (method === "GET" && path === "/api/admin/device-requests") {
-      const rows = await env.DB.prepare(
-        `SELECT d.id, d.student_id, d.device_name, d.created_at,
-                s.name AS student_name,
-                s.phone,
-                a.username
-         FROM student_devices d
-         JOIN students s ON s.id = d.student_id
-         LEFT JOIN student_accounts a ON a.student_id = d.student_id
-         WHERE d.status = 'pending'
-         ORDER BY d.created_at ASC`
-      ).all();
+    // أرشفة درس أو استعادته
+    const materialArchiveMatch = path.match(
+      /^\/api\/admin\/materials\/(\d+)\/(archive|restore)$/
+    );
+
+    if (method === "POST" && materialArchiveMatch) {
+      await ensureArchivedMaterialsTable(env);
+
+      const materialId = Number(materialArchiveMatch[1]);
+      const action = materialArchiveMatch[2];
+
+      const material = await env.DB.prepare(
+        "SELECT id FROM materials WHERE id = ?"
+      ).bind(materialId).first();
+
+      if (!material) {
+        return reply(request, env, {
+          success: false,
+          error: "الدرس غير موجود."
+        }, 404);
+      }
+
+      if (action === "archive") {
+        await env.DB.prepare(`
+          INSERT OR IGNORE INTO archived_materials (material_id)
+          VALUES (?)
+        `).bind(materialId).run();
+      } else {
+        await env.DB.prepare(
+          "DELETE FROM archived_materials WHERE material_id = ?"
+        ).bind(materialId).run();
+      }
 
       return reply(request, env, {
         success: true,
-        requests: rows.results || [],
+        message: action === "archive"
+          ? "تمت أرشفة الدرس بنجاح."
+          : "تمت استعادة الدرس بنجاح."
       });
     }
 
