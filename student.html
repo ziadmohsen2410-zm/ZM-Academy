@@ -669,7 +669,7 @@ async function loadDashboard(){
 
   $("accountSummary").textContent=
    "عدد المواد المسجلة: "+subjects.length+
-   " · عدد طلباتك: "+purchaseList.length;
+"عدد طلباتك: "+purchaseList.filter(p=>!Number(p.is_hidden)).length;
 
   showList("subjects",subjects,"لا توجد مواد مسجلة.",(div,s)=>{
    div.textContent=s.name;
@@ -753,34 +753,85 @@ async function loadDashboard(){
    rejected:"مرفوض"
   };
 
-  showList(
-   "purchases",purchaseList,
-   "لا توجد مشتريات حتى الآن.",
-   (div,p)=>{
-    const title=document.createElement("strong");
-    title.textContent=p.title||"مذكرة";
+ const visiblePurchases = purchaseList.filter(
+ p => !Number(p.is_hidden)
+);
 
-    const subject=document.createElement("div");
-    subject.className="muted";
-    subject.textContent="المادة: "+(p.subject_name||"غير محددة");
+showList(
+ "purchases",
+ visiblePurchases,
+ "لا توجد طلبات أو مشتريات ظاهرة حاليًا.",
+ (div,p)=>{
+  const title=document.createElement("strong");
+  title.textContent=p.title||"مذكرة";
 
-    const status=document.createElement("div");
-    status.className="status";
-    status.textContent="حالة الطلب: "+
-     (statusNames[p.status]||"غير معروف");
+  const subject=document.createElement("div");
+  subject.className="muted";
+  subject.textContent="المادة: "+(p.subject_name||"غير محددة");
 
-    div.append(title,subject,status);
+  const status=document.createElement("div");
+  status.className="status";
+  status.textContent="حالة الطلب: "+
+   (statusNames[p.status]||"غير معروف");
 
-    if(p.status==="approved"||p.status==="completed"){
-     const button=document.createElement("button");
-     button.textContent="فتح المذكرة";
-     button.addEventListener("click",()=>{
-      openPdf(p.material_id,p.title);
-     });
-     div.appendChild(button);
+  div.append(title,subject,status);
+
+  if(p.status==="approved"||p.status==="completed"){
+   const button=document.createElement("button");
+   button.textContent="فتح المذكرة";
+   button.addEventListener("click",()=>{
+    openPdf(p.material_id,p.title);
+   });
+   div.appendChild(button);
+  }
+
+  if(p.status==="rejected"||
+     p.status==="approved"||
+     p.status==="completed"){
+
+   const removeButton=document.createElement("button");
+
+   removeButton.className="danger";
+   removeButton.textContent=
+    p.status==="rejected"?"حذف الطلب":"إزالة من مشترياتي";
+
+   removeButton.addEventListener("click",async()=>{
+    const confirmed=confirm(
+     p.status==="rejected"
+      ?"هل تريد حذف الطلب المرفوض نهائيًا؟"
+      :"هل تريد إزالة هذه المذكرة من قائمة مشترياتك؟ ستظل صلاحية فتحها محفوظة."
+    );
+
+    if(!confirmed)return;
+
+    removeButton.disabled=true;
+    removeButton.textContent="جارٍ التنفيذ...";
+
+    try{
+     await api(
+      "/api/student/purchases/"+encodeURIComponent(p.order_id),
+      {method:"DELETE"}
+     );
+
+     message.textContent=
+      p.status==="rejected"
+       ?"تم حذف الطلب المرفوض."
+       :"تمت إزالة المذكرة من قائمة مشترياتك.";
+
+     await loadDashboard();
+
+    }catch(error){
+     message.textContent=error.message;
+     removeButton.disabled=false;
+     removeButton.textContent=
+      p.status==="rejected"?"حذف الطلب":"إزالة من مشترياتي";
     }
-   }
-  );
+   });
+
+   div.appendChild(removeButton);
+  }
+ }
+);
 
   dashboard.classList.remove("hidden");
   message.textContent="تم تحميل لوحة الطالب بنجاح.";
