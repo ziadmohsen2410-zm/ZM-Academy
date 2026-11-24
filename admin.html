@@ -241,7 +241,7 @@ async function logout(){
 
 async function loadSubjects(){
   try{
-    const data=await request("/api/subjects");
+    const data=await request("/api/admin/subjects");
     subjects=data.subjects||[];
     renderSubjects();
     fillSubjectOptions();
