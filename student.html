@@ -148,6 +148,11 @@ const token = localStorage.getItem("zm_student_token");
 const message = document.getElementById("message");
 const dashboard = document.getElementById("dashboard");
 
+ if (window.pdfjsLib) {
+  pdfjsLib.GlobalWorkerOptions.workerSrc =
+    "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+} 
+
 function showList(id, items, emptyText, render) {
   const box = document.getElementById(id);
   box.replaceChildren();
