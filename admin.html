@@ -251,18 +251,66 @@ async function loadSubjects(){
 
 function renderSubjects(){
   const box=document.getElementById("subjectsList");
+
   if(!subjects.length){
     box.innerHTML="<p class='muted'>لا توجد مواد دراسية حتى الآن</p>";
     return;
   }
-  box.innerHTML=subjects.map(s=>`<div class="item"><strong>${escapeHTML(s.name)}</strong><small>${escapeHTML(s.grade||"")}</small><div class="row"><button class="secondary" onclick="editSubject(${Number(s.id)})">تعديل</button><button class="danger" onclick="deleteSubject(${Number(s.id)})">حذف</button></div></div>`).join("");
+
+  box.innerHTML=subjects.map(s=>`
+    <div class="item">
+      <strong>${escapeHTML(s.name)}</strong>
+      <small>${escapeHTML(s.grade||"")}</small>
+      <small>${Number(s.is_archived)===1?"مؤرشفة":"نشطة"}</small>
+
+      <div class="row">
+        <button class="secondary" onclick="editSubject(${Number(s.id)})">تعديل</button>
+        ${Number(s.is_archived)===1
+          ? `<button onclick="archiveSubject(${Number(s.id)},'restore')">استعادة</button>`
+          : `<button class="danger" onclick="archiveSubject(${Number(s.id)},'archive')">أرشفة</button>`}
+      </div>
+    </div>
+  `).join("");
 }
 
 function fillSubjectOptions(){
-  const options=subjects.map(s=>`<option value="${Number(s.id)}">${escapeHTML(s.name)} - ${escapeHTML(s.grade||"")}</option>`).join("");
+  const activeSubjects=subjects.filter(s=>Number(s.is_archived)!==1);
+
+  const options=activeSubjects.map(s=>
+    `<option value="${Number(s.id)}">${escapeHTML(s.name)} - ${escapeHTML(s.grade||"")}</option>`
+  ).join("");
+
   document.getElementById("materialSubject").innerHTML='<option value="">كل المواد</option>'+options;
   document.getElementById("materialSubjectForm").innerHTML=options;
 }
+
+ async function archiveSubject(id,action){
+  const isArchive=action==="archive";
+
+  if(!confirm(
+    isArchive
+      ? "هل تريد أرشفة المادة؟ ستختفي من المواد المتاحة للطلاب مع الاحتفاظ بالمشتريات القديمة."
+      : "هل تريد استعادة المادة وإظهارها للطلاب مرة أخرى؟"
+  ))return;
+
+  try{
+    await request(
+      `/api/admin/subjects/${id}/${action}`,
+      "POST",
+      {}
+    );
+
+    await loadSubjects();
+
+    message(
+      isArchive
+        ? "تمت أرشفة المادة بنجاح"
+        : "تمت استعادة المادة بنجاح"
+    );
+  }catch(e){
+    message(e.message,"err");
+  }
+ }
 
 function editSubject(id){
   const s=subjects.find(x=>Number(x.id)===Number(id));
