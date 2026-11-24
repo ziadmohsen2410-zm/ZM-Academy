@@ -1641,8 +1641,11 @@ AND m.id NOT IN (
            JOIN student_subjects ss ON ss.subject_id = m.subject_id
            WHERE ss.student_id = ?
              AND m.subject_id NOT IN (
-               SELECT subject_id FROM archived_subjects
-             )
+  SELECT subject_id FROM archived_subjects
+)
+AND m.id NOT IN (
+  SELECT material_id FROM archived_materials
+)
            ORDER BY m.id DESC`
         )
           .bind(session.student_id)
