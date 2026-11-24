@@ -202,6 +202,113 @@ async function api(path, options = {}) {
 
   return data;
 }
+  async function openPdf(materialId, title, studentName) {
+  const viewer = document.getElementById("pdfViewer");
+  const viewerTitle = document.getElementById("viewerTitle");
+  const viewerMessage = document.getElementById("viewerMessage");
+  const viewerPages = document.getElementById("viewerPages");
+
+  viewer.classList.remove("hidden");
+  viewerTitle.textContent = title || "عرض المذكرة";
+  viewerMessage.textContent = "جارٍ تحميل المذكرة...";
+  viewerPages.replaceChildren();
+
+  try {
+    if (!window.pdfjsLib) {
+      throw new Error("تعذر تحميل مكتبة عرض ملفات PDF.");
+    }
+
+    const response = await fetch(
+      API + "/api/student/materials/" +
+      encodeURIComponent(materialId) + "/view",
+      {
+        method: "GET",
+        headers: {
+          "Authorization": "Bearer " + token
+        }
+      }
+    );
+
+    if (!response.ok) {
+      let errorMessage = "تعذر فتح المذكرة.";
+
+      try {
+        const errorData = await response.json();
+        errorMessage = errorData.error || errorMessage;
+      } catch (e) {}
+
+      throw new Error(errorMessage);
+    }
+
+    const buffer = await response.arrayBuffer();
+
+    const pdf = await pdfjsLib.getDocument({
+      data: new Uint8Array(buffer)
+    }).promise;
+
+    viewerMessage.textContent =
+      "عدد الصفحات: " + pdf.numPages;
+
+    for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber++) {
+      const page = await pdf.getPage(pageNumber);
+
+      const baseViewport = page.getViewport({ scale: 1 });
+      const availableWidth = Math.min(
+        window.innerWidth - 30,
+        900
+      );
+
+      const scale = Math.min(
+        1.5,
+        availableWidth / baseViewport.width
+      );
+
+      const viewport = page.getViewport({ scale });
+
+      const pageBox = document.createElement("div");
+      pageBox.className = "pdfPage";
+      pageBox.style.width = viewport.width + "px";
+
+      const canvas = document.createElement("canvas");
+      const context = canvas.getContext("2d");
+
+      const pixelRatio = Math.min(
+        window.devicePixelRatio || 1,
+        1.5
+      );
+
+      canvas.width = Math.floor(viewport.width * pixelRatio);
+      canvas.height = Math.floor(viewport.height * pixelRatio);
+
+      canvas.style.width = viewport.width + "px";
+      canvas.style.height = viewport.height + "px";
+
+      const watermark = document.createElement("div");
+      watermark.className = "pdfWatermark";
+      watermark.textContent = studentName || "ZM Academy";
+
+      pageBox.append(canvas, watermark);
+      viewerPages.appendChild(pageBox);
+
+      await page.render({
+        canvasContext: context,
+        viewport: viewport,
+        transform: pixelRatio !== 1
+          ? [pixelRatio, 0, 0, pixelRatio, 0, 0]
+          : null
+      }).promise;
+    }
+
+    viewerMessage.textContent =
+      "تم فتح المذكرة بنجاح.";
+
+  } catch (error) {
+    viewerMessage.textContent =
+      error.message || "حدث خطأ أثناء فتح المذكرة.";
+
+    viewerPages.replaceChildren();
+  }
+}
 
   async function loadDashboard() {
   if (!token) {
