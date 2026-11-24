@@ -495,15 +495,79 @@ function showList(id,items,emptyText,render){
  });
 }
 
-/* صورة الطالب */
+/* صورة الطالب - تحميل سريع وضغط تلقائي */
+
+function studentPhotoCacheKey(){
+ return currentStudent?.id
+  ? "zm_student_photo_" + currentStudent.id
+  : null;
+}
+
+async function compressStudentPhoto(file){
+ const bitmap = await createImageBitmap(file);
+
+ const maxSize = 512;
+ const scale = Math.min(1, maxSize / Math.max(bitmap.width, bitmap.height));
+
+ const canvas = document.createElement("canvas");
+ canvas.width = Math.round(bitmap.width * scale);
+ canvas.height = Math.round(bitmap.height * scale);
+
+ const ctx = canvas.getContext("2d");
+
+ ctx.fillStyle = "#ffffff";
+ ctx.fillRect(0, 0, canvas.width, canvas.height);
+ ctx.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+ bitmap.close();
+
+ const blob = await new Promise(resolve =>
+  canvas.toBlob(resolve, "image/jpeg", 0.78)
+ );
+
+ if(!blob) throw new Error("تعذر تجهيز الصورة.");
+
+ return new File(
+  [blob],
+  "student-photo.jpg",
+  {type:"image/jpeg",lastModified:Date.now()}
+ );
+}
+
 async function loadStudentPhoto(){
+ const cacheKey = studentPhotoCacheKey();
+
+ // عرض النسخة المحفوظة فورًا
+ if(cacheKey){
+  try{
+   const cached = localStorage.getItem(cacheKey);
+   if(cached){
+    $("studentPhoto").src = cached;
+   }
+  }catch(error){}
+ }
+
+ // جلب أحدث صورة من الحساب
  try{
-  const data=await api("/api/student/photo");
+  const data = await api("/api/student/photo");
+
   if(data.photo_url){
-   $("studentPhoto").src=data.photo_url;
+   $("studentPhoto").src = data.photo_url;
+
+   // تخزين الصور الصغيرة فقط لتجنب امتلاء مساحة المتصفح
+   if(cacheKey && data.photo_url.length <= 400000){
+    try{
+     localStorage.setItem(cacheKey,data.photo_url);
+    }catch(error){}
+   }
+  }else{
+   $("studentPhoto").removeAttribute("src");
+
+   if(cacheKey){
+    localStorage.removeItem(cacheKey);
+   }
   }
  }catch(error){
-  console.warn("تعذر تحميل صورة الطالب:",error.message);
+  console.warn("تعذر تحديث صورة الطالب:",error.message);
  }
 }
 
@@ -512,6 +576,7 @@ $("photoInput").addEventListener("change",async event=>{
  if(!file)return;
 
  const allowed=["image/jpeg","image/png","image/webp"];
+
  if(!allowed.includes(file.type)){
   message.textContent="اختر صورة JPG أو PNG أو WEBP.";
   event.target.value="";
@@ -524,12 +589,16 @@ $("photoInput").addEventListener("change",async event=>{
   return;
  }
 
- message.textContent="جارٍ رفع الصورة وحفظها على حسابك...";
-
- const form=new FormData();
- form.append("photo",file);
+ message.textContent="جارٍ تجهيز الصورة وضغطها...";
 
  try{
+  const compressedFile = await compressStudentPhoto(file);
+
+  message.textContent="جارٍ رفع الصورة وحفظها على حسابك...";
+
+  const form=new FormData();
+  form.append("photo",compressedFile);
+
   const data=await api("/api/student/photo",{
    method:"POST",
    body:form
@@ -537,18 +606,25 @@ $("photoInput").addEventListener("change",async event=>{
 
   if(data.photo_url){
    $("studentPhoto").src=data.photo_url;
-  }else{
-   await loadStudentPhoto();
+
+   const cacheKey=studentPhotoCacheKey();
+
+   if(cacheKey && data.photo_url.length<=400000){
+    try{
+     localStorage.setItem(cacheKey,data.photo_url);
+    }catch(error){}
+   }
   }
 
-  message.textContent="تم تحديث الصورة الشخصية.";
+  message.textContent="تم تحديث الصورة الشخصية وحفظها بنجاح.";
+
  }catch(error){
   message.textContent="لم يتم حفظ الصورة: "+error.message;
  }finally{
   event.target.value="";
  }
 });
-
+ 
 /* عارض PDF */
 async function openPdf(materialId,title){
  const viewer=$("pdfViewer");
