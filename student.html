@@ -360,6 +360,17 @@ async function api(path, options = {}) {
 
       div.append(title, type, price);
 
+     if (Number(m.is_free) === 1) {
+  const openButton = document.createElement("button");
+  openButton.textContent = "فتح المذكرة";
+
+  openButton.addEventListener("click", () => {
+    openPdf(m.id, m.title, student.name);
+  });
+
+  div.appendChild(openButton);
+} 
+
       if (Number(m.is_free) === 0) {
         const button = document.createElement("button");
         button.textContent = "طلب شراء المذكرة";
