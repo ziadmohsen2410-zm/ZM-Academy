@@ -478,15 +478,17 @@ function validStudentPhoto(bytes, contentType) {
   return false;
 }
 
-// إنشاء جدول أرشيف المواد دون المساس بالبيانات القديمة
-async function ensureArchivedSubjectsTable(env) {
+
+// إنشاء جدول أرشيف الدروس دون حذف أي بيانات
+async function ensureArchivedMaterialsTable(env) {
   await env.DB.prepare(`
-    CREATE TABLE IF NOT EXISTS archived_subjects (
-      subject_id INTEGER PRIMARY KEY,
+    CREATE TABLE IF NOT EXISTS archived_materials (
+      material_id INTEGER PRIMARY KEY,
       archived_at TEXT DEFAULT CURRENT_TIMESTAMP
     )
   `).run();
 }
+
 
 async function route(request, env) {
   const method = request.method.toUpperCase();
