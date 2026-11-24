@@ -365,6 +365,119 @@ async function deleteFromGitHub(env, fileKey) {
   }
 }
 
+async function uploadStudentPhotoToGitHub(env, fileBytes, contentType, studentId) {
+  if (!env.GITHUB_STORAGE_TOKEN) {
+    throw new Error("GitHub storage token is missing.");
+  }
+
+  const extensions = {
+    "image/jpeg": "jpg",
+    "image/png": "png",
+    "image/webp": "webp",
+  };
+
+  const extension = extensions[contentType];
+
+  if (!extension) {
+    throw new Error("نوع الصورة غير مسموح.");
+  }
+
+  if (!fileBytes || fileBytes.length < 1 || fileBytes.length > 5 * 1024 * 1024) {
+    throw new Error("حجم الصورة يجب ألا يتجاوز 5 ميجابايت.");
+  }
+
+  const fileKey =
+    `student-photos/${studentId}/${crypto.randomUUID()}.${extension}`;
+
+  const response = await fetch(githubContentsUrl(fileKey), {
+    method: "PUT",
+    headers: {
+      ...githubHeaders(env),
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      message: `Upload student photo: ${studentId}`,
+      content: bytesToBase64(fileBytes),
+    }),
+  });
+
+  if (!response.ok) {
+    const details = await response.text();
+    console.error("Student photo upload failed:", response.status, details.slice(0, 300));
+    throw new Error("تعذر رفع الصورة إلى التخزين.");
+  }
+
+  return fileKey;
+}
+
+async function deleteStudentPhotoFromGitHub(env, fileKey, studentId) {
+  const prefix = `student-photos/${studentId}/`;
+
+  if (
+    !env.GITHUB_STORAGE_TOKEN ||
+    !fileKey ||
+    !fileKey.startsWith(prefix) ||
+    fileKey.includes("..")
+  ) {
+    return;
+  }
+
+  const fileUrl = githubContentsUrl(fileKey);
+  const current = await fetch(fileUrl, {
+    headers: githubHeaders(env),
+  });
+
+  if (!current.ok) return;
+
+  const metadata = await current.json();
+  if (!metadata?.sha) return;
+
+  const removed = await fetch(fileUrl, {
+    method: "DELETE",
+    headers: {
+      ...githubHeaders(env),
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      message: `Delete old student photo: ${studentId}`,
+      sha: metadata.sha,
+    }),
+  });
+
+  if (!removed.ok) {
+    console.error("Old student photo delete failed:", removed.status);
+  }
+}
+
+function validStudentPhoto(bytes, contentType) {
+  if (contentType === "image/jpeg") {
+    return bytes.length >= 3 &&
+      bytes[0] === 0xff &&
+      bytes[1] === 0xd8 &&
+      bytes[2] === 0xff;
+  }
+
+  if (contentType === "image/png") {
+    return bytes.length >= 8 &&
+      bytes[0] === 0x89 &&
+      bytes[1] === 0x50 &&
+      bytes[2] === 0x4e &&
+      bytes[3] === 0x47 &&
+      bytes[4] === 0x0d &&
+      bytes[5] === 0x0a &&
+      bytes[6] === 0x1a &&
+      bytes[7] === 0x0a;
+  }
+
+  if (contentType === "image/webp") {
+    return bytes.length >= 12 &&
+      String.fromCharCode(...bytes.slice(0, 4)) === "RIFF" &&
+      String.fromCharCode(...bytes.slice(8, 12)) === "WEBP";
+  }
+
+  return false;
+}
+
 async function route(request, env) {
   const method = request.method.toUpperCase();
 
@@ -1797,6 +1910,193 @@ async function route(request, env) {
         401
       );
     }
+
+    // إنشاء جدول صور الطلاب عند الحاجة
+async function ensureStudentPhotosTable() {
+  await env.DB.prepare(`
+    CREATE TABLE IF NOT EXISTS student_photos (
+      student_id INTEGER PRIMARY KEY,
+      file_key TEXT NOT NULL,
+      content_type TEXT NOT NULL,
+      updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+    )
+  `).run();
+}
+
+// عرض صورة الطالب المحفوظة على حسابه
+if (method === "GET" && path === "/api/student/photo") {
+  await ensureStudentPhotosTable();
+
+  const photo = await env.DB.prepare(
+    `SELECT file_key, content_type
+     FROM student_photos
+     WHERE student_id = ?`
+  ).bind(session.student_id).first();
+
+  if (!photo) {
+    return reply(request, env, {
+      success: true,
+      photo_url: null,
+    });
+  }
+
+  const expectedPrefix = `student-photos/${session.student_id}/`;
+
+  if (
+    !photo.file_key ||
+    !photo.file_key.startsWith(expectedPrefix) ||
+    photo.file_key.includes("..")
+  ) {
+    return reply(request, env, {
+      success: false,
+      error: "بيانات الصورة غير صالحة.",
+    }, 400);
+  }
+
+  const imageResponse = await fetch(
+    githubContentsUrl(photo.file_key),
+    {
+      headers: githubHeaders(env, "application/vnd.github.raw"),
+    }
+  );
+
+  if (!imageResponse.ok) {
+    console.error("Student photo fetch failed:", imageResponse.status);
+
+    return reply(request, env, {
+      success: false,
+      error: "تعذر تحميل صورة الطالب.",
+    }, 502);
+  }
+
+  const imageBytes = new Uint8Array(await imageResponse.arrayBuffer());
+
+  return reply(request, env, {
+    success: true,
+    photo_url:
+      `data:${photo.content_type};base64,${bytesToBase64(imageBytes)}`,
+  });
+}
+
+// رفع صورة جديدة وحفظها على حساب الطالب
+if (method === "POST" && path === "/api/student/photo") {
+  await ensureStudentPhotosTable();
+
+  let form;
+
+  try {
+    form = await request.formData();
+  } catch {
+    return reply(request, env, {
+      success: false,
+      error: "تعذر قراءة ملف الصورة.",
+    }, 400);
+  }
+
+  const file = form.get("photo");
+
+  if (!file || typeof file.arrayBuffer !== "function") {
+    return reply(request, env, {
+      success: false,
+      error: "لم يتم اختيار صورة.",
+    }, 400);
+  }
+
+  if (file.size < 1 || file.size > 5 * 1024 * 1024) {
+    return reply(request, env, {
+      success: false,
+      error: "حجم الصورة يجب ألا يتجاوز 5 ميجابايت.",
+    }, 400);
+  }
+
+  const contentType = file.type;
+
+  if (!["image/jpeg", "image/png", "image/webp"].includes(contentType)) {
+    return reply(request, env, {
+      success: false,
+      error: "الصيغ المسموحة: JPG وPNG وWEBP فقط.",
+    }, 400);
+  }
+
+  const fileBytes = new Uint8Array(await file.arrayBuffer());
+
+  if (!validStudentPhoto(fileBytes, contentType)) {
+    return reply(request, env, {
+      success: false,
+      error: "ملف الصورة غير صالح.",
+    }, 400);
+  }
+
+  const oldPhoto = await env.DB.prepare(
+    `SELECT file_key
+     FROM student_photos
+     WHERE student_id = ?`
+  ).bind(session.student_id).first();
+
+  let newFileKey;
+
+  try {
+    newFileKey = await uploadStudentPhotoToGitHub(
+      env,
+      fileBytes,
+      contentType,
+      session.student_id
+    );
+
+    await env.DB.prepare(`
+      INSERT INTO student_photos
+        (student_id, file_key, content_type, updated_at)
+      VALUES (?, ?, ?, CURRENT_TIMESTAMP)
+      ON CONFLICT(student_id) DO UPDATE SET
+        file_key = excluded.file_key,
+        content_type = excluded.content_type,
+        updated_at = CURRENT_TIMESTAMP
+    `).bind(
+      session.student_id,
+      newFileKey,
+      contentType
+    ).run();
+
+  } catch (error) {
+    if (newFileKey) {
+      try {
+        await deleteStudentPhotoFromGitHub(
+          env,
+          newFileKey,
+          session.student_id
+        );
+      } catch (cleanupError) {
+        console.error("New photo cleanup failed:", cleanupError);
+      }
+    }
+
+    console.error("Student photo save failed:", error);
+
+    return reply(request, env, {
+      success: false,
+      error: "تعذر حفظ الصورة. حاول مرة أخرى.",
+    }, 500);
+  }
+
+  if (oldPhoto?.file_key && oldPhoto.file_key !== newFileKey) {
+    try {
+      await deleteStudentPhotoFromGitHub(
+        env,
+        oldPhoto.file_key,
+        session.student_id
+      );
+    } catch (error) {
+      console.error("Old photo cleanup failed:", error);
+    }
+  }
+
+  return reply(request, env, {
+    success: true,
+    photo_url:
+      `data:${contentType};base64,${bytesToBase64(fileBytes)}`,
+    message: "تم حفظ الصورة على حسابك.",
+  });
+}
 
     // عرض ملف PDF داخل المنصة بعد التحقق من صلاحية الطالب
     const materialViewMatch = path.match(
