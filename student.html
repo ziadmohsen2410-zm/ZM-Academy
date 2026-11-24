@@ -318,7 +318,7 @@ input[type=file]{display:none}
    <span>ZM Academy</span>
   </div>
   <div class="header-actions">
-   <button class="icon-btn" id="themeBtn" title="تغيير المظهر">☀</button>
+   <button class="icon-btn" id="themeBtn" title="تغيير المظهر">☀️</button>
    <button class="icon-btn" id="refreshBtn" title="تحديث البيانات">↻</button>
   </div>
  </div>
@@ -426,7 +426,7 @@ if(savedTheme==="light") document.body.classList.add("light");
 
 function updateThemeButton(){
  $("themeBtn").textContent=
- document.body.classList.contains("light")?"☾":"☀";
+ document.body.classList.contains("light")?"☾":"☀️";
 }
 updateThemeButton();
 
@@ -495,10 +495,7 @@ function showList(id,items,emptyText,render){
  });
 }
 
-/* صورة الطالب
-   يتطلب دعم Worker لمسار GET/POST /api/student/photo.
-   POST يستقبل multipart/form-data بحقل اسمه photo.
-*/
+/* صورة الطالب */
 async function loadStudentPhoto(){
  try{
   const data=await api("/api/student/photo");
@@ -527,7 +524,6 @@ $("photoInput").addEventListener("change",async event=>{
   return;
  }
 
- const oldText=message.textContent;
  message.textContent="جارٍ رفع الصورة وحفظها على حسابك...";
 
  const form=new FormData();
@@ -667,10 +663,14 @@ async function loadDashboard(){
   $("welcome").textContent="أهلاً "+(student.name||"بك");
   $("studentInfo").textContent="الصف الدراسي: "+(student.grade||"غير محدد");
 
-$("accountSummary").textContent=
+  const visiblePurchases=purchaseList.filter(
+   p=>!Number(p.is_hidden)
+  );
+
+  $("accountSummary").textContent=
    "عدد المواد المسجلة: "+subjects.length+
    " | عدد طلباتك ومشترياتك الظاهرة: "+
-   purchaseList.filter(p=>!Number(p.is_hidden)).length;
+   visiblePurchases.length;
 
   showList("subjects",subjects,"لا توجد مواد مسجلة.",(div,s)=>{
    div.textContent=s.name;
@@ -708,18 +708,17 @@ $("accountSummary").textContent=
     return;
    }
 
-   // نبحث عن كل طلبات الطالب الخاصة بهذه المذكرة
-   // بما فيها المشتريات التي أخفاها من قائمته
+   // نفحص كل الطلبات حتى المشتريات المخفية
    const relatedPurchases=purchaseList.filter(
     p=>Number(p.material_id)===Number(m.id)
    );
 
-   // الشراء المعتمد أو المكتمل يظل محفوظًا حتى بعد الإخفاء
+   // الشراء المعتمد أو المكتمل يظل متاحًا حتى بعد الإخفاء
    const owned=relatedPurchases.find(
     p=>p.status==="approved"||p.status==="completed"
    );
 
-   // الطلب قيد المراجعة لا يسمح بطلب شراء جديد
+   // الطلب قيد المراجعة يمنع إرسال طلب شراء جديد
    const pending=relatedPurchases.find(
     p=>p.status==="pending"
    );
@@ -742,38 +741,37 @@ $("accountSummary").textContent=
     return;
    }
 
-   // لا يوجد شراء معتمد أو طلب معلق:
-   // يمكن للطالب طلب المذكرة، حتى لو كان طلبه السابق مرفوضًا
+   // لا يوجد شراء معتمد أو طلب معلق
    const button=document.createElement("button");
    button.textContent="طلب شراء المذكرة";
 
    button.addEventListener("click",async()=>{
-     button.disabled=true;
-     button.textContent="جارٍ إرسال الطلب...";
+    button.disabled=true;
+    button.textContent="جارٍ إرسال الطلب...";
 
-     try{
-      await api("/api/orders",{
-       method:"POST",
-       body:JSON.stringify({material_id:Number(m.id)})
-      });
+    try{
+     await api("/api/orders",{
+      method:"POST",
+      body:JSON.stringify({material_id:Number(m.id)})
+     });
 
-      message.textContent="تم إرسال طلب الشراء بنجاح.";
-      await loadDashboard();
+     message.textContent="تم إرسال طلب الشراء بنجاح.";
+     await loadDashboard();
 
-     }catch(error){
-      message.textContent=error.message;
-      button.disabled=false;
-      button.textContent="طلب شراء المذكرة";
+    }catch(error){
+     message.textContent=error.message;
+     button.disabled=false;
+     button.textContent="طلب شراء المذكرة";
 
-      if(error.status===409){
-       button.textContent="لديك طلب شراء بالفعل";
-       button.disabled=true;
-      }
+     if(error.status===409){
+      button.textContent="لديك طلب شراء بالفعل";
+      button.disabled=true;
      }
+    }
    });
 
    div.appendChild(button);
-}
+  }
 
   showList(
    "freeMaterials",freeMaterials,
@@ -792,85 +790,86 @@ $("accountSummary").textContent=
    rejected:"مرفوض"
   };
 
- const visiblePurchases = purchaseList.filter(
- p => !Number(p.is_hidden)
-);
+  showList(
+   "purchases",
+   visiblePurchases,
+   "لا توجد طلبات أو مشتريات ظاهرة حاليًا.",
+   (div,p)=>{
+    const title=document.createElement("strong");
+    title.textContent=p.title||"مذكرة";
 
-showList(
- "purchases",
- visiblePurchases,
- "لا توجد طلبات أو مشتريات ظاهرة حاليًا.",
- (div,p)=>{
-  const title=document.createElement("strong");
-  title.textContent=p.title||"مذكرة";
+    const subject=document.createElement("div");
+    subject.className="muted";
+    subject.textContent="المادة: "+(p.subject_name||"غير محددة");
 
-  const subject=document.createElement("div");
-  subject.className="muted";
-  subject.textContent="المادة: "+(p.subject_name||"غير محددة");
+    const status=document.createElement("div");
+    status.className="status";
+    status.textContent="حالة الطلب: "+
+     (statusNames[p.status]||"غير معروف");
 
-  const status=document.createElement("div");
-  status.className="status";
-  status.textContent="حالة الطلب: "+
-   (statusNames[p.status]||"غير معروف");
+    div.append(title,subject,status);
 
-  div.append(title,subject,status);
+    if(p.status==="approved"||p.status==="completed"){
+     const button=document.createElement("button");
+     button.textContent="فتح المذكرة";
+     button.addEventListener("click",()=>{
+      openPdf(p.material_id,p.title);
+     });
+     div.appendChild(button);
+    }
 
-  if(p.status==="approved"||p.status==="completed"){
-   const button=document.createElement("button");
-   button.textContent="فتح المذكرة";
-   button.addEventListener("click",()=>{
-    openPdf(p.material_id,p.title);
-   });
-   div.appendChild(button);
-  }
-
-  if(p.status==="rejected"||
+    // الحذف مسموح للمرفوض فقط
+    // والإخفاء مسموح للمعتمد والمكتمل فقط
+    if(
+     p.status==="rejected"||
      p.status==="approved"||
-     p.status==="completed"){
+     p.status==="completed"
+    ){
+     const removeButton=document.createElement("button");
 
-   const removeButton=document.createElement("button");
-
-   removeButton.className="danger";
-   removeButton.textContent=
-    p.status==="rejected"?"حذف الطلب":"إزالة من مشترياتي";
-
-   removeButton.addEventListener("click",async()=>{
-    const confirmed=confirm(
-     p.status==="rejected"
-      ?"هل تريد حذف الطلب المرفوض نهائيًا؟"
-      :"هل تريد إزالة هذه المذكرة من قائمة مشترياتك؟ ستظل صلاحية فتحها محفوظة."
-    );
-
-    if(!confirmed)return;
-
-    removeButton.disabled=true;
-    removeButton.textContent="جارٍ التنفيذ...";
-
-    try{
-     await api(
-      "/api/student/purchases/"+encodeURIComponent(p.order_id),
-      {method:"DELETE"}
-     );
-
-     message.textContent=
-      p.status==="rejected"
-       ?"تم حذف الطلب المرفوض."
-       :"تمت إزالة المذكرة من قائمة مشترياتك.";
-
-     await loadDashboard();
-
-    }catch(error){
-     message.textContent=error.message;
-     removeButton.disabled=false;
+     removeButton.className="danger";
      removeButton.textContent=
       p.status==="rejected"?"حذف الطلب":"إزالة من مشترياتي";
-    }
-   });
 
-   div.appendChild(removeButton);
-  }
- }
-);
+     removeButton.addEventListener("click",async()=>{
+      const isRejected=p.status==="rejected";
+
+      const confirmed=confirm(
+       isRejected
+        ?"هل تريد حذف الطلب المرفوض نهائيًا؟"
+        :"هل تريد إزالة هذه المذكرة من قائمة مشترياتك؟ ستظل صلاحية فتحها محفوظة."
+      );
+
+      if(!confirmed)return;
+
+      removeButton.disabled=true;
+      removeButton.textContent="جارٍ التنفيذ...";
+
+      try{
+       const result=await api(
+        "/api/student/purchases/"+encodeURIComponent(p.order_id),
+        {method:"DELETE"}
+       );
+
+       message.textContent=
+        result.action==="deleted"
+         ?"تم حذف الطلب المرفوض."
+         :"تمت إزالة المذكرة من قائمة مشترياتك.";
+
+       await loadDashboard();
+
+      }catch(error){
+       message.textContent=error.message;
+       removeButton.disabled=false;
+       removeButton.textContent=
+        isRejected?"حذف الطلب":"إزالة من مشترياتي";
+      }
+     });
+
+     div.appendChild(removeButton);
+    }
+   }
+  );
 
   dashboard.classList.remove("hidden");
   message.textContent="تم تحميل لوحة الطالب بنجاح.";
