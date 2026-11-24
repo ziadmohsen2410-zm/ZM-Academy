@@ -1706,13 +1706,18 @@ const rows = await env.DB.prepare(`
 
     const placeholders = subjectIds.map(() => "?").join(",");
 
-    const validSubjects = await env.DB.prepare(
-      `SELECT id FROM subjects
-       WHERE grade = ?
-       AND id IN (${placeholders})`
-    )
-      .bind(grade, ...subjectIds)
-      .all();
+    await ensureArchivedSubjectsTable(env);
+
+const validSubjects = await env.DB.prepare(
+  `SELECT id FROM subjects
+   WHERE grade = ?
+   AND id IN (${placeholders})
+   AND id NOT IN (
+     SELECT subject_id FROM archived_subjects
+   )`
+)
+  .bind(grade, ...subjectIds)
+  .all();
 
     if ((validSubjects.results || []).length !== subjectIds.length) {
       return reply(
