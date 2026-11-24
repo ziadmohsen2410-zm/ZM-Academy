@@ -441,6 +441,17 @@ status.textContent = "حالة الطلب: " +
   (statusNames[p.status] || "غير معروف");
 
         div.append(title, subject, status);
+
+if (p.status === "approved" || p.status === "completed") {
+  const openButton = document.createElement("button");
+  openButton.textContent = "فتح المذكرة";
+
+  openButton.addEventListener("click", () => {
+    openPdf(p.material_id, p.title, student.name);
+  });
+
+  div.appendChild(openButton);
+}
       }
     );
 
@@ -466,6 +477,16 @@ document.getElementById("logoutBtn").addEventListener("click", async () => {
   location.replace("./login.html");
 });
 
+  document.getElementById("closePdfBtn").addEventListener("click", () => {
+  const viewer = document.getElementById("pdfViewer");
+  const viewerPages = document.getElementById("viewerPages");
+  const viewerMessage = document.getElementById("viewerMessage");
+
+  viewer.classList.add("hidden");
+  viewerPages.replaceChildren();
+  viewerMessage.textContent = "جارٍ تجهيز المذكرة...";
+});
+  
 loadDashboard();
 </script>
 </body>
