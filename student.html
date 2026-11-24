@@ -6,486 +6,811 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#0b1020">
 <title>لوحة الطالب | ZM Academy</title>
+
 <style>
 *{box-sizing:border-box}
-body{margin:0;background:#0b1020;color:#f5f6fa;font-family:Arial,Tahoma,sans-serif;line-height:1.8}
-header{background:#111a2d;border-bottom:1px solid #34415c;padding:18px}
-header h1{margin:0;color:#e8bd67}
-header p{margin:4px 0;color:#aab4c8}
-main{max-width:950px;margin:auto;padding:18px}
-.card{background:#151d32;border:1px solid #34415c;border-radius:15px;padding:18px;margin-bottom:16px}
-h2{color:#e8bd67;font-size:19px;margin:0 0 12px}
-.item{background:#0b1020;border-radius:10px;padding:12px;margin:9px 0}
-.muted{color:#aab4c8}
-button{border:0;border-radius:9px;padding:11px 18px;background:#e8bd67;color:#171717;font-weight:bold;cursor:pointer}
-#message{padding:12px;text-align:center}
-.hidden{display:none}
-  
-/* عارض المذكرات */
+:root{
+ --bg:#080d1b;
+ --panel:rgba(19,29,54,.88);
+ --panel2:#111d36;
+ --text:#f5f7ff;
+ --muted:#aab7d4;
+ --blue:#35a8ff;
+ --purple:#9b70ff;
+ --border:rgba(117,153,255,.22);
+ --shadow:0 15px 45px #0005;
+}
+body.light{
+ --bg:#f1f5ff;
+ --panel:rgba(255,255,255,.92);
+ --panel2:#fff;
+ --text:#17213a;
+ --muted:#64718c;
+ --border:rgba(65,104,180,.2);
+ --shadow:0 12px 35px #536b9b20;
+}
+body{
+ margin:0;
+ min-height:100vh;
+ background:
+ radial-gradient(circle at 10% 5%,#173e7760,transparent 32%),
+ radial-gradient(circle at 90% 20%,#542b9360,transparent 30%),
+ var(--bg);
+ color:var(--text);
+ font-family:Arial,Tahoma,sans-serif;
+ line-height:1.8;
+ transition:.25s;
+}
+button,a,input{font:inherit}
+button{
+ border:0;
+ cursor:pointer;
+ border-radius:12px;
+ padding:11px 17px;
+ color:white;
+ font-weight:bold;
+ background:linear-gradient(110deg,var(--blue),var(--purple));
+ transition:.2s;
+}
+button:hover{transform:translateY(-2px);filter:brightness(1.08)}
+button:disabled{opacity:.55;cursor:not-allowed;transform:none}
+header{
+ position:sticky;
+ top:0;
+ z-index:20;
+ padding:13px 18px;
+ background:var(--panel);
+ backdrop-filter:blur(18px);
+ border-bottom:1px solid var(--border);
+ box-shadow:var(--shadow);
+}
+.nav{
+ max-width:1100px;
+ margin:auto;
+ display:flex;
+ align-items:center;
+ justify-content:space-between;
+ gap:12px;
+}
+.brand{
+ display:flex;
+ align-items:center;
+ gap:10px;
+ font-weight:bold;
+ font-size:19px;
+}
+.brand img{
+ width:43px;height:43px;
+ object-fit:contain;
+ border-radius:12px;
+}
+.brand span{
+ background:linear-gradient(90deg,var(--blue),var(--purple));
+ background-clip:text;
+ -webkit-background-clip:text;
+ color:transparent;
+}
+.header-actions{display:flex;gap:8px}
+.icon-btn{
+ width:43px;height:43px;
+ padding:0;
+ background:var(--panel2);
+ border:1px solid var(--border);
+ color:var(--text);
+}
+main{max-width:1100px;margin:auto;padding:22px 16px 45px}
+#message{
+ padding:12px 15px;
+ margin-bottom:15px;
+ border:1px solid var(--border);
+ border-radius:13px;
+ background:var(--panel);
+ color:var(--muted);
+ text-align:center;
+}
+.hidden{display:none!important}
+.hero{
+ position:relative;
+ overflow:hidden;
+ display:flex;
+ align-items:center;
+ justify-content:space-between;
+ gap:20px;
+ padding:24px;
+ margin-bottom:20px;
+ border:1px solid var(--border);
+ border-radius:23px;
+ background:linear-gradient(120deg,#123b6dcc,#422b78cc);
+ box-shadow:var(--shadow);
+}
+.hero:after{
+ content:"";
+ position:absolute;
+ width:230px;height:230px;
+ border-radius:50%;
+ background:#7d8dff22;
+ left:-70px;top:-100px;
+}
+.hero h1{margin:0 0 5px;font-size:clamp(23px,4vw,32px)}
+.hero p{margin:0;color:#d5e4ff}
+.profile{
+ position:relative;
+ z-index:1;
+ display:flex;
+ align-items:center;
+ gap:14px;
+}
+.avatar-wrap{
+ width:100px;height:100px;
+ flex:none;
+ border-radius:50%;
+ padding:4px;
+ background:linear-gradient(140deg,#35c7ff,#a16aff);
+ box-shadow:0 0 25px #5b8fff66;
+}
+.avatar-wrap img{
+ width:100%;height:100%;
+ object-fit:cover;
+ border-radius:50%;
+ background:#17223c;
+}
+.profile-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.small-btn{padding:8px 12px;font-size:13px}
+.card{
+ background:var(--panel);
+ border:1px solid var(--border);
+ border-radius:19px;
+ padding:19px;
+ margin-bottom:17px;
+ box-shadow:var(--shadow);
+ backdrop-filter:blur(14px);
+}
+.card h2{
+ margin:0 0 14px;
+ font-size:19px;
+ display:flex;
+ align-items:center;
+ gap:9px;
+}
+.card h2:before{
+ content:"";
+ width:5px;height:22px;
+ border-radius:5px;
+ background:linear-gradient(var(--blue),var(--purple));
+}
+.grid{
+ display:grid;
+ grid-template-columns:repeat(auto-fit,minmax(210px,1fr));
+ gap:13px;
+}
+.item{
+ background:var(--panel2);
+ border:1px solid var(--border);
+ border-radius:14px;
+ padding:14px;
+ margin:10px 0;
+}
+.item strong{display:block;margin-bottom:5px}
+.muted{color:var(--muted);font-size:14px}
+.item button{margin-top:12px}
+.empty{
+ color:var(--muted);
+ text-align:center;
+ padding:12px;
+}
+.info-chip{
+ display:inline-block;
+ padding:5px 10px;
+ margin-top:7px;
+ border-radius:20px;
+ color:#b9dcff;
+ background:#238be522;
+ border:1px solid #238be544;
+ font-size:12px;
+}
+body.light .info-chip{color:#315c9a}
+.status{
+ display:inline-block;
+ border-radius:20px;
+ padding:4px 10px;
+ font-size:12px;
+ background:#8b7cff22;
+ color:var(--text);
+}
+.actions{
+ display:flex;
+ flex-wrap:wrap;
+ gap:10px;
+}
+.secondary{
+ background:var(--panel2);
+ color:var(--text);
+ border:1px solid var(--border);
+}
+.danger{background:linear-gradient(110deg,#e34b70,#a62f61)}
+footer{
+ text-align:center;
+ color:var(--muted);
+ font-size:12px;
+ padding:15px;
+}
+input[type=file]{display:none}
+
+/* PDF */
 #pdfViewer{
-  position:fixed;
-  inset:0;
-  z-index:9999;
-  background:#080d19;
-  overflow:auto;
-  padding:12px;
+ position:fixed;
+ inset:0;
+ z-index:1000;
+ overflow:auto;
+ padding:12px;
+ background:#080d19;
 }
-#pdfViewer.hidden{display:none}
 .viewerTop{
-  position:sticky;
-  top:0;
-  z-index:5;
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:10px;
-  background:#111a2d;
-  padding:12px;
-  border:1px solid #34415c;
-  border-radius:10px;
-  margin-bottom:12px;
+ position:sticky;
+ top:0;
+ z-index:5;
+ display:flex;
+ justify-content:space-between;
+ align-items:center;
+ gap:10px;
+ padding:12px;
+ margin-bottom:12px;
+ background:#111a2d;
+ border:1px solid #34415c;
+ border-radius:13px;
+ color:white;
 }
-.viewerTop strong{color:#e8bd67}
+.viewerTop strong{color:#75c5ff}
 .viewerPages{
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-  gap:14px;
+ display:flex;
+ flex-direction:column;
+ align-items:center;
+ gap:15px;
 }
 .pdfPage{
-  position:relative;
-  background:#fff;
-  max-width:100%;
-  overflow:hidden;
-  box-shadow:0 3px 15px #0008;
+ position:relative;
+ background:white;
+ max-width:100%;
+ overflow:hidden;
+ box-shadow:0 3px 18px #0009;
 }
-.pdfPage canvas{
-  display:block;
-  max-width:100%;
-  height:auto;
-}
+.pdfPage canvas{display:block;max-width:100%;height:auto}
 .pdfWatermark{
-  position:absolute;
-  inset:0;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  pointer-events:none;
-  overflow:hidden;
-  user-select:none;
+ position:absolute;
+ inset:0;
+ display:flex;
+ align-items:center;
+ justify-content:center;
+ pointer-events:none;
+ overflow:hidden;
 }
-
 .pdfWatermark img{
-  width:48%;
-  max-width:280px;
-  height:auto;
-  opacity:.16;
-  object-fit:contain;
+ width:48%;
+ max-width:280px;
+ height:auto;
+ opacity:.16;
+ object-fit:contain;
 }
-
+@media(max-width:600px){
+ main{padding:14px 11px 35px}
+ .hero{padding:17px;align-items:flex-start}
+ .profile{align-items:flex-start;flex-direction:column}
+ .avatar-wrap{width:78px;height:78px}
+ .brand{font-size:16px}
+ .card{padding:15px}
+}
+@media(prefers-reduced-motion:reduce){
+ *,*::before,*::after{
+  scroll-behavior:auto!important;
+  animation-duration:.01ms!important;
+  animation-iteration-count:1!important;
+  transition-duration:.01ms!important;
+ }
+}
 </style>
 </head>
+
 <body>
 <header>
-  <h1>ZM Academy</h1>
-  <p>لوحة الطالب التعليمية</p>
+ <div class="nav">
+  <div class="brand">
+   <img src="https://raw.githubusercontent.com/ziadmohsen2410-zm/ZM-Academy/main/Picsart_26-11-24_10-49-15-125.png" alt="ZM">
+   <span>ZM Academy</span>
+  </div>
+  <div class="header-actions">
+   <button class="icon-btn" id="themeBtn" title="تغيير المظهر">☀</button>
+   <button class="icon-btn" id="refreshBtn" title="تحديث البيانات">↻</button>
+  </div>
+ </div>
 </header>
 
 <main>
-  <div id="message">جارٍ تحميل بياناتك...</div>
+ <div id="message">جارٍ تحميل بياناتك...</div>
 
-  <section id="dashboard" class="hidden">
-    <div class="card">
-      <h2 id="welcome">أهلاً بك</h2>
-      <div id="studentInfo"></div>
+ <section id="dashboard" class="hidden">
+  <div class="hero">
+   <div>
+    <h1 id="welcome">أهلاً بك</h1>
+    <p>مرحباً بك في عالم التعلم والتفوق</p>
+    <div id="studentInfo" class="info-chip"></div>
+   </div>
+
+   <div class="profile">
+    <div class="avatar-wrap">
+     <img id="studentPhoto" alt="صورة الطالب"
+      src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='50' fill='%231b3155'/%3E%3Ccircle cx='50' cy='37' r='18' fill='%239bb9e8'/%3E%3Cpath d='M15 100 Q18 65 50 65 Q82 65 85 100' fill='%239bb9e8'/%3E%3C/svg%3E">
     </div>
-
-    <div class="card">
-      <h2>موادي الدراسية</h2>
-      <div id="subjects"></div>
+    <div>
+     <div style="font-weight:bold">الصورة الشخصية</div>
+     <div class="muted">صورتك المرتبطة بحسابك</div>
+     <div class="profile-actions">
+      <label for="photoInput" class="small-btn" style="cursor:pointer;background:linear-gradient(110deg,#35a8ff,#9b70ff);border-radius:10px;padding:8px 12px;color:white">تغيير الصورة</label>
+      <input id="photoInput" type="file" accept="image/png,image/jpeg,image/webp">
+     </div>
     </div>
+   </div>
+  </div>
 
-    <div class="card">
-  <h2>المحتوى المجاني</h2>
-  <div id="freeMaterials"></div>
-</div>
+  <div class="grid">
+   <div class="card">
+    <h2>موادي الدراسية</h2>
+    <div id="subjects"></div>
+   </div>
+   <div class="card">
+    <h2>ملخص الحساب</h2>
+    <div id="accountSummary" class="muted">بيانات حسابك التعليمية</div>
+   </div>
+  </div>
 
-<div class="card">
-  <h2>المذكرات المتاحة للشراء</h2>
-  <div id="paidMaterials"></div>
-</div>
+  <div class="card">
+   <h2>المحتوى المجاني</h2>
+   <div id="freeMaterials"></div>
+  </div>
 
-    <div class="card">
-      <h2>طلباتي ومشترياتي</h2>
-      <div id="purchases"></div>
-    </div>
+  <div class="card">
+   <h2>المذكرات المتاحة للشراء</h2>
+   <div id="paidMaterials"></div>
+  </div>
 
-    <div class="card">
-      <button id="logoutBtn">تسجيل الخروج</button>
-      <a href="./student.html" style="color:#e8bd67;margin-right:12px">الصفحة الرئيسية</a>
-    </div>
-  </section>
+  <div class="card">
+   <h2>طلباتي ومشترياتي</h2>
+   <div id="purchases"></div>
+  </div>
+
+  <div class="card">
+   <h2>التواصل والدعم</h2>
+   <div class="actions">
+    <a href="https://wa.me/201115336341" target="_blank" rel="noopener">
+     <button type="button">تواصل مع المدرس عبر واتساب</button>
+    </a>
+    <button type="button" class="secondary" id="logoutBtn">تسجيل الخروج</button>
+   </div>
+  </div>
+ </section>
 </main>
 
+<footer>ZM Academy · منصة التعلم والتفوق</footer>
+
 <div id="pdfViewer" class="hidden">
-  <div class="viewerTop">
-    <strong id="viewerTitle">عرض المذكرة</strong>
-    <button type="button" id="closePdfBtn">إغلاق</button>
-  </div>
-  <div id="viewerMessage" class="viewerMessage">
-    جارٍ تجهيز المذكرة...
-  </div>
-  <div id="viewerPages" class="viewerPages"></div>
+ <div class="viewerTop">
+  <strong id="viewerTitle">عرض المذكرة</strong>
+  <button id="closePdfBtn" type="button">إغلاق</button>
+ </div>
+ <div id="viewerMessage" style="color:white;text-align:center;padding:10px">جارٍ تجهيز المذكرة...</div>
+ <div id="viewerPages" class="viewerPages"></div>
 </div>
-  
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script>
-  
-const API = "https://zm-academy-api.ziadmohsen4567.workers.dev";
-const token = localStorage.getItem("zm_student_token");
-const message = document.getElementById("message");
-const dashboard = document.getElementById("dashboard");
+"use strict";
 
- if (window.pdfjsLib) {
-  pdfjsLib.GlobalWorkerOptions.workerSrc =
-    "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
-} 
+const API="https://zm-academy-api.ziadmohsen4567.workers.dev";
+const token=localStorage.getItem("zm_student_token");
 
-function showList(id, items, emptyText, render) {
-  const box = document.getElementById(id);
-  box.replaceChildren();
+const $=id=>document.getElementById(id);
+const message=$("message");
+const dashboard=$("dashboard");
 
-  if (!items || !items.length) {
-    const empty = document.createElement("p");
-    empty.className = "muted";
-    empty.textContent = emptyText;
-    box.appendChild(empty);
-    return;
-  }
+let currentStudent=null;
 
-  items.forEach(item => {
-    const div = document.createElement("div");
-    div.className = "item";
-    render(div, item);
-    box.appendChild(div);
-  });
+if(!token) location.replace("./login.html");
+
+if(window.pdfjsLib){
+ pdfjsLib.GlobalWorkerOptions.workerSrc=
+ "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
 }
 
+/* المظهر */
+const savedTheme=localStorage.getItem("zm_student_theme");
+if(savedTheme==="light") document.body.classList.add("light");
 
-async function api(path, options = {}) {
-  const response = await fetch(API + path, {
-    ...options,
-    method: options.method || "GET",
-    headers: {
-      "Content-Type": "application/json",
-      "Authorization": "Bearer " + token,
-      ...(options.headers || {})
-    }
-  });
-
-  const data = await response.json();
-
-  if (response.status === 401) {
-    localStorage.removeItem("zm_student_token");
-    location.replace("./login.html");
-    throw new Error("انتهت جلسة الدخول.");
-  }
-
-  if (!response.ok || !data.success) {
-    const error = new Error(data.error || "تعذر تنفيذ الطلب.");
-    error.code = data.code;
-    error.status = response.status;
-    throw error;
-  }
-
-  return data;
+function updateThemeButton(){
+ $("themeBtn").textContent=
+ document.body.classList.contains("light")?"☾":"☀";
 }
-  async function openPdf(materialId, title, studentName) {
-  const viewer = document.getElementById("pdfViewer");
-  const viewerTitle = document.getElementById("viewerTitle");
-  const viewerMessage = document.getElementById("viewerMessage");
-  const viewerPages = document.getElementById("viewerPages");
+updateThemeButton();
 
-  viewer.classList.remove("hidden");
-  viewerTitle.textContent = title || "عرض المذكرة";
-  viewerMessage.textContent = "جارٍ تحميل المذكرة...";
-  viewerPages.replaceChildren();
-
-  try {
-    if (!window.pdfjsLib) {
-      throw new Error("تعذر تحميل مكتبة عرض ملفات PDF.");
-    }
-
-    const response = await fetch(
-      API + "/api/student/materials/" +
-      encodeURIComponent(materialId) + "/view",
-      {
-        method: "GET",
-        headers: {
-          "Authorization": "Bearer " + token
-        }
-      }
-    );
-
-    if (!response.ok) {
-      let errorMessage = "تعذر فتح المذكرة.";
-
-      try {
-        const errorData = await response.json();
-        errorMessage = errorData.error || errorMessage;
-      } catch (e) {}
-
-      throw new Error(errorMessage);
-    }
-
-    const buffer = await response.arrayBuffer();
-
-    const pdf = await pdfjsLib.getDocument({
-      data: new Uint8Array(buffer)
-    }).promise;
-
-    viewerMessage.textContent =
-      "عدد الصفحات: " + pdf.numPages;
-
-    for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber++) {
-      const page = await pdf.getPage(pageNumber);
-
-      const baseViewport = page.getViewport({ scale: 1 });
-      const availableWidth = Math.min(
-        window.innerWidth - 30,
-        900
-      );
-
-      const scale = Math.min(
-        1.5,
-        availableWidth / baseViewport.width
-      );
-
-      const viewport = page.getViewport({ scale });
-
-      const pageBox = document.createElement("div");
-      pageBox.className = "pdfPage";
-      pageBox.style.width = viewport.width + "px";
-
-      const canvas = document.createElement("canvas");
-      const context = canvas.getContext("2d");
-
-      const pixelRatio = Math.min(
-        window.devicePixelRatio || 1,
-        1.5
-      );
-
-      canvas.width = Math.floor(viewport.width * pixelRatio);
-      canvas.height = Math.floor(viewport.height * pixelRatio);
-
-      canvas.style.width = viewport.width + "px";
-      canvas.style.height = viewport.height + "px";
-
-      const watermark = document.createElement("div");
-      watermark.className = "pdfWatermark";
-      const logo = document.createElement("img");
-logo.src = "https://raw.githubusercontent.com/ziadmohsen2410-zm/ZM-Academy/main/Picsart_26-11-24_10-49-15-125.png";
-watermark.appendChild(logo);
-      pageBox.append(canvas, watermark);
-      viewerPages.appendChild(pageBox);
-
-      await page.render({
-        canvasContext: context,
-        viewport: viewport,
-        transform: pixelRatio !== 1
-          ? [pixelRatio, 0, 0, pixelRatio, 0, 0]
-          : null
-      }).promise;
-    }
-
-    viewerMessage.textContent =
-      "تم فتح المذكرة بنجاح.";
-
-  } catch (error) {
-    viewerMessage.textContent =
-      error.message || "حدث خطأ أثناء فتح المذكرة.";
-
-    viewerPages.replaceChildren();
-  }
-}
-
-  async function loadDashboard() {
-  if (!token) {
-    location.replace("./login.html");
-    return;
-  }
-
-  try {
-    const [me, purchases, materialsData] = await Promise.all([
-      api("/api/student/me"),
-      api("/api/student/purchases"),
-      api("/api/materials")
-    ]);
-    const student = me.student;
-    const subjects = me.subjects || [];
-    const materials = materialsData.materials || [];
-
-    document.getElementById("welcome").textContent =
-      "أهلاً " + student.name;
-
-    document.getElementById("studentInfo").textContent =
-      "الصف الدراسي: " + student.grade;
-
-    showList("subjects", subjects, "لا توجد مواد مسجلة.", (div, s) => {
-      div.textContent = s.name;
-    });
-
-    const subjectIds = subjects.map(s => Number(s.id));
-    const myMaterials = materials.filter(m =>
-      subjectIds.includes(Number(m.subject_id))
-    );
-
-    const freeMaterials = myMaterials.filter(m => Number(m.is_free) === 1);
-    const paidMaterials = myMaterials.filter(m => Number(m.is_free) === 0);
-
-    function renderMaterial(div, m) {
-      const title = document.createElement("strong");
-      title.textContent = m.title;
-
-      const type = document.createElement("div");
-      type.className = "muted";
-      type.textContent = m.type || "محتوى تعليمي";
-
-      const price = document.createElement("div");
-      price.className = "muted";
-      price.textContent = Number(m.is_free) === 1
-        ? "مجاني"
-        : "السعر: " + m.price + " جنيه";
-
-      div.append(title, type, price);
-
-     if (Number(m.is_free) === 1) {
-  const openButton = document.createElement("button");
-  openButton.textContent = "فتح المذكرة";
-
-  openButton.addEventListener("click", () => {
-    openPdf(m.id, m.title, student.name);
-  });
-
-  div.appendChild(openButton);
-} 
-
-      if (Number(m.is_free) === 0) {
-        const button = document.createElement("button");
-        button.textContent = "طلب شراء المذكرة";
-
-        button.addEventListener("click", async () => {
-  button.disabled = true;
-  button.textContent = "جارٍ إرسال الطلب...";
-
-  try {
-    await api("/api/orders", {
-      method: "POST",
-      body: JSON.stringify({ material_id: Number(m.id) })
-    });
-
-    button.textContent = "طلبك قيد المراجعة";
-    button.disabled = true;
-    message.textContent = "تم إرسال طلب الشراء بنجاح.";
-
-  } catch (error) {
-    message.textContent = error.message;
-    button.disabled = false;
-    button.textContent = "طلب شراء المذكرة";
-
-    if (error.status === 409) {
-      button.textContent = "لديك طلب شراء بالفعل";
-      button.disabled = true;
-    }
-  }
+$("themeBtn").addEventListener("click",()=>{
+ document.body.classList.toggle("light");
+ localStorage.setItem(
+  "zm_student_theme",
+  document.body.classList.contains("light")?"light":"dark"
+ );
+ updateThemeButton();
 });
 
-div.appendChild(button);
-      }
-    }
+/* طلبات API */
+async function api(path,options={}){
+ const headers={
+  "Authorization":"Bearer "+token,
+  ...(options.headers||{})
+ };
 
-    showList(
-      "freeMaterials",
-      freeMaterials,
-      "لا يوجد محتوى مجاني متاح حاليًا.",
-      renderMaterial
-    );
+ if(options.body && !(options.body instanceof FormData)){
+  headers["Content-Type"]="application/json";
+ }
 
-    showList(
-      "paidMaterials",
-      paidMaterials,
-      "لا توجد مذكرات متاحة للشراء حاليًا.",
-      renderMaterial
-    );
+ const response=await fetch(API+path,{
+  ...options,
+  headers
+ });
 
-    showList("purchases", purchases.purchases,
-      "لا توجد مشتريات معتمدة حتى الآن.", (div, p) => {
-        const title = document.createElement("strong");
-        title.textContent = p.title;
+ let data={};
+ try{data=await response.json()}catch(e){}
 
-        const subject = document.createElement("div");
-        subject.className = "muted";
-        subject.textContent = "المادة: " + p.subject_name;
-
-        const status = document.createElement("div");
-
-const statusNames = {
-  pending: "قيد المراجعة",
-  approved: "تمت الموافقة",
-  completed: "مكتمل",
-  rejected: "مرفوض"
-};
-
-status.textContent = "حالة الطلب: " +
-  (statusNames[p.status] || "غير معروف");
-
-        div.append(title, subject, status);
-
-if (p.status === "approved" || p.status === "completed") {
-  const openButton = document.createElement("button");
-  openButton.textContent = "فتح المذكرة";
-
-  openButton.addEventListener("click", () => {
-    openPdf(p.material_id, p.title, student.name);
-  });
-
-  div.appendChild(openButton);
-}
-      }
-    );
-
-    message.textContent = "تم تحميل لوحة الطالب بنجاح.";
-    dashboard.classList.remove("hidden");
-
-  } catch (error) {
-    message.textContent = error.message || "حدث خطأ أثناء تحميل البيانات.";
-  }
-}
-
-document.getElementById("logoutBtn").addEventListener("click", async () => {
-  try {
-    await fetch(API + "/api/student/logout", {
-      method: "POST",
-      headers: {
-        "Authorization": "Bearer " + token
-      }
-    });
-  } catch (e) {}
-
+ if(response.status===401){
   localStorage.removeItem("zm_student_token");
   location.replace("./login.html");
+  throw new Error("انتهت جلسة الدخول.");
+ }
+
+ if(!response.ok || data.success===false){
+  const error=new Error(data.error||"تعذر تنفيذ الطلب.");
+  error.status=response.status;
+  error.code=data.code;
+  throw error;
+ }
+
+ return data;
+}
+
+/* عرض القوائم */
+function showList(id,items,emptyText,render){
+ const box=$(id);
+ box.replaceChildren();
+
+ if(!items || !items.length){
+  const p=document.createElement("div");
+  p.className="empty";
+  p.textContent=emptyText;
+  box.appendChild(p);
+  return;
+ }
+
+ items.forEach(item=>{
+  const div=document.createElement("div");
+  div.className="item";
+  render(div,item);
+  box.appendChild(div);
+ });
+}
+
+/* صورة الطالب
+   يتطلب دعم Worker لمسار GET/POST /api/student/photo.
+   POST يستقبل multipart/form-data بحقل اسمه photo.
+*/
+async function loadStudentPhoto(){
+ try{
+  const data=await api("/api/student/photo");
+  if(data.photo_url){
+   $("studentPhoto").src=data.photo_url;
+  }
+ }catch(error){
+  console.warn("تعذر تحميل صورة الطالب:",error.message);
+ }
+}
+
+$("photoInput").addEventListener("change",async event=>{
+ const file=event.target.files[0];
+ if(!file)return;
+
+ const allowed=["image/jpeg","image/png","image/webp"];
+ if(!allowed.includes(file.type)){
+  message.textContent="اختر صورة JPG أو PNG أو WEBP.";
+  event.target.value="";
+  return;
+ }
+
+ if(file.size>5*1024*1024){
+  message.textContent="حجم الصورة يجب ألا يتجاوز 5 ميجابايت.";
+  event.target.value="";
+  return;
+ }
+
+ const oldText=message.textContent;
+ message.textContent="جارٍ رفع الصورة وحفظها على حسابك...";
+
+ const form=new FormData();
+ form.append("photo",file);
+
+ try{
+  const data=await api("/api/student/photo",{
+   method:"POST",
+   body:form
+  });
+
+  if(data.photo_url){
+   $("studentPhoto").src=data.photo_url;
+  }else{
+   await loadStudentPhoto();
+  }
+
+  message.textContent="تم تحديث الصورة الشخصية.";
+ }catch(error){
+  message.textContent="لم يتم حفظ الصورة: "+error.message;
+ }finally{
+  event.target.value="";
+ }
 });
 
-  document.getElementById("closePdfBtn").addEventListener("click", () => {
-  const viewer = document.getElementById("pdfViewer");
-  const viewerPages = document.getElementById("viewerPages");
-  const viewerMessage = document.getElementById("viewerMessage");
+/* عارض PDF */
+async function openPdf(materialId,title){
+ const viewer=$("pdfViewer");
+ const viewerTitle=$("viewerTitle");
+ const viewerMessage=$("viewerMessage");
+ const viewerPages=$("viewerPages");
 
-  viewer.classList.add("hidden");
+ viewer.classList.remove("hidden");
+ viewerTitle.textContent=title||"عرض المذكرة";
+ viewerMessage.textContent="جارٍ تحميل المذكرة...";
+ viewerPages.replaceChildren();
+
+ try{
+  if(!window.pdfjsLib) throw new Error("تعذر تحميل مكتبة PDF.");
+
+  const response=await fetch(
+   API+"/api/student/materials/"+encodeURIComponent(materialId)+"/view",
+   {headers:{"Authorization":"Bearer "+token}}
+  );
+
+  if(response.status===401){
+   localStorage.removeItem("zm_student_token");
+   location.replace("./login.html");
+   return;
+  }
+
+  if(!response.ok){
+   let data={};
+   try{data=await response.json()}catch(e){}
+   throw new Error(data.error||"تعذر فتح المذكرة.");
+  }
+
+  const buffer=await response.arrayBuffer();
+  const pdf=await pdfjsLib.getDocument({
+   data:new Uint8Array(buffer)
+  }).promise;
+
+  viewerMessage.textContent="عدد الصفحات: "+pdf.numPages;
+
+  for(let number=1;number<=pdf.numPages;number++){
+   const page=await pdf.getPage(number);
+   const base=page.getViewport({scale:1});
+   const available=Math.min(window.innerWidth-30,900);
+   const scale=Math.min(1.5,available/base.width);
+   const viewport=page.getViewport({scale});
+
+   const pageBox=document.createElement("div");
+   pageBox.className="pdfPage";
+   pageBox.style.width=viewport.width+"px";
+
+   const canvas=document.createElement("canvas");
+   const context=canvas.getContext("2d");
+   const ratio=Math.min(window.devicePixelRatio||1,1.5);
+
+   canvas.width=Math.floor(viewport.width*ratio);
+   canvas.height=Math.floor(viewport.height*ratio);
+   canvas.style.width=viewport.width+"px";
+   canvas.style.height=viewport.height+"px";
+
+   const watermark=document.createElement("div");
+   watermark.className="pdfWatermark";
+
+   const logo=document.createElement("img");
+   logo.src="https://raw.githubusercontent.com/ziadmohsen2410-zm/ZM-Academy/main/Picsart_26-11-24_10-49-15-125.png";
+   logo.alt="ZM Academy";
+
+   watermark.appendChild(logo);
+   pageBox.append(canvas,watermark);
+   viewerPages.appendChild(pageBox);
+
+   await page.render({
+    canvasContext:context,
+    viewport,
+    transform:ratio!==1?[ratio,0,0,ratio,0,0]:null
+   }).promise;
+  }
+
+  viewerMessage.textContent="تم فتح المذكرة بنجاح.";
+ }catch(error){
+  viewerMessage.textContent=error.message||"حدث خطأ أثناء فتح المذكرة.";
   viewerPages.replaceChildren();
-  viewerMessage.textContent = "جارٍ تجهيز المذكرة...";
+ }
+}
+
+$("closePdfBtn").addEventListener("click",()=>{
+ $("pdfViewer").classList.add("hidden");
+ $("viewerPages").replaceChildren();
+ $("viewerMessage").textContent="جارٍ تجهيز المذكرة...";
 });
-  
+
+/* تحميل لوحة الطالب */
+async function loadDashboard(){
+ if(!token)return;
+
+ message.textContent="جارٍ تحميل بياناتك...";
+ dashboard.classList.add("hidden");
+
+ try{
+  const [me,purchases,materialsData]=await Promise.all([
+   api("/api/student/me"),
+   api("/api/student/purchases"),
+   api("/api/materials")
+  ]);
+
+  const student=me.student;
+  currentStudent=student;
+
+  const subjects=me.subjects||[];
+  const materials=materialsData.materials||[];
+  const purchaseList=purchases.purchases||[];
+
+  $("welcome").textContent="أهلاً "+(student.name||"بك");
+  $("studentInfo").textContent="الصف الدراسي: "+(student.grade||"غير محدد");
+
+  $("accountSummary").textContent=
+   "عدد المواد المسجلة: "+subjects.length+
+   " · عدد طلباتك: "+purchaseList.length;
+
+  showList("subjects",subjects,"لا توجد مواد مسجلة.",(div,s)=>{
+   div.textContent=s.name;
+  });
+
+  const subjectIds=subjects.map(s=>Number(s.id));
+  const myMaterials=materials.filter(m=>
+   subjectIds.includes(Number(m.subject_id))
+  );
+
+  const freeMaterials=myMaterials.filter(m=>Number(m.is_free)===1);
+  const paidMaterials=myMaterials.filter(m=>Number(m.is_free)!==1);
+
+  function renderMaterial(div,m){
+   const title=document.createElement("strong");
+   title.textContent=m.title||"مذكرة تعليمية";
+
+   const type=document.createElement("div");
+   type.className="muted";
+   type.textContent=m.type||"محتوى تعليمي";
+
+   const price=document.createElement("div");
+   price.className="muted";
+   price.textContent=Number(m.is_free)===1
+    ?"مجاني"
+    :"السعر: "+(m.price??"غير محدد")+" جنيه";
+
+   div.append(title,type,price);
+
+   if(Number(m.is_free)===1){
+    const button=document.createElement("button");
+    button.textContent="فتح المذكرة";
+    button.addEventListener("click",()=>openPdf(m.id,m.title));
+    div.appendChild(button);
+   }else{
+    const button=document.createElement("button");
+    button.textContent="طلب شراء المذكرة";
+
+    button.addEventListener("click",async()=>{
+     button.disabled=true;
+     button.textContent="جارٍ إرسال الطلب...";
+
+     try{
+      await api("/api/orders",{
+       method:"POST",
+       body:JSON.stringify({material_id:Number(m.id)})
+      });
+
+      button.textContent="طلبك قيد المراجعة";
+      message.textContent="تم إرسال طلب الشراء بنجاح.";
+     }catch(error){
+      message.textContent=error.message;
+      button.disabled=false;
+      button.textContent="طلب شراء المذكرة";
+
+      if(error.status===409){
+       button.textContent="لديك طلب شراء بالفعل";
+       button.disabled=true;
+      }
+     }
+    });
+
+    div.appendChild(button);
+   }
+  }
+
+  showList(
+   "freeMaterials",freeMaterials,
+   "لا يوجد محتوى مجاني متاح حاليًا.",renderMaterial
+  );
+
+  showList(
+   "paidMaterials",paidMaterials,
+   "لا توجد مذكرات متاحة للشراء حاليًا.",renderMaterial
+  );
+
+  const statusNames={
+   pending:"قيد المراجعة",
+   approved:"تمت الموافقة",
+   completed:"مكتمل",
+   rejected:"مرفوض"
+  };
+
+  showList(
+   "purchases",purchaseList,
+   "لا توجد مشتريات حتى الآن.",
+   (div,p)=>{
+    const title=document.createElement("strong");
+    title.textContent=p.title||"مذكرة";
+
+    const subject=document.createElement("div");
+    subject.className="muted";
+    subject.textContent="المادة: "+(p.subject_name||"غير محددة");
+
+    const status=document.createElement("div");
+    status.className="status";
+    status.textContent="حالة الطلب: "+
+     (statusNames[p.status]||"غير معروف");
+
+    div.append(title,subject,status);
+
+    if(p.status==="approved"||p.status==="completed"){
+     const button=document.createElement("button");
+     button.textContent="فتح المذكرة";
+     button.addEventListener("click",()=>{
+      openPdf(p.material_id,p.title);
+     });
+     div.appendChild(button);
+    }
+   }
+  );
+
+  dashboard.classList.remove("hidden");
+  message.textContent="تم تحميل لوحة الطالب بنجاح.";
+
+  loadStudentPhoto();
+
+ }catch(error){
+  message.textContent=error.message||"حدث خطأ أثناء تحميل البيانات.";
+ }
+}
+
+/* تحديث */
+$("refreshBtn").addEventListener("click",loadDashboard);
+
+/* تسجيل الخروج */
+$("logoutBtn").addEventListener("click",async()=>{
+ $("logoutBtn").disabled=true;
+ $("logoutBtn").textContent="جارٍ تسجيل الخروج...";
+
+ try{
+  await fetch(API+"/api/student/logout",{
+   method:"POST",
+   headers:{"Authorization":"Bearer "+token}
+  });
+ }catch(e){}
+
+ localStorage.removeItem("zm_student_token");
+ location.replace("./login.html");
+});
+
 loadDashboard();
 </script>
 </body>
