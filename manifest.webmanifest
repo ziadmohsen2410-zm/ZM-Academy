@@ -8,8 +8,10 @@
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
-  "background_color": "#09090b",
-  "theme_color": "#0b0b0d",
+  "background_color": "#090b12",
+  "theme_color": "#090b12",
+  "categories": ["education"],
+  "prefer_related_applications": false,
   "icons": [
     {
       "src": "assets/icon-192.png",
