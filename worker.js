@@ -518,14 +518,35 @@ function validStudentPhoto(bytes, contentType) {
 }
 
 // إنشاء جدول أرشيف المواد الدراسية
-async function ensureArchivedSubjectsTable(env) {
+async function ensureHomepageSettingsTable(env) {
   await env.DB.prepare(`
-    CREATE TABLE IF NOT EXISTS archived_subjects (
-      subject_id INTEGER PRIMARY KEY,
-      archived_at TEXT DEFAULT CURRENT_TIMESTAMP
+    CREATE TABLE IF NOT EXISTS homepage_settings (
+      id INTEGER PRIMARY KEY CHECK (id = 1),
+      draft_json TEXT NOT NULL DEFAULT '{}',
+      published_json TEXT NOT NULL DEFAULT '{}',
+      status TEXT NOT NULL DEFAULT 'published',
+      updated_at TEXT DEFAULT CURRENT_TIMESTAMP
     )
   `).run();
+
+  await env.DB.prepare(`
+    INSERT OR IGNORE INTO homepage_settings
+      (id, draft_json, published_json, status)
+    VALUES (1, '{}', '{}', 'published')
+  `).run();
 }
+
+function parseHomepageJson(value) {
+  try {
+    const parsed = JSON.parse(String(value || '{}'));
+    return parsed && typeof parsed === 'object' && !Array.isArray(parsed)
+      ? parsed
+      : {};
+  } catch {
+    return {};
+  }
+}
+
 
 // إنشاء جدول أرشيف الدروس
 async function ensureArchivedMaterialsTable(env) {
