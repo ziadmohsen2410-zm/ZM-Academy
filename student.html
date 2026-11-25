@@ -6,290 +6,139 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#0b1020">
 <title>لوحة الطالب | ZM Academy</title>
-
 <style>
 *{box-sizing:border-box}
 :root{
- --bg:#080d1b;
- --panel:rgba(19,29,54,.88);
- --panel2:#111d36;
- --text:#f5f7ff;
- --muted:#aab7d4;
- --blue:#35a8ff;
- --purple:#9b70ff;
- --border:rgba(117,153,255,.22);
+ --bg:#080d1b;--panel:rgba(19,29,54,.88);--panel2:#111d36;
+ --text:#f5f7ff;--muted:#aab7d4;--blue:#35a8ff;
+ --purple:#9b70ff;--border:rgba(117,153,255,.22);
  --shadow:0 15px 45px #0005;
 }
 body.light{
- --bg:#f1f5ff;
- --panel:rgba(255,255,255,.92);
- --panel2:#fff;
- --text:#17213a;
- --muted:#64718c;
- --border:rgba(65,104,180,.2);
+ --bg:#f1f5ff;--panel:rgba(255,255,255,.92);--panel2:#fff;
+ --text:#17213a;--muted:#64718c;--border:rgba(65,104,180,.2);
  --shadow:0 12px 35px #536b9b20;
 }
 body{
- margin:0;
- min-height:100vh;
- background:
- radial-gradient(circle at 10% 5%,#173e7760,transparent 32%),
- radial-gradient(circle at 90% 20%,#542b9360,transparent 30%),
- var(--bg);
- color:var(--text);
- font-family:Arial,Tahoma,sans-serif;
- line-height:1.8;
- transition:.25s;
+ margin:0;min-height:100vh;
+ background:radial-gradient(circle at 10% 5%,#173e7760,transparent 32%),
+ radial-gradient(circle at 90% 20%,#542b9360,transparent 30%),var(--bg);
+ color:var(--text);font-family:Arial,Tahoma,sans-serif;
+ line-height:1.8;transition:.25s;
 }
 button,a,input{font:inherit}
 button{
- border:0;
- cursor:pointer;
- border-radius:12px;
- padding:11px 17px;
- color:white;
- font-weight:bold;
- background:linear-gradient(110deg,var(--blue),var(--purple));
+ border:0;cursor:pointer;border-radius:12px;padding:11px 17px;
+ color:white;font-weight:bold;background:linear-gradient(110deg,var(--blue),var(--purple));
  transition:.2s;
 }
 button:hover{transform:translateY(-2px);filter:brightness(1.08)}
 button:disabled{opacity:.55;cursor:not-allowed;transform:none}
 header{
- position:sticky;
- top:0;
- z-index:20;
- padding:13px 18px;
- background:var(--panel);
- backdrop-filter:blur(18px);
- border-bottom:1px solid var(--border);
- box-shadow:var(--shadow);
+ position:sticky;top:0;z-index:20;padding:13px 18px;
+ background:var(--panel);backdrop-filter:blur(18px);
+ border-bottom:1px solid var(--border);box-shadow:var(--shadow);
 }
 .nav{
- max-width:1100px;
- margin:auto;
- display:flex;
- align-items:center;
- justify-content:space-between;
- gap:12px;
+ max-width:1100px;margin:auto;display:flex;align-items:center;
+ justify-content:space-between;gap:12px;
 }
-.brand{
- display:flex;
- align-items:center;
- gap:10px;
- font-weight:bold;
- font-size:19px;
-}
-.brand img{
- width:43px;height:43px;
- object-fit:contain;
- border-radius:12px;
-}
+.brand{display:flex;align-items:center;gap:10px;font-weight:bold;font-size:19px}
+.brand img{width:43px;height:43px;object-fit:contain;border-radius:12px}
 .brand span{
  background:linear-gradient(90deg,var(--blue),var(--purple));
- background-clip:text;
- -webkit-background-clip:text;
- color:transparent;
+ background-clip:text;-webkit-background-clip:text;color:transparent;
 }
 .header-actions{display:flex;gap:8px}
 .icon-btn{
- width:43px;height:43px;
- padding:0;
- background:var(--panel2);
- border:1px solid var(--border);
- color:var(--text);
+ width:43px;height:43px;padding:0;background:var(--panel2);
+ border:1px solid var(--border);color:var(--text);
 }
 main{max-width:1100px;margin:auto;padding:22px 16px 45px}
 #message{
- padding:12px 15px;
- margin-bottom:15px;
- border:1px solid var(--border);
- border-radius:13px;
- background:var(--panel);
- color:var(--muted);
- text-align:center;
+ padding:12px 15px;margin-bottom:15px;border:1px solid var(--border);
+ border-radius:13px;background:var(--panel);color:var(--muted);text-align:center;
 }
 .hidden{display:none!important}
 .hero{
- position:relative;
- overflow:hidden;
- display:flex;
- align-items:center;
- justify-content:space-between;
- gap:20px;
- padding:24px;
- margin-bottom:20px;
- border:1px solid var(--border);
- border-radius:23px;
- background:linear-gradient(120deg,#123b6dcc,#422b78cc);
- box-shadow:var(--shadow);
+ position:relative;overflow:hidden;display:flex;align-items:center;
+ justify-content:space-between;gap:20px;padding:24px;margin-bottom:20px;
+ border:1px solid var(--border);border-radius:23px;
+ background:linear-gradient(120deg,#123b6dcc,#422b78cc);box-shadow:var(--shadow);
 }
 .hero:after{
- content:"";
- position:absolute;
- width:230px;height:230px;
- border-radius:50%;
- background:#7d8dff22;
- left:-70px;top:-100px;
+ content:"";position:absolute;width:230px;height:230px;border-radius:50%;
+ background:#7d8dff22;left:-70px;top:-100px;
 }
 .hero h1{margin:0 0 5px;font-size:clamp(23px,4vw,32px)}
 .hero p{margin:0;color:#d5e4ff}
-.profile{
- position:relative;
- z-index:1;
- display:flex;
- align-items:center;
- gap:14px;
-}
+.profile{position:relative;z-index:1;display:flex;align-items:center;gap:14px}
 .avatar-wrap{
- width:100px;height:100px;
- flex:none;
- border-radius:50%;
- padding:4px;
- background:linear-gradient(140deg,#35c7ff,#a16aff);
- box-shadow:0 0 25px #5b8fff66;
+ width:100px;height:100px;flex:none;border-radius:50%;padding:4px;
+ background:linear-gradient(140deg,#35c7ff,#a16aff);box-shadow:0 0 25px #5b8fff66;
 }
 .avatar-wrap img{
- width:100%;height:100%;
- object-fit:cover;
- border-radius:50%;
- background:#17223c;
+ width:100%;height:100%;object-fit:cover;border-radius:50%;background:#17223c;
 }
 .profile-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
 .small-btn{padding:8px 12px;font-size:13px}
 .card{
- background:var(--panel);
- border:1px solid var(--border);
- border-radius:19px;
- padding:19px;
- margin-bottom:17px;
- box-shadow:var(--shadow);
- backdrop-filter:blur(14px);
+ background:var(--panel);border:1px solid var(--border);border-radius:19px;
+ padding:19px;margin-bottom:17px;box-shadow:var(--shadow);backdrop-filter:blur(14px);
 }
 .card h2{
- margin:0 0 14px;
- font-size:19px;
- display:flex;
- align-items:center;
- gap:9px;
+ margin:0 0 14px;font-size:19px;display:flex;align-items:center;gap:9px;
 }
 .card h2:before{
- content:"";
- width:5px;height:22px;
- border-radius:5px;
+ content:"";width:5px;height:22px;border-radius:5px;
  background:linear-gradient(var(--blue),var(--purple));
 }
-.grid{
- display:grid;
- grid-template-columns:repeat(auto-fit,minmax(210px,1fr));
- gap:13px;
-}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:13px}
 .item{
- background:var(--panel2);
- border:1px solid var(--border);
- border-radius:14px;
- padding:14px;
- margin:10px 0;
+ background:var(--panel2);border:1px solid var(--border);
+ border-radius:14px;padding:14px;margin:10px 0;
 }
 .item strong{display:block;margin-bottom:5px}
 .muted{color:var(--muted);font-size:14px}
-.item button{margin-top:12px}
-.empty{
- color:var(--muted);
- text-align:center;
- padding:12px;
-}
+.item button{margin-top:12px;margin-left:5px}
+.empty{color:var(--muted);text-align:center;padding:12px}
 .info-chip{
- display:inline-block;
- padding:5px 10px;
- margin-top:7px;
- border-radius:20px;
- color:#b9dcff;
- background:#238be522;
- border:1px solid #238be544;
- font-size:12px;
+ display:inline-block;padding:5px 10px;margin-top:7px;border-radius:20px;
+ color:#b9dcff;background:#238be522;border:1px solid #238be544;font-size:12px;
 }
 body.light .info-chip{color:#315c9a}
 .status{
- display:inline-block;
- border-radius:20px;
- padding:4px 10px;
- font-size:12px;
- background:#8b7cff22;
- color:var(--text);
+ display:inline-block;border-radius:20px;padding:4px 10px;font-size:12px;
+ background:#8b7cff22;color:var(--text);
 }
-.actions{
- display:flex;
- flex-wrap:wrap;
- gap:10px;
-}
+.actions{display:flex;flex-wrap:wrap;gap:10px}
 .secondary{
- background:var(--panel2);
- color:var(--text);
- border:1px solid var(--border);
+ background:var(--panel2);color:var(--text);border:1px solid var(--border);
 }
 .danger{background:linear-gradient(110deg,#e34b70,#a62f61)}
-footer{
- text-align:center;
- color:var(--muted);
- font-size:12px;
- padding:15px;
-}
+footer{text-align:center;color:var(--muted);font-size:12px;padding:15px}
 input[type=file]{display:none}
-
-/* PDF */
 #pdfViewer{
- position:fixed;
- inset:0;
- z-index:1000;
- overflow:auto;
- padding:12px;
- background:#080d19;
+ position:fixed;inset:0;z-index:1000;overflow:auto;padding:12px;background:#080d19;
 }
 .viewerTop{
- position:sticky;
- top:0;
- z-index:5;
- display:flex;
- justify-content:space-between;
- align-items:center;
- gap:10px;
- padding:12px;
- margin-bottom:12px;
- background:#111a2d;
- border:1px solid #34415c;
- border-radius:13px;
- color:white;
+ position:sticky;top:0;z-index:5;display:flex;justify-content:space-between;
+ align-items:center;gap:10px;padding:12px;margin-bottom:12px;
+ background:#111a2d;border:1px solid #34415c;border-radius:13px;color:white;
 }
 .viewerTop strong{color:#75c5ff}
-.viewerPages{
- display:flex;
- flex-direction:column;
- align-items:center;
- gap:15px;
-}
+.viewerPages{display:flex;flex-direction:column;align-items:center;gap:15px}
 .pdfPage{
- position:relative;
- background:white;
- max-width:100%;
- overflow:hidden;
+ position:relative;background:white;max-width:100%;overflow:hidden;
  box-shadow:0 3px 18px #0009;
 }
 .pdfPage canvas{display:block;max-width:100%;height:auto}
 .pdfWatermark{
- position:absolute;
- inset:0;
- display:flex;
- align-items:center;
- justify-content:center;
- pointer-events:none;
- overflow:hidden;
+ position:absolute;inset:0;display:flex;align-items:center;
+ justify-content:center;pointer-events:none;overflow:hidden;
 }
 .pdfWatermark img{
- width:48%;
- max-width:280px;
- height:auto;
- opacity:.16;
- object-fit:contain;
+ width:48%;max-width:280px;height:auto;opacity:.16;object-fit:contain;
 }
 @media(max-width:600px){
  main{padding:14px 11px 35px}
@@ -301,15 +150,12 @@ input[type=file]{display:none}
 }
 @media(prefers-reduced-motion:reduce){
  *,*::before,*::after{
-  scroll-behavior:auto!important;
-  animation-duration:.01ms!important;
-  animation-iteration-count:1!important;
-  transition-duration:.01ms!important;
+  scroll-behavior:auto!important;animation-duration:.01ms!important;
+  animation-iteration-count:1!important;transition-duration:.01ms!important;
  }
 }
 </style>
 </head>
-
 <body>
 <header>
  <div class="nav">
@@ -326,7 +172,6 @@ input[type=file]{display:none}
 
 <main>
  <div id="message">جارٍ تحميل بياناتك...</div>
-
  <section id="dashboard" class="hidden">
   <div class="hero">
    <div>
@@ -334,7 +179,6 @@ input[type=file]{display:none}
     <p>مرحباً بك في عالم التعلم والتفوق</p>
     <div id="studentInfo" class="info-chip"></div>
    </div>
-
    <div class="profile">
     <div class="avatar-wrap">
      <img id="studentPhoto" alt="صورة الطالب"
@@ -352,30 +196,18 @@ input[type=file]{display:none}
   </div>
 
   <div class="grid">
-   <div class="card">
-    <h2>موادي الدراسية</h2>
-    <div id="subjects"></div>
-   </div>
-   <div class="card">
-    <h2>ملخص الحساب</h2>
-    <div id="accountSummary" class="muted">بيانات حسابك التعليمية</div>
-   </div>
+   <div class="card"><h2>موادي الدراسية</h2><div id="subjects"></div></div>
+   <div class="card"><h2>ملخص الحساب</h2><div id="accountSummary" class="muted">بيانات حسابك التعليمية</div></div>
   </div>
 
-  <div class="card">
-   <h2>المحتوى المجاني</h2>
-   <div id="freeMaterials"></div>
+  <div class="grid">
+   <div class="card"><h2>ملخص المذاكرة</h2><div id="learningSummary" class="muted">جارٍ تحميل تقدمك الدراسي...</div></div>
+   <div class="card"><h2>مذكراتي المفضلة</h2><div id="favoriteMaterials"></div></div>
   </div>
 
-  <div class="card">
-   <h2>المذكرات المتاحة للشراء</h2>
-   <div id="paidMaterials"></div>
-  </div>
-
-  <div class="card">
-   <h2>طلباتي ومشترياتي</h2>
-   <div id="purchases"></div>
-  </div>
+  <div class="card"><h2>المحتوى المجاني</h2><div id="freeMaterials"></div></div>
+  <div class="card"><h2>المذكرات المتاحة للشراء</h2><div id="paidMaterials"></div></div>
+  <div class="card"><h2>طلباتي ومشترياتي</h2><div id="purchases"></div></div>
 
   <div class="card">
    <h2>التواصل والدعم</h2>
@@ -406,12 +238,17 @@ input[type=file]{display:none}
 
 const API="https://zm-academy-api.ziadmohsen4567.workers.dev";
 const token=localStorage.getItem("zm_student_token");
-
 const $=id=>document.getElementById(id);
 const message=$("message");
 const dashboard=$("dashboard");
 
 let currentStudent=null;
+let studentProgress=[];
+let studentFavorites=[];
+let activePdfMaterialId=null;
+let pdfProgressObserver=null;
+let lastSavedPage=0;
+let ownedMaterialIds=[];
 
 if(!token) location.replace("./login.html");
 
@@ -425,17 +262,14 @@ const savedTheme=localStorage.getItem("zm_student_theme");
 if(savedTheme==="light") document.body.classList.add("light");
 
 function updateThemeButton(){
- $("themeBtn").textContent=
- document.body.classList.contains("light")?"☾":"☀️";
+ $("themeBtn").textContent=document.body.classList.contains("light")?"☾":"☀️";
 }
 updateThemeButton();
 
 $("themeBtn").addEventListener("click",()=>{
  document.body.classList.toggle("light");
- localStorage.setItem(
-  "zm_student_theme",
-  document.body.classList.contains("light")?"light":"dark"
- );
+ localStorage.setItem("zm_student_theme",
+  document.body.classList.contains("light")?"light":"dark");
  updateThemeButton();
 });
 
@@ -445,32 +279,23 @@ async function api(path,options={}){
   "Authorization":"Bearer "+token,
   ...(options.headers||{})
  };
-
  if(options.body && !(options.body instanceof FormData)){
   headers["Content-Type"]="application/json";
  }
-
- const response=await fetch(API+path,{
-  ...options,
-  headers
- });
-
+ const response=await fetch(API+path,{...options,headers});
  let data={};
  try{data=await response.json()}catch(e){}
-
  if(response.status===401){
   localStorage.removeItem("zm_student_token");
   location.replace("./login.html");
   throw new Error("انتهت جلسة الدخول.");
  }
-
  if(!response.ok || data.success===false){
   const error=new Error(data.error||"تعذر تنفيذ الطلب.");
   error.status=response.status;
   error.code=data.code;
   throw error;
  }
-
  return data;
 }
 
@@ -478,7 +303,6 @@ async function api(path,options={}){
 function showList(id,items,emptyText,render){
  const box=$(id);
  box.replaceChildren();
-
  if(!items || !items.length){
   const p=document.createElement("div");
   p.className="empty";
@@ -486,7 +310,6 @@ function showList(id,items,emptyText,render){
   box.appendChild(p);
   return;
  }
-
  items.forEach(item=>{
   const div=document.createElement("div");
   div.className="item";
@@ -495,76 +318,46 @@ function showList(id,items,emptyText,render){
  });
 }
 
-/* صورة الطالب - تحميل سريع وضغط تلقائي */
-
+/* صورة الطالب */
 function studentPhotoCacheKey(){
- return currentStudent?.id
-  ? "zm_student_photo_" + currentStudent.id
-  : null;
+ return currentStudent?.id?"zm_student_photo_"+currentStudent.id:null;
 }
 
 async function compressStudentPhoto(file){
- const bitmap = await createImageBitmap(file);
-
- const maxSize = 512;
- const scale = Math.min(1, maxSize / Math.max(bitmap.width, bitmap.height));
-
- const canvas = document.createElement("canvas");
- canvas.width = Math.round(bitmap.width * scale);
- canvas.height = Math.round(bitmap.height * scale);
-
- const ctx = canvas.getContext("2d");
-
- ctx.fillStyle = "#ffffff";
- ctx.fillRect(0, 0, canvas.width, canvas.height);
- ctx.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+ const bitmap=await createImageBitmap(file);
+ const maxSize=512;
+ const scale=Math.min(1,maxSize/Math.max(bitmap.width,bitmap.height));
+ const canvas=document.createElement("canvas");
+ canvas.width=Math.round(bitmap.width*scale);
+ canvas.height=Math.round(bitmap.height*scale);
+ const ctx=canvas.getContext("2d");
+ ctx.fillStyle="#ffffff";
+ ctx.fillRect(0,0,canvas.width,canvas.height);
+ ctx.drawImage(bitmap,0,0,canvas.width,canvas.height);
  bitmap.close();
-
- const blob = await new Promise(resolve =>
-  canvas.toBlob(resolve, "image/jpeg", 0.78)
- );
-
+ const blob=await new Promise(resolve=>canvas.toBlob(resolve,"image/jpeg",0.78));
  if(!blob) throw new Error("تعذر تجهيز الصورة.");
-
- return new File(
-  [blob],
-  "student-photo.jpg",
-  {type:"image/jpeg",lastModified:Date.now()}
- );
+ return new File([blob],"student-photo.jpg",{type:"image/jpeg",lastModified:Date.now()});
 }
 
 async function loadStudentPhoto(){
- const cacheKey = studentPhotoCacheKey();
-
- // عرض النسخة المحفوظة فورًا
+ const cacheKey=studentPhotoCacheKey();
  if(cacheKey){
   try{
-   const cached = localStorage.getItem(cacheKey);
-   if(cached){
-    $("studentPhoto").src = cached;
-   }
+   const cached=localStorage.getItem(cacheKey);
+   if(cached) $("studentPhoto").src=cached;
   }catch(error){}
  }
-
- // جلب أحدث صورة من الحساب
  try{
-  const data = await api("/api/student/photo");
-
+  const data=await api("/api/student/photo");
   if(data.photo_url){
-   $("studentPhoto").src = data.photo_url;
-
-   // تخزين الصور الصغيرة فقط لتجنب امتلاء مساحة المتصفح
-   if(cacheKey && data.photo_url.length <= 400000){
-    try{
-     localStorage.setItem(cacheKey,data.photo_url);
-    }catch(error){}
+   $("studentPhoto").src=data.photo_url;
+   if(cacheKey && data.photo_url.length<=400000){
+    try{localStorage.setItem(cacheKey,data.photo_url)}catch(error){}
    }
   }else{
    $("studentPhoto").removeAttribute("src");
-
-   if(cacheKey){
-    localStorage.removeItem(cacheKey);
-   }
+   if(cacheKey) localStorage.removeItem(cacheKey);
   }
  }catch(error){
   console.warn("تعذر تحديث صورة الطالب:",error.message);
@@ -574,64 +367,127 @@ async function loadStudentPhoto(){
 $("photoInput").addEventListener("change",async event=>{
  const file=event.target.files[0];
  if(!file)return;
-
  const allowed=["image/jpeg","image/png","image/webp"];
-
  if(!allowed.includes(file.type)){
   message.textContent="اختر صورة JPG أو PNG أو WEBP.";
   event.target.value="";
   return;
  }
-
  if(file.size>5*1024*1024){
   message.textContent="حجم الصورة يجب ألا يتجاوز 5 ميجابايت.";
   event.target.value="";
   return;
  }
-
  message.textContent="جارٍ تجهيز الصورة وضغطها...";
-
  try{
-  const compressedFile = await compressStudentPhoto(file);
-
+  const compressedFile=await compressStudentPhoto(file);
   message.textContent="جارٍ رفع الصورة وحفظها على حسابك...";
-
   const form=new FormData();
   form.append("photo",compressedFile);
-
-  const data=await api("/api/student/photo",{
-   method:"POST",
-   body:form
-  });
-
+  const data=await api("/api/student/photo",{method:"POST",body:form});
   if(data.photo_url){
    $("studentPhoto").src=data.photo_url;
-
    const cacheKey=studentPhotoCacheKey();
-
    if(cacheKey && data.photo_url.length<=400000){
-    try{
-     localStorage.setItem(cacheKey,data.photo_url);
-    }catch(error){}
+    try{localStorage.setItem(cacheKey,data.photo_url)}catch(error){}
    }
   }
-
   message.textContent="تم تحديث الصورة الشخصية وحفظها بنجاح.";
-
  }catch(error){
   message.textContent="لم يتم حفظ الصورة: "+error.message;
  }finally{
   event.target.value="";
  }
 });
- 
+
+/* تقدم المذاكرة والمفضلة */
+function renderLearningSummary(){
+ const box=$("learningSummary");
+ box.replaceChildren();
+ const started=new Set(studentProgress.map(p=>Number(p.material_id))).size;
+ const count=document.createElement("strong");
+ count.textContent="بدأت مذاكرة "+started+" مذكرة";
+ const latest=[...studentProgress].sort((a,b)=>
+  new Date(b.updated_at||b.updatedAt||0)-new Date(a.updated_at||a.updatedAt||0)
+ )[0];
+ const detail=document.createElement("div");
+ detail.className="muted";
+ detail.style.marginTop="7px";
+ detail.textContent=latest
+  ?"آخر مذكرة تابعتها: "+(latest.title||"مذكرة")+" — الصفحة "+(latest.last_page||1)
+  :"لم تبدأ مذاكرة أي مذكرة بعد.";
+ box.append(count,detail);
+}
+
+function renderFavoriteMaterials(){
+ showList("favoriteMaterials",studentFavorites,"لم تضف أي مذكرات للمفضلة بعد.",(div,item)=>{
+  const title=document.createElement("strong");
+  title.textContent=item.title||"مذكرة تعليمية";
+  const info=document.createElement("div");
+  info.className="muted";
+  info.textContent=item.subject_name||item.type||"محتوى تعليمي";
+  const remove=document.createElement("button");
+  remove.className="secondary small-btn";
+  remove.textContent="إزالة من المفضلة";
+  remove.addEventListener("click",async()=>{
+   remove.disabled=true;
+   try{
+    await api("/api/student/favorites/"+encodeURIComponent(item.material_id),{method:"DELETE"});
+    studentFavorites=studentFavorites.filter(f=>Number(f.material_id)!==Number(item.material_id));
+    renderFavoriteMaterials();
+   }catch(error){
+    message.textContent=error.message;
+    remove.disabled=false;
+   }
+  });
+  div.append(title,info,remove);
+  if(Number(item.is_free)===1||ownedMaterialIds.includes(Number(item.material_id))){
+   const open=document.createElement("button");
+   open.textContent="فتح المذكرة";
+   open.addEventListener("click",()=>openPdf(item.material_id,item.title));
+   div.appendChild(open);
+  }
+ });
+}
+
+async function saveMaterialProgress(materialId,pageNumber){
+ if(!materialId||!Number.isInteger(pageNumber)||pageNumber<1||lastSavedPage===pageNumber)return;
+ try{
+  await api("/api/student/progress",{
+   method:"POST",
+   body:JSON.stringify({material_id:Number(materialId),last_page:pageNumber})
+  });
+  lastSavedPage=pageNumber;
+  const old=studentProgress.find(p=>Number(p.material_id)===Number(materialId));
+  if(old){
+   old.last_page=pageNumber;
+   old.updated_at=new Date().toISOString();
+  }else{
+   studentProgress.push({
+    material_id:Number(materialId),
+    last_page:pageNumber,
+    updated_at:new Date().toISOString()
+   });
+  }
+  renderLearningSummary();
+ }catch(error){
+  console.warn("تعذر حفظ تقدم المذاكرة:",error.message);
+ }
+}
+
 /* عارض PDF */
-async function openPdf(materialId,title){
+async function openPdf(materialId,title,resumePage=1){
  const viewer=$("pdfViewer");
  const viewerTitle=$("viewerTitle");
  const viewerMessage=$("viewerMessage");
  const viewerPages=$("viewerPages");
 
+ if(pdfProgressObserver){
+  pdfProgressObserver.disconnect();
+  pdfProgressObserver=null;
+ }
+ activePdfMaterialId=Number(materialId);
+ lastSavedPage=0;
  viewer.classList.remove("hidden");
  viewerTitle.textContent=title||"عرض المذكرة";
  viewerMessage.textContent="جارٍ تحميل المذكرة...";
@@ -639,29 +495,22 @@ async function openPdf(materialId,title){
 
  try{
   if(!window.pdfjsLib) throw new Error("تعذر تحميل مكتبة PDF.");
-
   const response=await fetch(
    API+"/api/student/materials/"+encodeURIComponent(materialId)+"/view",
    {headers:{"Authorization":"Bearer "+token}}
   );
-
   if(response.status===401){
    localStorage.removeItem("zm_student_token");
    location.replace("./login.html");
    return;
   }
-
   if(!response.ok){
    let data={};
    try{data=await response.json()}catch(e){}
    throw new Error(data.error||"تعذر فتح المذكرة.");
   }
-
   const buffer=await response.arrayBuffer();
-  const pdf=await pdfjsLib.getDocument({
-   data:new Uint8Array(buffer)
-  }).promise;
-
+  const pdf=await pdfjsLib.getDocument({data:new Uint8Array(buffer)}).promise;
   viewerMessage.textContent="عدد الصفحات: "+pdf.numPages;
 
   for(let number=1;number<=pdf.numPages;number++){
@@ -673,12 +522,12 @@ async function openPdf(materialId,title){
 
    const pageBox=document.createElement("div");
    pageBox.className="pdfPage";
+   pageBox.dataset.page=String(number);
    pageBox.style.width=viewport.width+"px";
 
    const canvas=document.createElement("canvas");
    const context=canvas.getContext("2d");
    const ratio=Math.min(window.devicePixelRatio||1,1.5);
-
    canvas.width=Math.floor(viewport.width*ratio);
    canvas.height=Math.floor(viewport.height*ratio);
    canvas.style.width=viewport.width+"px";
@@ -686,11 +535,9 @@ async function openPdf(materialId,title){
 
    const watermark=document.createElement("div");
    watermark.className="pdfWatermark";
-
    const logo=document.createElement("img");
    logo.src="https://raw.githubusercontent.com/ziadmohsen2410-zm/ZM-Academy/main/Picsart_26-11-24_10-49-15-125.png";
    logo.alt="ZM Academy";
-
    watermark.appendChild(logo);
    pageBox.append(canvas,watermark);
    viewerPages.appendChild(pageBox);
@@ -702,6 +549,15 @@ async function openPdf(materialId,title){
    }).promise;
   }
 
+  pdfProgressObserver=new IntersectionObserver(entries=>{
+   const visible=entries.filter(entry=>entry.isIntersecting)
+    .sort((a,b)=>b.intersectionRatio-a.intersectionRatio)[0];
+   if(visible) saveMaterialProgress(activePdfMaterialId,Number(visible.target.dataset.page));
+  },{root:viewer,threshold:[0.35,0.6]});
+
+  viewerPages.querySelectorAll(".pdfPage").forEach(page=>pdfProgressObserver.observe(page));
+  const target=viewerPages.querySelector('[data-page="'+Math.max(1,Number(resumePage)||1)+'"]');
+  if(target) target.scrollIntoView({block:"start",behavior:"auto"});
   viewerMessage.textContent="تم فتح المذكرة بنجاح.";
  }catch(error){
   viewerMessage.textContent=error.message||"حدث خطأ أثناء فتح المذكرة.";
@@ -711,6 +567,11 @@ async function openPdf(materialId,title){
 
 $("closePdfBtn").addEventListener("click",()=>{
  $("pdfViewer").classList.add("hidden");
+ if(pdfProgressObserver){
+  pdfProgressObserver.disconnect();
+  pdfProgressObserver=null;
+ }
+ activePdfMaterialId=null;
  $("viewerPages").replaceChildren();
  $("viewerMessage").textContent="جارٍ تجهيز المذكرة...";
 });
@@ -718,93 +579,112 @@ $("closePdfBtn").addEventListener("click",()=>{
 /* تحميل لوحة الطالب */
 async function loadDashboard(){
  if(!token)return;
-
  message.textContent="جارٍ تحميل بياناتك...";
  dashboard.classList.add("hidden");
 
  try{
-  const [me,purchases,materialsData]=await Promise.all([
+  const [me,purchases,materialsData,progressData,favoritesData]=await Promise.all([
    api("/api/student/me"),
    api("/api/student/purchases"),
-   api("/api/materials")
+   api("/api/materials"),
+   api("/api/student/progress").catch(()=>({progress:[]})),
+   api("/api/student/favorites").catch(()=>({favorites:[]}))
   ]);
 
   const student=me.student;
   currentStudent=student;
-
   const subjects=me.subjects||[];
   const materials=materialsData.materials||[];
   const purchaseList=purchases.purchases||[];
+  studentProgress=progressData.progress||[];
+  studentFavorites=favoritesData.favorites||[];
+  ownedMaterialIds=purchaseList
+   .filter(p=>p.status==="approved"||p.status==="completed")
+   .map(p=>Number(p.material_id));
 
   $("welcome").textContent="أهلاً "+(student.name||"بك");
   $("studentInfo").textContent="الصف الدراسي: "+(student.grade||"غير محدد");
 
-  const visiblePurchases=purchaseList.filter(
-   p=>!Number(p.is_hidden)
-  );
-
+  const visiblePurchases=purchaseList.filter(p=>!Number(p.is_hidden));
   $("accountSummary").textContent=
    "عدد المواد المسجلة: "+subjects.length+
-   " | عدد طلباتك ومشترياتك الظاهرة: "+
-   visiblePurchases.length;
+   " | عدد طلباتك ومشترياتك الظاهرة: "+visiblePurchases.length;
 
   showList("subjects",subjects,"لا توجد مواد مسجلة.",(div,s)=>{
    div.textContent=s.name;
   });
 
   const subjectIds=subjects.map(s=>Number(s.id));
-  const myMaterials=materials.filter(m=>
-   subjectIds.includes(Number(m.subject_id))
-  );
-
+  const myMaterials=materials.filter(m=>subjectIds.includes(Number(m.subject_id)));
   const freeMaterials=myMaterials.filter(m=>Number(m.is_free)===1);
   const paidMaterials=myMaterials.filter(m=>Number(m.is_free)!==1);
 
   function renderMaterial(div,m){
    const title=document.createElement("strong");
    title.textContent=m.title||"مذكرة تعليمية";
-
    const type=document.createElement("div");
    type.className="muted";
    type.textContent=m.type||"محتوى تعليمي";
-
    const price=document.createElement("div");
    price.className="muted";
    price.textContent=Number(m.is_free)===1
-    ?"مجاني"
-    :"السعر: "+(m.price??"غير محدد")+" جنيه";
-
+    ?"مجاني":"السعر: "+(m.price??"غير محدد")+" جنيه";
    div.append(title,type,price);
+
+   const isFavorite=studentFavorites.some(f=>Number(f.material_id)===Number(m.id));
+   const favoriteButton=document.createElement("button");
+   favoriteButton.className="secondary small-btn";
+   favoriteButton.textContent=isFavorite?"★ إزالة من المفضلة":"☆ أضف للمفضلة";
+   favoriteButton.addEventListener("click",async()=>{
+    favoriteButton.disabled=true;
+    try{
+     await api("/api/student/favorites/"+encodeURIComponent(m.id),{
+      method:isFavorite?"DELETE":"POST"
+     });
+     if(isFavorite){
+      studentFavorites=studentFavorites.filter(f=>Number(f.material_id)!==Number(m.id));
+     }else{
+      studentFavorites.push({
+       material_id:Number(m.id),title:m.title,type:m.type,
+       is_free:m.is_free,price:m.price
+      });
+     }
+     renderFavoriteMaterials();
+     favoriteButton.textContent=isFavorite?"☆ أضف للمفضلة":"★ إزالة من المفضلة";
+     favoriteButton.dataset.favorite=isFavorite?"0":"1";
+    }catch(error){
+     message.textContent=error.message;
+    }finally{
+     favoriteButton.disabled=false;
+    }
+   });
+   favoriteButton.dataset.favorite=isFavorite?"1":"0";
+   div.appendChild(favoriteButton);
+
+   const saved=studentProgress.find(p=>Number(p.material_id)===Number(m.id));
+   if(saved){
+    const progressLabel=document.createElement("div");
+    progressLabel.className="muted";
+    progressLabel.textContent="آخر صفحة وصلت إليها: "+(saved.last_page||1);
+    div.appendChild(progressLabel);
+   }
 
    if(Number(m.is_free)===1){
     const button=document.createElement("button");
     button.textContent="فتح المذكرة";
-    button.addEventListener("click",()=>openPdf(m.id,m.title));
+    button.addEventListener("click",()=>openPdf(m.id,m.title,Number(saved?.last_page)||1));
     div.appendChild(button);
     return;
    }
 
-   // نفحص كل الطلبات حتى المشتريات المخفية
-   const relatedPurchases=purchaseList.filter(
-    p=>Number(p.material_id)===Number(m.id)
-   );
-
-   // الشراء المعتمد أو المكتمل يظل متاحًا حتى بعد الإخفاء
-   const owned=relatedPurchases.find(
-    p=>p.status==="approved"||p.status==="completed"
-   );
-
-   // الطلب قيد المراجعة يمنع إرسال طلب شراء جديد
-   const pending=relatedPurchases.find(
-    p=>p.status==="pending"
-   );
+   const relatedPurchases=purchaseList.filter(p=>Number(p.material_id)===Number(m.id));
+   const owned=relatedPurchases.find(p=>p.status==="approved"||p.status==="completed");
+   const pending=relatedPurchases.find(p=>p.status==="pending");
 
    if(owned){
     const button=document.createElement("button");
     button.textContent="فتح المذكرة";
-    button.addEventListener("click",()=>{
-     openPdf(m.id,m.title);
-    });
+    button.addEventListener("click",()=>openPdf(m.id,m.title,Number(saved?.last_page)||1));
     div.appendChild(button);
     return;
    }
@@ -817,139 +697,94 @@ async function loadDashboard(){
     return;
    }
 
-   // لا يوجد شراء معتمد أو طلب معلق
    const button=document.createElement("button");
    button.textContent="طلب شراء المذكرة";
-
    button.addEventListener("click",async()=>{
     button.disabled=true;
     button.textContent="جارٍ إرسال الطلب...";
-
     try{
      await api("/api/orders",{
       method:"POST",
       body:JSON.stringify({material_id:Number(m.id)})
      });
-
      message.textContent="تم إرسال طلب الشراء بنجاح.";
      await loadDashboard();
-
     }catch(error){
      message.textContent=error.message;
      button.disabled=false;
      button.textContent="طلب شراء المذكرة";
-
      if(error.status===409){
       button.textContent="لديك طلب شراء بالفعل";
       button.disabled=true;
      }
     }
    });
-
    div.appendChild(button);
   }
 
-  showList(
-   "freeMaterials",freeMaterials,
-   "لا يوجد محتوى مجاني متاح حاليًا.",renderMaterial
-  );
-
-  showList(
-   "paidMaterials",paidMaterials,
-   "لا توجد مذكرات متاحة للشراء حاليًا.",renderMaterial
-  );
+  showList("freeMaterials",freeMaterials,"لا يوجد محتوى مجاني متاح حاليًا.",renderMaterial);
+  showList("paidMaterials",paidMaterials,"لا توجد مذكرات متاحة للشراء حاليًا.",renderMaterial);
 
   const statusNames={
-   pending:"قيد المراجعة",
-   approved:"تمت الموافقة",
-   completed:"مكتمل",
-   rejected:"مرفوض"
+   pending:"قيد المراجعة",approved:"تمت الموافقة",
+   completed:"مكتمل",rejected:"مرفوض"
   };
 
-  showList(
-   "purchases",
-   visiblePurchases,
-   "لا توجد طلبات أو مشتريات ظاهرة حاليًا.",
-   (div,p)=>{
-    const title=document.createElement("strong");
-    title.textContent=p.title||"مذكرة";
+  showList("purchases",visiblePurchases,"لا توجد طلبات أو مشتريات ظاهرة حاليًا.",(div,p)=>{
+   const title=document.createElement("strong");
+   title.textContent=p.title||"مذكرة";
+   const subject=document.createElement("div");
+   subject.className="muted";
+   subject.textContent="المادة: "+(p.subject_name||"غير محددة");
+   const status=document.createElement("div");
+   status.className="status";
+   status.textContent="حالة الطلب: "+(statusNames[p.status]||"غير معروف");
+   div.append(title,subject,status);
 
-    const subject=document.createElement("div");
-    subject.className="muted";
-    subject.textContent="المادة: "+(p.subject_name||"غير محددة");
-
-    const status=document.createElement("div");
-    status.className="status";
-    status.textContent="حالة الطلب: "+
-     (statusNames[p.status]||"غير معروف");
-
-    div.append(title,subject,status);
-
-    if(p.status==="approved"||p.status==="completed"){
-     const button=document.createElement("button");
-     button.textContent="فتح المذكرة";
-     button.addEventListener("click",()=>{
-      openPdf(p.material_id,p.title);
-     });
-     div.appendChild(button);
-    }
-
-    // الحذف مسموح للمرفوض فقط
-    // والإخفاء مسموح للمعتمد والمكتمل فقط
-    if(
-     p.status==="rejected"||
-     p.status==="approved"||
-     p.status==="completed"
-    ){
-     const removeButton=document.createElement("button");
-
-     removeButton.className="danger";
-     removeButton.textContent=
-      p.status==="rejected"?"حذف الطلب":"إزالة من مشترياتي";
-
-     removeButton.addEventListener("click",async()=>{
-      const isRejected=p.status==="rejected";
-
-      const confirmed=confirm(
-       isRejected
-        ?"هل تريد حذف الطلب المرفوض نهائيًا؟"
-        :"هل تريد إزالة هذه المذكرة من قائمة مشترياتك؟ ستظل صلاحية فتحها محفوظة."
-      );
-
-      if(!confirmed)return;
-
-      removeButton.disabled=true;
-      removeButton.textContent="جارٍ التنفيذ...";
-
-      try{
-       const result=await api(
-        "/api/student/purchases/"+encodeURIComponent(p.order_id),
-        {method:"DELETE"}
-       );
-
-       message.textContent=
-        result.action==="deleted"
-         ?"تم حذف الطلب المرفوض."
-         :"تمت إزالة المذكرة من قائمة مشترياتك.";
-
-       await loadDashboard();
-
-      }catch(error){
-       message.textContent=error.message;
-       removeButton.disabled=false;
-       removeButton.textContent=
-        isRejected?"حذف الطلب":"إزالة من مشترياتي";
-      }
-     });
-
-     div.appendChild(removeButton);
-    }
+   if(p.status==="approved"||p.status==="completed"){
+    const button=document.createElement("button");
+    button.textContent="فتح المذكرة";
+    button.addEventListener("click",()=>openPdf(p.material_id,p.title));
+    div.appendChild(button);
    }
-  );
 
+   if(p.status==="rejected"||p.status==="approved"||p.status==="completed"){
+    const removeButton=document.createElement("button");
+    removeButton.className="danger";
+    removeButton.textContent=p.status==="rejected"?"حذف الطلب":"إزالة من مشترياتي";
+    removeButton.addEventListener("click",async()=>{
+     const isRejected=p.status==="rejected";
+     const confirmed=confirm(
+      isRejected
+       ?"هل تريد حذف الطلب المرفوض نهائيًا؟"
+       :"هل تريد إزالة هذه المذكرة من قائمة مشترياتك؟ ستظل صلاحية فتحها محفوظة."
+     );
+     if(!confirmed)return;
+     removeButton.disabled=true;
+     removeButton.textContent="جارٍ التنفيذ...";
+     try{
+      const result=await api(
+       "/api/student/purchases/"+encodeURIComponent(p.order_id),
+       {method:"DELETE"}
+      );
+      message.textContent=result.action==="deleted"
+       ?"تم حذف الطلب المرفوض."
+       :"تمت إزالة المذكرة من قائمة مشترياتك.";
+      await loadDashboard();
+     }catch(error){
+      message.textContent=error.message;
+      removeButton.disabled=false;
+      removeButton.textContent=isRejected?"حذف الطلب":"إزالة من مشترياتي";
+     }
+    });
+    div.appendChild(removeButton);
+   }
+  });
+
+  renderLearningSummary();
+  renderFavoriteMaterials();
   dashboard.classList.remove("hidden");
   message.textContent="تم تحميل لوحة الطالب بنجاح.";
-
   loadStudentPhoto();
 
  }catch(error){
@@ -964,14 +799,12 @@ $("refreshBtn").addEventListener("click",loadDashboard);
 $("logoutBtn").addEventListener("click",async()=>{
  $("logoutBtn").disabled=true;
  $("logoutBtn").textContent="جارٍ تسجيل الخروج...";
-
  try{
   await fetch(API+"/api/student/logout",{
    method:"POST",
    headers:{"Authorization":"Bearer "+token}
   });
  }catch(e){}
-
  localStorage.removeItem("zm_student_token");
  location.replace("./login.html");
 });
