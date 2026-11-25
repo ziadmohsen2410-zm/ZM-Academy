@@ -493,6 +493,20 @@ async function ensureArchivedMaterialsTable(env) {
     )
   `).run();
 }
+async function ensurePasswordResetRequestsTable(env) {
+  await env.DB.prepare(`
+    CREATE TABLE IF NOT EXISTS password_reset_requests (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      student_id INTEGER NOT NULL,
+      username TEXT NOT NULL,
+      phone TEXT NOT NULL,
+      status TEXT NOT NULL DEFAULT 'pending',
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      reviewed_at TEXT,
+      reviewed_by INTEGER
+    )
+  `).run();
+}
 
 // إنشاء جدول صور الطلاب
 async function ensureStudentPhotosTable(env) {
@@ -721,6 +735,57 @@ async function route(request, env) {
     });
   }
 
+  // طلب استعادة كلمة مرور الطالب
+if (method === "POST" && path === "/api/password-reset/request") {
+  await ensurePasswordResetRequestsTable(env);
+
+  const body = await readBody(request);
+  const username = clean(body?.username, 40).toLowerCase();
+  const phone = clean(body?.phone, 30).replace(/[^\d]/g, "");
+
+  if (!username || !phone) {
+    return reply(request, env, {
+      success: false,
+      error: "اكتب اسم المستخدم ورقم الهاتف.",
+    }, 400);
+  }
+
+  const account = await env.DB.prepare(`
+    SELECT a.student_id, a.username, s.phone
+    FROM student_accounts a
+    JOIN students s ON s.id = a.student_id
+    WHERE LOWER(a.username) = ?
+  `).bind(username).first();
+
+  const savedPhone = String(account?.phone || "").replace(/[^\d]/g, "");
+
+  if (!account || savedPhone !== phone) {
+    return reply(request, env, {
+      success: true,
+      message: "إذا كانت البيانات صحيحة، سيصل طلبك للإدارة للمراجعة.",
+    });
+  }
+
+  const existing = await env.DB.prepare(`
+    SELECT id FROM password_reset_requests
+    WHERE student_id = ? AND status = 'pending'
+    LIMIT 1
+  `).bind(account.student_id).first();
+
+  if (!existing) {
+    await env.DB.prepare(`
+      INSERT INTO password_reset_requests
+        (student_id, username, phone, status)
+      VALUES (?, ?, ?, 'pending')
+    `).bind(account.student_id, username, phone).run();
+  }
+
+  return reply(request, env, {
+    success: true,
+    message: "تم إرسال طلبك للإدارة. انتظر المراجعة.",
+  }, 201);
+                                       }
+  
   // تسجيل خروج الإدارة
   if (method === "POST" && path === "/api/admin/logout") {
     const session = await adminSession(request, env);
