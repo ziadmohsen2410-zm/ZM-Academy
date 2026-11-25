@@ -30,6 +30,7 @@ button:hover{filter:brightness(1.1)}
 button.secondary{background:linear-gradient(120deg,#24366d,#35265f);border-color:rgba(167,123,255,.42);color:#e6eaff}
 button.danger{background:linear-gradient(120deg,#a52d67,#672b75);border-color:rgba(255,85,127,.5);color:#fff}
 button.success{background:linear-gradient(120deg,#1b987d,#2676a5);color:#fff;border-color:#45f0c0}
+button.preview{background:linear-gradient(120deg,#7b55d9,#277fba);color:#fff;border-color:#a77bff}
 button:disabled{opacity:.45;cursor:not-allowed}
 .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
 .row>*{flex:1}
@@ -55,7 +56,6 @@ small,.muted{color:var(--muted)}
 .editor-note{padding:12px;border-radius:12px;background:rgba(76,236,255,.07);border:1px solid rgba(76,236,255,.2);line-height:1.8;color:#c6eaff;font-size:13px;margin:12px 0}
 .section-toggles{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
 .section-toggles .check{margin:0}
-.preview-image{width:100%;max-height:180px;object-fit:cover;border-radius:12px;border:1px solid var(--line);display:none;margin:8px 0}
 @media(max-width:650px){
  header{padding:18px 14px}
  main{padding:15px 11px 38px}
@@ -92,17 +92,16 @@ small,.muted{color:var(--muted)}
 
   <section id="dashboard" class="hidden">
 
-    <!-- إدارة الصفحة الرئيسية -->
     <div class="card" id="homepageEditor">
       <div class="topline">
         <h2>إدارة الصفحة الرئيسية</h2>
         <span class="status" id="homepageStatus">لم يتم التحميل</span>
       </div>
 
-      <p class="hint">من هنا تتحكم في المحتوى الذي يظهر للزوار. احفظ المسودة أولًا، ثم انشرها عندما تنتهي من مراجعتها.</p>
+      <p class="hint">من هنا تتحكم في المحتوى الذي يظهر للزوار. يمكنك معاينة التعديلات قبل حفظها أو نشرها.</p>
 
       <div class="editor-note">
-        التعديلات المحفوظة كمسودة لا تظهر للزوار إلا بعد الضغط على «نشر الصفحة». لا تستخدم روابط صور غير موثوقة.
+        التعديلات المحفوظة كمسودة لا تظهر للزوار إلا بعد الضغط على «نشر الصفحة». استخدم زر المعاينة لمراجعة الشكل الحالي أولًا.
       </div>
 
       <h3>هوية الأكاديمية</h3>
@@ -149,10 +148,6 @@ small,.muted{color:var(--muted)}
         </div>
       </div>
 
-      <label for="hpHeroImage">رابط صورة القسم الرئيسي (اختياري)</label>
-      <input id="hpHeroImage" type="url" maxlength="1000" placeholder="https://example.com/image.webp" oninput="previewHomepageImage()">
-      <img id="hpImagePreview" class="preview-image" alt="معاينة صورة الصفحة الرئيسية">
-
       <h3>الإعلان الرئيسي</h3>
       <label class="check"><input id="hpAnnouncementEnabled" type="checkbox"> إظهار الإعلان</label>
       <label for="hpAnnouncementText">نص الإعلان</label>
@@ -185,6 +180,7 @@ small,.muted{color:var(--muted)}
       </div>
 
       <div class="editor-actions">
+        <button class="preview" onclick="previewHomepage()">معاينة الصفحة</button>
         <button class="secondary" onclick="loadHomepageSettings()">إعادة تحميل الإعدادات</button>
         <button onclick="saveHomepageDraft()">حفظ المسودة</button>
         <button class="success" onclick="publishHomepage()">نشر الصفحة الرئيسية</button>
@@ -369,8 +365,7 @@ function homepageDefault(){
       primaryText:"تسجيل طالب جديد",
       primaryUrl:"register.html",
       secondaryText:"تسجيل الدخول",
-      secondaryUrl:"login.html",
-      image:""
+      secondaryUrl:"login.html"
     },
     announcement:{
       enabled:false,
@@ -412,8 +407,7 @@ function readHomepageForm(){
       primaryText:el("hpPrimaryText").value.trim(),
       primaryUrl:el("hpPrimaryUrl").value.trim(),
       secondaryText:el("hpSecondaryText").value.trim(),
-      secondaryUrl:el("hpSecondaryUrl").value.trim(),
-      image:el("hpHeroImage").value.trim()
+      secondaryUrl:el("hpSecondaryUrl").value.trim()
     },
     announcement:{
       enabled:el("hpAnnouncementEnabled").checked,
@@ -453,7 +447,6 @@ function fillHomepageForm(settings){
   setField("hpPrimaryUrl",hero.primaryUrl);
   setField("hpSecondaryText",hero.secondaryText);
   setField("hpSecondaryUrl",hero.secondaryUrl);
-  setField("hpHeroImage",hero.image);
   setCheck("hpAnnouncementEnabled",announcement.enabled);
   setField("hpAnnouncementText",announcement.text);
   setField("hpAnnouncementButton",announcement.buttonText);
@@ -466,7 +459,6 @@ function fillHomepageForm(settings){
   setCheck("hpShowLibrary",sections.library);
   setCheck("hpShowAbout",sections.about);
   setCheck("hpShowJoin",sections.join);
-  previewHomepageImage();
 }
 async function loadHomepageSettings(){
   const status=el("homepageStatus");
@@ -485,12 +477,6 @@ async function loadHomepageSettings(){
 function validateHomepageSettings(settings){
   if(!settings.brandName)return "اكتب اسم العلامة التجارية.";
   if(!settings.hero.title)return "اكتب العنوان الرئيسي.";
-  if(settings.hero.image){
-    try{
-      const u=new URL(settings.hero.image);
-      if(u.protocol!=="https:")return "رابط صورة القسم الرئيسي يجب أن يبدأ بـ https://";
-    }catch(e){return "رابط صورة القسم الرئيسي غير صحيح."}
-  }
   for(const [label,url] of [
     ["الزر الأول",settings.hero.primaryUrl],
     ["الزر الثاني",settings.hero.secondaryUrl],
@@ -505,6 +491,123 @@ function validateHomepageSettings(settings){
   }
   return "";
 }
+
+/* معاينة مستقلة للمحتوى الحالي قبل الحفظ */
+function previewHomepage(){
+  const settings=readHomepageForm();
+  const validation=validateHomepageSettings(settings);
+  if(validation)return message(validation,"err");
+
+  const safe=(value)=>escapeHTML(value);
+  const link=(url)=>safe(url||"#");
+  const hero=settings.hero;
+  const announcement=settings.announcement;
+  const about=settings.about;
+  const sections=settings.sections;
+
+  const sectionCards=[
+    sections.subjects?`<article class="tile"><span>01</span><h3>المواد الدراسية</h3><p>استكشف المواد الدراسية المتاحة داخل الأكاديمية.</p></article>`:"",
+    sections.curriculum?`<article class="tile"><span>02</span><h3>المنهج</h3><p>تابع محتوى المنهج والدروس التعليمية.</p></article>`:"",
+    sections.library?`<article class="tile"><span>03</span><h3>المكتبة التعليمية</h3><p>مصادر وملفات تعليمية في مكان واحد.</p></article>`:"",
+    sections.join?`<article class="tile"><span>04</span><h3>انضم إلينا</h3><p>ابدأ رحلتك التعليمية مع ZM Academy.</p><a class="button" href="${link(hero.primaryUrl)}">${safe(hero.primaryText||"ابدأ الآن")}</a></article>`:""
+  ].join("");
+
+  const announcementHTML=announcement.enabled?`
+    <section class="announcement">
+      <div><span class="eyebrow">إعلان الأكاديمية</span><h2>${safe(announcement.text)}</h2></div>
+      ${announcement.buttonText?`<a class="button light" href="${link(announcement.url)}">${safe(announcement.buttonText)}</a>`:""}
+    </section>`:"";
+
+  const aboutHTML=(about.enabled&&sections.about)?`
+    <section class="about">
+      <span class="eyebrow">من نحن</span>
+      <h2>${safe(about.title)}</h2>
+      <p>${safe(about.description)}</p>
+    </section>`:"";
+
+  const previewHTML=`<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#080b1c">
+<title>${safe(settings.brandName)} | معاينة</title>
+<style>
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:#080b1c;color:#f2f5ff;font-family:Arial,Tahoma,sans-serif;line-height:1.8}
+a{text-decoration:none}
+.nav{display:flex;justify-content:space-between;align-items:center;gap:15px;padding:20px max(6%,calc((100% - 1150px)/2));background:rgba(8,12,31,.94);border-bottom:1px solid #26385f;flex-wrap:wrap}
+.brand{font-size:23px;font-weight:900;color:#82edff}
+.tagline{font-size:12px;color:#a8b6d6}
+.navlinks{display:flex;gap:12px;flex-wrap:wrap}
+.navlinks a{color:#dce7ff;font-size:13px}
+.hero{min-height:530px;padding:90px 7%;display:flex;align-items:center;background:radial-gradient(circle at 80% 20%,rgba(79,87,211,.28),transparent 36%),radial-gradient(circle at 10% 90%,rgba(0,197,235,.18),transparent 36%),linear-gradient(135deg,#0d1533,#090b1c 70%);border-bottom:1px solid #26385f}
+.hero-inner{max-width:1050px;margin:auto;width:100%}
+.eyebrow{display:inline-block;color:#7ceaff;font-size:13px;letter-spacing:1px;margin-bottom:12px}
+.hero h1{font-size:clamp(35px,7vw,68px);line-height:1.25;margin:8px 0 18px;max-width:850px}
+.highlight{color:#78eaff;text-shadow:0 0 25px #247caa}
+.hero p{max-width:700px;color:#bdc9e2;font-size:17px;line-height:2}
+.actions{display:flex;gap:12px;flex-wrap:wrap;margin-top:28px}
+.button{display:inline-flex;align-items:center;justify-content:center;padding:12px 23px;border-radius:12px;background:linear-gradient(120deg,#5cecff,#9a7cff);color:#071021;font-weight:800}
+.button.outline{background:transparent;border:1px solid #68dff5;color:#dffaff}
+.button.light{background:#e9f8ff;color:#10162d;white-space:nowrap}
+.announcement{max-width:1100px;margin:35px auto;padding:25px 30px;border:1px solid #4c82b7;border-radius:20px;background:linear-gradient(120deg,#182e57,#28204e);display:flex;justify-content:space-between;align-items:center;gap:20px;flex-wrap:wrap;width:90%}
+.announcement h2{margin:0;font-size:19px}
+.content{max-width:1100px;margin:55px auto;padding:0 20px}
+.content>h2,.about h2{font-size:30px;margin:0 0 12px}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;margin-top:24px}
+.tile{padding:25px;border:1px solid #263e68;border-radius:18px;background:linear-gradient(145deg,#121d3c,#0d142b);min-height:190px}
+.tile span{color:#65e7ff;font-weight:bold}
+.tile h3{font-size:20px;color:#f4f7ff;margin:12px 0 5px}
+.tile p,.about p{color:#b7c5e0}
+.about{margin:55px auto;padding:40px;width:90%;max-width:1100px;border:1px solid #344b79;border-radius:20px;background:linear-gradient(135deg,#151d3d,#11172d)}
+.footer{text-align:center;padding:35px 15px;color:#8295b9;border-top:1px solid #26385f;margin-top:65px}
+.preview-label{position:fixed;bottom:12px;left:12px;background:#15254a;color:#9beeff;border:1px solid #4cecff;padding:7px 12px;border-radius:20px;font-size:11px;z-index:5}
+@media(max-width:650px){.hero{min-height:470px;padding:65px 7%}.hero p{font-size:15px}.announcement{padding:20px}.about{padding:25px}.nav{padding:16px 5%}}
+</style>
+</head>
+<body>
+<nav class="nav">
+  <div><div class="brand">${safe(settings.brandName)}</div><div class="tagline">${safe(settings.tagline)}</div></div>
+  <div class="navlinks">
+    <a href="#home">الرئيسية</a>
+    ${sections.subjects?'<a href="#subjects">المواد</a>':""}
+    ${sections.library?'<a href="#library">المكتبة</a>':""}
+    ${sections.about?'<a href="#about">عن الأكاديمية</a>':""}
+  </div>
+</nav>
+<main>
+<section class="hero" id="home">
+  <div class="hero-inner">
+    <span class="eyebrow">${safe(hero.eyebrow)}</span>
+    <h1>${safe(hero.title)} <span class="highlight">${safe(hero.highlight)}</span></h1>
+    <p>${safe(hero.description)}</p>
+    <div class="actions">
+      <a class="button" href="${link(hero.primaryUrl)}">${safe(hero.primaryText)}</a>
+      <a class="button outline" href="${link(hero.secondaryUrl)}">${safe(hero.secondaryText)}</a>
+    </div>
+  </div>
+</section>
+${announcementHTML}
+${sectionCards?`<section class="content" id="subjects"><span class="eyebrow">اكتشف الأكاديمية</span><h2>رحلتك التعليمية تبدأ هنا</h2><div class="tiles">${sectionCards}</div></section>`:""}
+${aboutHTML}
+</main>
+<footer class="footer">${safe(settings.brandName)} — ${safe(settings.tagline)}</footer>
+<div class="preview-label">معاينة غير منشورة</div>
+</body>
+</html>`;
+
+  const previewWindow=window.open("","_blank");
+  if(!previewWindow){
+    message("المتصفح منع فتح المعاينة. اسمح بالنوافذ المنبثقة لهذا الموقع ثم حاول مرة أخرى.","err");
+    return;
+  }
+  previewWindow.document.open();
+  previewWindow.document.write(previewHTML);
+  previewWindow.document.close();
+}
+
 async function saveHomepageDraft(){
   if(isSavingHomepage)return;
   const settings=readHomepageForm();
@@ -544,18 +647,6 @@ async function publishHomepage(){
     isSavingHomepage=false;
     buttons.forEach(b=>b.disabled=false);
   }
-}
-function previewHomepageImage(){
-  const url=el("hpHeroImage").value.trim();
-  const img=el("hpImagePreview");
-  if(!url){img.style.display="none";img.removeAttribute("src");return}
-  try{
-    const parsed=new URL(url);
-    if(parsed.protocol!=="https:"){img.style.display="none";return}
-    img.src=url;
-    img.style.display="block";
-    img.onerror=()=>{img.style.display="none"};
-  }catch(e){img.style.display="none"}
 }
 
 async function loadSubjects(){
