@@ -956,6 +956,94 @@ if (method === "POST" && path === "/api/password-reset/request") {
         401
       );
     }
+    
+    // إدارة إعدادات الصفحة الرئيسية
+    if (
+      path === "/api/admin/homepage" &&
+      method === "GET"
+    ) {
+      await ensureHomepageSettingsTable(env);
+
+      const row = await env.DB.prepare(`
+        SELECT draft_json, published_json, status, updated_at
+        FROM homepage_settings
+        WHERE id = 1
+      `).first();
+
+      return reply(request, env, {
+        success: true,
+        draft: parseHomepageJson(row?.draft_json),
+        published: parseHomepageJson(row?.published_json),
+        status: row?.status || "published",
+        updated_at: row?.updated_at || null
+      });
+    }
+
+    // حفظ مسودة الصفحة الرئيسية
+    if (
+      path === "/api/admin/homepage" &&
+      method === "PUT"
+    ) {
+      await ensureHomepageSettingsTable(env);
+
+      const body = await readBody(request);
+      const settings = body?.settings;
+
+      if (
+        !settings ||
+        typeof settings !== "object" ||
+        Array.isArray(settings)
+      ) {
+        return reply(request, env, {
+          success: false,
+          error: "إعدادات الصفحة غير صحيحة."
+        }, 400);
+      }
+
+      const json = JSON.stringify(settings);
+
+      if (json.length > 50000) {
+        return reply(request, env, {
+          success: false,
+          error: "حجم إعدادات الصفحة كبير جدًا."
+        }, 413);
+      }
+
+      await env.DB.prepare(`
+        UPDATE homepage_settings
+        SET draft_json = ?,
+            status = 'draft',
+            updated_at = CURRENT_TIMESTAMP
+        WHERE id = 1
+      `).bind(json).run();
+
+      return reply(request, env, {
+        success: true,
+        message: "تم حفظ المسودة."
+      });
+    }
+
+    // نشر المسودة للزوار
+    if (
+      path === "/api/admin/homepage/publish" &&
+      method === "POST"
+    ) {
+      await ensureHomepageSettingsTable(env);
+
+      await env.DB.prepare(`
+        UPDATE homepage_settings
+        SET published_json = draft_json,
+            status = 'published',
+            updated_at = CURRENT_TIMESTAMP
+        WHERE id = 1
+      `).run();
+
+      return reply(request, env, {
+        success: true,
+        message: "تم نشر الصفحة الرئيسية."
+      });
+    }
+
     // عرض طلبات استعادة كلمات المرور
 if (method === "GET" && path === "/api/admin/password-reset-requests") {
   await ensurePasswordResetRequestsTable(env);
