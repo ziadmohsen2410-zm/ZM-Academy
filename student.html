@@ -4,86 +4,1414 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="theme-color" content="#0b1020">
+<meta name="theme-color" content="#080e20">
 <title>لوحة الطالب | ZM Academy</title>
+
 <style>
 *{box-sizing:border-box}
-:root{color-scheme:dark;--bg:#070b18;--surface:rgba(17,25,48,.78);--surface2:#111d38;--text:#f4f7ff;--muted:#9eaccb;--blue:#45c5ff;--purple:#9b7bff;--cyan:#55ead7;--border:rgba(126,158,255,.2);--shadow:0 22px 65px rgba(0,0,0,.28);--radius:22px}
-body.light{color-scheme:light;--bg:#f3f6ff;--surface:rgba(255,255,255,.86);--surface2:#fff;--text:#17213b;--muted:#687694;--border:rgba(80,111,180,.17);--shadow:0 18px 50px rgba(58,82,135,.12)}
-html{scroll-behavior:smooth;scroll-padding-top:90px}
-body{margin:0;min-height:100vh;background:radial-gradient(ellipse at 8% 0%,rgba(42,133,255,.22),transparent 34%),radial-gradient(ellipse at 92% 12%,rgba(139,82,255,.2),transparent 32%),radial-gradient(ellipse at 55% 100%,rgba(41,185,201,.08),transparent 38%),var(--bg);color:var(--text);font-family:Tahoma,Arial,sans-serif;line-height:1.8;transition:background .25s,color .25s}
-body:before{content:"";position:fixed;inset:0;pointer-events:none;opacity:.16;background-image:linear-gradient(rgba(130,160,255,.045) 1px,transparent 1px),linear-gradient(90deg,rgba(130,160,255,.045) 1px,transparent 1px);background-size:42px 42px;mask-image:linear-gradient(to bottom,#000,transparent 80%);z-index:-1}
-button,a,input{font:inherit}button{border:1px solid transparent;cursor:pointer;border-radius:13px;padding:10px 16px;color:#fff;font-weight:800;background:linear-gradient(115deg,#269fe9,#7865ed);box-shadow:0 8px 22px rgba(61,128,235,.2);transition:transform .2s,filter .2s,box-shadow .2s}button:hover{filter:brightness(1.1);transform:translateY(-2px);box-shadow:0 12px 26px rgba(61,128,235,.28)}button:active{transform:translateY(0)}button:disabled{opacity:.52;cursor:not-allowed;transform:none;box-shadow:none}
+:root{
+ color-scheme:dark;
+ --bg:#080e20;
+ --surface:#111b34;
+ --surface2:#172440;
+ --surface3:#1c2c4d;
+ --text:#f4f7ff;
+ --muted:#a5b3d0;
+ --blue:#39baff;
+ --purple:#9875ff;
+ --cyan:#50dfd0;
+ --border:rgba(135,166,230,.19);
+ --shadow:0 12px 35px rgba(0,0,0,.2);
+ --radius:20px;
+}
+body.light{
+ color-scheme:light;
+ --bg:#f1f5fc;
+ --surface:#ffffff;
+ --surface2:#f5f7fd;
+ --surface3:#eaf0fc;
+ --text:#17223c;
+ --muted:#65738f;
+ --border:#dce4f2;
+ --shadow:0 8px 25px rgba(40,65,115,.08);
+}
+html{scroll-behavior:smooth;scroll-padding-top:115px}
+body{
+ margin:0;
+ min-height:100vh;
+ background:var(--bg);
+ color:var(--text);
+ font-family:Tahoma,Arial,sans-serif;
+ line-height:1.8;
+ transition:none;
+}
+button,a,input{font:inherit}
+button{
+ border:0;
+ cursor:pointer;
+ border-radius:12px;
+ padding:10px 16px;
+ color:#fff;
+ font-weight:800;
+ background:linear-gradient(120deg,#218fdc,#7962e8);
+ box-shadow:0 5px 14px rgba(65,120,220,.16);
+ transition:none;
+}
+button:hover{filter:brightness(1.08)}
+button:active{filter:brightness(.96)}
+button:disabled{opacity:.5;cursor:not-allowed;filter:none}
 a{color:inherit;text-decoration:none}
-header{position:sticky;top:0;z-index:20;padding:11px 18px;background:var(--surface);backdrop-filter:blur(22px) saturate(150%);-webkit-backdrop-filter:blur(22px) saturate(150%);border-bottom:1px solid var(--border);box-shadow:0 8px 35px rgba(0,0,0,.12)}
-.nav{max-width:1180px;margin:auto;display:flex;align-items:center;justify-content:space-between;gap:14px}.brand{display:flex;align-items:center;gap:12px;font-weight:900;font-size:21px;letter-spacing:.2px}.brand img{width:48px;height:48px;object-fit:contain;border-radius:15px;padding:4px;background:linear-gradient(145deg,rgba(69,197,255,.16),rgba(155,123,255,.16));border:1px solid var(--border);box-shadow:0 0 24px rgba(69,197,255,.12)}.brand span{background:linear-gradient(90deg,#62d4ff,#a58aff 75%);background-clip:text;-webkit-background-clip:text;color:transparent}.header-actions{display:flex;gap:9px}.icon-btn{width:44px;height:44px;padding:0;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-size:19px;box-shadow:none}
-main{max-width:1180px;margin:auto;padding:27px 18px 55px}
-#message{padding:12px 17px;margin-bottom:20px;border:1px solid var(--border);border-radius:15px;background:var(--surface);color:var(--muted);text-align:center;box-shadow:var(--shadow);backdrop-filter:blur(14px)}
+header{
+ position:sticky;
+ top:0;
+ z-index:50;
+ padding:10px 18px;
+ background:var(--surface);
+ border-bottom:1px solid var(--border);
+ box-shadow:0 4px 18px rgba(0,0,0,.08);
+}
+.nav{
+ max-width:1180px;
+ margin:auto;
+ display:flex;
+ align-items:center;
+ justify-content:space-between;
+ gap:12px;
+}
+.brand{
+ display:flex;
+ align-items:center;
+ gap:11px;
+ font-weight:900;
+ font-size:21px;
+}
+.brand img{
+ width:46px;
+ height:46px;
+ object-fit:contain;
+ border-radius:13px;
+ padding:3px;
+ background:var(--surface3);
+ border:1px solid var(--border);
+}
+.brand span{
+ background:linear-gradient(90deg,#45c8ff,#a18aff);
+ background-clip:text;
+ -webkit-background-clip:text;
+ color:transparent;
+}
+.header-actions{display:flex;gap:8px}
+.icon-btn{
+ width:43px;
+ height:43px;
+ padding:0;
+ background:var(--surface2);
+ border:1px solid var(--border);
+ color:var(--text);
+ font-size:19px;
+ box-shadow:none;
+}
+main{
+ max-width:1180px;
+ margin:auto;
+ padding:25px 18px 50px;
+}
+#message{
+ padding:12px 16px;
+ margin-bottom:18px;
+ border:1px solid var(--border);
+ border-radius:13px;
+ background:var(--surface);
+ color:var(--muted);
+ text-align:center;
+ font-size:14px;
+}
 .hidden{display:none!important}
-.hero{position:relative;isolation:isolate;overflow:hidden;display:flex;align-items:center;justify-content:space-between;gap:24px;padding:30px;margin-bottom:22px;border:1px solid rgba(145,174,255,.28);border-radius:28px;background:linear-gradient(112deg,rgba(20,105,165,.88),rgba(74,57,151,.9) 58%,rgba(45,42,111,.92));box-shadow:0 24px 70px rgba(28,73,155,.24)}
-.hero:before,.hero:after{content:"";position:absolute;border-radius:50%;z-index:-1;pointer-events:none}.hero:before{width:300px;height:300px;left:22%;top:-220px;background:rgba(95,217,255,.22);filter:blur(5px)}.hero:after{width:240px;height:240px;right:-110px;bottom:-170px;border:1px solid rgba(255,255,255,.18);box-shadow:0 0 0 24px rgba(255,255,255,.035),0 0 0 48px rgba(255,255,255,.025)}
-.hero h1{margin:0 0 7px;font-size:clamp(25px,4vw,36px);font-weight:900;letter-spacing:-.5px}.hero p{margin:0;color:#e0edff;font-size:15px}.hero .info-chip{color:#e9f7ff;background:rgba(4,17,48,.24);border:1px solid rgba(255,255,255,.2)}
-.profile{display:flex;align-items:center;gap:15px;padding:12px 15px;border:1px solid rgba(255,255,255,.19);border-radius:20px;background:rgba(9,20,52,.2);backdrop-filter:blur(12px)}.profile b{color:#fff}.profile .muted{color:#d2e0ff}.avatar-wrap{width:94px;height:94px;flex:none;border-radius:50%;padding:4px;background:linear-gradient(145deg,#64e5ff,#a18aff,#fff);box-shadow:0 0 0 6px rgba(255,255,255,.08),0 12px 30px rgba(0,0,0,.2)}.avatar-wrap img{width:100%;height:100%;object-fit:cover;border-radius:50%;background:#17223c;border:3px solid rgba(9,20,52,.75)}.profile-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
-.card{position:relative;min-width:0;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:21px;margin-bottom:18px;box-shadow:var(--shadow);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);transition:border-color .2s,transform .2s}.card:hover{border-color:rgba(91,177,255,.38)}.card h2{margin:0 0 16px;font-size:19px;font-weight:900;display:flex;align-items:center;gap:11px}.card h2:before{content:"";width:5px;height:25px;flex:none;border-radius:8px;background:linear-gradient(180deg,var(--blue),var(--purple));box-shadow:0 0 14px rgba(69,197,255,.45)}.card h2:after{content:"";height:1px;flex:1;background:linear-gradient(90deg,var(--border),transparent);margin-right:4px}
-.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:17px;align-items:stretch}.grid>.card{margin-bottom:0}
-.item{position:relative;background:linear-gradient(145deg,var(--surface2),color-mix(in srgb,var(--surface2) 82%,transparent));border:1px solid var(--border);border-radius:17px;padding:16px;margin:11px 0;transition:transform .2s,border-color .2s,box-shadow .2s;overflow:hidden}.item:before{content:"";position:absolute;inset:0 auto 0 0;width:2px;background:linear-gradient(180deg,var(--blue),var(--purple));opacity:.55}.item:hover{transform:translateY(-2px);border-color:rgba(83,178,255,.38);box-shadow:0 12px 28px rgba(0,0,0,.12)}.item strong{display:block;margin-bottom:6px;font-size:16px;color:var(--text)}.muted{color:var(--muted);font-size:13px}.item button{margin:11px 6px 0 0}
-.empty{color:var(--muted);text-align:center;padding:20px 12px;border:1px dashed var(--border);border-radius:14px;background:rgba(120,150,220,.035)}
-.info-chip{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;margin-top:12px;border-radius:30px;color:#bdeaff;background:rgba(35,139,229,.14);border:1px solid rgba(80,180,255,.27);font-size:12px;font-weight:700}.status{display:inline-flex;align-items:center;border-radius:30px;padding:5px 11px;font-size:12px;font-weight:800;background:rgba(139,124,255,.15);border:1px solid rgba(139,124,255,.22);color:var(--text)}
-.actions{display:flex;flex-wrap:wrap;gap:10px}.secondary{background:var(--surface2);color:var(--text);border:1px solid var(--border);box-shadow:none}.secondary:hover{box-shadow:0 8px 20px rgba(0,0,0,.12)}.danger{background:linear-gradient(110deg,#e34b70,#a62f61)}.small-btn{padding:7px 12px;font-size:12px;border-radius:10px}footer{text-align:center;color:var(--muted);font-size:12px;padding:18px;border-top:1px solid var(--border);background:rgba(10,16,32,.12)}input[type=file]{display:none}
-#pdfViewer{position:fixed;inset:0;z-index:1000;overflow:auto;padding:12px;background:radial-gradient(ellipse at top right,#182b52,#070b15 55%);scroll-behavior:auto}.viewerTop{position:sticky;top:0;z-index:5;display:flex;justify-content:space-between;align-items:center;gap:10px;padding:12px 15px;margin-bottom:13px;background:rgba(15,25,48,.94);backdrop-filter:blur(16px);border:1px solid #405477;border-radius:16px;color:white;box-shadow:0 10px 30px #0005}.viewerTop strong{color:#75c5ff}.viewerPages{display:flex;flex-direction:column;align-items:center;gap:16px}.pdfPage{position:relative;background:white;max-width:100%;overflow:hidden;border-radius:3px;box-shadow:0 8px 30px #0009}.pdfPage canvas{display:block;max-width:100%;height:auto}.pdfWatermark{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;overflow:hidden}.pdfWatermark img{width:48%;max-width:280px;height:auto;opacity:.14;object-fit:contain}
-@media(max-width:760px){main{padding:18px 13px 38px}.hero{padding:21px;gap:15px}.profile{padding:9px 11px}.avatar-wrap{width:78px;height:78px}.grid{gap:12px}.card{padding:17px}}
-@media(max-width:560px){header{padding:9px 12px}.brand{font-size:17px;gap:9px}.brand img{width:42px;height:42px}.header-actions{gap:6px}.icon-btn{width:40px;height:40px}main{padding:14px 10px 30px}.hero{padding:17px;align-items:flex-start;flex-direction:column;border-radius:22px}.hero h1{font-size:25px}.profile{width:100%;justify-content:flex-start}.avatar-wrap{width:72px;height:72px}.grid{grid-template-columns:1fr;gap:0}.grid>.card{margin-bottom:14px}.card{padding:15px;border-radius:18px;margin-bottom:14px}.card h2{font-size:17px}.item{padding:14px}.item button{font-size:12px;padding:8px 11px}.viewerTop{padding:9px 11px}.viewerTop button{padding:8px 12px}}
-@media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;animation-duration:.01ms!important;transition-duration:.01ms!important}}
+
+/* واجهة الترحيب */
+.hero{
+ position:relative;
+ overflow:hidden;
+ display:flex;
+ align-items:center;
+ justify-content:space-between;
+ gap:22px;
+ padding:28px;
+ margin-bottom:20px;
+ border-radius:23px;
+ border:1px solid rgba(130,190,255,.3);
+ background:linear-gradient(115deg,#12679e,#384caa 55%,#6748a9);
+ color:#fff;
+ box-shadow:0 12px 30px rgba(35,75,160,.18);
+}
+.hero:after{
+ content:"ZM";
+ position:absolute;
+ left:30px;
+ bottom:-55px;
+ font-size:145px;
+ font-weight:900;
+ color:rgba(255,255,255,.055);
+ pointer-events:none;
+ line-height:1;
+}
+.hero-content{position:relative;z-index:1}
+.hero h1{
+ margin:0 0 5px;
+ font-size:clamp(25px,4vw,35px);
+ font-weight:900;
+}
+.hero p{margin:0;color:#dceaff;font-size:14px}
+.hero .info-chip{
+ color:#fff;
+ background:rgba(255,255,255,.12);
+ border-color:rgba(255,255,255,.2);
+}
+.profile{
+ position:relative;
+ z-index:1;
+ display:flex;
+ align-items:center;
+ gap:13px;
+ padding:12px 15px;
+ border:1px solid rgba(255,255,255,.2);
+ border-radius:17px;
+ background:rgba(8,20,55,.2);
+}
+.profile b{color:#fff}
+.profile .muted{color:#d8e5ff}
+.avatar-wrap{
+ width:82px;
+ height:82px;
+ flex:none;
+ border-radius:50%;
+ padding:3px;
+ background:linear-gradient(140deg,#52e5ff,#a58aff,#fff);
+}
+.avatar-wrap img{
+ width:100%;
+ height:100%;
+ object-fit:cover;
+ border-radius:50%;
+ background:#17223c;
+ border:2px solid #25375b;
+}
+.profile-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:7px}
+
+/* التنقل السريع */
+.quick-nav{
+ display:flex;
+ gap:9px;
+ overflow-x:auto;
+ padding:4px 1px 13px;
+ margin-bottom:15px;
+ scrollbar-width:thin;
+}
+.quick-nav a{
+ flex:none;
+ display:flex;
+ align-items:center;
+ gap:7px;
+ padding:9px 14px;
+ border:1px solid var(--border);
+ border-radius:12px;
+ background:var(--surface);
+ color:var(--text);
+ font-size:12px;
+ font-weight:800;
+}
+.quick-nav a:hover{
+ border-color:var(--blue);
+ color:var(--blue);
+}
+.quick-nav span{font-size:16px}
+
+/* البطاقات */
+.card{
+ min-width:0;
+ background:var(--surface);
+ border:1px solid var(--border);
+ border-radius:var(--radius);
+ padding:20px;
+ margin-bottom:17px;
+ box-shadow:var(--shadow);
+}
+.card h2{
+ margin:0 0 15px;
+ font-size:18px;
+ font-weight:900;
+ display:flex;
+ align-items:center;
+ gap:10px;
+}
+.card h2:before{
+ content:"";
+ width:5px;
+ height:23px;
+ flex:none;
+ border-radius:8px;
+ background:linear-gradient(180deg,var(--blue),var(--purple));
+}
+.card h2:after{
+ content:"";
+ height:1px;
+ flex:1;
+ background:var(--border);
+}
+.grid{
+ display:grid;
+ grid-template-columns:repeat(2,minmax(0,1fr));
+ gap:16px;
+ align-items:stretch;
+ margin-bottom:17px;
+}
+.grid>.card{margin:0}
+.item{
+ position:relative;
+ min-width:0;
+ background:var(--surface2);
+ border:1px solid var(--border);
+ border-radius:14px;
+ padding:15px;
+ margin:10px 0;
+ overflow:hidden;
+}
+.item:before{
+ content:"";
+ position:absolute;
+ inset:0 auto 0 0;
+ width:3px;
+ background:linear-gradient(180deg,var(--blue),var(--purple));
+}
+.item strong{
+ display:block;
+ margin-bottom:5px;
+ font-size:15px;
+ color:var(--text);
+}
+.muted{color:var(--muted);font-size:13px}
+.item button{margin:10px 5px 0 0}
+.empty{
+ color:var(--muted);
+ text-align:center;
+ padding:20px 12px;
+ border:1px dashed var(--border);
+ border-radius:13px;
+ background:var(--surface2);
+}
+.info-chip{
+ display:inline-flex;
+ align-items:center;
+ gap:6px;
+ padding:6px 12px;
+ margin-top:12px;
+ border-radius:30px;
+ color:#bdeaff;
+ background:rgba(35,139,229,.14);
+ border:1px solid rgba(80,180,255,.27);
+ font-size:12px;
+ font-weight:700;
+}
+.status{
+ display:inline-flex;
+ align-items:center;
+ border-radius:30px;
+ padding:5px 11px;
+ font-size:12px;
+ font-weight:800;
+ background:rgba(139,124,255,.15);
+ border:1px solid rgba(139,124,255,.22);
+ color:var(--text);
+}
+.actions{display:flex;flex-wrap:wrap;gap:10px}
+.secondary{
+ background:var(--surface2);
+ color:var(--text);
+ border:1px solid var(--border);
+ box-shadow:none;
+}
+.danger{background:linear-gradient(110deg,#e34b70,#a62f61)}
+.small-btn{padding:7px 12px;font-size:12px;border-radius:10px}
+input[type=file]{display:none}
+footer{
+ text-align:center;
+ color:var(--muted);
+ font-size:12px;
+ padding:18px;
+ border-top:1px solid var(--border);
+ background:var(--surface);
+}
+
+/* عارض المذكرات */
+#pdfViewer{
+ position:fixed;
+ inset:0;
+ z-index:1000;
+ overflow:auto;
+ padding:12px;
+ background:#080e20;
+ scroll-behavior:auto;
+}
+.viewerTop{
+ position:sticky;
+ top:0;
+ z-index:5;
+ display:flex;
+ justify-content:space-between;
+ align-items:center;
+ gap:10px;
+ padding:12px 15px;
+ margin-bottom:13px;
+ background:#14213d;
+ border:1px solid #405477;
+ border-radius:14px;
+ color:white;
+}
+.viewerTop strong{color:#75c5ff}
+.viewerPages{
+ display:flex;
+ flex-direction:column;
+ align-items:center;
+ gap:16px;
+}
+.pdfPage{
+ position:relative;
+ background:white;
+ max-width:100%;
+ overflow:hidden;
+ border-radius:3px;
+ box-shadow:0 8px 25px #0008;
+}
+.pdfPage canvas{display:block;max-width:100%;height:auto}
+.pdfWatermark{
+ position:absolute;
+ inset:0;
+ display:flex;
+ align-items:center;
+ justify-content:center;
+ pointer-events:none;
+ overflow:hidden;
+}
+.pdfWatermark img{
+ width:48%;
+ max-width:280px;
+ height:auto;
+ opacity:.14;
+ object-fit:contain;
+}
+
+/* الهاتف */
+@media(max-width:760px){
+ main{padding:18px 13px 38px}
+ .hero{padding:21px;gap:15px}
+ .profile{padding:9px 11px}
+ .avatar-wrap{width:74px;height:74px}
+ .grid{gap:12px}
+ .card{padding:17px}
+}
+@media(max-width:560px){
+ header{padding:8px 11px}
+ .brand{font-size:17px;gap:8px}
+ .brand img{width:40px;height:40px}
+ .icon-btn{width:39px;height:39px}
+ main{padding:14px 10px 30px}
+ .hero{
+  padding:17px;
+  align-items:flex-start;
+  flex-direction:column;
+  border-radius:18px;
+ }
+ .hero h1{font-size:25px}
+ .profile{width:100%}
+ .avatar-wrap{width:68px;height:68px}
+ .grid{grid-template-columns:1fr;gap:13px;margin-bottom:13px}
+ .grid>.card{margin-bottom:0}
+ .card{padding:15px;border-radius:16px;margin-bottom:13px}
+ .card h2{font-size:16px}
+ .item{padding:13px}
+ .item button{font-size:12px;padding:8px 10px}
+ .quick-nav a{padding:8px 11px}
+ .viewerTop{padding:9px 11px}
+ .viewerTop button{padding:8px 12px}
+}
 </style>
 </head>
+
 <body>
-<header><div class="nav"><div class="brand"><img src="https://raw.githubusercontent.com/ziadmohsen2410-zm/ZM-Academy/main/Picsart_26-11-24_10-49-15-125.png" alt="ZM"><span>ZM Academy</span></div><div class="header-actions"><button class="icon-btn" id="themeBtn" title="تغيير المظهر">☀️</button><button class="icon-btn" id="refreshBtn" title="تحديث البيانات">↻</button></div></div></header>
+<header>
+ <div class="nav">
+  <div class="brand">
+   <img src="https://raw.githubusercontent.com/ziadmohsen2410-zm/ZM-Academy/main/Picsart_26-11-24_10-49-15-125.png" alt="ZM">
+   <span>ZM Academy</span>
+  </div>
+  <div class="header-actions">
+   <button class="icon-btn" id="themeBtn" title="تغيير المظهر">☀️</button>
+   <button class="icon-btn" id="refreshBtn" title="تحديث البيانات">↻</button>
+  </div>
+ </div>
+</header>
+
 <main>
-<div id="message">جارٍ تحميل بياناتك...</div>
-<section id="dashboard" class="hidden">
-<div class="hero"><div><h1 id="welcome">أهلاً بك</h1><p>مرحباً بك في عالم التعلم والتفوق</p><div id="studentInfo" class="info-chip"></div></div><div class="profile"><div class="avatar-wrap"><img id="studentPhoto" alt="صورة الطالب" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='50' fill='%231b3155'/%3E%3Ccircle cx='50' cy='37' r='18' fill='%239bb9e8'/%3E%3Cpath d='M15 100 Q18 65 50 65 Q82 65 85 100' fill='%239bb9e8'/%3E%3C/svg%3E"></div><div><b>الصورة الشخصية</b><div class="muted">صورتك المرتبطة بحسابك</div><div class="profile-actions"><label for="photoInput" class="small-btn" style="cursor:pointer;background:linear-gradient(110deg,#35a8ff,#9b70ff);border-radius:10px;padding:7px 11px;color:white">تغيير الصورة</label><input id="photoInput" type="file" accept="image/png,image/jpeg,image/webp"></div></div></div></div>
-<div class="grid"><div class="card"><h2>موادي الدراسية</h2><div id="subjects"></div></div><div class="card"><h2>ملخص الحساب</h2><div id="accountSummary" class="muted">بيانات حسابك التعليمية</div></div></div>
-<div class="grid"><div class="card"><h2>ملخص المذاكرة</h2><div id="learningSummary" class="muted">جارٍ تحميل تقدمك الدراسي...</div></div><div class="card"><h2>مذكراتي المفضلة</h2><div id="favoriteMaterials"></div></div></div>
-<div class="card"><h2>المحتوى المجاني</h2><div id="freeMaterials"></div></div><div class="card"><h2>المذكرات المتاحة للشراء</h2><div id="paidMaterials"></div></div><div class="card"><h2>طلباتي ومشترياتي</h2><div id="purchases"></div></div>
-<div class="card"><h2>التواصل والدعم</h2><div class="actions"><a href="https://wa.me/201115336341" target="_blank" rel="noopener"><button type="button">تواصل مع المدرس عبر واتساب</button></a><button type="button" class="secondary" id="logoutBtn">تسجيل الخروج</button></div></div>
-</section></main>
+ <div id="message">جارٍ تحميل بياناتك...</div>
+
+ <section id="dashboard" class="hidden">
+
+  <div class="hero">
+   <div class="hero-content">
+    <h1 id="welcome">أهلاً بك</h1>
+    <p>مرحباً بك في عالم التعلم والتفوق</p>
+    <div id="studentInfo" class="info-chip"></div>
+   </div>
+
+   <div class="profile">
+    <div class="avatar-wrap">
+     <img id="studentPhoto" alt="صورة الطالب" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='50' fill='%231b3155'/%3E%3Ccircle cx='50' cy='37' r='18' fill='%239bb9e8'/%3E%3Cpath d='M15 100 Q18 65 50 65 Q82 65 85 100' fill='%239bb9e8'/%3E%3C/svg%3E">
+    </div>
+    <div>
+     <b>الصورة الشخصية</b>
+     <div class="muted">صورتك المرتبطة بحسابك</div>
+     <div class="profile-actions">
+      <label for="photoInput" class="small-btn" style="cursor:pointer;background:linear-gradient(110deg,#35a8ff,#9b70ff);border-radius:10px;padding:7px 11px;color:white">تغيير الصورة</label>
+      <input id="photoInput" type="file" accept="image/png,image/jpeg,image/webp">
+     </div>
+    </div>
+   </div>
+  </div>
+
+  <nav class="quick-nav" aria-label="التنقل السريع">
+   <a href="#subjectsSection"><span>📚</span> موادي</a>
+   <a href="#accountSection"><span>👤</span> حسابي</a>
+   <a href="#learningSection"><span>📈</span> تقدمي</a>
+   <a href="#favoritesSection"><span>⭐</span> المفضلة</a>
+   <a href="#freeSection"><span>🎁</span> المجاني</a>
+   <a href="#paidSection"><span>📖</span> المذكرات</a>
+   <a href="#purchasesSection"><span>🛒</span> مشترياتي</a>
+   <a href="#supportSection"><span>💬</span> الدعم</a>
+  </nav>
+
+  <div class="grid">
+   <div class="card" id="subjectsSection">
+    <h2>موادي الدراسية</h2>
+    <div id="subjects"></div>
+   </div>
+   <div class="card" id="accountSection">
+    <h2>ملخص الحساب</h2>
+    <div id="accountSummary" class="muted">بيانات حسابك التعليمية</div>
+   </div>
+  </div>
+
+  <div class="grid">
+   <div class="card" id="learningSection">
+    <h2>ملخص المذاكرة</h2>
+    <div id="learningSummary" class="muted">جارٍ تحميل تقدمك الدراسي...</div>
+   </div>
+   <div class="card" id="favoritesSection">
+    <h2>مذكراتي المفضلة</h2>
+    <div id="favoriteMaterials"></div>
+   </div>
+  </div>
+
+  <div class="card" id="freeSection">
+   <h2>المحتوى المجاني</h2>
+   <div id="freeMaterials"></div>
+  </div>
+
+  <div class="card" id="paidSection">
+   <h2>المذكرات المتاحة للشراء</h2>
+   <div id="paidMaterials"></div>
+  </div>
+
+  <div class="card" id="purchasesSection">
+   <h2>طلباتي ومشترياتي</h2>
+   <div id="purchases"></div>
+  </div>
+
+  <div class="card" id="supportSection">
+   <h2>التواصل والدعم</h2>
+   <div class="actions">
+    <a href="https://wa.me/201115336341" target="_blank" rel="noopener">
+     <button type="button">تواصل مع المدرس عبر واتساب</button>
+    </a>
+    <button type="button" class="secondary" id="logoutBtn">تسجيل الخروج</button>
+   </div>
+  </div>
+
+ </section>
+</main>
+
 <footer>ZM Academy · منصة التعلم والتفوق</footer>
-<div id="pdfViewer" class="hidden"><div class="viewerTop"><strong id="viewerTitle">عرض المذكرة</strong><button id="closePdfBtn" type="button">إغلاق</button></div><div id="viewerMessage" style="color:white;text-align:center;padding:10px">جارٍ تجهيز المذكرة...</div><div id="viewerPages" class="viewerPages"></div></div>
+
+<div id="pdfViewer" class="hidden">
+ <div class="viewerTop">
+  <strong id="viewerTitle">عرض المذكرة</strong>
+  <button id="closePdfBtn" type="button">إغلاق</button>
+ </div>
+ <div id="viewerMessage" style="color:white;text-align:center;padding:10px">جارٍ تجهيز المذكرة...</div>
+ <div id="viewerPages" class="viewerPages"></div>
+</div>
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+
 <script>
 "use strict";
-const API="https://zm-academy-api.ziadmohsen4567.workers.dev";
-const safeStorage={get(key){try{return localStorage.getItem(key)}catch(e){return null}},set(key,value){try{localStorage.setItem(key,value);return true}catch(e){return false}},remove(key){try{localStorage.removeItem(key)}catch(e){}}};
-const token=safeStorage.get("zm_student_token");
-const $=id=>document.getElementById(id),message=$("message"),dashboard=$("dashboard");
-let currentStudent=null,studentProgress=[],studentFavorites=[],ownedMaterialIds=[],activePdfMaterialId=null,pdfProgressObserver=null,pdfRenderObserver=null,progressQueue=Promise.resolve(),pdfRenderTask=null,pdfDocument=null,pdfOpenSequence=0,dashboardLoading=null;
-if(!token)location.replace("./login.html");
-if(window.pdfjsLib)pdfjsLib.GlobalWorkerOptions.workerSrc="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
-if(safeStorage.get("zm_student_theme")==="light")document.body.classList.add("light");
-function updateThemeButton(){$("themeBtn").textContent=document.body.classList.contains("light")?"☾":"☀️"}updateThemeButton();
-$("themeBtn").addEventListener("click",()=>{document.body.classList.toggle("light");safeStorage.set("zm_student_theme",document.body.classList.contains("light")?"light":"dark");updateThemeButton()});
-async function api(path,options={}){const headers={"Authorization":"Bearer "+token,...(options.headers||{})};if(options.body&&!(options.body instanceof FormData))headers["Content-Type"]="application/json";const response=await fetch(API+path,{...options,headers});let data={};try{data=await response.json()}catch(e){}if(response.status===401){safeStorage.remove("zm_student_token");location.replace("./login.html");throw Error("انتهت جلسة الدخول.")}if(!response.ok||data.success===false){const err=Error(data.error||"تعذر تنفيذ الطلب.");err.status=response.status;err.code=data.code;throw err}return data}
-function showList(id,items,emptyText,render){const box=$(id);box.replaceChildren();if(!items||!items.length){const p=document.createElement("div");p.className="empty";p.textContent=emptyText;box.appendChild(p);return}items.forEach(item=>{const div=document.createElement("div");div.className="item";render(div,item);box.appendChild(div)})}
-function photoCacheKey(){return currentStudent?.id?"zm_student_photo_"+currentStudent.id:null}
-async function compressPhoto(file){const bitmap=await createImageBitmap(file),max=512,scale=Math.min(1,max/Math.max(bitmap.width,bitmap.height)),canvas=document.createElement("canvas");canvas.width=Math.round(bitmap.width*scale);canvas.height=Math.round(bitmap.height*scale);const ctx=canvas.getContext("2d");ctx.fillStyle="#fff";ctx.fillRect(0,0,canvas.width,canvas.height);ctx.drawImage(bitmap,0,0,canvas.width,canvas.height);bitmap.close();const blob=await new Promise(resolve=>canvas.toBlob(resolve,"image/jpeg",.78));if(!blob)throw Error("تعذر تجهيز الصورة.");return new File([blob],"student-photo.jpg",{type:"image/jpeg"})}
-async function loadStudentPhoto(){const key=photoCacheKey();if(key){try{const cached=safeStorage.get(key);if(cached)$("studentPhoto").src=cached}catch(e){}}try{const d=await api("/api/student/photo");if(d.photo_url){$("studentPhoto").src=d.photo_url;if(key&&d.photo_url.length<=400000)safeStorage.set(key,d.photo_url)}else{$("studentPhoto").removeAttribute("src");if(key)safeStorage.remove(key)}}catch(e){console.warn(e.message)}}
-$("photoInput").addEventListener("change",async e=>{const file=e.target.files[0];if(!file)return;if(!["image/jpeg","image/png","image/webp"].includes(file.type)){message.textContent="اختر صورة JPG أو PNG أو WEBP.";e.target.value="";return}if(file.size>5*1024*1024){message.textContent="حجم الصورة يجب ألا يتجاوز 5 ميجابايت.";e.target.value="";return}try{message.textContent="جارٍ تجهيز الصورة...";const form=new FormData();form.append("photo",await compressPhoto(file));const d=await api("/api/student/photo",{method:"POST",body:form});if(d.photo_url){$("studentPhoto").src=d.photo_url;const key=photoCacheKey();if(key&&d.photo_url.length<=400000)safeStorage.set(key,d.photo_url)}message.textContent="تم تحديث الصورة الشخصية بنجاح."}catch(err){message.textContent="لم يتم حفظ الصورة: "+err.message}finally{e.target.value=""}});
-function getSavedPage(id){const p=studentProgress.find(x=>Number(x.material_id)===Number(id));return Math.max(1,Number(p?.last_page)||1)}
-function renderLearningSummary(){const box=$("learningSummary");box.replaceChildren();const started=new Set(studentProgress.map(p=>Number(p.material_id))).size;const count=document.createElement("strong");count.textContent="بدأت مذاكرة "+started+" مذكرة";const latest=[...studentProgress].sort((a,b)=>new Date(b.updated_at||b.updatedAt||0)-new Date(a.updated_at||a.updatedAt||0))[0];const detail=document.createElement("div");detail.className="muted";detail.style.marginTop="7px";detail.textContent=latest?"آخر مذكرة تابعتها: "+(latest.title||"مذكرة")+" — الصفحة "+getSavedPage(latest.material_id):"لم تبدأ مذاكرة أي مذكرة بعد.";box.append(count,detail)}
-function updateProgressLocal(id,page,title){let p=studentProgress.find(x=>Number(x.material_id)===Number(id));if(!p){p={material_id:Number(id)};studentProgress.push(p)}p.last_page=page;p.title=title||p.title;p.updated_at=new Date().toISOString();renderLearningSummary()}
-function saveMaterialProgress(id,page,title){if(!id||!Number.isInteger(page)||page<1)return;const materialId=Number(id);progressQueue=progressQueue.then(async()=>{if(activePdfMaterialId!==materialId)return;try{await api("/api/student/progress",{method:"POST",body:JSON.stringify({material_id:materialId,last_page:page})});updateProgressLocal(materialId,page,title)}catch(e){console.warn("تعذر حفظ التقدم:",e.message)}});return progressQueue}
 
-function renderFavoriteMaterials(){showList("favoriteMaterials",studentFavorites,"لم تضف أي مذكرات للمفضلة بعد.",(div,item)=>{const id=Number(item.material_id),title=document.createElement("strong");title.textContent=item.title||"مذكرة تعليمية";const info=document.createElement("div");info.className="muted";info.textContent=item.subject_name||item.type||"محتوى تعليمي";const remove=document.createElement("button");remove.className="secondary small-btn";remove.textContent="إزالة من المفضلة";remove.addEventListener("click",async()=>{remove.disabled=true;try{await api("/api/student/favorites/"+encodeURIComponent(id),{method:"DELETE"});studentFavorites=studentFavorites.filter(f=>Number(f.material_id)!==id);renderFavoriteMaterials();refreshFavoriteButtons()}catch(e){message.textContent=e.message;remove.disabled=false}});div.append(title,info,remove);if(Number(item.is_free)===1||ownedMaterialIds.includes(id)){const open=document.createElement("button");open.textContent="فتح المذكرة";open.addEventListener("click",()=>openPdf(id,item.title,getSavedPage(id)));div.appendChild(open)}})}
-function refreshFavoriteButtons(){document.querySelectorAll("[data-favorite-id]").forEach(btn=>{const id=Number(btn.dataset.favoriteId),yes=studentFavorites.some(f=>Number(f.material_id)===id);btn.textContent=yes?"★ إزالة من المفضلة":"☆ أضف للمفضلة";btn.dataset.favorite=yes?"1":"0"})}
-function stopPdfViewer(){pdfOpenSequence++;if(pdfProgressObserver){pdfProgressObserver.disconnect();pdfProgressObserver=null}if(pdfRenderObserver){pdfRenderObserver.disconnect();pdfRenderObserver=null}if(pdfRenderTask){try{pdfRenderTask.cancel()}catch(e){}pdfRenderTask=null}if(pdfDocument){try{pdfDocument.destroy()}catch(e){}pdfDocument=null}activePdfMaterialId=null;$("pdfViewer").classList.add("hidden");$("viewerPages").replaceChildren();$("viewerMessage").textContent="جارٍ تجهيز المذكرة..."}
-async function openPdf(materialId,title,resumePage=1){const id=Number(materialId),sequence=++pdfOpenSequence,viewer=$("pdfViewer"),viewerMessage=$("viewerMessage"),pages=$("viewerPages");if(pdfProgressObserver){pdfProgressObserver.disconnect();pdfProgressObserver=null}if(pdfRenderObserver){pdfRenderObserver.disconnect();pdfRenderObserver=null}if(pdfRenderTask){try{pdfRenderTask.cancel()}catch(e){}pdfRenderTask=null}if(pdfDocument){try{pdfDocument.destroy()}catch(e){}pdfDocument=null}activePdfMaterialId=id;viewer.classList.remove("hidden");$("viewerTitle").textContent=title||"عرض المذكرة";viewerMessage.textContent="جارٍ تحميل المذكرة...";pages.replaceChildren();try{if(!window.pdfjsLib)throw Error("تعذر تحميل مكتبة PDF.");const response=await fetch(API+"/api/student/materials/"+encodeURIComponent(id)+"/view",{headers:{"Authorization":"Bearer "+token}});if(sequence!==pdfOpenSequence)return;if(response.status===401){safeStorage.remove("zm_student_token");location.replace("./login.html");return}if(!response.ok){let d={};try{d=await response.json()}catch(e){}throw Error(d.error||"تعذر فتح المذكرة.")}const buffer=await response.arrayBuffer();if(sequence!==pdfOpenSequence)return;const loadingTask=pdfjsLib.getDocument({data:new Uint8Array(buffer)});const pdf=await loadingTask.promise;if(sequence!==pdfOpenSequence){try{await pdf.destroy()}catch(e){}return}pdfDocument=pdf;viewerMessage.textContent="عدد الصفحات: "+pdf.numPages;const pageElements=[];for(let n=1;n<=pdf.numPages;n++){if(sequence!==pdfOpenSequence)return;const page=await pdf.getPage(n);if(sequence!==pdfOpenSequence)return;const base=page.getViewport({scale:1}),available=Math.max(280,Math.min(window.innerWidth-26,900)),scale=Math.min(1.5,available/base.width),viewport=page.getViewport({scale}),box=document.createElement("div");box.className="pdfPage";box.dataset.page=String(n);box.style.width=viewport.width+"px";box.style.minHeight=viewport.height+"px";const canvas=document.createElement("canvas"),ratio=Math.min(window.devicePixelRatio||1,1.5);canvas.width=Math.floor(viewport.width*ratio);canvas.height=Math.floor(viewport.height*ratio);canvas.style.width=viewport.width+"px";canvas.style.height=viewport.height+"px";const watermark=document.createElement("div");watermark.className="pdfWatermark";const logo=document.createElement("img");logo.src="https://raw.githubusercontent.com/ziadmohsen2410-zm/ZM-Academy/main/Picsart_26-11-24_10-49-15-125.png";logo.alt="ZM Academy";watermark.appendChild(logo);box.append(canvas,watermark);pages.appendChild(box);pageElements.push({page,canvas,viewport,box,rendered:false,rendering:false})}
-const renderOne=async item=>{if(item.rendered||item.rendering||sequence!==pdfOpenSequence)return;item.rendering=true;const ratio=Math.min(window.devicePixelRatio||1,1.5);try{pdfRenderTask=item.page.render({canvasContext:item.canvas.getContext("2d"),viewport:item.viewport,transform:ratio!==1?[ratio,0,0,ratio,0,0]:null});await pdfRenderTask.promise;if(sequence===pdfOpenSequence)item.rendered=true}catch(e){if(e.name!=="RenderingCancelledException"&&sequence===pdfOpenSequence)throw e}finally{item.rendering=false;pdfRenderTask=null}};
-pdfRenderObserver=new IntersectionObserver(entries=>{entries.forEach(entry=>{if(entry.isIntersecting&&sequence===pdfOpenSequence){const item=pageElements[Number(entry.target.dataset.page)-1];if(item)renderOne(item).catch(e=>{if(sequence===pdfOpenSequence)viewerMessage.textContent="تعذر عرض إحدى الصفحات: "+e.message})}})},{root:viewer,rootMargin:"700px 0px",threshold:0.01});pageElements.forEach(x=>pdfRenderObserver.observe(x.box));pdfProgressObserver=new IntersectionObserver(entries=>{if(sequence!==pdfOpenSequence)return;const visible=entries.filter(x=>x.isIntersecting).sort((a,b)=>b.intersectionRatio-a.intersectionRatio)[0];if(visible)saveMaterialProgress(id,Number(visible.target.dataset.page),title)},{root:viewer,threshold:[.35,.6]});pageElements.forEach(x=>pdfProgressObserver.observe(x.box));const target=pages.querySelector('[data-page="'+Math.min(pdf.numPages,Math.max(1,Number(resumePage)||1))+'"]');if(target){target.scrollIntoView({block:"start",behavior:"auto"});const item=pageElements[Number(target.dataset.page)-1];await renderOne(item)}if(sequence===pdfOpenSequence)viewerMessage.textContent="تم فتح المذكرة. يتم تحميل الصفحات أثناء التصفح."}catch(e){if(sequence===pdfOpenSequence){viewerMessage.textContent=e.message||"حدث خطأ أثناء فتح المذكرة.";pages.replaceChildren()}}}
+const API="https://zm-academy-api.ziadmohsen4567.workers.dev";
+
+const safeStorage={
+ get(key){try{return localStorage.getItem(key)}catch(e){return null}},
+ set(key,value){try{localStorage.setItem(key,value);return true}catch(e){return false}},
+ remove(key){try{localStorage.removeItem(key)}catch(e){}}
+};
+
+const token=safeStorage.get("zm_student_token");
+const $=id=>document.getElementById(id);
+const message=$("message");
+const dashboard=$("dashboard");
+
+let currentStudent=null;
+let studentProgress=[];
+let studentFavorites=[];
+let ownedMaterialIds=[];
+let activePdfMaterialId=null;
+let pdfProgressObserver=null;
+let pdfRenderObserver=null;
+let progressQueue=Promise.resolve();
+let pdfRenderTask=null;
+let pdfDocument=null;
+let pdfOpenSequence=0;
+let dashboardLoading=null;
+
+if(!token)location.replace("./login.html");
+
+if(window.pdfjsLib){
+ pdfjsLib.GlobalWorkerOptions.workerSrc="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+}
+
+/* الوضع الليلي والنهاري */
+if(safeStorage.get("zm_student_theme")==="light"){
+ document.body.classList.add("light");
+}
+
+function updateThemeButton(){
+ $("themeBtn").textContent=document.body.classList.contains("light")?"☾":"☀️";
+}
+
+updateThemeButton();
+
+$("themeBtn").addEventListener("click",()=>{
+ document.body.classList.toggle("light");
+ safeStorage.set(
+  "zm_student_theme",
+  document.body.classList.contains("light")?"light":"dark"
+ );
+ updateThemeButton();
+});
+
+async function api(path,options={}){
+ const headers={
+  "Authorization":"Bearer "+token,
+  ...(options.headers||{})
+ };
+
+ if(options.body&&!(options.body instanceof FormData)){
+  headers["Content-Type"]="application/json";
+ }
+
+ const response=await fetch(API+path,{...options,headers});
+ let data={};
+
+ try{data=await response.json()}catch(e){}
+
+ if(response.status===401){
+  safeStorage.remove("zm_student_token");
+  location.replace("./login.html");
+  throw Error("انتهت جلسة الدخول.");
+ }
+
+ if(!response.ok||data.success===false){
+  const err=Error(data.error||"تعذر تنفيذ الطلب.");
+  err.status=response.status;
+  err.code=data.code;
+  throw err;
+ }
+
+ return data;
+}
+
+function showList(id,items,emptyText,render){
+ const box=$(id);
+ box.replaceChildren();
+
+ if(!items||!items.length){
+  const p=document.createElement("div");
+  p.className="empty";
+  p.textContent=emptyText;
+  box.appendChild(p);
+  return;
+ }
+
+ items.forEach(item=>{
+  const div=document.createElement("div");
+  div.className="item";
+  render(div,item);
+  box.appendChild(div);
+ });
+}
+
+function photoCacheKey(){
+ return currentStudent?.id?"zm_student_photo_"+currentStudent.id:null;
+}
+
+async function compressPhoto(file){
+ const bitmap=await createImageBitmap(file);
+ const max=512;
+ const scale=Math.min(1,max/Math.max(bitmap.width,bitmap.height));
+ const canvas=document.createElement("canvas");
+
+ canvas.width=Math.round(bitmap.width*scale);
+ canvas.height=Math.round(bitmap.height*scale);
+
+ const ctx=canvas.getContext("2d");
+ ctx.fillStyle="#fff";
+ ctx.fillRect(0,0,canvas.width,canvas.height);
+ ctx.drawImage(bitmap,0,0,canvas.width,canvas.height);
+ bitmap.close();
+
+ const blob=await new Promise(resolve=>canvas.toBlob(resolve,"image/jpeg",.78));
+
+ if(!blob)throw Error("تعذر تجهيز الصورة.");
+
+ return new File([blob],"student-photo.jpg",{type:"image/jpeg"});
+}
+
+async function loadStudentPhoto(){
+ const key=photoCacheKey();
+
+ if(key){
+  try{
+   const cached=safeStorage.get(key);
+   if(cached)$("studentPhoto").src=cached;
+  }catch(e){}
+ }
+
+ try{
+  const d=await api("/api/student/photo");
+
+  if(d.photo_url){
+   $("studentPhoto").src=d.photo_url;
+   if(key&&d.photo_url.length<=400000)safeStorage.set(key,d.photo_url);
+  }else{
+   $("studentPhoto").removeAttribute("src");
+   if(key)safeStorage.remove(key);
+  }
+ }catch(e){
+  console.warn(e.message);
+ }
+}
+
+$("photoInput").addEventListener("change",async e=>{
+ const file=e.target.files[0];
+ if(!file)return;
+
+ if(!["image/jpeg","image/png","image/webp"].includes(file.type)){
+  message.textContent="اختر صورة JPG أو PNG أو WEBP.";
+  e.target.value="";
+  return;
+ }
+
+ if(file.size>5*1024*1024){
+  message.textContent="حجم الصورة يجب ألا يتجاوز 5 ميجابايت.";
+  e.target.value="";
+  return;
+ }
+
+ try{
+  message.textContent="جارٍ تجهيز الصورة...";
+  const form=new FormData();
+  form.append("photo",await compressPhoto(file));
+
+  const d=await api("/api/student/photo",{method:"POST",body:form});
+
+  if(d.photo_url){
+   $("studentPhoto").src=d.photo_url;
+   const key=photoCacheKey();
+   if(key&&d.photo_url.length<=400000)safeStorage.set(key,d.photo_url);
+  }
+
+  message.textContent="تم تحديث الصورة الشخصية بنجاح.";
+ }catch(err){
+  message.textContent="لم يتم حفظ الصورة: "+err.message;
+ }finally{
+  e.target.value="";
+ }
+});
+
+function getSavedPage(id){
+ const p=studentProgress.find(x=>Number(x.material_id)===Number(id));
+ return Math.max(1,Number(p?.last_page)||1);
+}
+
+function renderLearningSummary(){
+ const box=$("learningSummary");
+ box.replaceChildren();
+
+ const started=new Set(studentProgress.map(p=>Number(p.material_id))).size;
+ const count=document.createElement("strong");
+ count.textContent="بدأت مذاكرة "+started+" مذكرة";
+
+ const latest=[...studentProgress].sort(
+  (a,b)=>new Date(b.updated_at||b.updatedAt||0)-new Date(a.updated_at||a.updatedAt||0)
+ )[0];
+
+ const detail=document.createElement("div");
+ detail.className="muted";
+ detail.style.marginTop="7px";
+ detail.textContent=latest
+  ?"آخر مذكرة تابعتها: "+(latest.title||"مذكرة")+" — الصفحة "+getSavedPage(latest.material_id)
+  :"لم تبدأ مذاكرة أي مذكرة بعد.";
+
+ box.append(count,detail);
+}
+
+function updateProgressLocal(id,page,title){
+ let p=studentProgress.find(x=>Number(x.material_id)===Number(id));
+
+ if(!p){
+  p={material_id:Number(id)};
+  studentProgress.push(p);
+ }
+
+ p.last_page=page;
+ p.title=title||p.title;
+ p.updated_at=new Date().toISOString();
+ renderLearningSummary();
+}
+
+function saveMaterialProgress(id,page,title){
+ if(!id||!Number.isInteger(page)||page<1)return;
+
+ const materialId=Number(id);
+
+ progressQueue=progressQueue.then(async()=>{
+  if(activePdfMaterialId!==materialId)return;
+
+  try{
+   await api("/api/student/progress",{
+    method:"POST",
+    body:JSON.stringify({material_id:materialId,last_page:page})
+   });
+
+   updateProgressLocal(materialId,page,title);
+  }catch(e){
+   console.warn("تعذر حفظ التقدم:",e.message);
+  }
+ });
+
+ return progressQueue;
+}
+
+function renderFavoriteMaterials(){
+ showList("favoriteMaterials",studentFavorites,"لم تضف أي مذكرات للمفضلة بعد.",(div,item)=>{
+  const id=Number(item.material_id);
+
+  const title=document.createElement("strong");
+  title.textContent=item.title||"مذكرة تعليمية";
+
+  const info=document.createElement("div");
+  info.className="muted";
+  info.textContent=item.subject_name||item.type||"محتوى تعليمي";
+
+  const remove=document.createElement("button");
+  remove.className="secondary small-btn";
+  remove.textContent="إزالة من المفضلة";
+
+  remove.addEventListener("click",async()=>{
+   remove.disabled=true;
+
+   try{
+    await api("/api/student/favorites/"+encodeURIComponent(id),{method:"DELETE"});
+    studentFavorites=studentFavorites.filter(f=>Number(f.material_id)!==id);
+    renderFavoriteMaterials();
+    refreshFavoriteButtons();
+   }catch(e){
+    message.textContent=e.message;
+    remove.disabled=false;
+   }
+  });
+
+  div.append(title,info,remove);
+
+  if(Number(item.is_free)===1||ownedMaterialIds.includes(id)){
+   const open=document.createElement("button");
+   open.textContent="فتح المذكرة";
+   open.addEventListener("click",()=>openPdf(id,item.title,getSavedPage(id)));
+   div.appendChild(open);
+  }
+ });
+}
+
+function refreshFavoriteButtons(){
+ document.querySelectorAll("[data-favorite-id]").forEach(btn=>{
+  const id=Number(btn.dataset.favoriteId);
+  const yes=studentFavorites.some(f=>Number(f.material_id)===id);
+
+  btn.textContent=yes?"★ إزالة من المفضلة":"☆ أضف للمفضلة";
+  btn.dataset.favorite=yes?"1":"0";
+ });
+}
+
+function stopPdfViewer(){
+ pdfOpenSequence++;
+
+ if(pdfProgressObserver){
+  pdfProgressObserver.disconnect();
+  pdfProgressObserver=null;
+ }
+
+ if(pdfRenderObserver){
+  pdfRenderObserver.disconnect();
+  pdfRenderObserver=null;
+ }
+
+ if(pdfRenderTask){
+  try{pdfRenderTask.cancel()}catch(e){}
+  pdfRenderTask=null;
+ }
+
+ if(pdfDocument){
+  try{pdfDocument.destroy()}catch(e){}
+  pdfDocument=null;
+ }
+
+ activePdfMaterialId=null;
+ $("pdfViewer").classList.add("hidden");
+ $("viewerPages").replaceChildren();
+ $("viewerMessage").textContent="جارٍ تجهيز المذكرة...";
+}
+
+async function openPdf(materialId,title,resumePage=1){
+ const id=Number(materialId);
+ const sequence=++pdfOpenSequence;
+ const viewer=$("pdfViewer");
+ const viewerMessage=$("viewerMessage");
+ const pages=$("viewerPages");
+
+ if(pdfProgressObserver){
+  pdfProgressObserver.disconnect();
+  pdfProgressObserver=null;
+ }
+
+ if(pdfRenderObserver){
+  pdfRenderObserver.disconnect();
+  pdfRenderObserver=null;
+ }
+
+ if(pdfRenderTask){
+  try{pdfRenderTask.cancel()}catch(e){}
+  pdfRenderTask=null;
+ }
+
+ if(pdfDocument){
+  try{pdfDocument.destroy()}catch(e){}
+  pdfDocument=null;
+ }
+
+ activePdfMaterialId=id;
+ viewer.classList.remove("hidden");
+ $("viewerTitle").textContent=title||"عرض المذكرة";
+ viewerMessage.textContent="جارٍ تحميل المذكرة...";
+ pages.replaceChildren();
+
+ try{
+  if(!window.pdfjsLib)throw Error("تعذر تحميل مكتبة PDF.");
+
+  const response=await fetch(
+   API+"/api/student/materials/"+encodeURIComponent(id)+"/view",
+   {headers:{"Authorization":"Bearer "+token}}
+  );
+
+  if(sequence!==pdfOpenSequence)return;
+
+  if(response.status===401){
+   safeStorage.remove("zm_student_token");
+   location.replace("./login.html");
+   return;
+  }
+
+  if(!response.ok){
+   let d={};
+   try{d=await response.json()}catch(e){}
+   throw Error(d.error||"تعذر فتح المذكرة.");
+  }
+
+  const buffer=await response.arrayBuffer();
+  if(sequence!==pdfOpenSequence)return;
+
+  const loadingTask=pdfjsLib.getDocument({data:new Uint8Array(buffer)});
+  const pdf=await loadingTask.promise;
+
+  if(sequence!==pdfOpenSequence){
+   try{await pdf.destroy()}catch(e){}
+   return;
+  }
+
+  pdfDocument=pdf;
+  viewerMessage.textContent="عدد الصفحات: "+pdf.numPages;
+
+  const pageElements=[];
+
+  for(let n=1;n<=pdf.numPages;n++){
+   if(sequence!==pdfOpenSequence)return;
+
+   const page=await pdf.getPage(n);
+   if(sequence!==pdfOpenSequence)return;
+
+   const base=page.getViewport({scale:1});
+   const available=Math.max(280,Math.min(window.innerWidth-26,900));
+   const scale=Math.min(1.5,available/base.width);
+   const viewport=page.getViewport({scale});
+
+   const box=document.createElement("div");
+   box.className="pdfPage";
+   box.dataset.page=String(n);
+   box.style.width=viewport.width+"px";
+   box.style.minHeight=viewport.height+"px";
+
+   const canvas=document.createElement("canvas");
+   const ratio=Math.min(window.devicePixelRatio||1,1.5);
+
+   canvas.width=Math.floor(viewport.width*ratio);
+   canvas.height=Math.floor(viewport.height*ratio);
+   canvas.style.width=viewport.width+"px";
+   canvas.style.height=viewport.height+"px";
+
+   const watermark=document.createElement("div");
+   watermark.className="pdfWatermark";
+
+   const logo=document.createElement("img");
+   logo.src="https://raw.githubusercontent.com/ziadmohsen2410-zm/ZM-Academy/main/Picsart_26-11-24_10-49-15-125.png";
+   logo.alt="ZM Academy";
+
+   watermark.appendChild(logo);
+   box.append(canvas,watermark);
+   pages.appendChild(box);
+
+   pageElements.push({
+    page,
+    canvas,
+    viewport,
+    box,
+    rendered:false,
+    rendering:false
+   });
+  }
+
+  const renderOne=async item=>{
+   if(item.rendered||item.rendering||sequence!==pdfOpenSequence)return;
+
+   item.rendering=true;
+   const ratio=Math.min(window.devicePixelRatio||1,1.5);
+
+   try{
+    pdfRenderTask=item.page.render({
+     canvasContext:item.canvas.getContext("2d"),
+     viewport:item.viewport,
+     transform:ratio!==1?[ratio,0,0,ratio,0,0]:null
+    });
+
+    await pdfRenderTask.promise;
+
+    if(sequence===pdfOpenSequence)item.rendered=true;
+   }catch(e){
+    if(e.name!=="RenderingCancelledException"&&sequence===pdfOpenSequence)throw e;
+   }finally{
+    item.rendering=false;
+    pdfRenderTask=null;
+   }
+  };
+
+  pdfRenderObserver=new IntersectionObserver(entries=>{
+   entries.forEach(entry=>{
+    if(entry.isIntersecting&&sequence===pdfOpenSequence){
+     const item=pageElements[Number(entry.target.dataset.page)-1];
+
+     if(item){
+      renderOne(item).catch(e=>{
+       if(sequence===pdfOpenSequence){
+        viewerMessage.textContent="تعذر عرض إحدى الصفحات: "+e.message;
+       }
+      });
+     }
+    }
+   });
+  },{
+   root:viewer,
+   rootMargin:"700px 0px",
+   threshold:0.01
+  });
+
+  pageElements.forEach(x=>pdfRenderObserver.observe(x.box));
+
+  pdfProgressObserver=new IntersectionObserver(entries=>{
+   if(sequence!==pdfOpenSequence)return;
+
+   const visible=entries
+    .filter(x=>x.isIntersecting)
+    .sort((a,b)=>b.intersectionRatio-a.intersectionRatio)[0];
+
+   if(visible){
+    saveMaterialProgress(
+     id,
+     Number(visible.target.dataset.page),
+     title
+    );
+   }
+  },{
+   root:viewer,
+   threshold:[.35,.6]
+  });
+
+  pageElements.forEach(x=>pdfProgressObserver.observe(x.box));
+
+  const target=pages.querySelector(
+   '[data-page="'+Math.min(pdf.numPages,Math.max(1,Number(resumePage)||1))+'"]'
+  );
+
+  if(target){
+   target.scrollIntoView({block:"start",behavior:"auto"});
+
+   const item=pageElements[Number(target.dataset.page)-1];
+   await renderOne(item);
+  }
+
+  if(sequence===pdfOpenSequence){
+   viewerMessage.textContent="تم فتح المذكرة. يتم تحميل الصفحات أثناء التصفح.";
+  }
+
+ }catch(e){
+  if(sequence===pdfOpenSequence){
+   viewerMessage.textContent=e.message||"حدث خطأ أثناء فتح المذكرة.";
+   pages.replaceChildren();
+  }
+ }
+}
+
 $("closePdfBtn").addEventListener("click",stopPdfViewer);
 
-async function loadDashboard(){if(!token||dashboardLoading)return dashboardLoading;dashboardLoading=(async()=>{$("refreshBtn").disabled=true;message.textContent="جارٍ تحميل بياناتك...";dashboard.classList.add("hidden");try{const [me,purchases,materialsData,progressData,favoritesData]=await Promise.all([api("/api/student/me"),api("/api/student/purchases"),api("/api/materials"),api("/api/student/progress").catch(()=>({progress:[]})),api("/api/student/favorites").catch(()=>({favorites:[]}))]);const student=me.student;currentStudent=student;const subjects=me.subjects||[],materials=materialsData.materials||[],purchaseList=purchases.purchases||[];studentProgress=progressData.progress||[];studentFavorites=favoritesData.favorites||[];ownedMaterialIds=purchaseList.filter(p=>p.status==="approved"||p.status==="completed").map(p=>Number(p.material_id));$("welcome").textContent="أهلاً "+(student.name||"بك");$("studentInfo").textContent="الصف الدراسي: "+(student.grade||"غير محدد");const visible=purchaseList.filter(p=>!Number(p.is_hidden));$("accountSummary").textContent="اسم الطالب: "+(student.name||"غير محدد")+" | الصف: "+(student.grade||"غير محدد")+" | عدد المواد: "+subjects.length+" | الطلبات والمشتريات الظاهرة: "+visible.length;showList("subjects",subjects,"لا توجد مواد مسجلة.",(div,s)=>{div.textContent=s.name});const subjectIds=subjects.map(s=>Number(s.id)),mine=materials.filter(m=>subjectIds.includes(Number(m.subject_id))),free=mine.filter(m=>Number(m.is_free)===1),paid=mine.filter(m=>Number(m.is_free)!==1);function renderMaterial(div,m){const id=Number(m.id),title=document.createElement("strong");title.textContent=m.title||"مذكرة تعليمية";const type=document.createElement("div");type.className="muted";type.textContent=m.type||"محتوى تعليمي";const price=document.createElement("div");price.className="muted";price.textContent=Number(m.is_free)===1?"مجاني":"السعر: "+(m.price??"غير محدد")+" جنيه";div.append(title,type,price);const fav=studentFavorites.some(f=>Number(f.material_id)===id),favBtn=document.createElement("button");favBtn.className="secondary small-btn";favBtn.dataset.favoriteId=String(id);favBtn.dataset.favorite=fav?"1":"0";favBtn.textContent=fav?"★ إزالة من المفضلة":"☆ أضف للمفضلة";favBtn.addEventListener("click",async()=>{favBtn.disabled=true;const currently=studentFavorites.some(f=>Number(f.material_id)===id);try{if(currently){await api("/api/student/favorites/"+encodeURIComponent(id),{method:"DELETE"});studentFavorites=studentFavorites.filter(f=>Number(f.material_id)!==id)}else{await api("/api/student/favorites/"+encodeURIComponent(id),{method:"POST"});studentFavorites.push({material_id:id,title:m.title,type:m.type,is_free:m.is_free,price:m.price})}renderFavoriteMaterials();refreshFavoriteButtons()}catch(e){message.textContent=e.message}finally{favBtn.disabled=false}});div.appendChild(favBtn);const saved=getSavedPage(id);if(studentProgress.some(p=>Number(p.material_id)===id)){const label=document.createElement("div");label.className="muted";label.textContent="آخر صفحة وصلت إليها: "+saved;div.appendChild(label)}const owned=Number(m.is_free)===1||purchaseList.some(p=>Number(p.material_id)===id&&(p.status==="approved"||p.status==="completed"));if(owned){const open=document.createElement("button");open.textContent=saved>1?"متابعة من الصفحة "+saved:"فتح المذكرة";open.addEventListener("click",()=>openPdf(id,m.title,saved));div.appendChild(open);return}const pending=purchaseList.some(p=>Number(p.material_id)===id&&p.status==="pending");if(pending){const b=document.createElement("button");b.textContent="طلبك قيد المراجعة";b.disabled=true;div.appendChild(b);return}const buy=document.createElement("button");buy.textContent="طلب شراء المذكرة";buy.addEventListener("click",async()=>{buy.disabled=true;buy.textContent="جارٍ إرسال الطلب...";try{await api("/api/orders",{method:"POST",body:JSON.stringify({material_id:id})});message.textContent="تم إرسال طلب الشراء بنجاح.";await loadDashboard()}catch(e){message.textContent=e.message;buy.disabled=false;buy.textContent=e.status===409?"لديك طلب شراء بالفعل":"طلب شراء المذكرة";if(e.status===409)buy.disabled=true}});div.appendChild(buy)}showList("freeMaterials",free,"لا يوجد محتوى مجاني متاح حاليًا.",renderMaterial);showList("paidMaterials",paid,"لا توجد مذكرات متاحة للشراء حاليًا.",renderMaterial);const statuses={pending:"قيد المراجعة",approved:"تمت الموافقة",completed:"مكتمل",rejected:"مرفوض"};showList("purchases",visible,"لا توجد طلبات أو مشتريات ظاهرة حاليًا.",(div,p)=>{const id=Number(p.material_id),title=document.createElement("strong");title.textContent=p.title||"مذكرة";const subject=document.createElement("div");subject.className="muted";subject.textContent="المادة: "+(p.subject_name||"غير محددة");const status=document.createElement("div");status.className="status";status.textContent="حالة الطلب: "+(statuses[p.status]||"غير معروف");div.append(title,subject,status);if(p.status==="approved"||p.status==="completed"){const b=document.createElement("button");const saved=getSavedPage(id);b.textContent=saved>1?"متابعة من الصفحة "+saved:"فتح المذكرة";b.addEventListener("click",()=>openPdf(id,p.title,saved));div.appendChild(b)}if(["rejected","approved","completed"].includes(p.status)){const rm=document.createElement("button");rm.className="danger";rm.textContent=p.status==="rejected"?"حذف الطلب":"إزالة من مشترياتي";rm.addEventListener("click",async()=>{const rejected=p.status==="rejected";if(!confirm(rejected?"هل تريد حذف الطلب المرفوض نهائيًا؟":"هل تريد إزالة هذه المذكرة من قائمة مشترياتك؟ ستظل صلاحية فتحها محفوظة."))return;rm.disabled=true;try{const result=await api("/api/student/purchases/"+encodeURIComponent(p.order_id),{method:"DELETE"});message.textContent=result.action==="deleted"?"تم حذف الطلب المرفوض.":"تمت إزالة المذكرة من قائمة مشترياتك.";await loadDashboard()}catch(e){message.textContent=e.message;rm.disabled=false}});div.appendChild(rm)}});renderLearningSummary();renderFavoriteMaterials();dashboard.classList.remove("hidden");message.textContent="تم تحميل لوحة الطالب بنجاح.";loadStudentPhoto()}catch(e){message.textContent=e.message||"حدث خطأ أثناء تحميل البيانات."}finally{$("refreshBtn").disabled=false;dashboardLoading=null}})();return dashboardLoading}
-$("refreshBtn").addEventListener("click",()=>{if(!dashboardLoading)loadDashboard()});
-$("logoutBtn").addEventListener("click",async()=>{$("logoutBtn").disabled=true;$("logoutBtn").textContent="جارٍ تسجيل الخروج...";try{await fetch(API+"/api/student/logout",{method:"POST",headers:{"Authorization":"Bearer "+token}})}catch(e){}safeStorage.remove("zm_student_token");location.replace("./login.html")});
+async function loadDashboard(){
+ if(!token||dashboardLoading)return dashboardLoading;
+
+ dashboardLoading=(async()=>{
+  $("refreshBtn").disabled=true;
+  message.textContent="جارٍ تحميل بياناتك...";
+  dashboard.classList.add("hidden");
+
+  try{
+   const [
+    me,
+    purchases,
+    materialsData,
+    progressData,
+    favoritesData
+   ]=await Promise.all([
+    api("/api/student/me"),
+    api("/api/student/purchases"),
+    api("/api/materials"),
+    api("/api/student/progress").catch(()=>({progress:[]})),
+    api("/api/student/favorites").catch(()=>({favorites:[]}))
+   ]);
+
+   const student=me.student;
+   currentStudent=student;
+
+   const subjects=me.subjects||[];
+   const materials=materialsData.materials||[];
+   const purchaseList=purchases.purchases||[];
+
+   studentProgress=progressData.progress||[];
+   studentFavorites=favoritesData.favorites||[];
+
+   ownedMaterialIds=purchaseList
+    .filter(p=>p.status==="approved"||p.status==="completed")
+    .map(p=>Number(p.material_id));
+
+   $("welcome").textContent="أهلاً "+(student.name||"بك");
+   $("studentInfo").textContent="الصف الدراسي: "+(student.grade||"غير محدد");
+
+   const visible=purchaseList.filter(p=>!Number(p.is_hidden));
+
+   $("accountSummary").textContent=
+    "اسم الطالب: "+(student.name||"غير محدد")+
+    " | الصف: "+(student.grade||"غير محدد")+
+    " | عدد المواد: "+subjects.length+
+    " | الطلبات والمشتريات الظاهرة: "+visible.length;
+
+   showList("subjects",subjects,"لا توجد مواد مسجلة.",(div,s)=>{
+    div.textContent=s.name;
+   });
+
+   const subjectIds=subjects.map(s=>Number(s.id));
+   const mine=materials.filter(m=>subjectIds.includes(Number(m.subject_id)));
+   const free=mine.filter(m=>Number(m.is_free)===1);
+   const paid=mine.filter(m=>Number(m.is_free)!==1);
+
+   function renderMaterial(div,m){
+    const id=Number(m.id);
+
+    const title=document.createElement("strong");
+    title.textContent=m.title||"مذكرة تعليمية";
+
+    const type=document.createElement("div");
+    type.className="muted";
+    type.textContent=m.type||"محتوى تعليمي";
+
+    const price=document.createElement("div");
+    price.className="muted";
+    price.textContent=Number(m.is_free)===1
+     ?"مجاني"
+     :"السعر: "+(m.price??"غير محدد")+" جنيه";
+
+    div.append(title,type,price);
+
+    const fav=studentFavorites.some(f=>Number(f.material_id)===id);
+    const favBtn=document.createElement("button");
+
+    favBtn.className="secondary small-btn";
+    favBtn.dataset.favoriteId=String(id);
+    favBtn.dataset.favorite=fav?"1":"0";
+    favBtn.textContent=fav?"★ إزالة من المفضلة":"☆ أضف للمفضلة";
+
+    favBtn.addEventListener("click",async()=>{
+     favBtn.disabled=true;
+
+     const currently=studentFavorites.some(f=>Number(f.material_id)===id);
+
+     try{
+      if(currently){
+       await api("/api/student/favorites/"+encodeURIComponent(id),{method:"DELETE"});
+       studentFavorites=studentFavorites.filter(f=>Number(f.material_id)!==id);
+      }else{
+       await api("/api/student/favorites/"+encodeURIComponent(id),{method:"POST"});
+
+       studentFavorites.push({
+        material_id:id,
+        title:m.title,
+        type:m.type,
+        is_free:m.is_free,
+        price:m.price
+       });
+      }
+
+      renderFavoriteMaterials();
+      refreshFavoriteButtons();
+     }catch(e){
+      message.textContent=e.message;
+     }finally{
+      favBtn.disabled=false;
+     }
+    });
+
+    div.appendChild(favBtn);
+
+    const saved=getSavedPage(id);
+
+    if(studentProgress.some(p=>Number(p.material_id)===id)){
+     const label=document.createElement("div");
+     label.className="muted";
+     label.textContent="آخر صفحة وصلت إليها: "+saved;
+     div.appendChild(label);
+    }
+
+    const owned=
+     Number(m.is_free)===1||
+     purchaseList.some(p=>
+      Number(p.material_id)===id&&
+      (p.status==="approved"||p.status==="completed")
+     );
+
+    if(owned){
+     const open=document.createElement("button");
+     open.textContent=saved>1?"متابعة من الصفحة "+saved:"فتح المذكرة";
+     open.addEventListener("click",()=>openPdf(id,m.title,saved));
+     div.appendChild(open);
+     return;
+    }
+
+    const pending=purchaseList.some(p=>
+     Number(p.material_id)===id&&p.status==="pending"
+    );
+
+    if(pending){
+     const b=document.createElement("button");
+     b.textContent="طلبك قيد المراجعة";
+     b.disabled=true;
+     div.appendChild(b);
+     return;
+    }
+
+    const buy=document.createElement("button");
+    buy.textContent="طلب شراء المذكرة";
+
+    buy.addEventListener("click",async()=>{
+     buy.disabled=true;
+     buy.textContent="جارٍ إرسال الطلب...";
+
+     try{
+      await api("/api/orders",{
+       method:"POST",
+       body:JSON.stringify({material_id:id})
+      });
+
+      message.textContent="تم إرسال طلب الشراء بنجاح.";
+      await loadDashboard();
+     }catch(e){
+      message.textContent=e.message;
+      buy.disabled=false;
+
+      buy.textContent=e.status===409
+       ?"لديك طلب شراء بالفعل"
+       :"طلب شراء المذكرة";
+
+      if(e.status===409)buy.disabled=true;
+     }
+    });
+
+    div.appendChild(buy);
+   }
+
+   showList(
+    "freeMaterials",
+    free,
+    "لا يوجد محتوى مجاني متاح حاليًا.",
+    renderMaterial
+   );
+
+   showList(
+    "paidMaterials",
+    paid,
+    "لا توجد مذكرات متاحة للشراء حاليًا.",
+    renderMaterial
+   );
+
+   const statuses={
+    pending:"قيد المراجعة",
+    approved:"تمت الموافقة",
+    completed:"مكتمل",
+    rejected:"مرفوض"
+   };
+
+   showList(
+    "purchases",
+    visible,
+    "لا توجد طلبات أو مشتريات ظاهرة حاليًا.",
+    (div,p)=>{
+     const id=Number(p.material_id);
+
+     const title=document.createElement("strong");
+     title.textContent=p.title||"مذكرة";
+
+     const subject=document.createElement("div");
+     subject.className="muted";
+     subject.textContent="المادة: "+(p.subject_name||"غير محددة");
+
+     const status=document.createElement("div");
+     status.className="status";
+     status.textContent="حالة الطلب: "+(statuses[p.status]||"غير معروف");
+
+     div.append(title,subject,status);
+
+     if(p.status==="approved"||p.status==="completed"){
+      const b=document.createElement("button");
+      const saved=getSavedPage(id);
+
+      b.textContent=saved>1
+       ?"متابعة من الصفحة "+saved
+       :"فتح المذكرة";
+
+      b.addEventListener("click",()=>openPdf(id,p.title,saved));
+      div.appendChild(b);
+     }
+
+     if(["rejected","approved","completed"].includes(p.status)){
+      const rm=document.createElement("button");
+
+      rm.className="danger";
+      rm.textContent=p.status==="rejected"
+       ?"حذف الطلب"
+       :"إزالة من مشترياتي";
+
+      rm.addEventListener("click",async()=>{
+       const rejected=p.status==="rejected";
+
+       if(!confirm(
+        rejected
+         ?"هل تريد حذف الطلب المرفوض نهائيًا؟"
+         :"هل تريد إزالة هذه المذكرة من قائمة مشترياتك؟ ستظل صلاحية فتحها محفوظة."
+       ))return;
+
+       rm.disabled=true;
+
+       try{
+        const result=await api(
+         "/api/student/purchases/"+encodeURIComponent(p.order_id),
+         {method:"DELETE"}
+        );
+
+        message.textContent=result.action==="deleted"
+         ?"تم حذف الطلب المرفوض."
+         :"تمت إزالة المذكرة من قائمة مشترياتك.";
+
+        await loadDashboard();
+       }catch(e){
+        message.textContent=e.message;
+        rm.disabled=false;
+       }
+      });
+
+      div.appendChild(rm);
+     }
+    }
+   );
+
+   renderLearningSummary();
+   renderFavoriteMaterials();
+
+   dashboard.classList.remove("hidden");
+   message.textContent="تم تحميل لوحة الطالب بنجاح.";
+
+   loadStudentPhoto();
+
+  }catch(e){
+   message.textContent=e.message||"حدث خطأ أثناء تحميل البيانات.";
+  }finally{
+   $("refreshBtn").disabled=false;
+   dashboardLoading=null;
+  }
+ })();
+
+ return dashboardLoading;
+}
+
+$("refreshBtn").addEventListener("click",()=>{
+ if(!dashboardLoading)loadDashboard();
+});
+
+$("logoutBtn").addEventListener("click",async()=>{
+ $("logoutBtn").disabled=true;
+ $("logoutBtn").textContent="جارٍ تسجيل الخروج...";
+
+ try{
+  await fetch(API+"/api/student/logout",{
+   method:"POST",
+   headers:{"Authorization":"Bearer "+token}
+  });
+ }catch(e){}
+
+ safeStorage.remove("zm_student_token");
+ location.replace("./login.html");
+});
+
 loadDashboard();
 </script>
-</body></html>
+</body>
+</html>
