@@ -2727,11 +2727,9 @@ if (method === "POST" && rejectPasswordMatch) {
 
       const expectedPrefix = `student-photos/${session.student_id}/`;
 
-      if (
+            if (
         !photo.file_key ||
         !photo.file_key.startsWith(expectedPrefix) ||
-        photo.file_key.includes("..")
-|
         photo.file_key.includes("..")
       ) {
         return reply(request, env, {
