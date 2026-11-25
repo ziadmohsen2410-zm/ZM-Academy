@@ -819,6 +819,123 @@ if (method === "POST" && path === "/api/password-reset/request") {
         401
       );
     }
+    // عرض طلبات استعادة كلمات المرور
+if (method === "GET" && path === "/api/admin/password-reset-requests") {
+  await ensurePasswordResetRequestsTable(env);
+
+  const result = await env.DB.prepare(`
+    SELECT
+      r.id,
+      r.username,
+      r.phone,
+      r.created_at,
+      s.name AS student_name,
+      s.grade
+    FROM password_reset_requests r
+    LEFT JOIN students s ON s.id = r.student_id
+    WHERE r.status = 'pending'
+    ORDER BY r.id DESC
+  `).all();
+
+  return reply(request, env, {
+    success: true,
+    requests: result.results || [],
+  });
+}
+
+// تعيين كلمة مرور جديدة للطالب
+const resetPasswordMatch = path.match(
+  /^\/api\/admin\/password-reset-requests\/(\d+)\/reset$/
+);
+
+if (method === "POST" && resetPasswordMatch) {
+  await ensurePasswordResetRequestsTable(env);
+
+  const requestId = Number(resetPasswordMatch[1]);
+  const body = await readBody(request);
+  const newPassword = String(body?.password || "");
+
+  if (newPassword.length < 8 || newPassword.length > 100) {
+    return reply(request, env, {
+      success: false,
+      error: "كلمة المرور يجب أن تكون من 8 إلى 100 حرف.",
+    }, 400);
+  }
+
+  const resetRequest = await env.DB.prepare(`
+    SELECT id, student_id
+    FROM password_reset_requests
+    WHERE id = ? AND status = 'pending'
+    LIMIT 1
+  `).bind(requestId).first();
+
+  if (!resetRequest) {
+    return reply(request, env, {
+      success: false,
+      error: "الطلب غير موجود أو تمت مراجعته بالفعل.",
+    }, 404);
+  }
+
+  const newHash = await passwordHash(newPassword);
+
+  await env.DB.prepare(`
+    UPDATE student_accounts
+    SET password_hash = ?
+    WHERE student_id = ?
+  `).bind(newHash, resetRequest.student_id).run();
+
+  // إنهاء جلسات الطالب القديمة
+  await env.DB.prepare(`
+    DELETE FROM student_sessions
+    WHERE student_id = ?
+  `).bind(resetRequest.student_id).run();
+
+  // تسجيل مراجعة الطلب
+  await env.DB.prepare(`
+    UPDATE password_reset_requests
+    SET status = 'completed',
+        reviewed_at = CURRENT_TIMESTAMP,
+        reviewed_by = ?
+    WHERE id = ? AND status = 'pending'
+  `).bind(session.admin_id, requestId).run();
+
+  return reply(request, env, {
+    success: true,
+    message: "تم تغيير كلمة مرور الطالب وإنهاء جلساته القديمة.",
+  });
+}
+
+// رفض طلب استعادة كلمة المرور
+const rejectPasswordMatch = path.match(
+  /^\/api\/admin\/password-reset-requests\/(\d+)\/reject$/
+);
+
+if (method === "POST" && rejectPasswordMatch) {
+  await ensurePasswordResetRequestsTable(env);
+
+  const requestId = Number(rejectPasswordMatch[1]);
+
+  const result = await env.DB.prepare(`
+    UPDATE password_reset_requests
+    SET status = 'rejected',
+        reviewed_at = CURRENT_TIMESTAMP,
+        reviewed_by = ?
+    WHERE id = ? AND status = 'pending'
+  `).bind(session.admin_id, requestId).run();
+
+  if (!result.meta || result.meta.changes === 0) {
+    return reply(request, env, {
+      success: false,
+      error: "الطلب غير موجود أو تمت مراجعته بالفعل.",
+    }, 404);
+  }
+
+  return reply(request, env, {
+    success: true,
+    message: "تم رفض طلب استعادة كلمة المرور.",
+  });
+}
+    
         // عرض طلبات اعتماد الأجهزة المعلقة
     if (method === "GET" && path === "/api/admin/device-requests") {
       const rows = await env.DB.prepare(`
