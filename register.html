@@ -1,385 +1,74 @@
-
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="theme-color" content="#09090b">
+<meta name="theme-color" content="#08090d">
 <title>تسجيل طالب | ZM Academy</title>
 <style>
 *{box-sizing:border-box}
-body{
- margin:0;min-height:100vh;padding:22px;
- background:radial-gradient(ellipse at top,#211b10,#09090b 65%);
- color:#f7f4ed;font-family:Tahoma,Arial,sans-serif
-}
-.panel{
- width:min(100%,560px);margin:25px auto;padding:28px;
- background:#141416;border:1px solid rgba(214,179,106,.35);
- border-radius:20px;box-shadow:0 20px 70px #000
-}
-.brand{text-align:center;color:#e8ce91;font-weight:bold}
-.brand small{display:block;font-size:11px;margin-top:5px;color:#aaa}
-h1{text-align:center;font-size:25px;margin:24px 0 8px}
-.sub{text-align:center;color:#b8b2a5;font-size:14px;margin:0 0 25px;line-height:1.8}
-label{display:block;margin:17px 0 7px;color:#e8ce91;font-size:14px}
-input,select{
- width:100%;padding:14px;border-radius:10px;
- border:1px solid #48402e;background:#0d0d0f;
- color:white;font:inherit;outline:none
-}
-input:focus,select:focus{border-color:#d6b36a}
-select option{background:#141416;color:white}
-button,.back{
- display:block;width:100%;padding:14px;margin-top:22px;
- border:0;border-radius:10px;
- background:linear-gradient(135deg,#e2c47f,#b58a3d);
- color:#17130b;font-weight:bold;font-size:16px;
- text-align:center;text-decoration:none;cursor:pointer
-}
-button:disabled{opacity:.6;cursor:not-allowed}
-.back{
- margin-top:12px;background:transparent;
- border:1px solid #69552e;color:#e8ce91;font-size:14px
-}
-#message{margin-top:16px;text-align:center;font-size:14px;line-height:1.8}
-.hint{color:#aaa;font-size:12px;text-align:center;margin-top:18px;line-height:1.8}
-.section{
- margin-top:24px;padding:16px;
- border:1px solid #393123;border-radius:12px;background:#101012
-}
-.section h3{margin:0 0 12px;color:#e8ce91;font-size:16px}
-.subjects{display:grid;grid-template-columns:1fr;gap:9px}
-.subject{
- display:flex;align-items:center;gap:10px;
- padding:12px;border:1px solid #393123;
- border-radius:9px;color:#eee;font-size:14px
-}
-.subject input{width:18px;height:18px;accent-color:#d6b36a}
-.muted{color:#aaa;font-size:13px;line-height:1.8}
-.required{color:#e8ce91}
-
-/* ZM Academy shared identity: black & champagne gold / blue & violet */
 :root{color-scheme:dark;--bg:#08090d;--panel:#11131a;--panel2:#191b24;--text:#f7f4ed;--muted:#aaa9b4;--accent:#d6b36a;--accent2:#f0d99d;--line:rgba(214,179,106,.23)}
-body{background:radial-gradient(ellipse at 12% 8%,rgba(214,179,106,.13),transparent 42%),radial-gradient(ellipse at 90% 90%,rgba(117,87,155,.10),transparent 42%),var(--bg);color:var(--text);transition:background .25s,color .25s}
-.panel{background:linear-gradient(145deg,#191b24,#101117);border-color:var(--line);box-shadow:0 22px 65px #0008;animation:zmEnter .55s ease both}
-.topbar{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px}.brand-link{color:var(--accent2);font-weight:800;letter-spacing:1.5px;text-decoration:none;font-size:13px}.theme-toggle{display:inline-flex;align-items:center;gap:7px;padding:8px 12px;border:1px solid var(--line);border-radius:30px;background:var(--panel2);color:var(--accent2);font-weight:700;cursor:pointer}
-.brand{color:var(--accent2)}.brand small{color:var(--muted)}h1{color:var(--text)}.sub,.muted,.hint{color:var(--muted)}label,.section h3,.required{color:var(--accent2)}
-input,select{background:#0b0d13;color:var(--text);border-color:#343746;transition:border-color .2s,box-shadow .2s}input:focus,select:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(214,179,106,.12);outline:none}select option{background:#141720;color:var(--text)}
-button:not(.theme-toggle){background:linear-gradient(115deg,#e7ca88,#b58a3d);color:#17130b;box-shadow:0 8px 22px rgba(181,138,61,.18);transition:transform .2s,filter .2s}button:not(.theme-toggle):hover{transform:translateY(-2px);filter:brightness(1.05)}
-.section{background:#11131a;border-color:var(--line)}.subject{background:#171a23;border-color:#343746;color:var(--text)}.subject input{accent-color:var(--accent)}.back{background:transparent;border-color:var(--line);color:var(--accent2)}.auth-links{display:grid;gap:10px;margin-top:14px}.auth-links .back{margin-top:0}.auth-links .home-link{opacity:.88}
+body{margin:0;min-height:100vh;padding:22px;background:radial-gradient(ellipse at 12% 8%,rgba(214,179,106,.13),transparent 42%),radial-gradient(ellipse at 90% 90%,rgba(117,87,155,.10),transparent 42%),var(--bg);color:var(--text);font-family:Tahoma,Arial,sans-serif;transition:background .25s,color .25s}
+.panel{width:min(100%,560px);margin:25px auto;padding:28px;background:linear-gradient(145deg,#191b24,#101117);border:1px solid var(--line);border-radius:20px;box-shadow:0 22px 65px #0008;animation:zmEnter .55s ease both}
+.topbar{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px}.brand-link{color:var(--accent2);font-weight:800;letter-spacing:1.5px;text-decoration:none;font-size:13px}.theme-toggle{display:inline-flex;align-items:center;gap:7px;padding:8px 12px;border:1px solid var(--line);border-radius:30px;background:var(--panel2);color:var(--accent2);font-weight:700;cursor:pointer;width:auto;margin:0;font-size:13px;box-shadow:none}
+.brand{text-align:center;color:var(--accent2);font-weight:bold}.brand small{display:block;font-size:11px;margin-top:5px;color:var(--muted)}
+h1{text-align:center;color:var(--text);font-size:25px;margin:24px 0 8px}.sub{text-align:center;color:var(--muted);font-size:14px;margin:0 0 25px;line-height:1.8}
+label{display:block;margin:17px 0 7px;color:var(--accent2);font-size:14px}
+input,select{width:100%;padding:14px;border-radius:10px;border:1px solid #343746;background:#0b0d13;color:var(--text);font:inherit;outline:none;transition:border-color .2s,box-shadow .2s}input:focus,select:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(214,179,106,.12)}select option{background:#141720;color:var(--text)}
+button:not(.theme-toggle){display:block;width:100%;padding:14px;margin-top:22px;border:0;border-radius:10px;background:linear-gradient(115deg,#e7ca88,#b58a3d);color:#17130b;font-weight:bold;font-size:16px;text-align:center;cursor:pointer;box-shadow:0 8px 22px rgba(181,138,61,.18);transition:transform .2s,filter .2s}button:not(.theme-toggle):hover{transform:translateY(-2px);filter:brightness(1.05)}button:disabled{opacity:.6;cursor:not-allowed;transform:none!important}
+.back{display:block;width:100%;padding:14px;margin-top:12px;background:transparent;border:1px solid var(--line);border-radius:10px;color:var(--accent2);font-size:14px;text-align:center;text-decoration:none}
+#message{margin-top:16px;text-align:center;font-size:14px;line-height:1.8;overflow-wrap:anywhere}.hint{color:var(--muted);font-size:12px;text-align:center;margin-top:18px;line-height:1.8}
+.section{margin-top:24px;padding:16px;border:1px solid var(--line);border-radius:12px;background:#11131a}.section h3{margin:0 0 12px;color:var(--accent2);font-size:16px}.subjects{display:grid;grid-template-columns:1fr;gap:9px}.subject{display:flex;align-items:center;gap:10px;padding:12px;border:1px solid #343746;border-radius:9px;background:#171a23;color:var(--text);font-size:14px;margin:0}.subject input{width:18px;height:18px;padding:0;margin:0;accent-color:var(--accent);flex:0 0 auto}.muted{color:var(--muted);font-size:13px;line-height:1.8;margin:8px 0}.auth-links{display:grid;gap:10px;margin-top:14px}.auth-links .back{margin-top:0}.required{color:var(--accent2)}
 body[data-theme="light"]{color-scheme:light;--bg:#f4f6ff;--panel:#fff;--panel2:#edf0ff;--text:#202747;--muted:#68708e;--accent:#6655d9;--accent2:#5143bd;--line:rgba(91,104,190,.2);background:radial-gradient(ellipse at 10% 5%,rgba(100,132,255,.2),transparent 45%),radial-gradient(ellipse at 90% 90%,rgba(151,111,235,.18),transparent 45%),linear-gradient(120deg,#f7f9ff,#edf1ff 55%,#f2edff);color:var(--text)}
-body[data-theme="light"] .panel{background:linear-gradient(145deg,#fff,#f4f5ff);border-color:var(--line);box-shadow:0 18px 50px rgba(59,70,130,.12)}body[data-theme="light"] .brand,body[data-theme="light"] .brand small,body[data-theme="light"] label,body[data-theme="light"] .section h3{color:#5143bd}body[data-theme="light"] .sub,body[data-theme="light"] .muted,body[data-theme="light"] .hint{color:#68708e}
-body[data-theme="light"] input,body[data-theme="light"] select{background:#fff;color:#202747;border-color:#d9def5}body[data-theme="light"] input:focus,body[data-theme="light"] select:focus{border-color:#7664df;box-shadow:0 0 0 3px rgba(118,100,223,.12)}body[data-theme="light"] .section{background:#f6f7ff;border-color:#dfe3fa}body[data-theme="light"] .subject{background:#fff;border-color:#dfe3fa;color:#34416c}body[data-theme="light"] .theme-toggle{background:#fff;color:#5143bd;border-color:var(--line)}body[data-theme="light"] .back{background:rgba(255,255,255,.65);border-color:rgba(101,84,216,.3);color:#5143bd}
-@keyframes zmEnter{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
-
+body[data-theme="light"] .panel{background:linear-gradient(145deg,#fff,#f4f5ff);border-color:var(--line);box-shadow:0 18px 50px rgba(59,70,130,.12)}body[data-theme="light"] .brand,body[data-theme="light"] .brand small,body[data-theme="light"] label,body[data-theme="light"] .section h3{color:#5143bd}body[data-theme="light"] .sub,body[data-theme="light"] .muted,body[data-theme="light"] .hint{color:#68708e}body[data-theme="light"] input,body[data-theme="light"] select{background:#fff;color:#202747;border-color:#d9def5}body[data-theme="light"] input:focus,body[data-theme="light"] select:focus{border-color:#7664df;box-shadow:0 0 0 3px rgba(118,100,223,.12)}body[data-theme="light"] .section{background:#f6f7ff;border-color:#dfe3fa}body[data-theme="light"] .subject{background:#fff;border-color:#dfe3fa;color:#34416c}body[data-theme="light"] .theme-toggle{background:#fff;color:#5143bd;border-color:var(--line)}body[data-theme="light"] .back{background:rgba(255,255,255,.65);border-color:rgba(101,84,216,.3);color:#5143bd}
+@keyframes zmEnter{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}@media(max-width:480px){body{padding:12px}.panel{padding:20px 16px;margin:12px auto}h1{font-size:22px}}
 </style>
 </head>
 <body>
 <main class="panel">
-
  <div class="topbar"><a class="brand-link" href="./index.html">ZM ACADEMY</a><button class="theme-toggle" id="themeToggle" type="button"><span class="theme-icon">☀</span><span class="theme-label">الوضع الفاتح</span></button></div>
- <div class="brand">
-  أكاديمية أ. زياد محسن
-  <small>ZIAD MOHSEN ACADEMY</small>
- </div>
-
+ <div class="brand">أكاديمية أ. زياد محسن<small>ZIAD MOHSEN ACADEMY</small></div>
  <h1>تسجيل طالب جديد</h1>
  <p class="sub">أدخل بياناتك بدقة لإنشاء حسابك ومتابعة المواد والطلبات التعليمية.</p>
-
- <form id="registerForm">
-
-  <label for="name">اسم الطالب بالكامل *</label>
-  <input id="name" name="name" autocomplete="name"
-   maxlength="120" required placeholder="اكتب الاسم رباعي">
-
-  <label for="phone">رقم هاتف الطالب *</label>
-  <input id="phone" name="phone" type="tel" inputmode="tel"
-   autocomplete="tel" maxlength="30" required placeholder="01xxxxxxxxx">
-
-  <label for="parent_phone">رقم هاتف ولي الأمر *</label>
-  <input id="parent_phone" name="parent_phone" type="tel"
-   inputmode="tel" maxlength="30" required placeholder="رقم هاتف ولي الأمر">
-
-  <label for="grade">الصف الدراسي *</label>
-  <select id="grade" name="grade" required>
-   <option value="">جارٍ تحميل الصفوف...</option>
-  </select>
-
-  <div class="section">
-   <h3>المواد الدراسية *</h3>
-   <div id="subjectsBox">
-    <p class="muted">اختر الصف الدراسي أولًا.</p>
-   </div>
+ <form id="registerForm" novalidate>
+  <label for="name">اسم الطالب بالكامل *</label><input id="name" name="name" autocomplete="name" maxlength="120" required placeholder="اكتب الاسم رباعي">
+  <label for="phone">رقم هاتف الطالب *</label><input id="phone" name="phone" type="tel" inputmode="tel" autocomplete="tel" maxlength="30" required placeholder="01xxxxxxxxx">
+  <label for="parent_phone">رقم هاتف ولي الأمر *</label><input id="parent_phone" name="parent_phone" type="tel" inputmode="tel" maxlength="30" required placeholder="رقم هاتف ولي الأمر">
+  <label for="grade">الصف الدراسي *</label><select id="grade" name="grade" required><option value="">جارٍ تحميل الصفوف...</option></select>
+  <div class="section"><h3>المواد الدراسية *</h3><div id="subjectsBox" aria-live="polite"><p class="muted">اختر الصف الدراسي أولًا.</p></div></div>
+  <label for="school">اسم المدرسة *</label><input id="school" name="school" maxlength="160" required placeholder="اكتب اسم المدرسة">
+  <label for="governorate">المحافظة *</label><select id="governorate" name="governorate" required><option value="">اختر المحافظة</option><option>القاهرة</option><option>الجيزة</option><option>القليوبية</option><option>الإسكندرية</option><option>البحيرة</option><option>الغربية</option><option>المنوفية</option><option>الشرقية</option><option>الدقهلية</option><option>كفر الشيخ</option><option>دمياط</option><option>بورسعيد</option><option>الإسماعيلية</option><option>السويس</option><option>شمال سيناء</option><option>جنوب سيناء</option><option>الفيوم</option><option>بني سويف</option><option>المنيا</option><option>أسيوط</option><option>سوهاج</option><option>قنا</option><option>الأقصر</option><option>أسوان</option><option>البحر الأحمر</option><option>الوادي الجديد</option><option>مطروح</option></select>
+  <div class="section"><h3>بيانات حسابك</h3>
+   <label for="username">اسم المستخدم *</label><input id="username" name="username" maxlength="40" required autocomplete="username" dir="ltr" autocapitalize="none" spellcheck="false" placeholder="مثال: ziad2026"><p class="muted">استخدم حروفًا إنجليزية صغيرة أو أرقامًا أو . أو _ أو - فقط، من 3 إلى 40 حرفًا.</p>
+   <label for="password">كلمة المرور *</label><input id="password" name="password" type="password" minlength="8" maxlength="200" required autocomplete="new-password" placeholder="8 أحرف على الأقل">
+   <label for="confirmPassword">تأكيد كلمة المرور *</label><input id="confirmPassword" type="password" minlength="8" maxlength="200" required autocomplete="new-password" placeholder="أعد كتابة كلمة المرور">
   </div>
-
-  <label for="school">اسم المدرسة *</label>
-  <input id="school" name="school" maxlength="160"
-   required placeholder="اكتب اسم المدرسة">
-
-  <label for="governorate">المحافظة *</label>
-  <select id="governorate" name="governorate" required>
-   <option value="">اختر المحافظة</option>
-   <option>القاهرة</option>
-   <option>الجيزة</option>
-   <option>القليوبية</option>
-   <option>الإسكندرية</option>
-   <option>البحيرة</option>
-   <option>الغربية</option>
-   <option>المنوفية</option>
-   <option>الشرقية</option>
-   <option>الدقهلية</option>
-   <option>كفر الشيخ</option>
-   <option>دمياط</option>
-   <option>بورسعيد</option>
-   <option>الإسماعيلية</option>
-   <option>السويس</option>
-   <option>شمال سيناء</option>
-   <option>جنوب سيناء</option>
-   <option>الفيوم</option>
-   <option>بني سويف</option>
-   <option>المنيا</option>
-   <option>أسيوط</option>
-   <option>سوهاج</option>
-   <option>قنا</option>
-   <option>الأقصر</option>
-   <option>أسوان</option>
-   <option>البحر الأحمر</option>
-   <option>الوادي الجديد</option>
-   <option>مطروح</option>
-  </select>
-
-  <div class="section">
-   <h3>بيانات حسابك</h3>
-
-   <label for="username">اسم المستخدم *</label>
-   <input id="username" name="username" maxlength="40"
-    required autocomplete="username" dir="ltr"
-    placeholder="مثال: ziad2026">
-
-   <p class="muted">استخدم حروفًا إنجليزية صغيرة أو أرقامًا أو . أو _ أو - فقط، من 3 إلى 40 حرفًا.</p>
-
-   <label for="password">كلمة المرور *</label>
-   <input id="password" name="password" type="password"
-    minlength="8" maxlength="200" required
-    autocomplete="new-password" placeholder="8 أحرف على الأقل">
-
-   <label for="confirmPassword">تأكيد كلمة المرور *</label>
-   <input id="confirmPassword" type="password"
-    minlength="8" maxlength="200" required
-    autocomplete="new-password" placeholder="أعد كتابة كلمة المرور">
-  </div>
-
   <button id="submitBtn" type="submit">إنشاء حساب الطالب</button>
  </form>
-
  <div id="message" role="status" aria-live="polite"></div>
-
- <nav class="auth-links" aria-label="روابط الحساب">
-  <a class="back" href="./login.html">لديك حساب بالفعل؟ تسجيل الدخول</a>
-  <a class="back home-link" href="./index.html">العودة للصفحة الرئيسية</a>
- </nav>
-
- <div class="hint">
-  جميع البيانات مطلوبة لإتمام التسجيل.
-  احتفظ باسم المستخدم وكلمة المرور ولا تشاركهما مع الآخرين.
- </div>
-
+ <nav class="auth-links" aria-label="روابط الحساب"><a class="back" href="./login.html">لديك حساب بالفعل؟ تسجيل الدخول</a><a class="back home-link" href="./index.html">العودة للصفحة الرئيسية</a></nav>
+ <div class="hint">جميع البيانات مطلوبة لإتمام التسجيل. احتفظ باسم المستخدم وكلمة المرور ولا تشاركهما مع الآخرين.</div>
 </main>
-
 <script>
 (()=>{const key='zm-academy-theme';let saved=null;try{saved=localStorage.getItem(key)}catch(e){}const btn=document.getElementById('themeToggle');const icon=btn.querySelector('.theme-icon');const label=btn.querySelector('.theme-label');const meta=document.querySelector('meta[name="theme-color"]');function paint(t){document.body.dataset.theme=t;const light=t==='light';icon.textContent=light?'☾':'☀';label.textContent=light?'الوضع الداكن':'الوضع الفاتح';btn.setAttribute('aria-label',light?'تفعيل الوضع الداكن':'تفعيل الوضع الفاتح');meta.content=light?'#f4f6ff':'#08090d';try{localStorage.setItem(key,t)}catch(e){}}paint(saved==='light'?'light':'dark');btn.addEventListener('click',()=>paint(document.body.dataset.theme==='light'?'dark':'light'))})();
 </script>
 <script>
-const API="https://zm-academy-api.ziadmohsen4567.workers.dev";
-
-const form=document.getElementById("registerForm");
-const btn=document.getElementById("submitBtn");
-const msg=document.getElementById("message");
-const gradeSelect=document.getElementById("grade");
-const subjectsBox=document.getElementById("subjectsBox");
-
-let allSubjects=[];
-
-function showMessage(text,type="error"){
- msg.style.color=type==="success"?"#a8e6b0":"#ffb6a8";
- msg.textContent=text;
-}
-
-function escapeHTML(value){
- return String(value).replace(/[&<>"']/g,char=>({
-  "&":"&amp;",
-  "<":"&lt;",
-  ">":"&gt;",
-  '"':"&quot;",
-  "'":"&#39;"
- }[char]));
-}
-
-async function loadSubjects(){
- try{
-  const response=await fetch(API+"/api/subjects");
-  const data=await response.json();
-
-  if(!response.ok||!data.success){
-   throw new Error("تعذر تحميل الصفوف والمواد.");
-  }
-
-  allSubjects=data.subjects||[];
-
-  const grades=[...new Set(
-   allSubjects.map(s=>String(s.grade||"").trim()).filter(Boolean)
-  )];
-
-  gradeSelect.innerHTML=
-   '<option value="">اختر الصف الدراسي</option>'+
-   grades.map(g=>
-    `<option value="${escapeHTML(g)}">${escapeHTML(g)}</option>`
-   ).join("");
-
-  if(!grades.length){
-   gradeSelect.innerHTML='<option value="">لا توجد صفوف متاحة حاليًا</option>';
-   subjectsBox.innerHTML='<p class="muted">لا توجد مواد مسجلة بعد. يرجى التواصل مع الإدارة.</p>';
-  }
-
- }catch(error){
-  gradeSelect.innerHTML='<option value="">تعذر تحميل الصفوف</option>';
-  subjectsBox.innerHTML='<p class="muted">تعذر الاتصال بالخادم لتحميل المواد.</p>';
- }
-}
-
-function renderSubjects(){
- const grade=gradeSelect.value;
-
- const list=allSubjects.filter(s=>String(s.grade||"").trim()===grade);
-
- if(!grade){
-  subjectsBox.innerHTML='<p class="muted">اختر الصف الدراسي أولًا.</p>';
-  return;
- }
-
- if(!list.length){
-  subjectsBox.innerHTML='<p class="muted">لا توجد مواد مضافة لهذا الصف حتى الآن.</p>';
-  return;
- }
-
- subjectsBox.innerHTML=
-  '<div class="subjects">'+
-  list.map(s=>`
-   <label class="subject">
-    <input type="checkbox" name="subjects" value="${Number(s.id)}">
-    <span>${escapeHTML(s.name)}</span>
-   </label>
-  `).join("")+
-  '</div>';
-}
-
-gradeSelect.addEventListener("change",renderSubjects);
-
-form.addEventListener("submit",async e=>{
- e.preventDefault();
- msg.textContent="";
-
- const name=document.getElementById("name").value.trim();
- const phone=document.getElementById("phone").value.trim();
- const parent_phone=document.getElementById("parent_phone").value.trim();
- const grade=gradeSelect.value;
- const school=document.getElementById("school").value.trim();
- const governorate=document.getElementById("governorate").value;
- const username=document.getElementById("username").value.trim().toLowerCase();
- const password=document.getElementById("password").value;
- const confirmPassword=document.getElementById("confirmPassword").value;
-
- const subjects=[...document.querySelectorAll(
-  'input[name="subjects"]:checked'
- )].map(input=>Number(input.value));
-
- if(name.length<2){
-  showMessage("اكتب اسم الطالب بشكل صحيح.");
-  return;
- }
-
- if(phone.replace(/\s+/g,"").length<8||
-    parent_phone.replace(/\s+/g,"").length<8){
-  showMessage("تأكد من كتابة رقمي الهاتف بشكل صحيح.");
-  return;
- }
-
- if(!grade||!school||!governorate){
-  showMessage("أكمل جميع البيانات المطلوبة.");
-  return;
- }
-
- if(subjects.length===0){
-  showMessage("اختر مادة دراسية واحدة على الأقل.");
-  return;
- }
-
- if(!/^[a-z0-9_.-]{3,40}$/.test(username)){
-  showMessage("اسم المستخدم يجب أن يكون من 3 إلى 40 حرفًا إنجليزيًا أو رقمًا.");
-  return;
- }
-
- if(password.length<8){
-  showMessage("كلمة المرور يجب ألا تقل عن 8 أحرف.");
-  return;
- }
-
- if(password!==confirmPassword){
-  showMessage("كلمتا المرور غير متطابقتين.");
-  return;
- }
-
- btn.disabled=true;
- btn.textContent="جارٍ إنشاء الحساب...";
- 
- try{
-  const response=await fetch(API+"/api/students/register",{
-   method:"POST",
-   headers:{"Content-Type":"application/json"},
-   body:JSON.stringify({
-    name,
-    phone,
-    parent_phone,
-    grade,
-    school,
-    governorate,
-    subjects,
-    username,
-    password
-   })
-  });
-
-  const data=await response.json();
-
-  if(!response.ok||!data.success){
-   throw new Error(data.error||"تعذر إتمام التسجيل.");
-  }
-
-  form.reset();
-  renderSubjects();
-
-  showMessage(
-   "تم إنشاء حسابك بنجاح. رقم الطالب: "+
-   data.student_id+
-   " — اسم المستخدم: "+
-   data.username+
-   ". احتفظ ببيانات الدخول.",
-   "success"
-  );
-
- }catch(error){
-  showMessage(
-   error.message==="Failed to fetch"
-    ?"تعذر الاتصال بالخادم. حاول مرة أخرى."
-    :error.message
-  );
- }finally{
-  btn.disabled=false;
-  btn.textContent="إنشاء حساب الطالب";
- }
+'use strict';
+const API='https://zm-academy-api.ziadmohsen4567.workers.dev';
+const form=document.getElementById('registerForm');const btn=document.getElementById('submitBtn');const msg=document.getElementById('message');const gradeSelect=document.getElementById('grade');const subjectsBox=document.getElementById('subjectsBox');let allSubjects=[];let isSubmitting=false;let subjectsLoaded=false;
+function showMessage(text,type='error'){msg.style.color=type==='success'?'#23834a':'#d85a4d';msg.textContent=text;}
+function escapeHTML(value){return String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+async function readJson(response){try{return await response.json()}catch{return {success:false,error:'استجابة غير مفهومة من الخادم.'}}}
+async function loadSubjects(){gradeSelect.disabled=true;gradeSelect.innerHTML='<option value="">جارٍ تحميل الصفوف...</option>';try{const response=await fetch(API+'/api/subjects',{method:'GET',headers:{'Accept':'application/json'},cache:'no-store'});const data=await readJson(response);if(!response.ok||!data.success||!Array.isArray(data.subjects))throw new Error(data.error||'تعذر تحميل الصفوف والمواد.');allSubjects=data.subjects.filter(s=>s&&Number.isInteger(Number(s.id))&&Number(s.id)>0&&String(s.name||'').trim()&&String(s.grade||'').trim());const grades=[...new Set(allSubjects.map(s=>String(s.grade).trim()))];gradeSelect.innerHTML='<option value="">اختر الصف الدراسي</option>'+grades.map(g=>`<option value="${escapeHTML(g)}">${escapeHTML(g)}</option>`).join('');subjectsLoaded=true;if(!grades.length){gradeSelect.innerHTML='<option value="">لا توجد صفوف متاحة حاليًا</option>';subjectsBox.innerHTML='<p class="muted">لا توجد مواد مسجلة حاليًا. يرجى التواصل مع الإدارة.</p>';showMessage('لا توجد صفوف أو مواد متاحة للتسجيل حاليًا.');}}catch(error){gradeSelect.innerHTML='<option value="">تعذر تحميل الصفوف</option>';subjectsBox.innerHTML='<p class="muted">تعذر الاتصال بالخادم لتحميل المواد. أعد تحميل الصفحة وحاول مرة أخرى.</p>';showMessage(error.message||'تعذر تحميل المواد.');}finally{gradeSelect.disabled=false;}}
+function renderSubjects(){const grade=gradeSelect.value;const list=allSubjects.filter(s=>String(s.grade).trim()===grade);if(!grade){subjectsBox.innerHTML='<p class="muted">اختر الصف الدراسي أولًا.</p>';return;}if(!list.length){subjectsBox.innerHTML='<p class="muted">لا توجد مواد مضافة لهذا الصف حتى الآن.</p>';return;}subjectsBox.innerHTML='<div class="subjects">'+list.map(s=>`<label class="subject"><input type="checkbox" name="subjects" value="${Number(s.id)}"><span>${escapeHTML(s.name)}</span></label>`).join('')+'</div>';}
+gradeSelect.addEventListener('change',()=>{renderSubjects();msg.textContent='';});
+function validPhone(value){const normalized=String(value).trim().replace(/\s+/g,'');return /^[+0-9()-]{8,20}$/.test(normalized)?normalized:null;}
+form.addEventListener('submit',async e=>{e.preventDefault();if(isSubmitting)return;msg.textContent='';if(!subjectsLoaded){showMessage('قائمة المواد لم تُحمّل بعد. أعد تحميل الصفحة وحاول مرة أخرى.');return;}
+const name=document.getElementById('name').value.trim();const phone=validPhone(document.getElementById('phone').value);const parent_phone=validPhone(document.getElementById('parent_phone').value);const grade=gradeSelect.value;const school=document.getElementById('school').value.trim();const governorate=document.getElementById('governorate').value;const username=document.getElementById('username').value.trim().toLowerCase();const password=document.getElementById('password').value;const confirmPassword=document.getElementById('confirmPassword').value;const selected=[...document.querySelectorAll('input[name="subjects"]:checked')].map(i=>Number(i.value));const allowed=new Set(allSubjects.filter(s=>String(s.grade).trim()===grade).map(s=>Number(s.id)));const subjects=[...new Set(selected)].filter(id=>allowed.has(id));
+if(name.length<2){showMessage('اكتب اسم الطالب بشكل صحيح.');document.getElementById('name').focus();return;}if(!phone||!parent_phone){showMessage('رقما الهاتف يجب أن يتكونا من 8 إلى 20 خانة من الأرقام أو + أو الأقواس أو الشرطة.');return;}if(!grade||!school||!governorate){showMessage('أكمل جميع البيانات المطلوبة.');return;}if(subjects.length===0){showMessage('اختر مادة دراسية واحدة على الأقل من مواد صفك.');return;}if(!/^[a-z0-9_.-]{3,40}$/.test(username)){showMessage('اسم المستخدم يجب أن يكون من 3 إلى 40 حرفًا إنجليزيًا صغيرًا أو رقمًا أو . أو _ أو -.');document.getElementById('username').focus();return;}if(password.length<8||password.length>200){showMessage('كلمة المرور يجب أن تكون من 8 إلى 200 حرف.');return;}if(password!==confirmPassword){showMessage('كلمتا المرور غير متطابقتين.');document.getElementById('confirmPassword').focus();return;}
+if(!form.reportValidity())return;isSubmitting=true;btn.disabled=true;btn.textContent='جارٍ إنشاء الحساب...';
+try{const response=await fetch(API+'/api/students/register',{method:'POST',headers:{'Content-Type':'application/json','Accept':'application/json'},body:JSON.stringify({name,phone,parent_phone,grade,school,governorate,subjects,username,password})});const data=await readJson(response);if(!response.ok||!data.success)throw new Error(data.error||'تعذر إتمام التسجيل. حاول مرة أخرى.');form.reset();renderSubjects();showMessage(`تم إنشاء حسابك بنجاح. رقم الطالب: ${data.student_id} — اسم المستخدم: ${data.username||username}. احتفظ ببيانات الدخول. يمكنك الآن تسجيل الدخول.`,'success');}catch(error){const message=error.name==='TypeError'?'تعذر الاتصال بالخادم. تحقق من الإنترنت وحاول مرة أخرى.':(error.message||'حدث خطأ غير متوقع، حاول مرة أخرى.');showMessage(message);}finally{isSubmitting=false;btn.disabled=false;btn.textContent='إنشاء حساب الطالب';}
 });
-
 loadSubjects();
 </script>
 </body>
