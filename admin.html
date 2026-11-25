@@ -1,81 +1,51 @@
-
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#050611">
 <title>ZM Academy | لوحة التحكم</title>
 <style>
-:root{--bg:#050611;--panel:#0b1022;--panel2:#101a35;--gold:#9b8cff;--text:#eef5ff;--muted:#9baed0;--red:#ff557f;--green:#45f0c0;--cyan:#4cecff;--violet:#a77bff;--line:rgba(102,220,255,.24);--glow:0 0 28px rgba(76,236,255,.12),0 18px 55px rgba(0,0,0,.42)}
+:root{--bg:#050611;--panel:#0b1022;--panel2:#101a35;--text:#eef5ff;--muted:#9baed0;--red:#ff557f;--green:#45f0c0;--cyan:#4cecff;--violet:#a77bff;--line:rgba(102,220,255,.24);--glow:0 0 28px rgba(76,236,255,.12),0 18px 55px rgba(0,0,0,.42)}
 *{box-sizing:border-box}
 html{scroll-behavior:smooth}
 body{margin:0;min-height:100vh;overflow-x:hidden;color:var(--text);font-family:Arial,Tahoma,sans-serif;background:radial-gradient(ellipse at 12% 12%,rgba(92,55,190,.28),transparent 34%),radial-gradient(ellipse at 88% 18%,rgba(0,183,255,.20),transparent 31%),radial-gradient(ellipse at 52% 100%,rgba(79,60,180,.20),transparent 42%),#050611}
-body:before{content:"";position:fixed;inset:0;pointer-events:none;z-index:-1;opacity:.28;background-image:radial-gradient(1px 1px at 20px 30px,#fff 98%,transparent),radial-gradient(1px 1px at 80px 110px,#80eaff 98%,transparent),radial-gradient(2px 2px at 160px 70px,#b99aff 98%,transparent),radial-gradient(1px 1px at 230px 180px,#fff 98%,transparent);background-size:270px 220px}
-body:after{content:"";position:fixed;width:380px;height:380px;right:-210px;top:25%;border:1px solid rgba(104,229,255,.12);border-radius:50%;box-shadow:0 0 0 35px rgba(104,229,255,.018),0 0 0 75px rgba(168,139,255,.018);pointer-events:none;z-index:-1}
-header{position:relative;isolation:isolate;padding:25px 20px;background:linear-gradient(110deg,rgba(5,9,25,.97),rgba(17,18,52,.94));border-bottom:1px solid rgba(76,236,255,.35);box-shadow:0 12px 45px rgba(0,0,0,.38),0 1px 22px rgba(76,236,255,.08);backdrop-filter:blur(18px)}
-header:before{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(90deg,transparent,rgba(76,236,255,.06),rgba(167,123,255,.06),transparent)}
-header h1{margin:0;color:#8ceeff;font-size:clamp(24px,4vw,32px);letter-spacing:1.5px;text-shadow:0 0 12px rgba(76,236,255,.65),0 0 30px rgba(76,236,255,.25)}
-header p{margin:8px 0 0;color:var(--muted);font-size:13px;letter-spacing:.3px}
-header p:before{content:"●";display:inline-block;color:#45f0c0;font-size:9px;margin-left:8px;text-shadow:0 0 12px #45f0c0}
-main{max-width:1180px;margin:auto;padding:25px 18px 60px}
-.card{position:relative;overflow:hidden;background:linear-gradient(145deg,rgba(13,21,47,.94),rgba(7,12,30,.96));border:1px solid rgba(102,220,255,.20);border-radius:20px;padding:22px;margin-bottom:19px;box-shadow:var(--glow);backdrop-filter:blur(16px);transition:transform .28s,border-color .28s,box-shadow .28s}
-.card:before{content:"";position:absolute;top:0;right:8%;left:8%;height:1px;background:linear-gradient(90deg,transparent,#4cecff,#a77bff,transparent);opacity:.8}
-.card:after{content:"";position:absolute;width:150px;height:150px;left:-95px;bottom:-110px;border:1px solid rgba(168,139,255,.12);border-radius:50%;box-shadow:0 0 0 18px rgba(168,139,255,.025),0 0 0 38px rgba(104,229,255,.018);pointer-events:none}
-.card:hover{transform:translateY(-2px);border-color:rgba(76,236,255,.55);box-shadow:0 0 32px rgba(76,236,255,.15),0 22px 60px rgba(0,0,0,.4)}
-h2{font-size:18px;margin:0 0 15px;color:#b9a5ff;text-shadow:0 0 15px rgba(167,123,255,.22);letter-spacing:.2px;display:flex;align-items:center;gap:10px}
-h2:before{content:"";width:4px;height:19px;border-radius:8px;background:linear-gradient(#4cecff,#a77bff);box-shadow:0 0 14px rgba(76,236,255,.6)}
-input,select{position:relative;width:100%;padding:14px 15px;margin:8px 0 15px;border:1px solid rgba(102,220,255,.25);border-radius:12px;background:rgba(3,8,23,.92);color:#f3f7ff;font-size:15px;outline:none;transition:border-color .2s,box-shadow .2s}
-input:focus,select:focus{border-color:#4cecff;box-shadow:0 0 0 3px rgba(76,236,255,.12),0 0 20px rgba(76,236,255,.13)}
+body:before{content:"";position:fixed;inset:0;pointer-events:none;z-index:-1;opacity:.28;background-image:radial-gradient(1px 1px at 20px 30px,#fff 98%,transparent),radial-gradient(1px 1px at 80px 110px,#80eaff 98%,transparent),radial-gradient(2px 2px at 160px 70px,#b99aff 98%,transparent);background-size:270px 220px}
+header{position:relative;padding:22px 18px;background:linear-gradient(110deg,rgba(5,9,25,.97),rgba(17,18,52,.94));border-bottom:1px solid rgba(76,236,255,.35);box-shadow:0 12px 45px rgba(0,0,0,.38)}
+header h1{margin:0;color:#8ceeff;font-size:clamp(24px,4vw,32px);text-shadow:0 0 12px rgba(76,236,255,.5)}
+header p{margin:8px 0 0;color:var(--muted);font-size:13px}
+main{max-width:1180px;margin:auto;padding:24px 18px 60px}
+.card{background:linear-gradient(145deg,rgba(13,21,47,.96),rgba(7,12,30,.98));border:1px solid rgba(102,220,255,.20);border-radius:18px;padding:21px;margin-bottom:18px;box-shadow:var(--glow)}
+h2{font-size:18px;margin:0 0 15px;color:#b9a5ff;display:flex;align-items:center;gap:10px}
+h2:before{content:"";width:4px;height:19px;border-radius:8px;background:linear-gradient(#4cecff,#a77bff)}
+input,select{width:100%;padding:13px 14px;margin:7px 0 14px;border:1px solid rgba(102,220,255,.25);border-radius:11px;background:rgba(3,8,23,.95);color:#f3f7ff;font-size:15px;outline:none}
+input:focus,select:focus{border-color:var(--cyan);box-shadow:0 0 0 3px rgba(76,236,255,.12)}
 input::placeholder{color:#7185ac}
-label{font-size:13px;color:#b7c9e8;letter-spacing:.15px}
-button{position:relative;overflow:hidden;border:1px solid rgba(154,238,255,.6);border-radius:12px;padding:12px 18px;background:linear-gradient(120deg,#63edff,#817bff);color:#071020;font-weight:800;font-size:14px;cursor:pointer;margin:4px;box-shadow:0 0 18px rgba(76,236,255,.18);transition:transform .2s,filter .2s,box-shadow .2s}
-button:before{content:"";position:absolute;inset:0;transform:translateX(-120%);background:linear-gradient(100deg,transparent,rgba(255,255,255,.35),transparent);transition:transform .55s}
-button:hover{transform:translateY(-2px);filter:brightness(1.12);box-shadow:0 0 24px rgba(76,236,255,.35)}
-button:hover:before{transform:translateX(120%)}
-button:active{transform:translateY(0) scale(.98)}
-button.secondary{background:linear-gradient(120deg,#24366d,#35265f);border-color:rgba(167,123,255,.42);color:#e6eaff;box-shadow:0 0 16px rgba(123,102,255,.12)}
-button.danger{background:linear-gradient(120deg,#a52d67,#672b75);border-color:rgba(255,85,127,.5);color:#fff;box-shadow:0 0 16px rgba(255,85,127,.14)}
-button:disabled{opacity:.45;cursor:not-allowed;transform:none}
-.row{display:flex;gap:9px;flex-wrap:wrap;align-items:center}
+label{font-size:13px;color:#b7c9e8}
+button{border:1px solid rgba(154,238,255,.6);border-radius:11px;padding:11px 16px;background:linear-gradient(120deg,#63edff,#817bff);color:#071020;font-weight:800;font-size:14px;cursor:pointer;margin:4px}
+button:hover{filter:brightness(1.1)}
+button.secondary{background:linear-gradient(120deg,#24366d,#35265f);border-color:rgba(167,123,255,.42);color:#e6eaff}
+button.danger{background:linear-gradient(120deg,#a52d67,#672b75);border-color:rgba(255,85,127,.5);color:#fff}
+button:disabled{opacity:.45;cursor:not-allowed}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
 .row>*{flex:1}
-.item{position:relative;background:linear-gradient(125deg,rgba(17,31,66,.96),rgba(9,16,39,.96));border:1px solid rgba(102,220,255,.18);border-radius:15px;padding:16px;margin:12px 0;box-shadow:inset 0 1px rgba(255,255,255,.035);transition:border-color .2s,transform .2s}
-.item:hover{border-color:rgba(76,236,255,.48);box-shadow:0 0 18px rgba(76,236,255,.08);transform:translateX(-2px)}
+.item{background:linear-gradient(125deg,rgba(17,31,66,.96),rgba(9,16,39,.96));border:1px solid rgba(102,220,255,.18);border-radius:14px;padding:15px;margin:11px 0}
 .item strong{display:block;font-size:15px;color:#f0f6ff;margin-bottom:7px}
 .item small{display:inline-block;margin:3px 8px 3px 0;line-height:1.8}
-small,.muted{color:#9baed0}
+small,.muted{color:var(--muted)}
 .hidden{display:none!important}
-#message{padding:12px;border-radius:10px;margin:12px 0;display:none;border:1px solid transparent;backdrop-filter:blur(12px);box-shadow:var(--glow)}
+#message{padding:12px;border-radius:10px;margin:12px 0;display:none;border:1px solid transparent;box-shadow:var(--glow)}
 #message.ok{display:block;background:rgba(14,92,77,.48);border-color:rgba(69,240,192,.35);color:#a8ffe5}
 #message.err{display:block;background:rgba(105,25,61,.5);border-color:rgba(255,85,127,.4);color:#ffc1d5}
 .topline{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
 .check{display:flex;align-items:center;gap:8px;margin:8px 0 14px;padding:9px 12px;border:1px solid rgba(102,220,255,.2);border-radius:10px;background:rgba(4,9,25,.55)}
-.check input{width:auto;margin:0;accent-color:#4cecff}
+.check input{width:auto;margin:0;accent-color:var(--cyan)}
 .status{display:inline-block;padding:5px 10px;border-radius:8px;background:rgba(76,236,255,.11);border:1px solid rgba(76,236,255,.3);color:#9cefff;font-size:12px;margin-top:7px}
-#loginSection{max-width:570px;margin:8vh auto 30px;padding:30px;border-color:rgba(167,123,255,.3)}
-#loginSection h2{font-size:21px;margin-bottom:24px}
-#loginSection button{width:100%;margin:10px 0 0;padding:14px}
-#dashboard>.card:first-child{border-color:rgba(76,236,255,.28)}
-@keyframes riseIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
-#dashboard:not(.hidden)>.card{animation:riseIn .55s both}
-#dashboard:not(.hidden)>.card:nth-child(2){animation-delay:.04s}
-#dashboard:not(.hidden)>.card:nth-child(3){animation-delay:.08s}
-#dashboard:not(.hidden)>.card:nth-child(4){animation-delay:.12s}
-#dashboard:not(.hidden)>.card:nth-child(5){animation-delay:.16s}
-#dashboard:not(.hidden)>.card:nth-child(6){animation-delay:.20s}
-#dashboard:not(.hidden)>.card:nth-child(7){animation-delay:.24s}
-#dashboard:not(.hidden)>.card:nth-child(8){animation-delay:.28s}
-@media(max-width:650px){
- header{padding:19px 14px}
- main{padding:16px 12px 40px}
- .card{padding:17px 14px;border-radius:17px}
- .row{display:flex;gap:6px}
- .row>*{min-width:0}
- .row button{width:auto;flex:1;margin:3px;padding:11px 9px;font-size:13px}
- #loginSection{margin:5vh auto 22px;padding:22px 17px}
- .item{padding:13px}
- .item .row{display:flex}
-}
-@media(prefers-reduced-motion:reduce){*,*:before,*:after{scroll-behavior:auto!important;animation:none!important;transition:none!important}}
+#loginSection{max-width:570px;margin:8vh auto 30px;padding:28px}
+#loginSection button{width:100%;margin:8px 0 0;padding:14px}
+.hint{font-size:12px;line-height:1.8;color:var(--muted);margin:0 0 12px}
+@media(max-width:650px){header{padding:18px 14px}main{padding:15px 11px 38px}.card{padding:16px 13px;border-radius:15px}.row{gap:5px}.row button{min-width:0;padding:10px 8px;font-size:12px}.item{padding:12px}#loginSection{margin:5vh auto 20px;padding:20px 15px}}
+@media(prefers-reduced-motion:reduce){*,*:before,*:after{scroll-behavior:auto!important;transition:none!important;animation:none!important}}
 </style>
 </head>
 <body>
@@ -85,70 +55,66 @@ small,.muted{color:#9baed0}
     <button id="logoutBtn" class="secondary hidden" onclick="logout()">تسجيل الخروج</button>
   </div>
 </header>
-
 <main>
-  <div id="message"></div>
+  <div id="message" role="status" aria-live="polite"></div>
 
   <section id="loginSection" class="card">
     <h2>تسجيل دخول الإدارة</h2>
-    <label>اسم المستخدم</label>
+    <label for="username">اسم المستخدم</label>
     <input id="username" autocomplete="username" placeholder="اسم المستخدم">
-    <label>كلمة المرور</label>
+    <label for="password">كلمة المرور</label>
     <input id="password" type="password" autocomplete="current-password" placeholder="كلمة المرور">
-    <button onclick="login()">دخول لوحة التحكم</button>
+    <button id="loginBtn" onclick="login()">دخول لوحة التحكم</button>
   </section>
 
   <section id="dashboard" class="hidden">
-
     <div class="card">
       <div class="topline"><h2>إدارة المواد الدراسية</h2><button onclick="loadSubjects()">تحديث</button></div>
-      <div id="subjectsList"></div>
+      <div id="subjectsList"><p class="muted">جارٍ تحميل المواد...</p></div>
     </div>
 
     <div class="card">
       <h2 id="subjectFormTitle">إضافة مادة دراسية</h2>
       <input id="subjectId" type="hidden">
-      <label>اسم المادة</label>
-      <input id="subjectName" placeholder="مثال: الفلسفة والمنطق">
-      <label>الصف الدراسي</label>
-      <input id="subjectGrade" placeholder="مثال: الصف الأول الثانوي">
+      <label for="subjectName">اسم المادة</label>
+      <input id="subjectName" maxlength="120" placeholder="مثال: الفلسفة والمنطق">
+      <label for="subjectGrade">الصف الدراسي</label>
+      <input id="subjectGrade" maxlength="80" placeholder="مثال: الصف الأول الثانوي">
       <div class="row">
-        <button onclick="saveSubject()">حفظ المادة</button>
+        <button id="saveSubjectBtn" onclick="saveSubject()">حفظ المادة</button>
         <button class="secondary" onclick="resetSubjectForm()">إلغاء</button>
       </div>
     </div>
 
     <div class="card">
       <h2>إدارة الدروس والمحتوى</h2>
-      <label>اختر المادة الدراسية</label>
+      <label for="materialSubject">تصفية حسب المادة</label>
       <select id="materialSubject" onchange="loadMaterials()"><option value="">كل المواد</option></select>
-      <div id="materialsList"></div>
+      <div id="materialsList"><p class="muted">اختر تحديث المواد لعرض المحتوى.</p></div>
     </div>
 
     <div class="card">
       <h2 id="materialFormTitle">إضافة محتوى تعليمي</h2>
       <input id="materialId" type="hidden">
-      <label>المادة الدراسية</label>
+      <label for="materialSubjectForm">المادة الدراسية</label>
       <select id="materialSubjectForm"></select>
-      <label>عنوان المحتوى</label>
-      <input id="materialTitle" placeholder="عنوان الدرس">
-      <label>نوع المحتوى</label>
+      <label for="materialTitle">عنوان المحتوى</label>
+      <input id="materialTitle" maxlength="180" placeholder="عنوان الدرس">
+      <label for="materialType">نوع المحتوى</label>
       <select id="materialType">
-        <option value="lesson">درس</option>
-        <option value="video">فيديو</option>
-        <option value="pdf">ملف PDF</option>
+        <option value="lesson">درس</option><option value="video">فيديو</option><option value="pdf">ملف PDF</option>
       </select>
-      <label>رابط الفيديو أو الملف الخارجي</label>
-      <input id="materialFileUrl" type="url" placeholder="ضع رابط الفيديو هنا">
-      <label>رفع ملف PDF من الجهاز (حد أقصى 8 ميجابايت)</label>
+      <label for="materialFileUrl">رابط الفيديو أو الملف الخارجي</label>
+      <input id="materialFileUrl" type="url" placeholder="https://...">
+      <label for="materialFile">رفع ملف PDF من الجهاز (حد أقصى 8 ميجابايت)</label>
       <input id="materialFile" type="file" accept="application/pdf,.pdf">
       <input id="materialExistingFileKey" type="hidden">
-      <p class="muted">يمكنك رفع مذكرة PDF مباشرة من هاتفك.</p>
-      <label>السعر بالجنيه المصري</label>
-      <input id="materialPrice" type="number" min="0" value="0">
-      <label class="check"><input id="materialFree" type="checkbox" checked> محتوى مجاني</label>
+      <p class="hint">يمكنك رفع ملف PDF أو وضع رابط خارجي آمن يبدأ بـ https://. لا تضع رابطًا وملفًا في الوقت نفسه.</p>
+      <label for="materialPrice">السعر بالجنيه المصري</label>
+      <input id="materialPrice" type="number" min="0" max="1000000" step="1" value="0">
+      <label class="check"><input id="materialFree" type="checkbox" checked onchange="syncPriceField()"> محتوى مجاني</label>
       <div class="row">
-        <button onclick="saveMaterial()">حفظ المحتوى</button>
+        <button id="saveMaterialBtn" onclick="saveMaterial()">حفظ المحتوى</button>
         <button class="secondary" onclick="resetMaterialForm()">إلغاء</button>
       </div>
     </div>
@@ -159,7 +125,8 @@ small,.muted{color:#9baed0}
     </div>
 
     <div class="card">
-      <div class="topline"><h2>طلبات الطلاب</h2><button onclick="loadOrders()">تحديث</button></div>
+      <div class="topline"><h2>طلبات الطلاب المعلقة</h2><button onclick="loadOrders()">تحديث</button></div>
+      <p class="hint">الخادم يعرض الطلبات المعلقة فقط في هذا القسم. عند تحديث حالة الطلب سيختفي من القائمة.</p>
       <div id="ordersList"><p class="muted">جارٍ تحميل الطلبات...</p></div>
     </div>
 
@@ -168,699 +135,390 @@ small,.muted{color:#9baed0}
       <div id="deviceRequestsList"><p class="muted">جارٍ تحميل طلبات الأجهزة...</p></div>
     </div>
 
-    <!-- طلبات استعادة كلمة المرور -->
     <div class="card">
-      <div class="topline">
-        <h2>طلبات استعادة كلمة المرور</h2>
-        <button onclick="loadPasswordResetRequests()">تحديث</button>
-      </div>
-      <div id="passwordResetRequestsList">
-        <p class="muted">جارٍ تحميل طلبات استعادة كلمة المرور...</p>
-      </div>
+      <div class="topline"><h2>طلبات استعادة كلمة المرور</h2><button onclick="loadPasswordResetRequests()">تحديث</button></div>
+      <div id="passwordResetRequestsList"><p class="muted">جارٍ تحميل طلبات استعادة كلمة المرور...</p></div>
     </div>
-
   </section>
 </main>
 
 <script>
+"use strict";
 const API="https://zm-academy-api.ziadmohsen4567.workers.dev";
 let token=sessionStorage.getItem("zm_admin_token")||"";
 let subjects=[];
+let isSavingMaterial=false;
+let isSavingSubject=false;
 
+function el(id){return document.getElementById(id)}
 function message(text,type="ok"){
-  const el=document.getElementById("message");
-  el.textContent=text;
-  el.className=type;
-  el.style.display="block";
+  const box=el("message");
+  box.textContent=String(text||"");
+  box.className=type==="err"?"err":"ok";
+  box.style.display="block";
   window.scrollTo({top:0,behavior:"smooth"});
 }
-
+function escapeHTML(value){
+  return String(value??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+}
 async function request(path,method="GET",body=null){
-  const headers={"Content-Type":"application/json"};
+  const headers={};
   if(token)headers.Authorization="Bearer "+token;
-
   const options={method,headers};
-  if(body)options.body=JSON.stringify(body);
-
-  const response=await fetch(API+path,options);
-  const data=await response.json().catch(()=>({}));
-
-  if(!response.ok||data.success===false){
-    throw new Error(data.error||"حدث خطأ في الاتصال");
+  if(body!==null){
+    headers["Content-Type"]="application/json";
+    options.body=JSON.stringify(body);
   }
-
+  let response;
+  try{response=await fetch(API+path,options)}
+  catch(e){throw new Error("تعذر الاتصال بالخادم. تحقق من الإنترنت وحاول مرة أخرى.")}
+  const data=await response.json().catch(()=>({}));
+  if(!response.ok||data.success===false){
+    if(response.status===401){
+      token="";
+      sessionStorage.removeItem("zm_admin_token");
+      showLogin();
+    }
+    throw new Error(data.error||"حدث خطأ في الاتصال بالخادم.");
+  }
   return data;
 }
-
 function showDashboard(){
-  document.getElementById("loginSection").classList.add("hidden");
-  document.getElementById("dashboard").classList.remove("hidden");
-  document.getElementById("logoutBtn").classList.remove("hidden");
+  el("loginSection").classList.add("hidden");
+  el("dashboard").classList.remove("hidden");
+  el("logoutBtn").classList.remove("hidden");
 }
-
 function showLogin(){
-  document.getElementById("loginSection").classList.remove("hidden");
-  document.getElementById("dashboard").classList.add("hidden");
-  document.getElementById("logoutBtn").classList.add("hidden");
+  el("loginSection").classList.remove("hidden");
+  el("dashboard").classList.add("hidden");
+  el("logoutBtn").classList.add("hidden");
 }
-
 async function loadDashboardData(){
   await loadSubjects();
-
-  await Promise.all([
-    loadStudents(),
-    loadOrders(),
-    loadDeviceRequests(),
-    loadPasswordResetRequests()
-  ]);
+  await Promise.allSettled([loadStudents(),loadOrders(),loadDeviceRequests(),loadPasswordResetRequests()]);
 }
-
 async function login(){
-  const username=document.getElementById("username").value.trim();
-  const password=document.getElementById("password").value;
-
-  if(!username||!password){
-    return message("اكتب اسم المستخدم وكلمة المرور","err");
-  }
-
+  const username=el("username").value.trim();
+  const password=el("password").value;
+  if(!username||!password)return message("اكتب اسم المستخدم وكلمة المرور","err");
+  const btn=el("loginBtn");btn.disabled=true;btn.textContent="جارٍ تسجيل الدخول...";
   try{
     const data=await request("/api/admin/login","POST",{username,password});
     const newToken=data.token||data.access_token||data.session?.token;
-
-    if(!newToken)throw new Error("لم يصل رمز الجلسة من الخادم");
-
+    if(!newToken)throw new Error("لم يصل رمز الجلسة من الخادم.");
     token=newToken;
     sessionStorage.setItem("zm_admin_token",token);
-    document.getElementById("password").value="";
-
+    el("password").value="";
     showDashboard();
     await loadDashboardData();
     message("تم تسجيل الدخول بنجاح");
-
-  }catch(e){
-    message(e.message,"err");
-  }
+  }catch(e){message(e.message,"err")}
+  finally{btn.disabled=false;btn.textContent="دخول لوحة التحكم"}
 }
-
 async function checkSession(){
-  if(!token){
-    showLogin();
-    return;
-  }
-
-  try{
-    await request("/api/admin/me");
-    showDashboard();
-    await loadDashboardData();
-  }catch(e){
-    token="";
-    sessionStorage.removeItem("zm_admin_token");
-    showLogin();
-  }
+  if(!token){showLogin();return}
+  try{await request("/api/admin/me");showDashboard();await loadDashboardData()}
+  catch(e){token="";sessionStorage.removeItem("zm_admin_token");showLogin()}
 }
-
 async function logout(){
-  try{
-    await request("/api/admin/logout","POST",{});
-  }catch(e){}
-
-  token="";
-  sessionStorage.removeItem("zm_admin_token");
-  showLogin();
-  message("تم تسجيل الخروج");
+  try{await request("/api/admin/logout","POST",{})}catch(e){}
+  token="";sessionStorage.removeItem("zm_admin_token");
+  showLogin();message("تم تسجيل الخروج");
 }
 
 async function loadSubjects(){
+  const previousFilter=el("materialSubject").value;
   try{
     const data=await request("/api/admin/subjects");
-    subjects=data.subjects||[];
+    subjects=Array.isArray(data.subjects)?data.subjects:[];
     renderSubjects();
-    fillSubjectOptions();
+    fillSubjectOptions(previousFilter);
     await loadMaterials();
-  }catch(e){
-    message(e.message,"err");
-  }
+  }catch(e){message(e.message,"err")}
 }
-
 function renderSubjects(){
-  const box=document.getElementById("subjectsList");
-
-  if(!subjects.length){
-    box.innerHTML="<p class='muted'>لا توجد مواد دراسية حتى الآن</p>";
-    return;
-  }
-
-  box.innerHTML=subjects.map(s=>`
-    <div class="item">
-      <strong>${escapeHTML(s.name)}</strong>
-      <small>${escapeHTML(s.grade||"")}</small>
-      <small>${Number(s.is_archived)===1?"مؤرشفة":"نشطة"}</small>
-      <div class="row">
-        <button class="secondary" onclick="editSubject(${Number(s.id)})">تعديل</button>
-        ${Number(s.is_archived)===1
-          ? `<button onclick="archiveSubject(${Number(s.id)},'restore')">استعادة</button>`
-          : `<button class="danger" onclick="archiveSubject(${Number(s.id)},'archive')">أرشفة</button>`}
-      </div>
-    </div>
-  `).join("");
-}
-
-function fillSubjectOptions(){
-  const activeSubjects=subjects.filter(s=>Number(s.is_archived)!==1);
-
-  const options=activeSubjects.map(s=>
-    `<option value="${Number(s.id)}">${escapeHTML(s.name)} - ${escapeHTML(s.grade||"")}</option>`
-  ).join("");
-
-  document.getElementById("materialSubject").innerHTML=
-    '<option value="">كل المواد</option>'+options;
-
-  document.getElementById("materialSubjectForm").innerHTML=options;
-}
-
-async function archiveSubject(id,action){
-  const isArchive=action==="archive";
-
-  if(!confirm(isArchive
-    ? "هل تريد أرشفة المادة؟ ستختفي من المواد المتاحة للطلاب مع الاحتفاظ بالمشتريات القديمة."
-    : "هل تريد استعادة المادة وإظهارها للطلاب مرة أخرى؟"))return;
-
-  try{
-    await request(`/api/admin/subjects/${id}/${action}`,"POST",{});
-    await loadSubjects();
-    message(isArchive?"تمت أرشفة المادة بنجاح":"تمت استعادة المادة بنجاح");
-  }catch(e){
-    message(e.message,"err");
-  }
-}
-
-function editSubject(id){
-  const s=subjects.find(x=>Number(x.id)===Number(id));
-  if(!s)return;
-
-  document.getElementById("subjectId").value=s.id;
-  document.getElementById("subjectName").value=s.name;
-  document.getElementById("subjectGrade").value=s.grade||"";
-  document.getElementById("subjectFormTitle").textContent="تعديل المادة الدراسية";
-  document.getElementById("subjectName").scrollIntoView({behavior:"smooth"});
-}
-
-function resetSubjectForm(){
-  document.getElementById("subjectId").value="";
-  document.getElementById("subjectName").value="";
-  document.getElementById("subjectGrade").value="";
-  document.getElementById("subjectFormTitle").textContent="إضافة مادة دراسية";
-}
-
-async function saveSubject(){
-  const id=document.getElementById("subjectId").value;
-  const name=document.getElementById("subjectName").value.trim();
-  const grade=document.getElementById("subjectGrade").value.trim();
-
-  if(!name||!grade){
-    return message("اكتب اسم المادة والصف الدراسي","err");
-  }
-
-  try{
-    await request("/api/subjects",id?"PUT":"POST",
-      id?{id:Number(id),name,grade}:{name,grade}
-    );
-
-    resetSubjectForm();
-    await loadSubjects();
-    message("تم حفظ المادة بنجاح");
-  }catch(e){
-    message(e.message,"err");
-  }
-}
-
-async function deleteSubject(id){
-  if(!confirm("هل أنت متأكد من حذف المادة؟"))return;
-
-  try{
-    await request("/api/subjects","DELETE",{id:Number(id)});
-    await loadSubjects();
-    message("تم حذف المادة");
-  }catch(e){
-    message(e.message,"err");
-  }
-}
-
-async function loadMaterials(){
-  try{
-    const selected=document.getElementById("materialSubject").value;
-    const data=await request("/api/admin/materials");
-    let list=data.materials||[];
-
-    if(selected){
-      list=list.filter(m=>String(m.subject_id)===selected);
-    }
-
-    renderMaterials(list);
-  }catch(e){
-    message(e.message,"err");
-  }
-}
-
-function renderMaterials(list){
-  const box=document.getElementById("materialsList");
-
-  if(!list.length){
-    box.innerHTML="<p class='muted'>لا يوجد محتوى في هذا الاختيار</p>";
-    return;
-  }
-
-  box.innerHTML=list.map(m=>{
-    const archived=Number(m.is_archived)===1;
-
+  const box=el("subjectsList");
+  if(!subjects.length){box.innerHTML="<p class='muted'>لا توجد مواد دراسية حتى الآن.</p>";return}
+  box.innerHTML=subjects.map(s=>{
+    const id=Number(s.id),archived=Number(s.is_archived)===1;
     return `<div class="item">
-      <strong>${escapeHTML(m.title)}</strong>
-      <small>النوع: ${escapeHTML(m.type)} | السعر: ${Number(m.price)||0} جنيه | ${Number(m.is_free)===1?"مجاني":"مدفوع"}</small>
-      <small style="display:block;color:${archived?"#bda7ff":"#45f0c0"}">${archived?"● الدرس مؤرشف":"● الدرس نشط"}</small>
+      <strong>${escapeHTML(s.name)}</strong>
+      <small>${escapeHTML(s.grade||"بدون صف محدد")}</small>
+      <small>${archived?"مؤرشفة":"نشطة"}</small>
       <div class="row">
-        <button class="secondary" onclick="editMaterial(${Number(m.id)})">تعديل</button>
-        ${archived
-          ? `<button onclick="archiveMaterial(${Number(m.id)},'restore')">استعادة</button>`
-          : `<button class="secondary" onclick="archiveMaterial(${Number(m.id)},'archive')">أرشفة</button>`}
-        <button class="danger" onclick="deleteMaterial(${Number(m.id)})">حذف</button>
+        <button class="secondary" onclick="editSubject(${id})">تعديل</button>
+        ${archived?`<button onclick="archiveSubject(${id},'restore')">استعادة</button>`:`<button class="danger" onclick="archiveSubject(${id},'archive')">أرشفة</button>`}
       </div>
     </div>`;
   }).join("");
 }
-
-async function archiveMaterial(id,action){
-  const isArchive=action==="archive";
-
-  if(!confirm(isArchive
-    ? "هل تريد أرشفة هذا الدرس؟ سيختفي من المحتوى المتاح للطلاب مع الاحتفاظ بالمشتريات القديمة."
-    : "هل تريد استعادة هذا الدرس وإظهاره للطلاب مرة أخرى؟"))return;
-
+function fillSubjectOptions(previousFilter=""){
+  const active=subjects.filter(s=>Number(s.is_archived)!==1);
+  const options=active.map(s=>`<option value="${Number(s.id)}">${escapeHTML(s.name)} - ${escapeHTML(s.grade||"")}</option>`).join("");
+  el("materialSubject").innerHTML='<option value="">كل المواد</option>'+options;
+  el("materialSubjectForm").innerHTML=options;
+  if(active.some(s=>String(s.id)===String(previousFilter)))el("materialSubject").value=String(previousFilter);
+}
+async function archiveSubject(id,action){
+  const archiving=action==="archive";
+  if(!confirm(archiving?"أرشفة المادة؟ ستختفي من المواد المتاحة للطلاب مع الاحتفاظ بالمشتريات القديمة.":"استعادة المادة وإظهارها للطلاب مرة أخرى؟"))return;
+  try{await request(`/api/admin/subjects/${id}/${action}`,"POST",{});await loadSubjects();message(archiving?"تمت أرشفة المادة بنجاح":"تمت استعادة المادة بنجاح")}
+  catch(e){message(e.message,"err")}
+}
+function editSubject(id){
+  const s=subjects.find(x=>Number(x.id)===Number(id));if(!s)return;
+  el("subjectId").value=s.id;el("subjectName").value=s.name;el("subjectGrade").value=s.grade||"";
+  el("subjectFormTitle").textContent="تعديل المادة الدراسية";
+  el("subjectName").scrollIntoView({behavior:"smooth",block:"center"});
+}
+function resetSubjectForm(){
+  el("subjectId").value="";el("subjectName").value="";el("subjectGrade").value="";
+  el("subjectFormTitle").textContent="إضافة مادة دراسية";
+}
+async function saveSubject(){
+  if(isSavingSubject)return;
+  const id=el("subjectId").value,name=el("subjectName").value.trim(),grade=el("subjectGrade").value.trim();
+  if(!name||!grade)return message("اكتب اسم المادة والصف الدراسي","err");
+  isSavingSubject=true;const btn=el("saveSubjectBtn");btn.disabled=true;btn.textContent="جارٍ الحفظ...";
   try{
-    await request(`/api/admin/materials/${Number(id)}/${action}`,"POST",{});
-    await loadMaterials();
-    message(isArchive?"تمت أرشفة الدرس بنجاح":"تمت استعادة الدرس بنجاح");
-  }catch(e){
-    message(e.message,"err");
-  }
+    await request("/api/subjects",id?"PUT":"POST",id?{id:Number(id),name,grade}:{name,grade});
+    resetSubjectForm();await loadSubjects();message("تم حفظ المادة بنجاح");
+  }catch(e){message(e.message,"err")}
+  finally{isSavingSubject=false;btn.disabled=false;btn.textContent="حفظ المادة"}
+}
+async function deleteSubject(id){
+  if(!confirm("حذف المادة نهائيًا؟ قد يرفض الخادم الحذف إذا كانت هناك سجلات مرتبطة بها."))return;
+  try{await request("/api/subjects","DELETE",{id:Number(id)});await loadSubjects();message("تم حذف المادة")}
+  catch(e){message(e.message,"err")}
 }
 
+async function loadMaterials(){
+  try{
+    const selected=el("materialSubject").value;
+    const data=await request("/api/admin/materials");
+    let list=Array.isArray(data.materials)?data.materials:[];
+    if(selected)list=list.filter(m=>String(m.subject_id)===String(selected));
+    renderMaterials(list);
+  }catch(e){el("materialsList").innerHTML=`<p class="muted">${escapeHTML(e.message)}</p>`}
+}
+function renderMaterials(list){
+  const box=el("materialsList");
+  if(!list.length){box.innerHTML="<p class='muted'>لا يوجد محتوى في هذا الاختيار.</p>";return}
+  box.innerHTML=list.map(m=>{
+    const id=Number(m.id),archived=Number(m.is_archived)===1;
+    return `<div class="item">
+      <strong>${escapeHTML(m.title)}</strong>
+      <small>المادة: ${escapeHTML(m.subject_name||"—")}</small><br>
+      <small>النوع: ${escapeHTML(m.type)} | السعر: ${Number(m.price)||0} جنيه | ${Number(m.is_free)===1?"مجاني":"مدفوع"}</small>
+      <small style="display:block;color:${archived?"#bda7ff":"#45f0c0"}">${archived?"● الدرس مؤرشف":"● الدرس نشط"}</small>
+      <div class="row">
+        <button class="secondary" onclick="editMaterial(${id})">تعديل</button>
+        ${archived?`<button onclick="archiveMaterial(${id},'restore')">استعادة</button>`:`<button class="secondary" onclick="archiveMaterial(${id},'archive')">أرشفة</button>`}
+        <button class="danger" onclick="deleteMaterial(${id})">حذف</button>
+      </div>
+    </div>`;
+  }).join("");
+}
+async function archiveMaterial(id,action){
+  const archiving=action==="archive";
+  if(!confirm(archiving?"أرشفة هذا الدرس؟ سيختفي من المحتوى المتاح للطلاب مع الاحتفاظ بالمشتريات القديمة.":"استعادة هذا الدرس وإظهاره للطلاب مرة أخرى؟"))return;
+  try{await request(`/api/admin/materials/${Number(id)}/${action}`,"POST",{});await loadMaterials();message(archiving?"تمت أرشفة الدرس بنجاح":"تمت استعادة الدرس بنجاح")}
+  catch(e){message(e.message,"err")}
+}
 async function editMaterial(id){
   try{
     const data=await request("/api/admin/materials");
-    const m=(data.materials||[]).find(x=>Number(x.id)===Number(id));
-
-    if(!m)return;
-
-    document.getElementById("materialId").value=m.id;
-    document.getElementById("materialSubjectForm").value=m.subject_id;
-    document.getElementById("materialTitle").value=m.title;
-    document.getElementById("materialType").value=m.type;
-
-    document.getElementById("materialExistingFileKey").value=
-      m.file_key&&!/^https?:\/\//i.test(m.file_key)?m.file_key:"";
-
-    document.getElementById("materialFileUrl").value=
-      m.file_key&&/^https?:\/\//i.test(m.file_key)?m.file_key:"";
-
-    document.getElementById("materialFile").value="";
-    document.getElementById("materialPrice").value=m.price||0;
-    document.getElementById("materialFree").checked=!!m.is_free;
-    document.getElementById("materialFormTitle").textContent="تعديل المحتوى";
-    document.getElementById("materialTitle").scrollIntoView({behavior:"smooth"});
-
-  }catch(e){
-    message(e.message,"err");
-  }
+    const m=(data.materials||[]).find(x=>Number(x.id)===Number(id));if(!m)return;
+    el("materialId").value=m.id;el("materialSubjectForm").value=String(m.subject_id);
+    el("materialTitle").value=m.title||"";el("materialType").value=m.type||"lesson";
+    const key=m.file_key||"";
+    el("materialExistingFileKey").value=key&&!/^https?:\/\//i.test(key)?key:"";
+    el("materialFileUrl").value=/^https?:\/\//i.test(key)?key:"";
+    el("materialFile").value="";
+    el("materialPrice").value=Number(m.price)||0;
+    el("materialFree").checked=Number(m.is_free)===1;
+    syncPriceField();
+    el("materialFormTitle").textContent="تعديل المحتوى";
+    el("materialTitle").scrollIntoView({behavior:"smooth",block:"center"});
+  }catch(e){message(e.message,"err")}
 }
-
+function syncPriceField(){
+  const free=el("materialFree").checked;
+  el("materialPrice").disabled=free;
+  if(free)el("materialPrice").value="0";
+}
 function resetMaterialForm(){
-  document.getElementById("materialId").value="";
-  document.getElementById("materialTitle").value="";
-  document.getElementById("materialType").value="lesson";
-  document.getElementById("materialFileUrl").value="";
-  document.getElementById("materialFile").value="";
-  document.getElementById("materialExistingFileKey").value="";
-  document.getElementById("materialPrice").value="0";
-  document.getElementById("materialFree").checked=true;
-  document.getElementById("materialFormTitle").textContent="إضافة محتوى تعليمي";
+  el("materialId").value="";el("materialTitle").value="";el("materialType").value="lesson";
+  el("materialFileUrl").value="";el("materialFile").value="";el("materialExistingFileKey").value="";
+  el("materialPrice").value="0";el("materialFree").checked=true;
+  el("materialFormTitle").textContent="إضافة محتوى تعليمي";syncPriceField();
 }
-
 async function saveMaterial(){
-  const id=document.getElementById("materialId").value;
-  const subject_id=Number(document.getElementById("materialSubjectForm").value);
-  const title=document.getElementById("materialTitle").value.trim();
-  const type=document.getElementById("materialType").value;
-  const selectedFile=document.getElementById("materialFile").files[0];
-  const externalUrl=document.getElementById("materialFileUrl").value.trim();
-  const existingKey=document.getElementById("materialExistingFileKey").value;
-  const price=Number(document.getElementById("materialPrice").value);
-  const is_free=document.getElementById("materialFree").checked;
+  if(isSavingMaterial)return;
+  const id=el("materialId").value;
+  const subject_id=Number(el("materialSubjectForm").value);
+  const title=el("materialTitle").value.trim();
+  const type=el("materialType").value;
+  const selectedFile=el("materialFile").files[0];
+  const externalUrl=el("materialFileUrl").value.trim();
+  const existingKey=el("materialExistingFileKey").value;
+  const is_free=el("materialFree").checked;
+  const price=is_free?0:Number(el("materialPrice").value);
 
-  if(!subject_id||!title){
-    return message("اختر المادة واكتب عنوان المحتوى","err");
-  }
-
-  if(!Number.isFinite(price)||price<0){
-    return message("اكتب سعرًا صحيحًا","err");
-  }
-
-  if(selectedFile&&(selectedFile.type!=="application/pdf"||selectedFile.size>8*1024*1024)){
-    return message("اختر ملف PDF لا يتجاوز 8 ميجابايت","err");
-  }
-
+  if(!subject_id||!title)return message("اختر المادة واكتب عنوان المحتوى","err");
+  if(!Number.isFinite(price)||price<0||price>1000000)return message("اكتب سعرًا صحيحًا بين صفر ومليون جنيه","err");
+  if(!is_free&&price<=0)return message("المحتوى المدفوع يجب أن يكون له سعر أكبر من صفر","err");
+  if(selectedFile&&(selectedFile.type!=="application/pdf"||selectedFile.size>8*1024*1024))return message("اختر ملف PDF لا يتجاوز 8 ميجابايت","err");
+  if(selectedFile&&type!=="pdf")return message("رفع ملف من الجهاز متاح لنوع PDF فقط. غيّر نوع المحتوى إلى ملف PDF.","err");
   if(externalUrl){
-    try{
-      const parsedUrl=new URL(externalUrl);
-      if(parsedUrl.protocol!=="https:")throw new Error();
-    }catch(e){
-      return message("اكتب رابطًا صحيحًا يبدأ بـ https://","err");
-    }
+    try{const u=new URL(externalUrl);if(u.protocol!=="https:")throw new Error()}
+    catch(e){return message("اكتب رابطًا صحيحًا يبدأ بـ https://","err")}
   }
+  if(selectedFile&&externalUrl)return message("ارفع ملف PDF أو ضع رابطًا خارجيًا، وليس الاثنين معًا","err");
 
-  if(selectedFile&&externalUrl){
-    return message("ارفع ملف PDF أو ضع رابطًا خارجيًا، وليس الاثنين معًا","err");
-  }
-
+  isSavingMaterial=true;const btn=el("saveMaterialBtn");btn.disabled=true;btn.textContent="جارٍ الحفظ...";
   let file_key=existingKey||externalUrl||null;
-
   try{
     if(selectedFile){
       message("جارٍ رفع ملف PDF...");
-
-      const formData=new FormData();
-      formData.append("file",selectedFile);
-
-      const uploadResponse=await fetch(API+"/api/admin/upload",{
-        method:"POST",
-        headers:{Authorization:"Bearer "+token},
-        body:formData
-      });
-
+      const formData=new FormData();formData.append("file",selectedFile);
+      let uploadResponse;
+      try{uploadResponse=await fetch(API+"/api/admin/upload",{method:"POST",headers:{Authorization:"Bearer "+token},body:formData})}
+      catch(e){throw new Error("تعذر الاتصال أثناء رفع الملف.")}
       const uploadData=await uploadResponse.json().catch(()=>({}));
-
-      if(!uploadResponse.ok||!uploadData.success){
-        throw new Error(uploadData.error||"فشل رفع ملف PDF");
-      }
-
+      if(!uploadResponse.ok||!uploadData.success||!uploadData.file_key)throw new Error(uploadData.error||"فشل رفع ملف PDF");
       file_key=uploadData.file_key;
     }
-
     message("جارٍ حفظ المحتوى...");
-
     const body={subject_id,title,type,price,is_free,file_key};
     if(id)body.id=Number(id);
-
     await request("/api/admin/materials",id?"PUT":"POST",body);
-
-    resetMaterialForm();
-    await loadMaterials();
-    message("تم حفظ المحتوى بنجاح");
-
-  }catch(e){
-    message(e.message,"err");
-  }
+    resetMaterialForm();await loadMaterials();message("تم حفظ المحتوى بنجاح");
+  }catch(e){message(e.message,"err")}
+  finally{isSavingMaterial=false;btn.disabled=false;btn.textContent="حفظ المحتوى"}
 }
-
 async function deleteMaterial(id){
-  if(!confirm("هل أنت متأكد من حذف المحتوى؟"))return;
-
-  try{
-    await request("/api/admin/materials","DELETE",{id:Number(id)});
-    await loadMaterials();
-    message("تم حذف المحتوى");
-  }catch(e){
-    message(e.message,"err");
-  }
+  if(!confirm("حذف المحتوى نهائيًا؟ سيتم حذف سجلات التقدم والمفضلة المرتبطة به."))return;
+  try{await request("/api/admin/materials","DELETE",{id:Number(id)});await loadMaterials();message("تم حذف المحتوى")}
+  catch(e){message(e.message,"err")}
 }
 
 async function loadStudents(){
-  const box=document.getElementById("studentsList");
-  box.innerHTML="<p class='muted'>جارٍ تحميل الطلاب...</p>";
-
+  const box=el("studentsList");box.innerHTML="<p class='muted'>جارٍ تحميل الطلاب...</p>";
   try{
-    const data=await request("/api/admin/students");
-    const list=data.students||[];
-
-    if(!list.length){
-      box.innerHTML="<p class='muted'>لا يوجد طلاب مسجلون حتى الآن</p>";
-      return;
-    }
-
-    box.innerHTML=list.map(s=>`
-      <div class="item">
-        <strong>${escapeHTML(s.name)}</strong>
-        <small>رقم الهاتف: ${escapeHTML(s.phone||"غير مسجل")}</small>
-        <small>رقم الطالب: ${escapeHTML(s.id)}</small>
-        <br><small>تاريخ التسجيل: ${escapeHTML(s.created_at||"—")}</small>
-        <div class="row">
-          <button class="danger" onclick="deleteStudent(${Number(s.id)})">حذف الطالب</button>
-        </div>
-      </div>
-    `).join("");
-
-  }catch(e){
-    box.innerHTML=`<p class="muted">${escapeHTML(e.message)}</p>`;
-  }
+    const data=await request("/api/admin/students");const list=data.students||[];
+    if(!list.length){box.innerHTML="<p class='muted'>لا يوجد طلاب مسجلون حتى الآن.</p>";return}
+    box.innerHTML=list.map(s=>`<div class="item">
+      <strong>${escapeHTML(s.name)}</strong>
+      <small>رقم الهاتف: ${escapeHTML(s.phone||"غير مسجل")}</small>
+      <small>رقم الطالب: ${escapeHTML(s.id)}</small><br>
+      <small>الصف: ${escapeHTML(s.grade||"—")} | تاريخ التسجيل: ${escapeHTML(s.created_at||"—")}</small>
+      <div class="row"><button class="danger" onclick="deleteStudent(${Number(s.id)})">حذف الطالب</button></div>
+    </div>`).join("");
+  }catch(e){box.innerHTML=`<p class="muted">${escapeHTML(e.message)}</p>`}
 }
-
 async function deleteStudent(id){
-  if(!confirm("هل أنت متأكد من حذف هذا الطالب؟ لن يتم الحذف إذا كانت له طلبات مرتبطة."))return;
-
-  try{
-    await request("/api/admin/students/"+Number(id),"DELETE");
-    await loadStudents();
-    message("تم حذف الطالب بنجاح");
-  }catch(e){
-    message(e.message,"err");
-  }
+  if(!confirm("تأكيد حذف الطالب؟ سيحاول الخادم حذف بياناته التابعة أيضًا."))return;
+  try{await request("/api/admin/students/"+Number(id),"DELETE");await loadStudents();message("تم حذف الطالب بنجاح")}
+  catch(e){message(e.message,"err")}
 }
 
-const orderStatusLabels={
-  pending:"قيد المراجعة",
-  approved:"مقبول",
-  rejected:"مرفوض",
-  completed:"مكتمل"
-};
-
+const orderStatusLabels={pending:"قيد المراجعة",approved:"مقبول",rejected:"مرفوض",completed:"مكتمل"};
 async function loadOrders(){
-  const box=document.getElementById("ordersList");
-  box.innerHTML="<p class='muted'>جارٍ تحميل الطلبات...</p>";
-
+  const box=el("ordersList");box.innerHTML="<p class='muted'>جارٍ تحميل الطلبات...</p>";
   try{
-    const data=await request("/api/admin/orders");
-    const list=(data.orders||[]).filter(o=>o.status==="pending");
-
-    if(!list.length){
-      box.innerHTML="<p class='muted'>لا توجد طلبات حتى الآن</p>";
-      return;
-    }
-
-    box.innerHTML=list.map(o=>`
-      <div class="item">
-        <strong>${escapeHTML(o.material_title||"طلب محتوى")}</strong>
-        <small>الطالب: ${escapeHTML(o.student_name||"غير معروف")}</small><br>
-        <small>الهاتف: ${escapeHTML(o.phone||"—")}</small><br>
-        <small>السعر: ${Number(o.price)||0} جنيه</small><br>
-        <small>التاريخ: ${escapeHTML(o.created_at||"—")}</small><br>
-        <span class="status">الحالة: ${escapeHTML(orderStatusLabels[o.status]||o.status||"غير محددة")}</span>
-        <div class="row">
-          <button onclick="updateOrder(${Number(o.id)},'approved')">قبول</button>
-          <button class="danger" onclick="updateOrder(${Number(o.id)},'rejected')">رفض</button>
-          <button class="secondary" onclick="updateOrder(${Number(o.id)},'completed')">مكتمل</button>
-        </div>
+    const data=await request("/api/admin/orders");const list=(data.orders||[]).filter(o=>o.status==="pending");
+    if(!list.length){box.innerHTML="<p class='muted'>لا توجد طلبات معلقة حاليًا.</p>";return}
+    box.innerHTML=list.map(o=>`<div class="item">
+      <strong>${escapeHTML(o.material_title||"طلب محتوى")}</strong>
+      <small>الطالب: ${escapeHTML(o.student_name||"غير معروف")}</small><br>
+      <small>الهاتف: ${escapeHTML(o.phone||"—")}</small><br>
+      <small>السعر: ${Number(o.price)||0} جنيه</small><br>
+      <small>التاريخ: ${escapeHTML(o.created_at||"—")}</small><br>
+      <span class="status">الحالة: ${escapeHTML(orderStatusLabels[o.status]||o.status||"غير محددة")}</span>
+      <div class="row">
+        <button onclick="updateOrder(${Number(o.id)},'approved')">قبول</button>
+        <button class="danger" onclick="updateOrder(${Number(o.id)},'rejected')">رفض</button>
+        <button class="secondary" onclick="updateOrder(${Number(o.id)},'completed')">مكتمل</button>
       </div>
-    `).join("");
-
-  }catch(e){
-    box.innerHTML=`<p class="muted">${escapeHTML(e.message)}</p>`;
-  }
+    </div>`).join("");
+  }catch(e){box.innerHTML=`<p class="muted">${escapeHTML(e.message)}</p>`}
 }
-
 async function updateOrder(id,status){
-  const prompts={
-    approved:"تأكيد قبول الطلب؟",
-    rejected:"تأكيد رفض الطلب؟",
-    completed:"تأكيد إكمال الطلب؟"
-  };
-
+  const prompts={approved:"تأكيد قبول الطلب؟",rejected:"تأكيد رفض الطلب؟",completed:"تأكيد إكمال الطلب؟"};
   if(!confirm(prompts[status]||"تأكيد تحديث الطلب؟"))return;
-
-  try{
-    await request("/api/admin/orders/"+id,"PATCH",{status});
-    await loadOrders();
-    message("تم تحديث حالة الطلب");
-  }catch(e){
-    message(e.message,"err");
-  }
+  try{await request("/api/admin/orders/"+Number(id),"PATCH",{status});await loadOrders();message("تم تحديث حالة الطلب")}
+  catch(e){message(e.message,"err")}
 }
 
 async function loadDeviceRequests(){
-  const box=document.getElementById("deviceRequestsList");
-  box.innerHTML="<p class='muted'>جارٍ تحميل طلبات الأجهزة...</p>";
-
+  const box=el("deviceRequestsList");box.innerHTML="<p class='muted'>جارٍ تحميل طلبات الأجهزة...</p>";
   try{
-    const data=await request("/api/admin/device-requests");
-    const list=data.requests||[];
-
-    if(!list.length){
-      box.innerHTML="<p class='muted'>لا توجد طلبات اعتماد أجهزة حاليًا</p>";
-      return;
-    }
-
-    box.innerHTML=list.map(d=>`
-      <div class="item">
-        <strong>${escapeHTML(d.student_name||"طالب غير معروف")}</strong>
-        <small>اسم المستخدم: ${escapeHTML(d.username||"—")}</small>
-        <small>رقم الطالب: ${Number(d.student_id)}</small>
-        <small>رقم الهاتف: ${escapeHTML(d.phone||"غير مسجل")}</small>
-        <small>الجهاز: ${escapeHTML(d.device_name||"غير معروف")}</small>
-        <small>تاريخ الطلب: ${escapeHTML(d.created_at||"—")}</small>
-        <div class="row">
-          <button onclick="reviewDevice(${Number(d.id)},'approve')">موافقة</button>
-          <button class="danger" onclick="reviewDevice(${Number(d.id)},'reject')">رفض</button>
-        </div>
+    const data=await request("/api/admin/device-requests");const list=data.requests||[];
+    if(!list.length){box.innerHTML="<p class='muted'>لا توجد طلبات اعتماد أجهزة معلقة حاليًا.</p>";return}
+    box.innerHTML=list.map(d=>`<div class="item">
+      <strong>${escapeHTML(d.student_name||"طالب غير معروف")}</strong>
+      <small>اسم المستخدم: ${escapeHTML(d.username||"—")}</small>
+      <small>رقم الطالب: ${Number(d.student_id)||"—"}</small>
+      <small>رقم الهاتف: ${escapeHTML(d.phone||"غير مسجل")}</small><br>
+      <small>الجهاز: ${escapeHTML(d.device_name||"غير معروف")}</small><br>
+      <small>تاريخ الطلب: ${escapeHTML(d.created_at||"—")}</small>
+      <div class="row">
+        <button onclick="reviewDevice(${Number(d.id)},'approve')">موافقة</button>
+        <button class="danger" onclick="reviewDevice(${Number(d.id)},'reject')">رفض</button>
       </div>
-    `).join("");
-
-  }catch(e){
-    box.innerHTML=`<p class="muted">${escapeHTML(e.message)}</p>`;
-  }
+    </div>`).join("");
+  }catch(e){box.innerHTML=`<p class="muted">${escapeHTML(e.message)}</p>`}
 }
-
 async function reviewDevice(id,decision){
-  const action=decision==="approve"
-    ?"الموافقة على هذا الجهاز؟"
-    :"رفض طلب هذا الجهاز؟";
-
-  if(!confirm(action))return;
-
+  if(!confirm(decision==="approve"?"الموافقة على هذا الجهاز؟":"رفض طلب هذا الجهاز؟"))return;
   try{
     await request("/api/admin/device-requests/"+Number(id)+"/"+decision,"POST",{});
-    await loadDeviceRequests();
-
-    message(decision==="approve"
-      ?"تم اعتماد الجهاز بنجاح"
-      :"تم رفض طلب الجهاز");
-
-  }catch(e){
-    message(e.message,"err");
-  }
+    await loadDeviceRequests();message(decision==="approve"?"تم اعتماد الجهاز بنجاح":"تم رفض طلب الجهاز");
+  }catch(e){message(e.message,"err")}
 }
-
-/* ==================================
-   استعادة كلمات مرور حسابات الطلاب
-================================== */
 
 async function loadPasswordResetRequests(){
-  const box=document.getElementById("passwordResetRequestsList");
-
-  box.innerHTML="<p class='muted'>جارٍ تحميل طلبات استعادة كلمة المرور...</p>";
-
+  const box=el("passwordResetRequestsList");box.innerHTML="<p class='muted'>جارٍ تحميل طلبات استعادة كلمة المرور...</p>";
   try{
-    const data=await request("/api/admin/password-reset-requests");
-    const list=data.requests||[];
-
-    if(!list.length){
-      box.innerHTML="<p class='muted'>لا توجد طلبات استعادة كلمة مرور معلقة حاليًا</p>";
-      return;
-    }
-
-    box.innerHTML=list.map(r=>`
-      <div class="item">
-        <strong>${escapeHTML(r.student_name||"طالب غير معروف")}</strong>
-        <small>اسم المستخدم: ${escapeHTML(r.username||"—")}</small>
-        <small>رقم الطالب: ${Number(r.student_id)||"—"}</small>
-        <small>رقم الهاتف: ${escapeHTML(r.phone||"—")}</small>
-        <small>الصف الدراسي: ${escapeHTML(r.grade||"—")}</small>
-        <small>تاريخ الطلب: ${escapeHTML(r.created_at||"—")}</small>
-
-        <span class="status">طلب قيد المراجعة</span>
-
-        <div class="row">
-          <button onclick="resetStudentPassword(${Number(r.id)})">
-            تعيين كلمة مرور جديدة
-          </button>
-
-          <button class="danger" onclick="rejectPasswordReset(${Number(r.id)})">
-            رفض الطلب
-          </button>
-        </div>
+    const data=await request("/api/admin/password-reset-requests");const list=data.requests||[];
+    if(!list.length){box.innerHTML="<p class='muted'>لا توجد طلبات استعادة كلمة مرور معلقة حاليًا.</p>";return}
+    box.innerHTML=list.map(r=>`<div class="item">
+      <strong>${escapeHTML(r.student_name||"طالب غير معروف")}</strong>
+      <small>اسم المستخدم: ${escapeHTML(r.username||"—")}</small>
+      <small>رقم الهاتف: ${escapeHTML(r.phone||"—")}</small><br>
+      <small>الصف الدراسي: ${escapeHTML(r.grade||"—")}</small><br>
+      <small>تاريخ الطلب: ${escapeHTML(r.created_at||"—")}</small>
+      <span class="status">طلب قيد المراجعة</span>
+      <div class="row">
+        <button onclick="resetStudentPassword(${Number(r.id)})">تعيين كلمة مرور جديدة</button>
+        <button class="danger" onclick="rejectPasswordReset(${Number(r.id)})">رفض الطلب</button>
       </div>
-    `).join("");
-
-  }catch(e){
-    box.innerHTML=`<p class="muted">${escapeHTML(e.message)}</p>`;
-  }
+    </div>`).join("");
+  }catch(e){box.innerHTML=`<p class="muted">${escapeHTML(e.message)}</p>`}
 }
-
 async function resetStudentPassword(id){
-  const password=prompt("اكتب كلمة المرور الجديدة للطالب (8 أحرف على الأقل):");
-
+  const password=prompt("اكتب كلمة المرور الجديدة للطالب (8 إلى 100 حرف):");
   if(password===null)return;
-
-  if(password.length<8||password.length>100){
-    return message("كلمة المرور يجب أن تكون من 8 إلى 100 حرف","err");
-  }
-
+  if(password.length<8||password.length>100)return message("كلمة المرور يجب أن تكون من 8 إلى 100 حرف","err");
   const confirmPassword=prompt("أعد كتابة كلمة المرور الجديدة للتأكيد:");
-
   if(confirmPassword===null)return;
-
-  if(password!==confirmPassword){
-    return message("كلمتا المرور غير متطابقتين","err");
-  }
-
-  if(!confirm("تأكيد تعيين كلمة المرور الجديدة؟ سيتم تسجيل خروج الطالب من الجلسات القديمة.")){
-    return;
-  }
-
+  if(password!==confirmPassword)return message("كلمتا المرور غير متطابقتين","err");
+  if(!confirm("تأكيد تعيين كلمة المرور؟ سيتم إنهاء جلسات الطالب القديمة."))return;
   try{
-    await request(
-      `/api/admin/password-reset-requests/${Number(id)}/reset`,
-      "POST",
-      {password}
-    );
-
-    await loadPasswordResetRequests();
-    message("تم تعيين كلمة المرور الجديدة بنجاح");
-
-  }catch(e){
-    message(e.message,"err");
-  }
+    await request(`/api/admin/password-reset-requests/${Number(id)}/reset`,"POST",{password});
+    await loadPasswordResetRequests();message("تم تعيين كلمة المرور الجديدة بنجاح");
+  }catch(e){message(e.message,"err")}
 }
-
 async function rejectPasswordReset(id){
   if(!confirm("هل أنت متأكد من رفض طلب استعادة كلمة المرور؟"))return;
-
   try{
-    await request(
-      `/api/admin/password-reset-requests/${Number(id)}/reject`,
-      "POST",
-      {}
-    );
-
-    await loadPasswordResetRequests();
-    message("تم رفض طلب استعادة كلمة المرور");
-
-  }catch(e){
-    message(e.message,"err");
-  }
+    await request(`/api/admin/password-reset-requests/${Number(id)}/reject`,"POST",{});
+    await loadPasswordResetRequests();message("تم رفض طلب استعادة كلمة المرور");
+  }catch(e){message(e.message,"err")}
 }
 
-/* ==================================
-   أدوات مساعدة
-================================== */
-
-function escapeHTML(value){
-  return String(value??"").replace(/[&<>"']/g,c=>({
-    "&":"&amp;",
-    "<":"&lt;",
-    ">":"&gt;",
-    '"':"&quot;",
-    "'":"&#39;"
-  }[c]));
-}
-
+syncPriceField();
 checkSession();
 </script>
 </body>
