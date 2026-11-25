@@ -15,60 +15,163 @@ h1{text-align:center;color:#e8bd67;margin:0 0 8px}
 label{display:block;margin:15px 0 7px}
 input{width:100%;padding:14px;border-radius:9px;border:1px solid #46536c;background:#0b1020;color:white;font-size:16px}
 button{width:100%;padding:14px;margin-top:22px;border:0;border-radius:9px;background:#e8bd67;color:#171717;font-size:17px;font-weight:bold;cursor:pointer}
-button:disabled{opacity:.6}
+button:disabled{opacity:.6;cursor:not-allowed}
 #message{margin-top:18px;text-align:center;line-height:1.8}
 .profile{display:none;margin-top:20px;padding:15px;background:#0b1020;border-radius:10px;line-height:2}
 a{color:#e8bd67}
 
-/* ZM Academy shared identity: black & champagne gold / blue & violet */
 :root{color-scheme:dark;--bg:#08090d;--panel:#11131a;--panel2:#191b24;--text:#f7f4ed;--muted:#aaa9b4;--accent:#d6b36a;--accent2:#f0d99d;--line:rgba(214,179,106,.23)}
 body{background:radial-gradient(ellipse at 12% 8%,rgba(214,179,106,.13),transparent 42%),radial-gradient(ellipse at 90% 90%,rgba(117,87,155,.10),transparent 42%),var(--bg);color:var(--text);transition:background .25s,color .25s}
 .card{background:linear-gradient(145deg,#191b24,#101117);border:1px solid var(--line);border-radius:22px;box-shadow:0 22px 65px #0008;animation:zmEnter .55s ease both}
-.topbar{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:22px}.brand-link{color:var(--accent2);font-weight:800;letter-spacing:1.5px;text-decoration:none;font-size:13px}
+.topbar{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:22px}
+.brand-link{color:var(--accent2);font-weight:800;letter-spacing:1.5px;text-decoration:none;font-size:13px}
 .theme-toggle{display:inline-flex;align-items:center;gap:7px;padding:8px 12px;border:1px solid var(--line);border-radius:30px;background:var(--panel2);color:var(--accent2);font-weight:700;cursor:pointer}
-h1{color:var(--accent2)}.sub{color:var(--muted)}label{color:var(--accent2)}
-input{background:#0b0d13;color:var(--text);border:1px solid #343746;transition:border-color .2s,box-shadow .2s}input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(214,179,106,.12)}
-button[type=submit],.primary-link{background:linear-gradient(115deg,#e7ca88,#b58a3d);color:#17130b;box-shadow:0 8px 22px rgba(181,138,61,.18);transition:transform .2s,filter .2s}button[type=submit]:hover,.primary-link:hover{transform:translateY(-2px);filter:brightness(1.05)}
-.profile,#deviceContact{background:var(--panel2)!important;border-color:var(--line)!important;color:var(--text)}a{color:var(--accent2)}
-.auth-links{display:grid;gap:10px;margin-top:20px;text-align:center}.auth-links a{display:block;padding:12px;border-radius:10px;text-decoration:none;border:1px solid var(--line);color:var(--accent2);font-weight:700}.auth-links .primary-link{border:0;color:#17130b}
+h1{color:var(--accent2)}
+.sub{color:var(--muted)}
+label{color:var(--accent2)}
+input{background:#0b0d13;color:var(--text);border:1px solid #343746;transition:border-color .2s,box-shadow .2s}
+input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(214,179,106,.12)}
+button[type=submit],.primary-link{background:linear-gradient(115deg,#e7ca88,#b58a3d);color:#17130b;box-shadow:0 8px 22px rgba(181,138,61,.18);transition:transform .2s,filter .2s}
+button[type=submit]:hover,.primary-link:hover{transform:translateY(-2px);filter:brightness(1.05)}
+.profile,#deviceContact{background:var(--panel2)!important;border-color:var(--line)!important;color:var(--text)}
+a{color:var(--accent2)}
+.auth-links{display:grid;gap:10px;margin-top:20px;text-align:center}
+.auth-links a{display:block;padding:12px;border-radius:10px;text-decoration:none;border:1px solid var(--line);color:var(--accent2);font-weight:700}
+.auth-links .primary-link{border:0;color:#17130b}
+
+.reset-toggle{
+  display:block;width:100%;margin-top:15px;padding:11px;
+  background:transparent!important;color:var(--accent2)!important;
+  border:1px solid var(--line);box-shadow:none!important;
+  font-size:14px
+}
+.reset-box{
+  display:none;margin-top:18px;padding:16px;
+  background:var(--panel2);border:1px solid var(--line);
+  border-radius:13px
+}
+.reset-box .sub{text-align:right;line-height:1.8;margin-bottom:12px}
+.reset-box button{font-size:15px}
+.reset-cancel{
+  margin-top:10px!important;background:transparent!important;
+  color:var(--accent2)!important;border:1px solid var(--line)!important;
+  box-shadow:none!important
+}
+.reset-note{font-size:12px;color:var(--muted);line-height:1.8;margin-top:10px}
+
 body[data-theme="light"]{color-scheme:light;--bg:#f4f6ff;--panel:#fff;--panel2:#edf0ff;--text:#202747;--muted:#68708e;--accent:#6655d9;--accent2:#5143bd;--line:rgba(91,104,190,.2);background:radial-gradient(ellipse at 10% 5%,rgba(100,132,255,.2),transparent 45%),radial-gradient(ellipse at 90% 90%,rgba(151,111,235,.18),transparent 45%),linear-gradient(120deg,#f7f9ff,#edf1ff 55%,#f2edff);color:var(--text)}
 body[data-theme="light"] .card{background:linear-gradient(145deg,#fff,#f4f5ff);border-color:var(--line);box-shadow:0 18px 50px rgba(59,70,130,.12)}
-body[data-theme="light"] h1,body[data-theme="light"] label{color:#5143bd}body[data-theme="light"] .sub{color:#68708e}body[data-theme="light"] input{background:#fff;color:#202747;border-color:#d9def5}body[data-theme="light"] input:focus{border-color:#7664df;box-shadow:0 0 0 3px rgba(118,100,223,.12)}
-body[data-theme="light"] .theme-toggle{background:#fff;color:#5143bd;border-color:var(--line)}body[data-theme="light"] .auth-links a:not(.primary-link){color:#5143bd;background:rgba(255,255,255,.65)}body[data-theme="light"] .profile,body[data-theme="light"] #deviceContact{background:#edf0ff!important;color:#34416c;border-color:#d9def5!important}
-@keyframes zmEnter{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
-
+body[data-theme="light"] h1,body[data-theme="light"] label{color:#5143bd}
+body[data-theme="light"] .sub{color:#68708e}
+body[data-theme="light"] input{background:#fff;color:#202747;border-color:#d9def5}
+body[data-theme="light"] input:focus{border-color:#7664df;box-shadow:0 0 0 3px rgba(118,100,223,.12)}
+body[data-theme="light"] .theme-toggle{background:#fff;color:#5143bd;border-color:var(--line)}
+body[data-theme="light"] .auth-links a:not(.primary-link){color:#5143bd;background:rgba(255,255,255,.65)}
+body[data-theme="light"] .profile,body[data-theme="light"] #deviceContact{background:#edf0ff!important;color:#34416c;border-color:#d9def5!important}
+body[data-theme="light"] .reset-toggle,body[data-theme="light"] .reset-cancel{color:#5143bd!important}
+@keyframes zmEnter{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
 </head>
+
 <body>
 <div class="card">
-<div class="topbar"><a class="brand-link" href="./index.html">ZM ACADEMY</a><button class="theme-toggle" id="themeToggle" type="button"><span class="theme-icon">☀</span><span class="theme-label">الوضع الفاتح</span></button></div>
+
+<div class="topbar">
+  <a class="brand-link" href="./index.html">ZM ACADEMY</a>
+  <button class="theme-toggle" id="themeToggle" type="button">
+    <span class="theme-icon">☀</span>
+    <span class="theme-label">الوضع الفاتح</span>
+  </button>
+</div>
+
 <h1>ZM Academy</h1>
 <div class="sub">تسجيل دخول الطالب</div>
 
 <form id="loginForm">
-<label for="username">اسم المستخدم</label>
-<input id="username" name="username" autocomplete="username" required>
+  <label for="username">اسم المستخدم</label>
+  <input id="username" name="username" autocomplete="username" required>
 
-<label for="password">كلمة المرور</label>
-<input id="password" name="password" type="password" autocomplete="current-password" required>
+  <label for="password">كلمة المرور</label>
+  <input id="password" name="password" type="password" autocomplete="current-password" required>
 
-<button id="submitBtn" type="submit">تسجيل الدخول</button>
+  <button id="submitBtn" type="submit">تسجيل الدخول</button>
 </form>
 
-<div id="message" role="status"></div>
-  <div id="deviceContact" style="display:none;margin:14px 0;padding:14px;border:1px solid #c99d4d;border-radius:10px;text-align:center">
+<!-- استعادة كلمة المرور -->
+<button type="button" class="reset-toggle" id="showResetForm">
+  نسيت كلمة المرور؟
+</button>
+
+<form id="resetForm" class="reset-box">
+  <div class="sub">
+    لاستعادة حسابك، اكتب اسم المستخدم ورقم الهاتف المسجل في حسابك.
+    سيصل طلبك للإدارة للمراجعة والتحقق.
+  </div>
+
+  <label for="resetUsername">اسم المستخدم</label>
+  <input id="resetUsername" autocomplete="username" maxlength="40" required>
+
+  <label for="resetPhone">رقم الهاتف المسجل</label>
+  <input id="resetPhone" type="tel" inputmode="tel" autocomplete="tel" maxlength="30" required>
+
+  <button id="resetSubmitBtn" type="submit">
+    إرسال طلب استعادة كلمة المرور
+  </button>
+
+  <button type="button" class="reset-cancel" id="hideResetForm">
+    إلغاء
+  </button>
+
+  <div class="reset-note">
+    بعد مراجعة الطلب، ستتمكن من استخدام كلمة المرور الجديدة التي تحددها الإدارة.
+  </div>
+</form>
+
+<div id="message" role="status" aria-live="polite"></div>
+
+<div id="deviceContact" style="display:none;margin:14px 0;padding:14px;border:1px solid #c99d4d;border-radius:10px;text-align:center">
   <p>لاستكمال اعتماد جهازك، برجاء التواصل مع المدرس:</p>
   <a href="https://wa.me/201115336341" target="_blank" rel="noopener noreferrer">تواصل عبر واتساب</a>
   <br><br>
   <a href="tel:+201115336341">اتصال هاتفي</a>
 </div>
+
 <div id="profile" class="profile"></div>
-<nav class="auth-links" aria-label="روابط الحساب"><a class="primary-link" href="./register.html">تسجيل طالب جديد</a><a href="./index.html">العودة للصفحة الرئيسية</a></nav>
+
+<nav class="auth-links" aria-label="روابط الحساب">
+  <a class="primary-link" href="./register.html">تسجيل طالب جديد</a>
+  <a href="./index.html">العودة للصفحة الرئيسية</a>
+</nav>
+
 </div>
 
 <script>
-(()=>{const key='zm-academy-theme';let saved=null;try{saved=localStorage.getItem(key)}catch(e){}const btn=document.getElementById('themeToggle');const icon=btn.querySelector('.theme-icon');const label=btn.querySelector('.theme-label');const meta=document.querySelector('meta[name="theme-color"]');function paint(t){document.body.dataset.theme=t;const light=t==='light';icon.textContent=light?'☾':'☀';label.textContent=light?'الوضع الداكن':'الوضع الفاتح';btn.setAttribute('aria-label',light?'تفعيل الوضع الداكن':'تفعيل الوضع الفاتح');meta.content=light?'#f4f6ff':'#08090d';try{localStorage.setItem(key,t)}catch(e){}}paint(saved==='light'?'light':'dark');btn.addEventListener('click',()=>paint(document.body.dataset.theme==='light'?'dark':'light'))})();
+(()=>{
+  const key='zm-academy-theme';
+  let saved=null;
+  try{saved=localStorage.getItem(key)}catch(e){}
+
+  const btn=document.getElementById('themeToggle');
+  const icon=btn.querySelector('.theme-icon');
+  const label=btn.querySelector('.theme-label');
+  const meta=document.querySelector('meta[name="theme-color"]');
+
+  function paint(t){
+    document.body.dataset.theme=t;
+    const light=t==='light';
+    icon.textContent=light?'☾':'☀';
+    label.textContent=light?'الوضع الداكن':'الوضع الفاتح';
+    btn.setAttribute('aria-label',light?'تفعيل الوضع الداكن':'تفعيل الوضع الفاتح');
+    meta.content=light?'#f4f6ff':'#08090d';
+    try{localStorage.setItem(key,t)}catch(e){}
+  }
+
+  paint(saved==='light'?'light':'dark');
+  btn.addEventListener('click',()=>paint(document.body.dataset.theme==='light'?'dark':'light'));
+})();
 </script>
+
 <script>
 const API = "https://zm-academy-api.ziadmohsen4567.workers.dev";
 
@@ -77,7 +180,65 @@ const message = document.getElementById("message");
 const button = document.getElementById("submitBtn");
 const profile = document.getElementById("profile");
 const deviceContact = document.getElementById("deviceContact");
-  
+
+// عناصر استعادة كلمة المرور
+const resetForm = document.getElementById("resetForm");
+const resetSubmitBtn = document.getElementById("resetSubmitBtn");
+const showResetForm = document.getElementById("showResetForm");
+
+showResetForm.addEventListener("click", () => {
+  const isVisible = resetForm.style.display === "block";
+
+  resetForm.style.display = isVisible ? "none" : "block";
+
+  if (!isVisible) {
+    document.getElementById("resetUsername").value =
+      document.getElementById("username").value.trim();
+
+    document.getElementById("resetUsername").focus();
+  }
+});
+
+document.getElementById("hideResetForm").addEventListener("click", () => {
+  resetForm.style.display = "none";
+  resetForm.reset();
+  message.textContent = "";
+});
+
+resetForm.addEventListener("submit", async (e) => {
+  e.preventDefault();
+
+  resetSubmitBtn.disabled = true;
+  message.textContent = "جارٍ إرسال طلب الاستعادة...";
+
+  try {
+    const username = document.getElementById("resetUsername").value.trim();
+    const phone = document.getElementById("resetPhone").value.trim();
+
+    const response = await fetch(API + "/api/password-reset/request", {
+      method: "POST",
+      headers: {"Content-Type":"application/json"},
+      body: JSON.stringify({username, phone})
+    });
+
+    const data = await response.json();
+
+    if (!response.ok || !data.success) {
+      throw new Error(data.error || "تعذر إرسال الطلب.");
+    }
+
+    message.textContent = data.message || "تم إرسال طلبك للإدارة للمراجعة.";
+    resetForm.reset();
+    resetForm.style.display = "none";
+
+  } catch(error) {
+    message.textContent = error.message || "حدث خطأ، حاول مرة أخرى.";
+  } finally {
+    resetSubmitBtn.disabled = false;
+  }
+});
+
+// تسجيل دخول الطالب - الوظيفة الأصلية
 form.addEventListener("submit", async function(e){
   e.preventDefault();
 
@@ -87,20 +248,23 @@ form.addEventListener("submit", async function(e){
 
   const username = document.getElementById("username").value.trim();
   const password = document.getElementById("password").value;
+
   let deviceToken = localStorage.getItem("zm_device_token");
 
-if (!deviceToken) {
-  const bytes = new Uint8Array(32);
-  crypto.getRandomValues(bytes);
-  deviceToken = Array.from(bytes, b =>
-    b.toString(16).padStart(2, "0")
-  ).join("");
+  if (!deviceToken) {
+    const bytes = new Uint8Array(32);
+    crypto.getRandomValues(bytes);
 
-  localStorage.setItem("zm_device_token", deviceToken);
-}
+    deviceToken = Array.from(bytes, b =>
+      b.toString(16).padStart(2, "0")
+    ).join("");
+
+    localStorage.setItem("zm_device_token", deviceToken);
+  }
+
   const deviceName = "متصفح " + String(navigator.userAgent || "هذا الجهاز").slice(0, 90);
 
-deviceContact.style.display = "none";
+  deviceContact.style.display = "none";
 
   try {
     const response = await fetch(API + "/api/students/login", {
@@ -112,11 +276,12 @@ deviceContact.style.display = "none";
     const data = await response.json();
 
     if (!response.ok || !data.success) {
-  if (data.code === "DEVICE_APPROVAL_REQUIRED") {
-    deviceContact.style.display = "block";
-  }
-  throw new Error(data.error || "تعذر تسجيل الدخول.");
-}
+      if (data.code === "DEVICE_APPROVAL_REQUIRED") {
+        deviceContact.style.display = "block";
+      }
+
+      throw new Error(data.error || "تعذر تسجيل الدخول.");
+    }
 
     localStorage.setItem("zm_student_token", data.token);
 
@@ -130,10 +295,8 @@ deviceContact.style.display = "none";
       throw new Error(meData.error || "تعذر تحميل بيانات الطالب.");
     }
 
-    
-message.textContent = "تم تسجيل الدخول بنجاح.";
-location.replace("./student.html");
-
+    message.textContent = "تم تسجيل الدخول بنجاح.";
+    location.replace("./student.html");
 
   } catch(error) {
     message.textContent = error.message || "حدث خطأ، حاول مرة أخرى.";
@@ -143,5 +306,6 @@ location.replace("./student.html");
   }
 });
 </script>
+
 </body>
 </html>
