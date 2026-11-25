@@ -63,6 +63,7 @@ small,.muted{color:#9baed0}
 #dashboard:not(.hidden)>.card:nth-child(5){animation-delay:.16s}
 #dashboard:not(.hidden)>.card:nth-child(6){animation-delay:.20s}
 #dashboard:not(.hidden)>.card:nth-child(7){animation-delay:.24s}
+#dashboard:not(.hidden)>.card:nth-child(8){animation-delay:.28s}
 @media(max-width:650px){
  header{padding:19px 14px}
  main{padding:16px 12px 40px}
@@ -84,63 +85,103 @@ small,.muted{color:#9baed0}
     <button id="logoutBtn" class="secondary hidden" onclick="logout()">تسجيل الخروج</button>
   </div>
 </header>
+
 <main>
   <div id="message"></div>
+
   <section id="loginSection" class="card">
     <h2>تسجيل دخول الإدارة</h2>
-    <label>اسم المستخدم</label><input id="username" autocomplete="username" placeholder="اسم المستخدم">
-    <label>كلمة المرور</label><input id="password" type="password" autocomplete="current-password" placeholder="كلمة المرور">
+    <label>اسم المستخدم</label>
+    <input id="username" autocomplete="username" placeholder="اسم المستخدم">
+    <label>كلمة المرور</label>
+    <input id="password" type="password" autocomplete="current-password" placeholder="كلمة المرور">
     <button onclick="login()">دخول لوحة التحكم</button>
   </section>
+
   <section id="dashboard" class="hidden">
+
     <div class="card">
       <div class="topline"><h2>إدارة المواد الدراسية</h2><button onclick="loadSubjects()">تحديث</button></div>
       <div id="subjectsList"></div>
     </div>
+
     <div class="card">
       <h2 id="subjectFormTitle">إضافة مادة دراسية</h2>
       <input id="subjectId" type="hidden">
-      <label>اسم المادة</label><input id="subjectName" placeholder="مثال: الفلسفة والمنطق">
-      <label>الصف الدراسي</label><input id="subjectGrade" placeholder="مثال: الصف الأول الثانوي">
-      <div class="row"><button onclick="saveSubject()">حفظ المادة</button><button class="secondary" onclick="resetSubjectForm()">إلغاء</button></div>
+      <label>اسم المادة</label>
+      <input id="subjectName" placeholder="مثال: الفلسفة والمنطق">
+      <label>الصف الدراسي</label>
+      <input id="subjectGrade" placeholder="مثال: الصف الأول الثانوي">
+      <div class="row">
+        <button onclick="saveSubject()">حفظ المادة</button>
+        <button class="secondary" onclick="resetSubjectForm()">إلغاء</button>
+      </div>
     </div>
+
     <div class="card">
       <h2>إدارة الدروس والمحتوى</h2>
       <label>اختر المادة الدراسية</label>
       <select id="materialSubject" onchange="loadMaterials()"><option value="">كل المواد</option></select>
       <div id="materialsList"></div>
     </div>
+
     <div class="card">
       <h2 id="materialFormTitle">إضافة محتوى تعليمي</h2>
       <input id="materialId" type="hidden">
-      <label>المادة الدراسية</label><select id="materialSubjectForm"></select>
-      <label>عنوان المحتوى</label><input id="materialTitle" placeholder="عنوان الدرس">
+      <label>المادة الدراسية</label>
+      <select id="materialSubjectForm"></select>
+      <label>عنوان المحتوى</label>
+      <input id="materialTitle" placeholder="عنوان الدرس">
       <label>نوع المحتوى</label>
-      <select id="materialType"><option value="lesson">درس</option><option value="video">فيديو</option><option value="pdf">ملف PDF</option></select>
+      <select id="materialType">
+        <option value="lesson">درس</option>
+        <option value="video">فيديو</option>
+        <option value="pdf">ملف PDF</option>
+      </select>
       <label>رابط الفيديو أو الملف الخارجي</label>
       <input id="materialFileUrl" type="url" placeholder="ضع رابط الفيديو هنا">
       <label>رفع ملف PDF من الجهاز (حد أقصى 8 ميجابايت)</label>
       <input id="materialFile" type="file" accept="application/pdf,.pdf">
       <input id="materialExistingFileKey" type="hidden">
       <p class="muted">يمكنك رفع مذكرة PDF مباشرة من هاتفك.</p>
-      <label>السعر بالجنيه المصري</label><input id="materialPrice" type="number" min="0" value="0">
+      <label>السعر بالجنيه المصري</label>
+      <input id="materialPrice" type="number" min="0" value="0">
       <label class="check"><input id="materialFree" type="checkbox" checked> محتوى مجاني</label>
-      <div class="row"><button onclick="saveMaterial()">حفظ المحتوى</button><button class="secondary" onclick="resetMaterialForm()">إلغاء</button></div>
+      <div class="row">
+        <button onclick="saveMaterial()">حفظ المحتوى</button>
+        <button class="secondary" onclick="resetMaterialForm()">إلغاء</button>
+      </div>
     </div>
+
     <div class="card">
       <div class="topline"><h2>إدارة الطلاب</h2><button onclick="loadStudents()">تحديث</button></div>
       <div id="studentsList"><p class="muted">جارٍ تحميل الطلاب...</p></div>
     </div>
+
     <div class="card">
       <div class="topline"><h2>طلبات الطلاب</h2><button onclick="loadOrders()">تحديث</button></div>
       <div id="ordersList"><p class="muted">جارٍ تحميل الطلبات...</p></div>
     </div>
+
     <div class="card">
       <div class="topline"><h2>طلبات اعتماد الأجهزة</h2><button onclick="loadDeviceRequests()">تحديث</button></div>
       <div id="deviceRequestsList"><p class="muted">جارٍ تحميل طلبات الأجهزة...</p></div>
     </div>
+
+    <!-- طلبات استعادة كلمة المرور -->
+    <div class="card">
+      <div class="topline">
+        <h2>طلبات استعادة كلمة المرور</h2>
+        <button onclick="loadPasswordResetRequests()">تحديث</button>
+      </div>
+      <div id="passwordResetRequestsList">
+        <p class="muted">جارٍ تحميل طلبات استعادة كلمة المرور...</p>
+      </div>
+    </div>
+
   </section>
 </main>
+
 <script>
 const API="https://zm-academy-api.ziadmohsen4567.workers.dev";
 let token=sessionStorage.getItem("zm_admin_token")||"";
@@ -148,18 +189,26 @@ let subjects=[];
 
 function message(text,type="ok"){
   const el=document.getElementById("message");
-  el.textContent=text;el.className=type;el.style.display="block";
+  el.textContent=text;
+  el.className=type;
+  el.style.display="block";
   window.scrollTo({top:0,behavior:"smooth"});
 }
 
 async function request(path,method="GET",body=null){
   const headers={"Content-Type":"application/json"};
   if(token)headers.Authorization="Bearer "+token;
+
   const options={method,headers};
   if(body)options.body=JSON.stringify(body);
+
   const response=await fetch(API+path,options);
   const data=await response.json().catch(()=>({}));
-  if(!response.ok||data.success===false)throw new Error(data.error||"حدث خطأ في الاتصال");
+
+  if(!response.ok||data.success===false){
+    throw new Error(data.error||"حدث خطأ في الاتصال");
+  }
+
   return data;
 }
 
@@ -177,28 +226,48 @@ function showLogin(){
 
 async function loadDashboardData(){
   await loadSubjects();
-  await Promise.all([loadStudents(),loadOrders(),loadDeviceRequests()]);
+
+  await Promise.all([
+    loadStudents(),
+    loadOrders(),
+    loadDeviceRequests(),
+    loadPasswordResetRequests()
+  ]);
 }
 
 async function login(){
   const username=document.getElementById("username").value.trim();
   const password=document.getElementById("password").value;
-  if(!username||!password)return message("اكتب اسم المستخدم وكلمة المرور","err");
+
+  if(!username||!password){
+    return message("اكتب اسم المستخدم وكلمة المرور","err");
+  }
+
   try{
     const data=await request("/api/admin/login","POST",{username,password});
     const newToken=data.token||data.access_token||data.session?.token;
+
     if(!newToken)throw new Error("لم يصل رمز الجلسة من الخادم");
+
     token=newToken;
     sessionStorage.setItem("zm_admin_token",token);
     document.getElementById("password").value="";
+
     showDashboard();
     await loadDashboardData();
     message("تم تسجيل الدخول بنجاح");
-  }catch(e){message(e.message,"err")}
+
+  }catch(e){
+    message(e.message,"err");
+  }
 }
 
 async function checkSession(){
-  if(!token){showLogin();return}
+  if(!token){
+    showLogin();
+    return;
+  }
+
   try{
     await request("/api/admin/me");
     showDashboard();
@@ -211,7 +280,10 @@ async function checkSession(){
 }
 
 async function logout(){
-  try{await request("/api/admin/logout","POST",{})}catch(e){}
+  try{
+    await request("/api/admin/logout","POST",{});
+  }catch(e){}
+
   token="";
   sessionStorage.removeItem("zm_admin_token");
   showLogin();
@@ -225,15 +297,19 @@ async function loadSubjects(){
     renderSubjects();
     fillSubjectOptions();
     await loadMaterials();
-  }catch(e){message(e.message,"err")}
+  }catch(e){
+    message(e.message,"err");
+  }
 }
 
 function renderSubjects(){
   const box=document.getElementById("subjectsList");
+
   if(!subjects.length){
     box.innerHTML="<p class='muted'>لا توجد مواد دراسية حتى الآن</p>";
     return;
   }
+
   box.innerHTML=subjects.map(s=>`
     <div class="item">
       <strong>${escapeHTML(s.name)}</strong>
@@ -251,28 +327,37 @@ function renderSubjects(){
 
 function fillSubjectOptions(){
   const activeSubjects=subjects.filter(s=>Number(s.is_archived)!==1);
+
   const options=activeSubjects.map(s=>
     `<option value="${Number(s.id)}">${escapeHTML(s.name)} - ${escapeHTML(s.grade||"")}</option>`
   ).join("");
-  document.getElementById("materialSubject").innerHTML='<option value="">كل المواد</option>'+options;
+
+  document.getElementById("materialSubject").innerHTML=
+    '<option value="">كل المواد</option>'+options;
+
   document.getElementById("materialSubjectForm").innerHTML=options;
 }
 
 async function archiveSubject(id,action){
   const isArchive=action==="archive";
+
   if(!confirm(isArchive
     ? "هل تريد أرشفة المادة؟ ستختفي من المواد المتاحة للطلاب مع الاحتفاظ بالمشتريات القديمة."
     : "هل تريد استعادة المادة وإظهارها للطلاب مرة أخرى؟"))return;
+
   try{
     await request(`/api/admin/subjects/${id}/${action}`,"POST",{});
     await loadSubjects();
     message(isArchive?"تمت أرشفة المادة بنجاح":"تمت استعادة المادة بنجاح");
-  }catch(e){message(e.message,"err")}
+  }catch(e){
+    message(e.message,"err");
+  }
 }
 
 function editSubject(id){
   const s=subjects.find(x=>Number(x.id)===Number(id));
   if(!s)return;
+
   document.getElementById("subjectId").value=s.id;
   document.getElementById("subjectName").value=s.name;
   document.getElementById("subjectGrade").value=s.grade||"";
@@ -291,22 +376,34 @@ async function saveSubject(){
   const id=document.getElementById("subjectId").value;
   const name=document.getElementById("subjectName").value.trim();
   const grade=document.getElementById("subjectGrade").value.trim();
-  if(!name||!grade)return message("اكتب اسم المادة والصف الدراسي","err");
+
+  if(!name||!grade){
+    return message("اكتب اسم المادة والصف الدراسي","err");
+  }
+
   try{
-    await request("/api/subjects",id?"PUT":"POST",id?{id:Number(id),name,grade}:{name,grade});
+    await request("/api/subjects",id?"PUT":"POST",
+      id?{id:Number(id),name,grade}:{name,grade}
+    );
+
     resetSubjectForm();
     await loadSubjects();
     message("تم حفظ المادة بنجاح");
-  }catch(e){message(e.message,"err")}
+  }catch(e){
+    message(e.message,"err");
+  }
 }
 
 async function deleteSubject(id){
   if(!confirm("هل أنت متأكد من حذف المادة؟"))return;
+
   try{
     await request("/api/subjects","DELETE",{id:Number(id)});
     await loadSubjects();
     message("تم حذف المادة");
-  }catch(e){message(e.message,"err")}
+  }catch(e){
+    message(e.message,"err");
+  }
 }
 
 async function loadMaterials(){
@@ -314,19 +411,28 @@ async function loadMaterials(){
     const selected=document.getElementById("materialSubject").value;
     const data=await request("/api/admin/materials");
     let list=data.materials||[];
-    if(selected)list=list.filter(m=>String(m.subject_id)===selected);
+
+    if(selected){
+      list=list.filter(m=>String(m.subject_id)===selected);
+    }
+
     renderMaterials(list);
-  }catch(e){message(e.message,"err")}
+  }catch(e){
+    message(e.message,"err");
+  }
 }
 
 function renderMaterials(list){
   const box=document.getElementById("materialsList");
+
   if(!list.length){
     box.innerHTML="<p class='muted'>لا يوجد محتوى في هذا الاختيار</p>";
     return;
   }
+
   box.innerHTML=list.map(m=>{
     const archived=Number(m.is_archived)===1;
+
     return `<div class="item">
       <strong>${escapeHTML(m.title)}</strong>
       <small>النوع: ${escapeHTML(m.type)} | السعر: ${Number(m.price)||0} جنيه | ${Number(m.is_free)===1?"مجاني":"مدفوع"}</small>
@@ -344,33 +450,47 @@ function renderMaterials(list){
 
 async function archiveMaterial(id,action){
   const isArchive=action==="archive";
+
   if(!confirm(isArchive
     ? "هل تريد أرشفة هذا الدرس؟ سيختفي من المحتوى المتاح للطلاب مع الاحتفاظ بالمشتريات القديمة."
     : "هل تريد استعادة هذا الدرس وإظهاره للطلاب مرة أخرى؟"))return;
+
   try{
     await request(`/api/admin/materials/${Number(id)}/${action}`,"POST",{});
     await loadMaterials();
     message(isArchive?"تمت أرشفة الدرس بنجاح":"تمت استعادة الدرس بنجاح");
-  }catch(e){message(e.message,"err")}
+  }catch(e){
+    message(e.message,"err");
+  }
 }
 
 async function editMaterial(id){
   try{
     const data=await request("/api/admin/materials");
     const m=(data.materials||[]).find(x=>Number(x.id)===Number(id));
+
     if(!m)return;
+
     document.getElementById("materialId").value=m.id;
     document.getElementById("materialSubjectForm").value=m.subject_id;
     document.getElementById("materialTitle").value=m.title;
     document.getElementById("materialType").value=m.type;
-    document.getElementById("materialExistingFileKey").value=m.file_key&&!/^https?:\/\//i.test(m.file_key)?m.file_key:"";
-    document.getElementById("materialFileUrl").value=m.file_key&&/^https?:\/\//i.test(m.file_key)?m.file_key:"";
+
+    document.getElementById("materialExistingFileKey").value=
+      m.file_key&&!/^https?:\/\//i.test(m.file_key)?m.file_key:"";
+
+    document.getElementById("materialFileUrl").value=
+      m.file_key&&/^https?:\/\//i.test(m.file_key)?m.file_key:"";
+
     document.getElementById("materialFile").value="";
     document.getElementById("materialPrice").value=m.price||0;
     document.getElementById("materialFree").checked=!!m.is_free;
     document.getElementById("materialFormTitle").textContent="تعديل المحتوى";
     document.getElementById("materialTitle").scrollIntoView({behavior:"smooth"});
-  }catch(e){message(e.message,"err")}
+
+  }catch(e){
+    message(e.message,"err");
+  }
 }
 
 function resetMaterialForm(){
@@ -396,95 +516,145 @@ async function saveMaterial(){
   const price=Number(document.getElementById("materialPrice").value);
   const is_free=document.getElementById("materialFree").checked;
 
-  if(!subject_id||!title)return message("اختر المادة واكتب عنوان المحتوى","err");
-  if(!Number.isFinite(price)||price<0)return message("اكتب سعرًا صحيحًا","err");
-  if(selectedFile&&(selectedFile.type!=="application/pdf"||selectedFile.size>8*1024*1024))
+  if(!subject_id||!title){
+    return message("اختر المادة واكتب عنوان المحتوى","err");
+  }
+
+  if(!Number.isFinite(price)||price<0){
+    return message("اكتب سعرًا صحيحًا","err");
+  }
+
+  if(selectedFile&&(selectedFile.type!=="application/pdf"||selectedFile.size>8*1024*1024)){
     return message("اختر ملف PDF لا يتجاوز 8 ميجابايت","err");
+  }
 
   if(externalUrl){
     try{
       const parsedUrl=new URL(externalUrl);
       if(parsedUrl.protocol!=="https:")throw new Error();
-    }catch(e){return message("اكتب رابطًا صحيحًا يبدأ بـ https://","err")}
+    }catch(e){
+      return message("اكتب رابطًا صحيحًا يبدأ بـ https://","err");
+    }
   }
-  if(selectedFile&&externalUrl)return message("ارفع ملف PDF أو ضع رابطًا خارجيًا، وليس الاثنين معًا","err");
+
+  if(selectedFile&&externalUrl){
+    return message("ارفع ملف PDF أو ضع رابطًا خارجيًا، وليس الاثنين معًا","err");
+  }
 
   let file_key=existingKey||externalUrl||null;
+
   try{
     if(selectedFile){
       message("جارٍ رفع ملف PDF...");
+
       const formData=new FormData();
       formData.append("file",selectedFile);
+
       const uploadResponse=await fetch(API+"/api/admin/upload",{
-        method:"POST",headers:{Authorization:"Bearer "+token},body:formData
+        method:"POST",
+        headers:{Authorization:"Bearer "+token},
+        body:formData
       });
+
       const uploadData=await uploadResponse.json().catch(()=>({}));
-      if(!uploadResponse.ok||!uploadData.success)
+
+      if(!uploadResponse.ok||!uploadData.success){
         throw new Error(uploadData.error||"فشل رفع ملف PDF");
+      }
+
       file_key=uploadData.file_key;
     }
+
     message("جارٍ حفظ المحتوى...");
+
     const body={subject_id,title,type,price,is_free,file_key};
     if(id)body.id=Number(id);
+
     await request("/api/admin/materials",id?"PUT":"POST",body);
+
     resetMaterialForm();
     await loadMaterials();
     message("تم حفظ المحتوى بنجاح");
-  }catch(e){message(e.message,"err")}
+
+  }catch(e){
+    message(e.message,"err");
+  }
 }
 
 async function deleteMaterial(id){
   if(!confirm("هل أنت متأكد من حذف المحتوى؟"))return;
+
   try{
     await request("/api/admin/materials","DELETE",{id:Number(id)});
     await loadMaterials();
     message("تم حذف المحتوى");
-  }catch(e){message(e.message,"err")}
+  }catch(e){
+    message(e.message,"err");
+  }
 }
 
 async function loadStudents(){
   const box=document.getElementById("studentsList");
   box.innerHTML="<p class='muted'>جارٍ تحميل الطلاب...</p>";
+
   try{
     const data=await request("/api/admin/students");
     const list=data.students||[];
+
     if(!list.length){
       box.innerHTML="<p class='muted'>لا يوجد طلاب مسجلون حتى الآن</p>";
       return;
     }
+
     box.innerHTML=list.map(s=>`
       <div class="item">
         <strong>${escapeHTML(s.name)}</strong>
         <small>رقم الهاتف: ${escapeHTML(s.phone||"غير مسجل")}</small>
         <small>رقم الطالب: ${escapeHTML(s.id)}</small>
         <br><small>تاريخ التسجيل: ${escapeHTML(s.created_at||"—")}</small>
-        <div class="row"><button class="danger" onclick="deleteStudent(${Number(s.id)})">حذف الطالب</button></div>
+        <div class="row">
+          <button class="danger" onclick="deleteStudent(${Number(s.id)})">حذف الطالب</button>
+        </div>
       </div>
     `).join("");
-  }catch(e){box.innerHTML=`<p class="muted">${escapeHTML(e.message)}</p>`}
+
+  }catch(e){
+    box.innerHTML=`<p class="muted">${escapeHTML(e.message)}</p>`;
+  }
 }
 
 async function deleteStudent(id){
   if(!confirm("هل أنت متأكد من حذف هذا الطالب؟ لن يتم الحذف إذا كانت له طلبات مرتبطة."))return;
+
   try{
     await request("/api/admin/students/"+Number(id),"DELETE");
     await loadStudents();
     message("تم حذف الطالب بنجاح");
-  }catch(e){message(e.message,"err")}
+  }catch(e){
+    message(e.message,"err");
+  }
 }
 
-const orderStatusLabels={pending:"قيد المراجعة",approved:"مقبول",rejected:"مرفوض",completed:"مكتمل"};
+const orderStatusLabels={
+  pending:"قيد المراجعة",
+  approved:"مقبول",
+  rejected:"مرفوض",
+  completed:"مكتمل"
+};
 
 async function loadOrders(){
   const box=document.getElementById("ordersList");
   box.innerHTML="<p class='muted'>جارٍ تحميل الطلبات...</p>";
+
   try{
     const data=await request("/api/admin/orders");
     const list=(data.orders||[]).filter(o=>o.status==="pending");
+
     if(!list.length){
       box.innerHTML="<p class='muted'>لا توجد طلبات حتى الآن</p>";
       return;
     }
+
     box.innerHTML=list.map(o=>`
       <div class="item">
         <strong>${escapeHTML(o.material_title||"طلب محتوى")}</strong>
@@ -500,29 +670,43 @@ async function loadOrders(){
         </div>
       </div>
     `).join("");
-  }catch(e){box.innerHTML=`<p class="muted">${escapeHTML(e.message)}</p>`}
+
+  }catch(e){
+    box.innerHTML=`<p class="muted">${escapeHTML(e.message)}</p>`;
+  }
 }
 
 async function updateOrder(id,status){
-  const prompts={approved:"تأكيد قبول الطلب؟",rejected:"تأكيد رفض الطلب؟",completed:"تأكيد إكمال الطلب؟"};
+  const prompts={
+    approved:"تأكيد قبول الطلب؟",
+    rejected:"تأكيد رفض الطلب؟",
+    completed:"تأكيد إكمال الطلب؟"
+  };
+
   if(!confirm(prompts[status]||"تأكيد تحديث الطلب؟"))return;
+
   try{
     await request("/api/admin/orders/"+id,"PATCH",{status});
     await loadOrders();
     message("تم تحديث حالة الطلب");
-  }catch(e){message(e.message,"err")}
+  }catch(e){
+    message(e.message,"err");
+  }
 }
 
 async function loadDeviceRequests(){
   const box=document.getElementById("deviceRequestsList");
   box.innerHTML="<p class='muted'>جارٍ تحميل طلبات الأجهزة...</p>";
+
   try{
     const data=await request("/api/admin/device-requests");
     const list=data.requests||[];
+
     if(!list.length){
       box.innerHTML="<p class='muted'>لا توجد طلبات اعتماد أجهزة حاليًا</p>";
       return;
     }
+
     box.innerHTML=list.map(d=>`
       <div class="item">
         <strong>${escapeHTML(d.student_name||"طالب غير معروف")}</strong>
@@ -537,21 +721,144 @@ async function loadDeviceRequests(){
         </div>
       </div>
     `).join("");
-  }catch(e){box.innerHTML=`<p class="muted">${escapeHTML(e.message)}</p>`}
+
+  }catch(e){
+    box.innerHTML=`<p class="muted">${escapeHTML(e.message)}</p>`;
+  }
 }
 
 async function reviewDevice(id,decision){
-  const action=decision==="approve"?"الموافقة على هذا الجهاز؟":"رفض طلب هذا الجهاز؟";
+  const action=decision==="approve"
+    ?"الموافقة على هذا الجهاز؟"
+    :"رفض طلب هذا الجهاز؟";
+
   if(!confirm(action))return;
+
   try{
     await request("/api/admin/device-requests/"+Number(id)+"/"+decision,"POST",{});
     await loadDeviceRequests();
-    message(decision==="approve"?"تم اعتماد الجهاز بنجاح":"تم رفض طلب الجهاز");
-  }catch(e){message(e.message,"err")}
+
+    message(decision==="approve"
+      ?"تم اعتماد الجهاز بنجاح"
+      :"تم رفض طلب الجهاز");
+
+  }catch(e){
+    message(e.message,"err");
+  }
 }
 
+/* ==================================
+   استعادة كلمات مرور حسابات الطلاب
+================================== */
+
+async function loadPasswordResetRequests(){
+  const box=document.getElementById("passwordResetRequestsList");
+
+  box.innerHTML="<p class='muted'>جارٍ تحميل طلبات استعادة كلمة المرور...</p>";
+
+  try{
+    const data=await request("/api/admin/password-reset-requests");
+    const list=data.requests||[];
+
+    if(!list.length){
+      box.innerHTML="<p class='muted'>لا توجد طلبات استعادة كلمة مرور معلقة حاليًا</p>";
+      return;
+    }
+
+    box.innerHTML=list.map(r=>`
+      <div class="item">
+        <strong>${escapeHTML(r.student_name||"طالب غير معروف")}</strong>
+        <small>اسم المستخدم: ${escapeHTML(r.username||"—")}</small>
+        <small>رقم الطالب: ${Number(r.student_id)||"—"}</small>
+        <small>رقم الهاتف: ${escapeHTML(r.phone||"—")}</small>
+        <small>الصف الدراسي: ${escapeHTML(r.grade||"—")}</small>
+        <small>تاريخ الطلب: ${escapeHTML(r.created_at||"—")}</small>
+
+        <span class="status">طلب قيد المراجعة</span>
+
+        <div class="row">
+          <button onclick="resetStudentPassword(${Number(r.id)})">
+            تعيين كلمة مرور جديدة
+          </button>
+
+          <button class="danger" onclick="rejectPasswordReset(${Number(r.id)})">
+            رفض الطلب
+          </button>
+        </div>
+      </div>
+    `).join("");
+
+  }catch(e){
+    box.innerHTML=`<p class="muted">${escapeHTML(e.message)}</p>`;
+  }
+}
+
+async function resetStudentPassword(id){
+  const password=prompt("اكتب كلمة المرور الجديدة للطالب (8 أحرف على الأقل):");
+
+  if(password===null)return;
+
+  if(password.length<8||password.length>100){
+    return message("كلمة المرور يجب أن تكون من 8 إلى 100 حرف","err");
+  }
+
+  const confirmPassword=prompt("أعد كتابة كلمة المرور الجديدة للتأكيد:");
+
+  if(confirmPassword===null)return;
+
+  if(password!==confirmPassword){
+    return message("كلمتا المرور غير متطابقتين","err");
+  }
+
+  if(!confirm("تأكيد تعيين كلمة المرور الجديدة؟ سيتم تسجيل خروج الطالب من الجلسات القديمة.")){
+    return;
+  }
+
+  try{
+    await request(
+      `/api/admin/password-reset-requests/${Number(id)}/reset`,
+      "POST",
+      {password}
+    );
+
+    await loadPasswordResetRequests();
+    message("تم تعيين كلمة المرور الجديدة بنجاح");
+
+  }catch(e){
+    message(e.message,"err");
+  }
+}
+
+async function rejectPasswordReset(id){
+  if(!confirm("هل أنت متأكد من رفض طلب استعادة كلمة المرور؟"))return;
+
+  try{
+    await request(
+      `/api/admin/password-reset-requests/${Number(id)}/reject`,
+      "POST",
+      {}
+    );
+
+    await loadPasswordResetRequests();
+    message("تم رفض طلب استعادة كلمة المرور");
+
+  }catch(e){
+    message(e.message,"err");
+  }
+}
+
+/* ==================================
+   أدوات مساعدة
+================================== */
+
 function escapeHTML(value){
-  return String(value??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+  return String(value??"").replace(/[&<>"']/g,c=>({
+    "&":"&amp;",
+    "<":"&lt;",
+    ">":"&gt;",
+    '"':"&quot;",
+    "'":"&#39;"
+  }[c]));
 }
 
 checkSession();
