@@ -58,6 +58,49 @@ function clean(value, max = 200) {
   return typeof value === "string" ? value.trim().slice(0, max) : "";
 }
 
+async function ensureApiRateLimitTable(env) {
+  await env.DB.prepare(`
+    CREATE TABLE IF NOT EXISTS api_rate_limits (
+      rate_key TEXT PRIMARY KEY,
+      window_start INTEGER NOT NULL,
+      attempts INTEGER NOT NULL DEFAULT 0
+    )
+  `).run();
+
+  const cleanupBefore = Math.floor(Date.now() / 1000) - 86400;
+  await env.DB.prepare(
+    "DELETE FROM api_rate_limits WHERE window_start < ?"
+  ).bind(cleanupBefore).run();
+}
+
+async function consumeApiRateLimit(env, request, scope, identity, maxAttempts, windowSeconds) {
+  await ensureApiRateLimitTable(env);
+
+  const ip = clean(request.headers.get("CF-Connecting-IP"), 80) || "unknown";
+  const key = await sha256(`${scope}|${ip}|${String(identity || "*").toLowerCase()}`);
+  const now = Math.floor(Date.now() / 1000);
+
+  await env.DB.prepare(`
+    INSERT INTO api_rate_limits (rate_key, window_start, attempts)
+    VALUES (?, ?, 1)
+    ON CONFLICT(rate_key) DO UPDATE SET
+      attempts = CASE
+        WHEN window_start + ? <= ? THEN 1
+        ELSE attempts + 1
+      END,
+      window_start = CASE
+        WHEN window_start + ? <= ? THEN ?
+        ELSE window_start
+      END
+  `).bind(key, now, windowSeconds, now, windowSeconds, now, now).run();
+
+  const row = await env.DB.prepare(
+    "SELECT attempts FROM api_rate_limits WHERE rate_key = ?"
+  ).bind(key).first();
+
+  return Number(row?.attempts || 0) <= maxAttempts;
+}
+
 function randomToken(bytes = 32) {
   return toBase64Url(crypto.getRandomValues(new Uint8Array(bytes)));
 }
@@ -662,6 +705,7 @@ async function route(request, env) {
       );
     }
 
+
     const hash = await passwordHash(password);
 
     try {
@@ -726,6 +770,15 @@ async function route(request, env) {
       );
     }
 
+    const adminIpAllowed = await consumeApiRateLimit(env, request, "admin-login-ip", "*", 60, 900);
+    const adminUserAllowed = await consumeApiRateLimit(env, request, "admin-login-user", username, 8, 900);
+    if (!adminIpAllowed || !adminUserAllowed) {
+      return reply(request, env, {
+        success: false,
+        error: "محاولات تسجيل الدخول كثيرة. انتظر 15 دقيقة ثم حاول مرة أخرى.",
+      }, 429);
+    }
+
     const admin = await env.DB.prepare(
       "SELECT id, username, password_hash FROM admin_users WHERE username = ?"
     )
@@ -781,6 +834,15 @@ if (method === "POST" && path === "/api/password-reset/request") {
     }, 400);
   }
 
+  const resetIpAllowed = await consumeApiRateLimit(env, request, "password-reset-ip", "*", 10, 3600);
+  const resetUserAllowed = await consumeApiRateLimit(env, request, "password-reset-user", username, 3, 3600);
+  if (!resetIpAllowed || !resetUserAllowed) {
+    return reply(request, env, {
+      success: true,
+      message: "إذا كانت البيانات صحيحة، سيصل طلبك للإدارة للمراجعة.",
+    });
+  }
+
   const account = await env.DB.prepare(`
     SELECT a.student_id, a.username, s.phone
     FROM student_accounts a
@@ -813,10 +875,10 @@ if (method === "POST" && path === "/api/password-reset/request") {
 
   return reply(request, env, {
     success: true,
-    message: "تم إرسال طلبك للإدارة. انتظر المراجعة.",
-  }, 201);
-                                       }
-  
+    message: "إذا كانت البيانات صحيحة، سيصل طلبك للإدارة للمراجعة.",
+  });
+}
+
   // تسجيل خروج الإدارة
   if (method === "POST" && path === "/api/admin/logout") {
     const session = await adminSession(request, env);
@@ -966,7 +1028,7 @@ if (method === "POST" && rejectPasswordMatch) {
     message: "تم رفض طلب استعادة كلمة المرور.",
   });
 }
-    
+
         // عرض طلبات اعتماد الأجهزة المعلقة
     if (method === "GET" && path === "/api/admin/device-requests") {
       const rows = await env.DB.prepare(`
@@ -1192,21 +1254,34 @@ if (method === "POST" && rejectPasswordMatch) {
         );
       }
 
+      await ensurePasswordResetRequestsTable(env);
+      await ensureStudentPhotosTable(env);
+      await ensureStudentLearningTables(env);
+
+      const oldPhoto = await env.DB.prepare(
+        "SELECT file_key FROM student_photos WHERE student_id = ?"
+      ).bind(studentId).first();
+
       await env.DB.batch([
-        env.DB.prepare(
-          "DELETE FROM student_sessions WHERE student_id = ?"
-        ).bind(studentId),
-        env.DB.prepare(
-          "DELETE FROM student_devices WHERE student_id = ?"
-        ).bind(studentId),
-        env.DB.prepare(
-          "DELETE FROM student_subjects WHERE student_id = ?"
-        ).bind(studentId),
-        env.DB.prepare(
-          "DELETE FROM student_accounts WHERE student_id = ?"
-        ).bind(studentId),
+        env.DB.prepare("DELETE FROM student_sessions WHERE student_id = ?").bind(studentId),
+        env.DB.prepare("DELETE FROM student_devices WHERE student_id = ?").bind(studentId),
+        env.DB.prepare("DELETE FROM student_subjects WHERE student_id = ?").bind(studentId),
+        env.DB.prepare("DELETE FROM student_accounts WHERE student_id = ?").bind(studentId),
+        env.DB.prepare("DELETE FROM password_reset_requests WHERE student_id = ?").bind(studentId),
+        env.DB.prepare("DELETE FROM student_photos WHERE student_id = ?").bind(studentId),
+        env.DB.prepare("DELETE FROM student_material_progress WHERE student_id = ?").bind(studentId),
+        env.DB.prepare("DELETE FROM student_favorites WHERE student_id = ?").bind(studentId),
+        env.DB.prepare("DELETE FROM student_activity_days WHERE student_id = ?").bind(studentId),
         env.DB.prepare("DELETE FROM students WHERE id = ?").bind(studentId),
       ]);
+
+      if (oldPhoto?.file_key) {
+        try {
+          await deleteStudentPhotoFromGitHub(env, oldPhoto.file_key, studentId);
+        } catch (error) {
+          console.error("Student photo cleanup failed:", error?.message || error);
+        }
+      }
 
       return reply(request, env, {
         success: true,
@@ -1275,7 +1350,8 @@ if (method === "POST" && rejectPasswordMatch) {
 
     // إضافة مادة دراسية
     if (
-      method === "POST" &&
+
+    method === "POST" &&
       (path === "/api/admin/subjects" || path === "/api/subjects")
     ) {
       const body = await readBody(request);
@@ -1539,13 +1615,18 @@ if (method === "POST" && rejectPasswordMatch) {
         );
       }
 
-      const result = await env.DB.prepare(
-        "DELETE FROM materials WHERE id = ?"
-      )
-        .bind(id)
-        .run();
+      await ensureStudentLearningTables(env);
+      await ensureArchivedMaterialsTable(env);
 
-      if (!(result.meta?.changes || 0)) {
+      const deletion = await env.DB.batch([
+        env.DB.prepare("DELETE FROM student_material_progress WHERE material_id = ?").bind(id),
+        env.DB.prepare("DELETE FROM student_favorites WHERE material_id = ?").bind(id),
+        env.DB.prepare("DELETE FROM archived_materials WHERE material_id = ?").bind(id),
+        env.DB.prepare("DELETE FROM materials WHERE id = ?").bind(id),
+      ]);
+      const result = deletion[deletion.length - 1];
+
+      if (!(result?.meta?.changes || 0)) {
         return reply(
           request,
           env,
@@ -1682,7 +1763,7 @@ if (method === "POST" && rejectPasswordMatch) {
       }
 
       const [existing, subject] = await Promise.all([
-        env.DB.prepare("SELECT file_key FROM materials WHERE id = ?")
+        env.DB.prepare("SELECT file_key, subject_id FROM materials WHERE id = ?")
           .bind(id)
           .first(),
         env.DB.prepare("SELECT id FROM subjects WHERE id = ?")
@@ -1712,6 +1793,19 @@ if (method === "POST" && rejectPasswordMatch) {
           },
           404
         );
+      }
+
+      if (Number(existing.subject_id) !== subjectId) {
+        const linkedOrders = await env.DB.prepare(
+          "SELECT COUNT(*) AS n FROM orders WHERE material_id = ?"
+        ).bind(id).first();
+
+        if (Number(linkedOrders?.n || 0) > 0) {
+          return reply(request, env, {
+            success: false,
+            error: "لا يمكن نقل محتوى مرتبط بطلبات شراء إلى مادة أخرى.",
+          }, 409);
+        }
       }
 
       const newFileKey = clean(body?.file_key, 500);
@@ -2125,6 +2219,15 @@ if (method === "POST" && rejectPasswordMatch) {
       );
     }
 
+    const studentIpAllowed = await consumeApiRateLimit(env, request, "student-login-ip", "*", 100, 900);
+    const studentUserAllowed = await consumeApiRateLimit(env, request, "student-login-user", username, 8, 900);
+    if (!studentIpAllowed || !studentUserAllowed) {
+      return reply(request, env, {
+        success: false,
+        error: "محاولات تسجيل الدخول كثيرة. انتظر 15 دقيقة ثم حاول مرة أخرى.",
+      }, 429);
+    }
+
     const account = await env.DB.prepare(
       `SELECT id, student_id, password_hash
        FROM student_accounts
@@ -2495,6 +2598,8 @@ if (method === "POST" && rejectPasswordMatch) {
       if (
         !photo.file_key ||
         !photo.file_key.startsWith(expectedPrefix) ||
+        photo.file_key.includes("..")
+|
         photo.file_key.includes("..")
       ) {
         return reply(request, env, {
