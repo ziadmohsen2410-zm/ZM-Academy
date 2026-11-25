@@ -6,82 +6,75 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>ZM Academy | لوحة التحكم</title>
 <style>
-:root{--bg:#0b1020;--panel:#151d32;--panel2:#1c2942;--gold:#e8bd67;--text:#f5f6fa;--muted:#aab4c8;--red:#e66b75;--green:#5bc69b}
+:root{--bg:#050611;--panel:#0b1022;--panel2:#101a35;--gold:#9b8cff;--text:#eef5ff;--muted:#9baed0;--red:#ff557f;--green:#45f0c0;--cyan:#4cecff;--violet:#a77bff;--line:rgba(102,220,255,.24);--glow:0 0 28px rgba(76,236,255,.12),0 18px 55px rgba(0,0,0,.42)}
 *{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--text);font-family:Arial,Tahoma,sans-serif}
-header{padding:22px 18px;background:#111a2d;border-bottom:1px solid #293550}
-header h1{margin:0;color:var(--gold);font-size:24px}
-header p{margin:8px 0 0;color:var(--muted);font-size:13px}
-main{max-width:950px;margin:auto;padding:18px}
-.card{background:var(--panel);border:1px solid #293550;border-radius:16px;padding:18px;margin-bottom:16px}
-h2{font-size:18px;margin:0 0 15px;color:var(--gold)}
-input,select{width:100%;padding:13px;margin:7px 0 13px;border:1px solid #34415c;border-radius:10px;background:#0e1729;color:white;font-size:15px}
-label{font-size:13px;color:var(--muted)}
-button{border:0;border-radius:10px;padding:12px 16px;background:var(--gold);color:#171717;font-weight:bold;font-size:14px;cursor:pointer;margin:4px}
-button.secondary{background:#34415c;color:white}
-button.danger{background:#8e3945;color:white}
-button:disabled{opacity:.5}
-.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
-.row>*{flex:1}
-.item{background:var(--panel2);border-radius:12px;padding:13px;margin:10px 0}
-.item strong{display:block;margin-bottom:7px}
-small,.muted{color:var(--muted)}
-.hidden{display:none!important}
-#message{padding:12px;border-radius:10px;margin:12px 0;display:none}
-#message.ok{display:block;background:#153c32;color:#9be4c5}
-#message.err{display:block;background:#49232b;color:#ffb5bd}
-.topline{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
-.check{display:flex;align-items:center;gap:8px;margin:8px 0 14px}
-.check input{width:auto;margin:0}
-.status{display:inline-block;padding:4px 8px;border-radius:7px;background:#34415c;color:#fff;font-size:12px;margin-top:7px}
-@media(max-width:550px){main{padding:12px}.card{padding:14px}.row{display:block}.row button{width:100%;margin:5px 0}}
-
-/* ===== ZM ACADEMY | FUTURE COMMAND CENTER ===== */
-:root{
- --bg:#050711;--panel:rgba(13,19,36,.82);--panel2:rgba(18,29,52,.88);
- --gold:#f2cf82;--text:#f4f7ff;--muted:#9ba9c4;--red:#ff667d;--green:#56e0b0;
- --line:rgba(130,158,210,.19);--cyan:#68e5ff;--violet:#a88bff;
- --glow:0 0 34px rgba(104,229,255,.09),0 18px 55px rgba(0,0,0,.32)
-}
 html{scroll-behavior:smooth}
-body{min-height:100vh;position:relative;overflow-x:hidden;background:
- radial-gradient(ellipse at 12% 8%,rgba(91,71,176,.20),transparent 34%),
- radial-gradient(ellipse at 88% 18%,rgba(24,147,190,.14),transparent 30%),
- radial-gradient(ellipse at 50% 100%,rgba(181,132,57,.09),transparent 42%),#050711;color:var(--text)}
-body:before{content:"";position:fixed;inset:0;pointer-events:none;z-index:-1;opacity:.22;background-image:linear-gradient(rgba(126,164,220,.075) 1px,transparent 1px),linear-gradient(90deg,rgba(126,164,220,.075) 1px,transparent 1px);background-size:42px 42px;mask-image:linear-gradient(to bottom,black,transparent 90%)}
+body{margin:0;min-height:100vh;overflow-x:hidden;color:var(--text);font-family:Arial,Tahoma,sans-serif;background:radial-gradient(ellipse at 12% 12%,rgba(92,55,190,.28),transparent 34%),radial-gradient(ellipse at 88% 18%,rgba(0,183,255,.20),transparent 31%),radial-gradient(ellipse at 52% 100%,rgba(79,60,180,.20),transparent 42%),#050611}
+body:before{content:"";position:fixed;inset:0;pointer-events:none;z-index:-1;opacity:.28;background-image:radial-gradient(1px 1px at 20px 30px,#fff 98%,transparent),radial-gradient(1px 1px at 80px 110px,#80eaff 98%,transparent),radial-gradient(2px 2px at 160px 70px,#b99aff 98%,transparent),radial-gradient(1px 1px at 230px 180px,#fff 98%,transparent);background-size:270px 220px}
 body:after{content:"";position:fixed;width:380px;height:380px;right:-210px;top:25%;border:1px solid rgba(104,229,255,.12);border-radius:50%;box-shadow:0 0 0 35px rgba(104,229,255,.018),0 0 0 75px rgba(168,139,255,.018);pointer-events:none;z-index:-1}
-header{position:relative;isolation:isolate;padding:25px 20px;background:linear-gradient(110deg,rgba(10,15,29,.97),rgba(17,23,43,.88));border-bottom:1px solid rgba(242,207,130,.25);box-shadow:0 12px 45px rgba(0,0,0,.28);backdrop-filter:blur(18px)}
-header:before{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(90deg,transparent,rgba(104,229,255,.045),transparent)}
-header h1{font-size:clamp(24px,4vw,32px);letter-spacing:1.5px;color:var(--gold);text-shadow:0 0 22px rgba(242,207,130,.28)}
-header p{letter-spacing:.3px;font-size:13px}
-header p:before{content:"●";display:inline-block;color:var(--green);font-size:9px;margin-left:8px;text-shadow:0 0 12px var(--green)}
-main{max-width:1180px;padding:25px 18px 60px}
-.card{position:relative;overflow:hidden;background:linear-gradient(145deg,rgba(19,29,52,.88),rgba(9,14,27,.91));border:1px solid var(--line);border-radius:21px;padding:22px;margin-bottom:19px;box-shadow:var(--glow);backdrop-filter:blur(16px);transition:transform .28s ease,border-color .28s ease,box-shadow .28s ease}
-.card:before{content:"";position:absolute;top:0;right:8%;left:8%;height:1px;background:linear-gradient(90deg,transparent,rgba(104,229,255,.6),rgba(242,207,130,.55),transparent);opacity:.65}
+header{position:relative;isolation:isolate;padding:25px 20px;background:linear-gradient(110deg,rgba(5,9,25,.97),rgba(17,18,52,.94));border-bottom:1px solid rgba(76,236,255,.35);box-shadow:0 12px 45px rgba(0,0,0,.38),0 1px 22px rgba(76,236,255,.08);backdrop-filter:blur(18px)}
+header:before{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(90deg,transparent,rgba(76,236,255,.06),rgba(167,123,255,.06),transparent)}
+header h1{margin:0;color:#8ceeff;font-size:clamp(24px,4vw,32px);letter-spacing:1.5px;text-shadow:0 0 12px rgba(76,236,255,.65),0 0 30px rgba(76,236,255,.25)}
+header p{margin:8px 0 0;color:var(--muted);font-size:13px;letter-spacing:.3px}
+header p:before{content:"●";display:inline-block;color:#45f0c0;font-size:9px;margin-left:8px;text-shadow:0 0 12px #45f0c0}
+main{max-width:1180px;margin:auto;padding:25px 18px 60px}
+.card{position:relative;overflow:hidden;background:linear-gradient(145deg,rgba(13,21,47,.94),rgba(7,12,30,.96));border:1px solid rgba(102,220,255,.20);border-radius:20px;padding:22px;margin-bottom:19px;box-shadow:var(--glow);backdrop-filter:blur(16px);transition:transform .28s,border-color .28s,box-shadow .28s}
+.card:before{content:"";position:absolute;top:0;right:8%;left:8%;height:1px;background:linear-gradient(90deg,transparent,#4cecff,#a77bff,transparent);opacity:.8}
 .card:after{content:"";position:absolute;width:150px;height:150px;left:-95px;bottom:-110px;border:1px solid rgba(168,139,255,.12);border-radius:50%;box-shadow:0 0 0 18px rgba(168,139,255,.025),0 0 0 38px rgba(104,229,255,.018);pointer-events:none}
-.card:hover{transform:translateY(-2px);border-color:rgba(104,229,255,.32);box-shadow:0 0 38px rgba(104,229,255,.10),0 22px 60px rgba(0,0,0,.35)}
-h2{font-size:18px;color:var(--gold);letter-spacing:.2px;display:flex;align-items:center;gap:10px}
-h2:before{content:"";width:4px;height:19px;border-radius:8px;background:linear-gradient(var(--cyan),var(--violet),var(--gold));box-shadow:0 0 14px rgba(104,229,255,.45)}
-input,select{position:relative;width:100%;padding:14px 15px;margin:8px 0 15px;border:1px solid rgba(130,158,210,.25);border-radius:12px;background:rgba(4,9,20,.78);color:#f7f8ff;font-size:15px;outline:none;transition:border-color .2s,box-shadow .2s,background .2s}
-input:focus,select:focus{border-color:rgba(104,229,255,.75);box-shadow:0 0 0 3px rgba(104,229,255,.10),0 0 22px rgba(104,229,255,.08);background:rgba(8,15,30,.96)}
-input::placeholder{color:#73819d}label{font-size:13px;color:#b8c5dc;letter-spacing:.15px}
-button{position:relative;overflow:hidden;border:1px solid rgba(255,232,183,.38);border-radius:12px;padding:12px 18px;background:linear-gradient(120deg,#f4d895,#c99b4c);color:#17120a;font-weight:800;font-size:14px;cursor:pointer;margin:4px;box-shadow:0 7px 22px rgba(201,155,76,.16);transition:transform .2s,filter .2s,box-shadow .2s}
+.card:hover{transform:translateY(-2px);border-color:rgba(76,236,255,.55);box-shadow:0 0 32px rgba(76,236,255,.15),0 22px 60px rgba(0,0,0,.4)}
+h2{font-size:18px;margin:0 0 15px;color:#b9a5ff;text-shadow:0 0 15px rgba(167,123,255,.22);letter-spacing:.2px;display:flex;align-items:center;gap:10px}
+h2:before{content:"";width:4px;height:19px;border-radius:8px;background:linear-gradient(#4cecff,#a77bff);box-shadow:0 0 14px rgba(76,236,255,.6)}
+input,select{position:relative;width:100%;padding:14px 15px;margin:8px 0 15px;border:1px solid rgba(102,220,255,.25);border-radius:12px;background:rgba(3,8,23,.92);color:#f3f7ff;font-size:15px;outline:none;transition:border-color .2s,box-shadow .2s}
+input:focus,select:focus{border-color:#4cecff;box-shadow:0 0 0 3px rgba(76,236,255,.12),0 0 20px rgba(76,236,255,.13)}
+input::placeholder{color:#7185ac}
+label{font-size:13px;color:#b7c9e8;letter-spacing:.15px}
+button{position:relative;overflow:hidden;border:1px solid rgba(154,238,255,.6);border-radius:12px;padding:12px 18px;background:linear-gradient(120deg,#63edff,#817bff);color:#071020;font-weight:800;font-size:14px;cursor:pointer;margin:4px;box-shadow:0 0 18px rgba(76,236,255,.18);transition:transform .2s,filter .2s,box-shadow .2s}
 button:before{content:"";position:absolute;inset:0;transform:translateX(-120%);background:linear-gradient(100deg,transparent,rgba(255,255,255,.35),transparent);transition:transform .55s}
-button:hover{transform:translateY(-2px);filter:brightness(1.07);box-shadow:0 10px 28px rgba(201,155,76,.25)}button:hover:before{transform:translateX(120%)}button:active{transform:translateY(0) scale(.98)}
-button.secondary{background:linear-gradient(120deg,#253653,#17243c);border-color:rgba(104,229,255,.22);color:#e6f6ff;box-shadow:0 7px 20px rgba(31,91,128,.13)}
-button.danger{background:linear-gradient(120deg,#a83d59,#68283d);border-color:rgba(255,102,125,.3);color:white;box-shadow:0 7px 20px rgba(168,61,89,.14)}button:disabled{opacity:.45;cursor:not-allowed;transform:none}
-.row{gap:9px}.item{position:relative;background:linear-gradient(125deg,rgba(25,40,68,.88),rgba(12,20,38,.9));border:1px solid rgba(130,158,210,.14);border-radius:15px;padding:16px;margin:12px 0;box-shadow:inset 0 1px rgba(255,255,255,.025);transition:border-color .2s,transform .2s}
-.item:hover{border-color:rgba(104,229,255,.27);transform:translateX(-2px)}.item strong{font-size:15px;color:#f5f7ff}.item small{display:inline-block;margin:3px 8px 3px 0;line-height:1.8}
-small,.muted{color:var(--muted)}.status{background:rgba(104,229,255,.10);border:1px solid rgba(104,229,255,.22);color:#9cecff;border-radius:8px;padding:5px 10px}
-#message{border:1px solid transparent;backdrop-filter:blur(12px);box-shadow:var(--glow)}#message.ok{background:rgba(21,91,70,.45);border-color:rgba(86,224,176,.3);color:#a8f5d9}#message.err{background:rgba(105,34,53,.48);border-color:rgba(255,102,125,.3);color:#ffc0ca}
-.check{padding:9px 12px;border:1px solid rgba(130,158,210,.16);border-radius:10px;background:rgba(4,9,20,.35)}.check input{accent-color:#68e5ff}
-#loginSection{max-width:570px;margin:8vh auto 30px;padding:30px}#loginSection h2{font-size:21px;margin-bottom:24px}#loginSection button{width:100%;margin:10px 0 0;padding:14px}
-#dashboard>.card:first-child{border-color:rgba(242,207,130,.25)}
+button:hover{transform:translateY(-2px);filter:brightness(1.12);box-shadow:0 0 24px rgba(76,236,255,.35)}
+button:hover:before{transform:translateX(120%)}
+button:active{transform:translateY(0) scale(.98)}
+button.secondary{background:linear-gradient(120deg,#24366d,#35265f);border-color:rgba(167,123,255,.42);color:#e6eaff;box-shadow:0 0 16px rgba(123,102,255,.12)}
+button.danger{background:linear-gradient(120deg,#a52d67,#672b75);border-color:rgba(255,85,127,.5);color:#fff;box-shadow:0 0 16px rgba(255,85,127,.14)}
+button:disabled{opacity:.45;cursor:not-allowed;transform:none}
+.row{display:flex;gap:9px;flex-wrap:wrap;align-items:center}
+.row>*{flex:1}
+.item{position:relative;background:linear-gradient(125deg,rgba(17,31,66,.96),rgba(9,16,39,.96));border:1px solid rgba(102,220,255,.18);border-radius:15px;padding:16px;margin:12px 0;box-shadow:inset 0 1px rgba(255,255,255,.035);transition:border-color .2s,transform .2s}
+.item:hover{border-color:rgba(76,236,255,.48);box-shadow:0 0 18px rgba(76,236,255,.08);transform:translateX(-2px)}
+.item strong{display:block;font-size:15px;color:#f0f6ff;margin-bottom:7px}
+.item small{display:inline-block;margin:3px 8px 3px 0;line-height:1.8}
+small,.muted{color:#9baed0}
 .hidden{display:none!important}
-@keyframes riseIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}#dashboard:not(.hidden)>.card{animation:riseIn .55s both}#dashboard:not(.hidden)>.card:nth-child(2){animation-delay:.04s}#dashboard:not(.hidden)>.card:nth-child(3){animation-delay:.08s}#dashboard:not(.hidden)>.card:nth-child(4){animation-delay:.12s}#dashboard:not(.hidden)>.card:nth-child(5){animation-delay:.16s}#dashboard:not(.hidden)>.card:nth-child(6){animation-delay:.20s}#dashboard:not(.hidden)>.card:nth-child(7){animation-delay:.24s}
-@media(max-width:650px){header{padding:19px 14px}main{padding:16px 12px 40px}.card{padding:17px 14px;border-radius:17px}.row{display:flex;gap:6px}.row>*{min-width:0}.row button{width:auto;flex:1;margin:3px;padding:11px 9px;font-size:13px}#loginSection{margin:5vh auto 22px;padding:22px 17px}.item{padding:13px}.item .row{display:flex}}
+#message{padding:12px;border-radius:10px;margin:12px 0;display:none;border:1px solid transparent;backdrop-filter:blur(12px);box-shadow:var(--glow)}
+#message.ok{display:block;background:rgba(14,92,77,.48);border-color:rgba(69,240,192,.35);color:#a8ffe5}
+#message.err{display:block;background:rgba(105,25,61,.5);border-color:rgba(255,85,127,.4);color:#ffc1d5}
+.topline{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.check{display:flex;align-items:center;gap:8px;margin:8px 0 14px;padding:9px 12px;border:1px solid rgba(102,220,255,.2);border-radius:10px;background:rgba(4,9,25,.55)}
+.check input{width:auto;margin:0;accent-color:#4cecff}
+.status{display:inline-block;padding:5px 10px;border-radius:8px;background:rgba(76,236,255,.11);border:1px solid rgba(76,236,255,.3);color:#9cefff;font-size:12px;margin-top:7px}
+#loginSection{max-width:570px;margin:8vh auto 30px;padding:30px;border-color:rgba(167,123,255,.3)}
+#loginSection h2{font-size:21px;margin-bottom:24px}
+#loginSection button{width:100%;margin:10px 0 0;padding:14px}
+#dashboard>.card:first-child{border-color:rgba(76,236,255,.28)}
+@keyframes riseIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+#dashboard:not(.hidden)>.card{animation:riseIn .55s both}
+#dashboard:not(.hidden)>.card:nth-child(2){animation-delay:.04s}
+#dashboard:not(.hidden)>.card:nth-child(3){animation-delay:.08s}
+#dashboard:not(.hidden)>.card:nth-child(4){animation-delay:.12s}
+#dashboard:not(.hidden)>.card:nth-child(5){animation-delay:.16s}
+#dashboard:not(.hidden)>.card:nth-child(6){animation-delay:.20s}
+#dashboard:not(.hidden)>.card:nth-child(7){animation-delay:.24s}
+@media(max-width:650px){
+ header{padding:19px 14px}
+ main{padding:16px 12px 40px}
+ .card{padding:17px 14px;border-radius:17px}
+ .row{display:flex;gap:6px}
+ .row>*{min-width:0}
+ .row button{width:auto;flex:1;margin:3px;padding:11px 9px;font-size:13px}
+ #loginSection{margin:5vh auto 22px;padding:22px 17px}
+ .item{padding:13px}
+ .item .row{display:flex}
+}
 @media(prefers-reduced-motion:reduce){*,*:before,*:after{scroll-behavior:auto!important;animation:none!important;transition:none!important}}
-
 </style>
 </head>
 <body>
@@ -122,19 +115,14 @@ small,.muted{color:var(--muted)}.status{background:rgba(104,229,255,.10);border:
       <input id="materialId" type="hidden">
       <label>المادة الدراسية</label><select id="materialSubjectForm"></select>
       <label>عنوان المحتوى</label><input id="materialTitle" placeholder="عنوان الدرس">
-            <label>نوع المحتوى</label>
+      <label>نوع المحتوى</label>
       <select id="materialType"><option value="lesson">درس</option><option value="video">فيديو</option><option value="pdf">ملف PDF</option></select>
       <label>رابط الفيديو أو الملف الخارجي</label>
-<input id="materialFileUrl" type="url" placeholder="ضع رابط الفيديو هنا">
-
-<label>رفع ملف PDF من الجهاز (حد أقصى 8 ميجابايت)</label>
-<input
-  id="materialFile"
-  type="file"
-  accept="application/pdf,.pdf"
->
-<input id="materialExistingFileKey" type="hidden">
-<p class="muted">يمكنك رفع مذكرة PDF مباشرة من هاتفك.</p>
+      <input id="materialFileUrl" type="url" placeholder="ضع رابط الفيديو هنا">
+      <label>رفع ملف PDF من الجهاز (حد أقصى 8 ميجابايت)</label>
+      <input id="materialFile" type="file" accept="application/pdf,.pdf">
+      <input id="materialExistingFileKey" type="hidden">
+      <p class="muted">يمكنك رفع مذكرة PDF مباشرة من هاتفك.</p>
       <label>السعر بالجنيه المصري</label><input id="materialPrice" type="number" min="0" value="0">
       <label class="check"><input id="materialFree" type="checkbox" checked> محتوى مجاني</label>
       <div class="row"><button onclick="saveMaterial()">حفظ المحتوى</button><button class="secondary" onclick="resetMaterialForm()">إلغاء</button></div>
@@ -148,13 +136,8 @@ small,.muted{color:var(--muted)}.status{background:rgba(104,229,255,.10);border:
       <div id="ordersList"><p class="muted">جارٍ تحميل الطلبات...</p></div>
     </div>
     <div class="card">
-      <div class="topline">
-        <h2>طلبات اعتماد الأجهزة</h2>
-        <button onclick="loadDeviceRequests()">تحديث</button>
-      </div>
-      <div id="deviceRequestsList">
-        <p class="muted">جارٍ تحميل طلبات الأجهزة...</p>
-      </div>
+      <div class="topline"><h2>طلبات اعتماد الأجهزة</h2><button onclick="loadDeviceRequests()">تحديث</button></div>
+      <div id="deviceRequestsList"><p class="muted">جارٍ تحميل طلبات الأجهزة...</p></div>
     </div>
   </section>
 </main>
@@ -194,11 +177,7 @@ function showLogin(){
 
 async function loadDashboardData(){
   await loadSubjects();
-  await Promise.all([
-    loadStudents(),
-    loadOrders(),
-    loadDeviceRequests()
-  ]);
+  await Promise.all([loadStudents(),loadOrders(),loadDeviceRequests()]);
 }
 
 async function login(){
@@ -251,18 +230,15 @@ async function loadSubjects(){
 
 function renderSubjects(){
   const box=document.getElementById("subjectsList");
-
   if(!subjects.length){
     box.innerHTML="<p class='muted'>لا توجد مواد دراسية حتى الآن</p>";
     return;
   }
-
   box.innerHTML=subjects.map(s=>`
     <div class="item">
       <strong>${escapeHTML(s.name)}</strong>
       <small>${escapeHTML(s.grade||"")}</small>
       <small>${Number(s.is_archived)===1?"مؤرشفة":"نشطة"}</small>
-
       <div class="row">
         <button class="secondary" onclick="editSubject(${Number(s.id)})">تعديل</button>
         ${Number(s.is_archived)===1
@@ -275,42 +251,24 @@ function renderSubjects(){
 
 function fillSubjectOptions(){
   const activeSubjects=subjects.filter(s=>Number(s.is_archived)!==1);
-
   const options=activeSubjects.map(s=>
     `<option value="${Number(s.id)}">${escapeHTML(s.name)} - ${escapeHTML(s.grade||"")}</option>`
   ).join("");
-
   document.getElementById("materialSubject").innerHTML='<option value="">كل المواد</option>'+options;
   document.getElementById("materialSubjectForm").innerHTML=options;
 }
 
- async function archiveSubject(id,action){
+async function archiveSubject(id,action){
   const isArchive=action==="archive";
-
-  if(!confirm(
-    isArchive
-      ? "هل تريد أرشفة المادة؟ ستختفي من المواد المتاحة للطلاب مع الاحتفاظ بالمشتريات القديمة."
-      : "هل تريد استعادة المادة وإظهارها للطلاب مرة أخرى؟"
-  ))return;
-
+  if(!confirm(isArchive
+    ? "هل تريد أرشفة المادة؟ ستختفي من المواد المتاحة للطلاب مع الاحتفاظ بالمشتريات القديمة."
+    : "هل تريد استعادة المادة وإظهارها للطلاب مرة أخرى؟"))return;
   try{
-    await request(
-      `/api/admin/subjects/${id}/${action}`,
-      "POST",
-      {}
-    );
-
+    await request(`/api/admin/subjects/${id}/${action}`,"POST",{});
     await loadSubjects();
-
-    message(
-      isArchive
-        ? "تمت أرشفة المادة بنجاح"
-        : "تمت استعادة المادة بنجاح"
-    );
-  }catch(e){
-    message(e.message,"err");
-  }
- }
+    message(isArchive?"تمت أرشفة المادة بنجاح":"تمت استعادة المادة بنجاح");
+  }catch(e){message(e.message,"err")}
+}
 
 function editSubject(id){
   const s=subjects.find(x=>Number(x.id)===Number(id));
@@ -367,36 +325,52 @@ function renderMaterials(list){
     box.innerHTML="<p class='muted'>لا يوجد محتوى في هذا الاختيار</p>";
     return;
   }
-  box.innerHTML=list.map(m=>`<div class="item"><strong>${escapeHTML(m.title)}</strong><small>النوع: ${escapeHTML(m.type)} | السعر: ${Number(m.price)||0} جنيه | ${m.is_free?"مجاني":"مدفوع"}</small><div class="row"><button class="secondary" onclick="editMaterial(${Number(m.id)})">تعديل</button><button class="danger" onclick="deleteMaterial(${Number(m.id)})">حذف</button></div></div>`).join("");
+  box.innerHTML=list.map(m=>{
+    const archived=Number(m.is_archived)===1;
+    return `<div class="item">
+      <strong>${escapeHTML(m.title)}</strong>
+      <small>النوع: ${escapeHTML(m.type)} | السعر: ${Number(m.price)||0} جنيه | ${Number(m.is_free)===1?"مجاني":"مدفوع"}</small>
+      <small style="display:block;color:${archived?"#bda7ff":"#45f0c0"}">${archived?"● الدرس مؤرشف":"● الدرس نشط"}</small>
+      <div class="row">
+        <button class="secondary" onclick="editMaterial(${Number(m.id)})">تعديل</button>
+        ${archived
+          ? `<button onclick="archiveMaterial(${Number(m.id)},'restore')">استعادة</button>`
+          : `<button class="secondary" onclick="archiveMaterial(${Number(m.id)},'archive')">أرشفة</button>`}
+        <button class="danger" onclick="deleteMaterial(${Number(m.id)})">حذف</button>
+      </div>
+    </div>`;
+  }).join("");
 }
 
+async function archiveMaterial(id,action){
+  const isArchive=action==="archive";
+  if(!confirm(isArchive
+    ? "هل تريد أرشفة هذا الدرس؟ سيختفي من المحتوى المتاح للطلاب مع الاحتفاظ بالمشتريات القديمة."
+    : "هل تريد استعادة هذا الدرس وإظهاره للطلاب مرة أخرى؟"))return;
+  try{
+    await request(`/api/admin/materials/${Number(id)}/${action}`,"POST",{});
+    await loadMaterials();
+    message(isArchive?"تمت أرشفة الدرس بنجاح":"تمت استعادة الدرس بنجاح");
+  }catch(e){message(e.message,"err")}
+}
 
 async function editMaterial(id){
   try{
     const data=await request("/api/admin/materials");
     const m=(data.materials||[]).find(x=>Number(x.id)===Number(id));
     if(!m)return;
-
     document.getElementById("materialId").value=m.id;
     document.getElementById("materialSubjectForm").value=m.subject_id;
     document.getElementById("materialTitle").value=m.title;
     document.getElementById("materialType").value=m.type;
-
-    document.getElementById("materialExistingFileKey").value =
-      m.file_key && !/^https?:\/\//i.test(m.file_key) ? m.file_key : "";
-
-    document.getElementById("materialFileUrl").value =
-      m.file_key && /^https?:\/\//i.test(m.file_key) ? m.file_key : "";
-
+    document.getElementById("materialExistingFileKey").value=m.file_key&&!/^https?:\/\//i.test(m.file_key)?m.file_key:"";
+    document.getElementById("materialFileUrl").value=m.file_key&&/^https?:\/\//i.test(m.file_key)?m.file_key:"";
     document.getElementById("materialFile").value="";
     document.getElementById("materialPrice").value=m.price||0;
     document.getElementById("materialFree").checked=!!m.is_free;
     document.getElementById("materialFormTitle").textContent="تعديل المحتوى";
     document.getElementById("materialTitle").scrollIntoView({behavior:"smooth"});
-
-  }catch(e){
-    message(e.message,"err");
-  }
+  }catch(e){message(e.message,"err")}
 }
 
 function resetMaterialForm(){
@@ -411,7 +385,6 @@ function resetMaterialForm(){
   document.getElementById("materialFormTitle").textContent="إضافة محتوى تعليمي";
 }
 
-
 async function saveMaterial(){
   const id=document.getElementById("materialId").value;
   const subject_id=Number(document.getElementById("materialSubjectForm").value);
@@ -423,76 +396,42 @@ async function saveMaterial(){
   const price=Number(document.getElementById("materialPrice").value);
   const is_free=document.getElementById("materialFree").checked;
 
-  if(!subject_id||!title)
-    return message("اختر المادة واكتب عنوان المحتوى","err");
-
-  if(!Number.isFinite(price)||price<0)
-    return message("اكتب سعرًا صحيحًا","err");
-
-  if(selectedFile){
-    if(selectedFile.type!=="application/pdf" || selectedFile.size>8*1024*1024)
-      return message("اختر ملف PDF لا يتجاوز 8 ميجابايت","err");
-  }
+  if(!subject_id||!title)return message("اختر المادة واكتب عنوان المحتوى","err");
+  if(!Number.isFinite(price)||price<0)return message("اكتب سعرًا صحيحًا","err");
+  if(selectedFile&&(selectedFile.type!=="application/pdf"||selectedFile.size>8*1024*1024))
+    return message("اختر ملف PDF لا يتجاوز 8 ميجابايت","err");
 
   if(externalUrl){
     try{
       const parsedUrl=new URL(externalUrl);
       if(parsedUrl.protocol!=="https:")throw new Error();
-    }catch(e){
-      return message("اكتب رابطًا صحيحًا يبدأ بـ https://","err");
-    }
+    }catch(e){return message("اكتب رابطًا صحيحًا يبدأ بـ https://","err")}
   }
+  if(selectedFile&&externalUrl)return message("ارفع ملف PDF أو ضع رابطًا خارجيًا، وليس الاثنين معًا","err");
 
-  if(selectedFile && externalUrl)
-    return message("ارفع ملف PDF أو ضع رابطًا خارجيًا، وليس الاثنين معًا","err");
-
-  let file_key=existingKey || externalUrl || null;
-
+  let file_key=existingKey||externalUrl||null;
   try{
     if(selectedFile){
       message("جارٍ رفع ملف PDF...");
-
       const formData=new FormData();
       formData.append("file",selectedFile);
-
       const uploadResponse=await fetch(API+"/api/admin/upload",{
-        method:"POST",
-        headers:{Authorization:"Bearer "+token},
-        body:formData
+        method:"POST",headers:{Authorization:"Bearer "+token},body:formData
       });
-
       const uploadData=await uploadResponse.json().catch(()=>({}));
-
-      if(!uploadResponse.ok || !uploadData.success)
+      if(!uploadResponse.ok||!uploadData.success)
         throw new Error(uploadData.error||"فشل رفع ملف PDF");
-
       file_key=uploadData.file_key;
     }
-
     message("جارٍ حفظ المحتوى...");
-
-    const body={
-      subject_id,
-      title,
-      type,
-      price,
-      is_free,
-      file_key
-    };
-
+    const body={subject_id,title,type,price,is_free,file_key};
     if(id)body.id=Number(id);
-
     await request("/api/admin/materials",id?"PUT":"POST",body);
-
     resetMaterialForm();
     await loadMaterials();
     message("تم حفظ المحتوى بنجاح");
-
-  }catch(e){
-    message(e.message,"err");
-  }
+  }catch(e){message(e.message,"err")}
 }
-
 
 async function deleteMaterial(id){
   if(!confirm("هل أنت متأكد من حذف المحتوى؟"))return;
@@ -519,14 +458,10 @@ async function loadStudents(){
         <small>رقم الهاتف: ${escapeHTML(s.phone||"غير مسجل")}</small>
         <small>رقم الطالب: ${escapeHTML(s.id)}</small>
         <br><small>تاريخ التسجيل: ${escapeHTML(s.created_at||"—")}</small>
-        <div class="row">
-          <button class="danger" onclick="deleteStudent(${Number(s.id)})">حذف الطالب</button>
-        </div>
+        <div class="row"><button class="danger" onclick="deleteStudent(${Number(s.id)})">حذف الطالب</button></div>
       </div>
     `).join("");
-  }catch(e){
-    box.innerHTML=`<p class="muted">${escapeHTML(e.message)}</p>`;
-  }
+  }catch(e){box.innerHTML=`<p class="muted">${escapeHTML(e.message)}</p>`}
 }
 
 async function deleteStudent(id){
@@ -535,9 +470,7 @@ async function deleteStudent(id){
     await request("/api/admin/students/"+Number(id),"DELETE");
     await loadStudents();
     message("تم حذف الطالب بنجاح");
-  }catch(e){
-    message(e.message,"err");
-  }
+  }catch(e){message(e.message,"err")}
 }
 
 const orderStatusLabels={pending:"قيد المراجعة",approved:"مقبول",rejected:"مرفوض",completed:"مكتمل"};
@@ -552,10 +485,22 @@ async function loadOrders(){
       box.innerHTML="<p class='muted'>لا توجد طلبات حتى الآن</p>";
       return;
     }
-    box.innerHTML=list.map(o=>`<div class="item"><strong>${escapeHTML(o.material_title||"طلب محتوى")}</strong><small>الطالب: ${escapeHTML(o.student_name||"غير معروف")}</small><br><small>الهاتف: ${escapeHTML(o.phone||"—")}</small><br><small>السعر: ${Number(o.price)||0} جنيه</small><br><small>التاريخ: ${escapeHTML(o.created_at||"—")}</small><br><span class="status">الحالة: ${escapeHTML(orderStatusLabels[o.status]||o.status||"غير محددة")}</span><div class="row"><button onclick="updateOrder(${Number(o.id)},'approved')">قبول</button><button class="danger" onclick="updateOrder(${Number(o.id)},'rejected')">رفض</button><button class="secondary" onclick="updateOrder(${Number(o.id)},'completed')">مكتمل</button></div></div>`).join("");
-  }catch(e){
-    box.innerHTML=`<p class="muted">${escapeHTML(e.message)}</p>`;
-  }
+    box.innerHTML=list.map(o=>`
+      <div class="item">
+        <strong>${escapeHTML(o.material_title||"طلب محتوى")}</strong>
+        <small>الطالب: ${escapeHTML(o.student_name||"غير معروف")}</small><br>
+        <small>الهاتف: ${escapeHTML(o.phone||"—")}</small><br>
+        <small>السعر: ${Number(o.price)||0} جنيه</small><br>
+        <small>التاريخ: ${escapeHTML(o.created_at||"—")}</small><br>
+        <span class="status">الحالة: ${escapeHTML(orderStatusLabels[o.status]||o.status||"غير محددة")}</span>
+        <div class="row">
+          <button onclick="updateOrder(${Number(o.id)},'approved')">قبول</button>
+          <button class="danger" onclick="updateOrder(${Number(o.id)},'rejected')">رفض</button>
+          <button class="secondary" onclick="updateOrder(${Number(o.id)},'completed')">مكتمل</button>
+        </div>
+      </div>
+    `).join("");
+  }catch(e){box.innerHTML=`<p class="muted">${escapeHTML(e.message)}</p>`}
 }
 
 async function updateOrder(id,status){
@@ -571,16 +516,13 @@ async function updateOrder(id,status){
 async function loadDeviceRequests(){
   const box=document.getElementById("deviceRequestsList");
   box.innerHTML="<p class='muted'>جارٍ تحميل طلبات الأجهزة...</p>";
-
   try{
     const data=await request("/api/admin/device-requests");
     const list=data.requests||[];
-
     if(!list.length){
       box.innerHTML="<p class='muted'>لا توجد طلبات اعتماد أجهزة حاليًا</p>";
       return;
     }
-
     box.innerHTML=list.map(d=>`
       <div class="item">
         <strong>${escapeHTML(d.student_name||"طالب غير معروف")}</strong>
@@ -595,34 +537,17 @@ async function loadDeviceRequests(){
         </div>
       </div>
     `).join("");
-
-  }catch(e){
-    box.innerHTML=`<p class="muted">${escapeHTML(e.message)}</p>`;
-  }
+  }catch(e){box.innerHTML=`<p class="muted">${escapeHTML(e.message)}</p>`}
 }
 
 async function reviewDevice(id,decision){
   const action=decision==="approve"?"الموافقة على هذا الجهاز؟":"رفض طلب هذا الجهاز؟";
-
   if(!confirm(action))return;
-
   try{
-    await request(
-      "/api/admin/device-requests/"+Number(id)+"/"+decision,
-      "POST",
-      {}
-    );
-
+    await request("/api/admin/device-requests/"+Number(id)+"/"+decision,"POST",{});
     await loadDeviceRequests();
-    message(
-      decision==="approve"
-        ?"تم اعتماد الجهاز بنجاح"
-        :"تم رفض طلب الجهاز"
-    );
-
-  }catch(e){
-    message(e.message,"err");
-  }
+    message(decision==="approve"?"تم اعتماد الجهاز بنجاح":"تم رفض طلب الجهاز");
+  }catch(e){message(e.message,"err")}
 }
 
 function escapeHTML(value){
