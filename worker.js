@@ -2522,20 +2522,24 @@ if (method === "DELETE" && studentPurchaseDelete) {
       );
     }
 
-    await ensureArchivedSubjectsTable(env);
+        await ensureArchivedSubjectsTable(env);
+    await ensureArchivedMaterialsTable(env);
 
-const material = await env.DB.prepare(
-  `SELECT m.id, m.is_free
-   FROM materials m
-   JOIN student_subjects ss ON ss.subject_id = m.subject_id
-   WHERE m.id = ?
-     AND ss.student_id = ?
-     AND m.subject_id NOT IN (
-       SELECT subject_id FROM archived_subjects
-     )`
-)
-  .bind(materialId, session.student_id)
-  .first();
+    const material = await env.DB.prepare(
+      `SELECT m.id, m.is_free
+       FROM materials m
+       JOIN student_subjects ss ON ss.subject_id = m.subject_id
+       WHERE m.id = ?
+         AND ss.student_id = ?
+         AND m.subject_id NOT IN (
+           SELECT subject_id FROM archived_subjects
+         )
+         AND m.id NOT IN (
+           SELECT material_id FROM archived_materials
+         )`
+    )
+      .bind(materialId, session.student_id)
+      .first();
 
     if (!material) {
       return reply(
