@@ -1,36 +1,37 @@
+
 {
-"id": "./",
-"name": "ZM Academy",
-"short_name": "ZM Academy",
-"description": "ZM Academy - منصة تعليمية للفلسفة والمنطق وعلم النفس والاجتماع",
-"lang": "ar",
-"dir": "rtl",
-"start_url": "./",
-"scope": "./",
-"display": "standalone",
-"orientation": "portrait",
-"background_color": "#080d1b",
-"theme_color": "#080d1b",
-"categories": ["education"],
-"prefer_related_applications": false,
-"icons": [
-{
-"src": "assets/icon-192.png",
-"sizes": "192x192",
-"type": "image/png",
-"purpose": "any"
-},
-{
-"src": "assets/icon-512.png",
-"sizes": "512x512",
-"type": "image/png",
-"purpose": "any"
-},
-{
-"src": "assets/icon-512.png",
-"sizes": "512x512",
-"type": "image/png",
-"purpose": "maskable"
-}
-]
+  "id": "./",
+  "name": "ZM Academy",
+  "short_name": "ZM Academy",
+  "description": "ZM Academy - منصة تعليمية للفلسفة والمنطق وعلم النفس والاجتماع",
+  "lang": "ar",
+  "dir": "rtl",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#080d1b",
+  "theme_color": "#080d1b",
+  "categories": ["education"],
+  "prefer_related_applications": false,
+  "icons": [
+    {
+      "src": "assets/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "assets/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "assets/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
 }
