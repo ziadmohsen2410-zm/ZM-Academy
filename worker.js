@@ -69,7 +69,6 @@ function toBase64Url(bytes) {
     .replace(/=+$/g, "");
 }
 
-// Faster than building one huge string char-by-char (important for 8 MB files).
 function bytesToBase64(bytes) {
   let binary = "";
   const chunk = 0x8000;
@@ -87,7 +86,6 @@ function fromBase64Url(value) {
   return Uint8Array.from(binary, (c) => c.charCodeAt(0));
 }
 
-// Constant-time-ish comparison for secrets (setup key, password hashes).
 function safeEqual(a, b) {
   const aa = String(a ?? "");
   const bb = String(b ?? "");
@@ -328,8 +326,6 @@ async function uploadToGitHub(env, fileBytes, fileName, contentType) {
   return path;
 }
 
-// حذف الملف من التخزين عند حذف المحتوى (يمنع تراكم الملفات).
-// أي فشل هنا لا يمنع حذف سجل المحتوى من قاعدة البيانات.
 async function deleteFromGitHub(env, fileKey) {
   if (!env.GITHUB_STORAGE_TOKEN) return;
   if (
@@ -478,8 +474,17 @@ function validStudentPhoto(bytes, contentType) {
   return false;
 }
 
+// إنشاء جدول أرشيف المواد الدراسية
+async function ensureArchivedSubjectsTable(env) {
+  await env.DB.prepare(`
+    CREATE TABLE IF NOT EXISTS archived_subjects (
+      subject_id INTEGER PRIMARY KEY,
+      archived_at TEXT DEFAULT CURRENT_TIMESTAMP
+    )
+  `).run();
+}
 
-// إنشاء جدول أرشيف الدروس دون حذف أي بيانات
+// إنشاء جدول أرشيف الدروس
 async function ensureArchivedMaterialsTable(env) {
   await env.DB.prepare(`
     CREATE TABLE IF NOT EXISTS archived_materials (
@@ -489,11 +494,21 @@ async function ensureArchivedMaterialsTable(env) {
   `).run();
 }
 
+// إنشاء جدول صور الطلاب
+async function ensureStudentPhotosTable(env) {
+  await env.DB.prepare(`
+    CREATE TABLE IF NOT EXISTS student_photos (
+      student_id INTEGER PRIMARY KEY,
+      file_key TEXT NOT NULL,
+      content_type TEXT NOT NULL,
+      updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+    )
+  `).run();
+}
 
 async function route(request, env) {
   const method = request.method.toUpperCase();
 
-  // Preflight يجب أن يعمل حتى لو كانت قاعدة البيانات غير مهيأة.
   if (method === "OPTIONS") {
     return new Response(null, {
       status: 204,
@@ -516,7 +531,6 @@ async function route(request, env) {
   const url = new URL(request.url);
   const path = url.pathname.replace(/\/+$/, "") || "/";
 
-  // فحص اتصال قاعدة البيانات
   if (method === "GET" && path === "/api/health") {
     try {
       await env.DB.prepare("SELECT 1").first();
@@ -606,7 +620,6 @@ async function route(request, env) {
     const hash = await passwordHash(password);
 
     try {
-      // إدراج مشروط ذري لمنع إنشاء أكثر من أدمن في طلبين متزامنين.
       const result = await env.DB.prepare(
         `INSERT INTO admin_users (username, password_hash)
          SELECT ?, ? WHERE NOT EXISTS (SELECT 1 FROM admin_users)`
@@ -741,6 +754,25 @@ async function route(request, env) {
         401
       );
     }
+        // عرض طلبات اعتماد الأجهزة المعلقة
+    if (method === "GET" && path === "/api/admin/device-requests") {
+      const rows = await env.DB.prepare(`
+        SELECT d.id, d.student_id, d.device_name, d.created_at,
+               s.name AS student_name, s.phone,
+               a.username
+        FROM student_devices d
+        JOIN students s ON s.id = d.student_id
+        LEFT JOIN student_accounts a ON a.student_id = d.student_id
+        WHERE d.status = 'pending'
+        ORDER BY d.created_at DESC, d.id DESC
+        LIMIT 500
+      `).all();
+
+      return reply(request, env, {
+        success: true,
+        requests: rows.results || [],
+      });
+    }
 
     const deviceDecision = path.match(
       /^\/api\/admin\/device-requests\/(\d+)\/(approve|reject)$/
@@ -829,17 +861,17 @@ async function route(request, env) {
 
     // الطلبات
     if (method === "GET" && path === "/api/admin/orders") {
-      const rows = await env.DB.prepare(
-  `SELECT o.id, o.status, o.created_at,
-          s.name AS student_name, s.phone,
-          m.title AS material_title, m.price
-   FROM orders o
-   JOIN students s ON s.id = o.student_id
-   JOIN materials m ON m.id = o.material_id
-   WHERE o.status = 'pending'
-   ORDER BY o.id DESC
-   LIMIT 500`
-).all();
+      const rows = await env.DB.prepare(`
+        SELECT o.id, o.status, o.created_at,
+               s.name AS student_name, s.phone,
+               m.title AS material_title, m.price
+        FROM orders o
+        JOIN students s ON s.id = o.student_id
+        JOIN materials m ON m.id = o.material_id
+        WHERE o.status = 'pending'
+        ORDER BY o.id DESC
+        LIMIT 500
+      `).all();
 
       return reply(request, env, {
         success: true,
@@ -890,19 +922,15 @@ async function route(request, env) {
       });
     }
 
-    // قائمة الطلاب بالتفاصيل الجديدة
+    // قائمة الطلاب بالتفاصيل الصحيحة
     if (method === "GET" && path === "/api/admin/students") {
-      const rows = await env.DB.prepare(
-  `SELECT o.id, o.status, o.created_at,
-          s.name AS student_name, s.phone,
-          m.title AS material_title, m.price
-   FROM orders o
-   JOIN students s ON s.id = o.student_id
-   JOIN materials m ON m.id = o.material_id
-   WHERE o.status = 'pending'
-   ORDER BY o.id DESC
-   LIMIT 500`
-).all();
+      const rows = await env.DB.prepare(`
+        SELECT id, name, phone, parent_phone,
+               grade, school, governorate, created_at
+        FROM students
+        ORDER BY id DESC
+        LIMIT 500
+      `).all();
 
       return reply(request, env, {
         success: true,
@@ -974,64 +1002,64 @@ async function route(request, env) {
     }
 
     // عرض المواد للإدارة بما فيها المؤرشفة
-if (method === "GET" && path === "/api/admin/subjects") {
-  await ensureArchivedSubjectsTable(env);
+    if (method === "GET" && path === "/api/admin/subjects") {
+      await ensureArchivedSubjectsTable(env);
 
-  const rows = await env.DB.prepare(`
-    SELECT s.id, s.name, s.grade,
-           CASE WHEN a.subject_id IS NULL THEN 0 ELSE 1 END AS is_archived
-    FROM subjects s
-    LEFT JOIN archived_subjects a ON a.subject_id = s.id
-    ORDER BY is_archived ASC, s.grade, s.name
-  `).all();
+      const rows = await env.DB.prepare(`
+        SELECT s.id, s.name, s.grade,
+               CASE WHEN a.subject_id IS NULL THEN 0 ELSE 1 END AS is_archived
+        FROM subjects s
+        LEFT JOIN archived_subjects a ON a.subject_id = s.id
+        ORDER BY is_archived ASC, s.grade, s.name
+      `).all();
 
-  return reply(request, env, {
-    success: true,
-    subjects: rows.results || []
-  });
-}
+      return reply(request, env, {
+        success: true,
+        subjects: rows.results || [],
+      });
+    }
 
-// أرشفة مادة أو استعادتها
-const subjectArchiveMatch = path.match(
-  /^\/api\/admin\/subjects\/(\d+)\/(archive|restore)$/
-);
+    // أرشفة مادة أو استعادتها
+    const subjectArchiveMatch = path.match(
+      /^\/api\/admin\/subjects\/(\d+)\/(archive|restore)$/
+    );
 
-if (method === "POST" && subjectArchiveMatch) {
-  await ensureArchivedSubjectsTable(env);
+    if (method === "POST" && subjectArchiveMatch) {
+      await ensureArchivedSubjectsTable(env);
 
-  const subjectId = Number(subjectArchiveMatch[1]);
-  const action = subjectArchiveMatch[2];
+      const subjectId = Number(subjectArchiveMatch[1]);
+      const action = subjectArchiveMatch[2];
 
-  const subject = await env.DB.prepare(
-    "SELECT id FROM subjects WHERE id = ?"
-  ).bind(subjectId).first();
+      const subject = await env.DB.prepare(
+        "SELECT id FROM subjects WHERE id = ?"
+      ).bind(subjectId).first();
 
-  if (!subject) {
-    return reply(request, env, {
-      success: false,
-      error: "المادة غير موجودة."
-    }, 404);
-  }
+      if (!subject) {
+        return reply(request, env, {
+          success: false,
+          error: "المادة غير موجودة.",
+        }, 404);
+      }
 
-  if (action === "archive") {
-    await env.DB.prepare(`
-      INSERT OR IGNORE INTO archived_subjects (subject_id)
-      VALUES (?)
-    `).bind(subjectId).run();
-  } else {
-    await env.DB.prepare(
-      "DELETE FROM archived_subjects WHERE subject_id = ?"
-    ).bind(subjectId).run();
-  }
+      if (action === "archive") {
+        await env.DB.prepare(`
+          INSERT OR IGNORE INTO archived_subjects (subject_id)
+          VALUES (?)
+        `).bind(subjectId).run();
+      } else {
+        await env.DB.prepare(
+          "DELETE FROM archived_subjects WHERE subject_id = ?"
+        ).bind(subjectId).run();
+      }
 
-  return reply(request, env, {
-    success: true,
-    message: action === "archive"
-      ? "تمت أرشفة المادة بنجاح."
-      : "تمت استعادة المادة بنجاح."
-  });
-}
-    
+      return reply(request, env, {
+        success: true,
+        message: action === "archive"
+          ? "تمت أرشفة المادة بنجاح."
+          : "تمت استعادة المادة بنجاح.",
+      });
+    }
+
     // إضافة مادة دراسية
     if (
       method === "POST" &&
@@ -1180,6 +1208,7 @@ if (method === "POST" && subjectArchiveMatch) {
         message: "تم حذف المادة بنجاح.",
       });
     }
+
     // عرض جميع المحتويات للإدارة بما فيها المؤرشفة
     if (method === "GET" && path === "/api/admin/materials") {
       await ensureArchivedMaterialsTable(env);
@@ -1221,7 +1250,7 @@ if (method === "POST" && subjectArchiveMatch) {
       if (!material) {
         return reply(request, env, {
           success: false,
-          error: "الدرس غير موجود."
+          error: "الدرس غير موجود.",
         }, 404);
       }
 
@@ -1240,7 +1269,7 @@ if (method === "POST" && subjectArchiveMatch) {
         success: true,
         message: action === "archive"
           ? "تمت أرشفة الدرس بنجاح."
-          : "تمت استعادة الدرس بنجاح."
+          : "تمت استعادة الدرس بنجاح.",
       });
     }
 
@@ -1279,7 +1308,6 @@ if (method === "POST" && subjectArchiveMatch) {
         );
       }
 
-      // لا نحذف محتوى عليه طلبات حتى لا نكسر سجل المشتريات.
       const linkedOrders = await env.DB.prepare(
         "SELECT COUNT(*) AS n FROM orders WHERE material_id = ?"
       )
@@ -1329,8 +1357,7 @@ if (method === "POST" && subjectArchiveMatch) {
         message: "Material deleted.",
       });
     }
-
-    // رفع ملف PDF إلى التخزين الخاص
+        // رفع ملف PDF إلى التخزين الخاص
     if (method === "POST" && path === "/api/admin/upload") {
       try {
         const form = await request.formData();
@@ -1582,22 +1609,22 @@ if (method === "POST" && subjectArchiveMatch) {
   if (method === "GET" && path === "/api/subjects") {
     await ensureArchivedSubjectsTable(env);
 
-const rows = await env.DB.prepare(`
-  SELECT id, name, grade
-  FROM subjects
-  WHERE id NOT IN (
-    SELECT subject_id FROM archived_subjects
-  )
-  ORDER BY grade, name
-`).all();
-    
+    const rows = await env.DB.prepare(`
+      SELECT id, name, grade
+      FROM subjects
+      WHERE id NOT IN (
+        SELECT subject_id FROM archived_subjects
+      )
+      ORDER BY grade, name
+    `).all();
+
     return reply(request, env, {
       success: true,
       subjects: rows.results || [],
     });
   }
-  
-    // المحتوى الدراسي المتاح للطالب المسجل
+
+  // المحتوى الدراسي المتاح للطالب المسجل
   if (method === "GET" && path === "/api/materials") {
     const session = await studentSession(request, env);
 
@@ -1614,7 +1641,7 @@ const rows = await env.DB.prepare(`
     }
 
     await ensureArchivedSubjectsTable(env);
-await ensureArchivedMaterialsTable(env);
+    await ensureArchivedMaterialsTable(env);
 
     const subjectId = Number(url.searchParams.get("subject_id") || 0);
 
@@ -1626,11 +1653,11 @@ await ensureArchivedMaterialsTable(env);
            WHERE ss.student_id = ?
              AND m.subject_id = ?
              AND m.subject_id NOT IN (
-  SELECT subject_id FROM archived_subjects
-)
-AND m.id NOT IN (
-  SELECT material_id FROM archived_materials
-)
+               SELECT subject_id FROM archived_subjects
+             )
+             AND m.id NOT IN (
+               SELECT material_id FROM archived_materials
+             )
            ORDER BY m.id DESC`
         )
           .bind(session.student_id, subjectId)
@@ -1641,11 +1668,11 @@ AND m.id NOT IN (
            JOIN student_subjects ss ON ss.subject_id = m.subject_id
            WHERE ss.student_id = ?
              AND m.subject_id NOT IN (
-  SELECT subject_id FROM archived_subjects
-)
-AND m.id NOT IN (
-  SELECT material_id FROM archived_materials
-)
+               SELECT subject_id FROM archived_subjects
+             )
+             AND m.id NOT IN (
+               SELECT material_id FROM archived_materials
+             )
            ORDER BY m.id DESC`
         )
           .bind(session.student_id)
@@ -1745,16 +1772,16 @@ AND m.id NOT IN (
 
     await ensureArchivedSubjectsTable(env);
 
-const validSubjects = await env.DB.prepare(
-  `SELECT id FROM subjects
-   WHERE grade = ?
-   AND id IN (${placeholders})
-   AND id NOT IN (
-     SELECT subject_id FROM archived_subjects
-   )`
-)
-  .bind(grade, ...subjectIds)
-  .all();
+    const validSubjects = await env.DB.prepare(
+      `SELECT id FROM subjects
+       WHERE grade = ?
+         AND id IN (${placeholders})
+         AND id NOT IN (
+           SELECT subject_id FROM archived_subjects
+         )`
+    )
+      .bind(grade, ...subjectIds)
+      .all();
 
     if ((validSubjects.results || []).length !== subjectIds.length) {
       return reply(
@@ -1967,7 +1994,6 @@ const validSubjects = await env.DB.prepare(
           .bind(deviceName, existingDevice.id)
           .run();
       } else if (!existingDevice) {
-        // إدراج مشروط ذري لتجنب طلبين متطابقين عند طلبات متزامنة.
         await env.DB.prepare(
           `INSERT INTO student_devices
            (student_id, device_token_hash, device_name, status)
@@ -2020,9 +2046,8 @@ const validSubjects = await env.DB.prepare(
       token,
       expiresInDays: SESSION_DAYS,
     });
-  }
-
-  // مسارات الطالب المحمية بتسجيل الدخول
+          }
+    // مسارات الطالب المحمية بتسجيل الدخول
   if (path.startsWith("/api/student/")) {
     const session = await studentSession(request, env);
 
@@ -2038,194 +2063,182 @@ const validSubjects = await env.DB.prepare(
       );
     }
 
-    // إنشاء جدول صور الطلاب عند الحاجة
-async function ensureStudentPhotosTable() {
-  await env.DB.prepare(`
-    CREATE TABLE IF NOT EXISTS student_photos (
-      student_id INTEGER PRIMARY KEY,
-      file_key TEXT NOT NULL,
-      content_type TEXT NOT NULL,
-      updated_at TEXT DEFAULT CURRENT_TIMESTAMP
-    )
-  `).run();
-}
+    // عرض صورة الطالب المحفوظة على حسابه
+    if (method === "GET" && path === "/api/student/photo") {
+      await ensureStudentPhotosTable(env);
 
-// عرض صورة الطالب المحفوظة على حسابه
-if (method === "GET" && path === "/api/student/photo") {
-  await ensureStudentPhotosTable();
+      const photo = await env.DB.prepare(
+        `SELECT file_key, content_type
+         FROM student_photos
+         WHERE student_id = ?`
+      ).bind(session.student_id).first();
 
-  const photo = await env.DB.prepare(
-    `SELECT file_key, content_type
-     FROM student_photos
-     WHERE student_id = ?`
-  ).bind(session.student_id).first();
+      if (!photo) {
+        return reply(request, env, {
+          success: true,
+          photo_url: null,
+        });
+      }
 
-  if (!photo) {
-    return reply(request, env, {
-      success: true,
-      photo_url: null,
-    });
-  }
+      const expectedPrefix = `student-photos/${session.student_id}/`;
 
-  const expectedPrefix = `student-photos/${session.student_id}/`;
+      if (
+        !photo.file_key ||
+        !photo.file_key.startsWith(expectedPrefix) ||
+        photo.file_key.includes("..")
+      ) {
+        return reply(request, env, {
+          success: false,
+          error: "بيانات الصورة غير صالحة.",
+        }, 400);
+      }
 
-  if (
-    !photo.file_key ||
-    !photo.file_key.startsWith(expectedPrefix) ||
-    photo.file_key.includes("..")
-  ) {
-    return reply(request, env, {
-      success: false,
-      error: "بيانات الصورة غير صالحة.",
-    }, 400);
-  }
+      const imageResponse = await fetch(
+        githubContentsUrl(photo.file_key),
+        {
+          headers: githubHeaders(env, "application/vnd.github.raw"),
+        }
+      );
 
-  const imageResponse = await fetch(
-    githubContentsUrl(photo.file_key),
-    {
-      headers: githubHeaders(env, "application/vnd.github.raw"),
+      if (!imageResponse.ok) {
+        console.error("Student photo fetch failed:", imageResponse.status);
+
+        return reply(request, env, {
+          success: false,
+          error: "تعذر تحميل صورة الطالب.",
+        }, 502);
+      }
+
+      const imageBytes = new Uint8Array(await imageResponse.arrayBuffer());
+
+      return reply(request, env, {
+        success: true,
+        photo_url:
+          `data:${photo.content_type};base64,${bytesToBase64(imageBytes)}`,
+      });
     }
-  );
 
-  if (!imageResponse.ok) {
-    console.error("Student photo fetch failed:", imageResponse.status);
+    // رفع صورة جديدة وحفظها على حساب الطالب
+    if (method === "POST" && path === "/api/student/photo") {
+      await ensureStudentPhotosTable(env);
 
-    return reply(request, env, {
-      success: false,
-      error: "تعذر تحميل صورة الطالب.",
-    }, 502);
-  }
+      let form;
 
-  const imageBytes = new Uint8Array(await imageResponse.arrayBuffer());
-
-  return reply(request, env, {
-    success: true,
-    photo_url:
-      `data:${photo.content_type};base64,${bytesToBase64(imageBytes)}`,
-  });
-}
-
-// رفع صورة جديدة وحفظها على حساب الطالب
-if (method === "POST" && path === "/api/student/photo") {
-  await ensureStudentPhotosTable();
-
-  let form;
-
-  try {
-    form = await request.formData();
-  } catch {
-    return reply(request, env, {
-      success: false,
-      error: "تعذر قراءة ملف الصورة.",
-    }, 400);
-  }
-
-  const file = form.get("photo");
-
-  if (!file || typeof file.arrayBuffer !== "function") {
-    return reply(request, env, {
-      success: false,
-      error: "لم يتم اختيار صورة.",
-    }, 400);
-  }
-
-  if (file.size < 1 || file.size > 5 * 1024 * 1024) {
-    return reply(request, env, {
-      success: false,
-      error: "حجم الصورة يجب ألا يتجاوز 5 ميجابايت.",
-    }, 400);
-  }
-
-  const contentType = file.type;
-
-  if (!["image/jpeg", "image/png", "image/webp"].includes(contentType)) {
-    return reply(request, env, {
-      success: false,
-      error: "الصيغ المسموحة: JPG وPNG وWEBP فقط.",
-    }, 400);
-  }
-
-  const fileBytes = new Uint8Array(await file.arrayBuffer());
-
-  if (!validStudentPhoto(fileBytes, contentType)) {
-    return reply(request, env, {
-      success: false,
-      error: "ملف الصورة غير صالح.",
-    }, 400);
-  }
-
-  const oldPhoto = await env.DB.prepare(
-    `SELECT file_key
-     FROM student_photos
-     WHERE student_id = ?`
-  ).bind(session.student_id).first();
-
-  let newFileKey;
-
-  try {
-    newFileKey = await uploadStudentPhotoToGitHub(
-      env,
-      fileBytes,
-      contentType,
-      session.student_id
-    );
-
-    await env.DB.prepare(`
-      INSERT INTO student_photos
-        (student_id, file_key, content_type, updated_at)
-      VALUES (?, ?, ?, CURRENT_TIMESTAMP)
-      ON CONFLICT(student_id) DO UPDATE SET
-        file_key = excluded.file_key,
-        content_type = excluded.content_type,
-        updated_at = CURRENT_TIMESTAMP
-    `).bind(
-      session.student_id,
-      newFileKey,
-      contentType
-    ).run();
-
-  } catch (error) {
-    if (newFileKey) {
       try {
-        await deleteStudentPhotoFromGitHub(
+        form = await request.formData();
+      } catch {
+        return reply(request, env, {
+          success: false,
+          error: "تعذر قراءة ملف الصورة.",
+        }, 400);
+      }
+
+      const file = form.get("photo");
+
+      if (!file || typeof file.arrayBuffer !== "function") {
+        return reply(request, env, {
+          success: false,
+          error: "لم يتم اختيار صورة.",
+        }, 400);
+      }
+
+      if (file.size < 1 || file.size > 5 * 1024 * 1024) {
+        return reply(request, env, {
+          success: false,
+          error: "حجم الصورة يجب ألا يتجاوز 5 ميجابايت.",
+        }, 400);
+      }
+
+      const contentType = file.type;
+
+      if (!["image/jpeg", "image/png", "image/webp"].includes(contentType)) {
+        return reply(request, env, {
+          success: false,
+          error: "الصيغ المسموحة: JPG وPNG وWEBP فقط.",
+        }, 400);
+      }
+
+      const fileBytes = new Uint8Array(await file.arrayBuffer());
+
+      if (!validStudentPhoto(fileBytes, contentType)) {
+        return reply(request, env, {
+          success: false,
+          error: "ملف الصورة غير صالح.",
+        }, 400);
+      }
+
+      const oldPhoto = await env.DB.prepare(
+        `SELECT file_key
+         FROM student_photos
+         WHERE student_id = ?`
+      ).bind(session.student_id).first();
+
+      let newFileKey;
+
+      try {
+        newFileKey = await uploadStudentPhotoToGitHub(
           env,
-          newFileKey,
+          fileBytes,
+          contentType,
           session.student_id
         );
-      } catch (cleanupError) {
-        console.error("New photo cleanup failed:", cleanupError);
+
+        await env.DB.prepare(`
+          INSERT INTO student_photos
+            (student_id, file_key, content_type, updated_at)
+          VALUES (?, ?, ?, CURRENT_TIMESTAMP)
+          ON CONFLICT(student_id) DO UPDATE SET
+            file_key = excluded.file_key,
+            content_type = excluded.content_type,
+            updated_at = CURRENT_TIMESTAMP
+        `).bind(
+          session.student_id,
+          newFileKey,
+          contentType
+        ).run();
+
+      } catch (error) {
+        if (newFileKey) {
+          try {
+            await deleteStudentPhotoFromGitHub(
+              env,
+              newFileKey,
+              session.student_id
+            );
+          } catch (cleanupError) {
+            console.error("New photo cleanup failed:", cleanupError);
+          }
+        }
+
+        console.error("Student photo save failed:", error);
+
+        return reply(request, env, {
+          success: false,
+          error: "تعذر حفظ الصورة. حاول مرة أخرى.",
+        }, 500);
       }
+
+      if (oldPhoto?.file_key && oldPhoto.file_key !== newFileKey) {
+        try {
+          await deleteStudentPhotoFromGitHub(
+            env,
+            oldPhoto.file_key,
+            session.student_id
+          );
+        } catch (error) {
+          console.error("Old photo cleanup failed:", error);
+        }
+      }
+
+      return reply(request, env, {
+        success: true,
+        photo_url:
+          `data:${contentType};base64,${bytesToBase64(fileBytes)}`,
+        message: "تم حفظ الصورة على حسابك.",
+      });
     }
 
-    console.error("Student photo save failed:", error);
-
-    return reply(request, env, {
-      success: false,
-      error: "تعذر حفظ الصورة. حاول مرة أخرى.",
-    }, 500);
-  }
-
-  if (oldPhoto?.file_key && oldPhoto.file_key !== newFileKey) {
-    try {
-      await deleteStudentPhotoFromGitHub(
-        env,
-        oldPhoto.file_key,
-        session.student_id
-      );
-    } catch (error) {
-      console.error("Old photo cleanup failed:", error);
-    }
-  }
-
-  return reply(request, env, {
-    success: true,
-    photo_url:
-      `data:${contentType};base64,${bytesToBase64(fileBytes)}`,
-    message: "تم حفظ الصورة على حسابك.",
-  });
-}
-
-    // عرض ملف PDF داخل المنصة بعد التحقق من صلاحية الطالب
+    // عرض ملف PDF بعد التحقق من صلاحية الطالب وعدم أرشفة المحتوى
     const materialViewMatch = path.match(
       /^\/api\/student\/materials\/(\d+)\/view$/
     );
@@ -2233,11 +2246,21 @@ if (method === "POST" && path === "/api/student/photo") {
     if (method === "GET" && materialViewMatch) {
       const materialId = Number(materialViewMatch[1]);
 
+      await ensureArchivedSubjectsTable(env);
+      await ensureArchivedMaterialsTable(env);
+
       const material = await env.DB.prepare(
         `SELECT m.id, m.title, m.is_free, m.file_key
          FROM materials m
          JOIN student_subjects ss ON ss.subject_id = m.subject_id
-         WHERE m.id = ? AND ss.student_id = ?`
+         WHERE m.id = ?
+           AND ss.student_id = ?
+           AND m.subject_id NOT IN (
+             SELECT subject_id FROM archived_subjects
+           )
+           AND m.id NOT IN (
+             SELECT material_id FROM archived_materials
+           )`
       )
         .bind(materialId, session.student_id)
         .first();
@@ -2353,6 +2376,8 @@ if (method === "POST" && path === "/api/student/photo") {
 
     // بيانات الطالب ومواده
     if (method === "GET" && path === "/api/student/me") {
+      await ensureArchivedSubjectsTable(env);
+
       const student = await env.DB.prepare(
         `SELECT id, name, phone, parent_phone,
                 grade, school, governorate, created_at
@@ -2367,6 +2392,9 @@ if (method === "POST" && path === "/api/student/photo") {
          FROM student_subjects ss
          JOIN subjects sub ON sub.id = ss.subject_id
          WHERE ss.student_id = ?
+           AND sub.id NOT IN (
+             SELECT subject_id FROM archived_subjects
+           )
          ORDER BY sub.name`
       )
         .bind(session.student_id)
@@ -2379,93 +2407,91 @@ if (method === "POST" && path === "/api/student/photo") {
       });
     }
 
-// طلبات الطالب ومشترياته مع تحديد العناصر المخفية
-if (method === "GET" && path === "/api/student/purchases") {
-  const rows = await env.DB.prepare(
-    `SELECT o.id AS order_id, o.status, o.created_at,
-            m.id AS material_id, m.title, m.type,
-            m.price,
-            sub.name AS subject_name,
-            CASE WHEN h.order_id IS NULL THEN 0 ELSE 1 END AS is_hidden
-     FROM orders o
-     JOIN materials m ON m.id = o.material_id
-     JOIN subjects sub ON sub.id = m.subject_id
-     LEFT JOIN student_hidden_purchases h
-       ON h.order_id = o.id
-      AND h.student_id = o.student_id
-     WHERE o.student_id = ?
-     ORDER BY o.id DESC`
-  )
-    .bind(session.student_id)
-    .all();
+    // طلبات الطالب ومشترياته مع تحديد العناصر المخفية
+    if (method === "GET" && path === "/api/student/purchases") {
+      const rows = await env.DB.prepare(
+        `SELECT o.id AS order_id, o.status, o.created_at,
+                m.id AS material_id, m.title, m.type,
+                m.price,
+                sub.name AS subject_name,
+                CASE WHEN h.order_id IS NULL THEN 0 ELSE 1 END AS is_hidden
+         FROM orders o
+         JOIN materials m ON m.id = o.material_id
+         JOIN subjects sub ON sub.id = m.subject_id
+         LEFT JOIN student_hidden_purchases h
+           ON h.order_id = o.id
+          AND h.student_id = o.student_id
+         WHERE o.student_id = ?
+         ORDER BY o.id DESC`
+      )
+        .bind(session.student_id)
+        .all();
 
-  return reply(request, env, {
-    success: true,
-    purchases: rows.results || [],
-  });
-}
+      return reply(request, env, {
+        success: true,
+        purchases: rows.results || [],
+      });
+    }
 
-// حذف الطلب المرفوض أو إخفاء عملية الشراء
-const studentPurchaseDelete = path.match(
-  /^\/api\/student\/purchases\/(\d+)$/
-);
+    // حذف الطلب المرفوض أو إخفاء عملية الشراء
+    const studentPurchaseDelete = path.match(
+      /^\/api\/student\/purchases\/(\d+)$/
+    );
 
-if (method === "DELETE" && studentPurchaseDelete) {
-  const orderId = Number(studentPurchaseDelete[1]);
+    if (method === "DELETE" && studentPurchaseDelete) {
+      const orderId = Number(studentPurchaseDelete[1]);
 
-  const order = await env.DB.prepare(
-    `SELECT id, status
-     FROM orders
-     WHERE id = ? AND student_id = ?`
-  )
-    .bind(orderId, session.student_id)
-    .first();
+      const order = await env.DB.prepare(
+        `SELECT id, status
+         FROM orders
+         WHERE id = ? AND student_id = ?`
+      )
+        .bind(orderId, session.student_id)
+        .first();
 
-  if (!order) {
-    return reply(request, env, {
-      success: false,
-      error: "الطلب غير موجود.",
-    }, 404);
-  }
+      if (!order) {
+        return reply(request, env, {
+          success: false,
+          error: "الطلب غير موجود.",
+        }, 404);
+      }
 
-  // الطلب المرفوض: حذف سجل الطلب نفسه
-  if (order.status === "rejected") {
-    await env.DB.prepare(
-      `DELETE FROM orders
-       WHERE id = ? AND student_id = ? AND status = 'rejected'`
-    )
-      .bind(orderId, session.student_id)
-      .run();
+      if (order.status === "rejected") {
+        await env.DB.prepare(
+          `DELETE FROM orders
+           WHERE id = ? AND student_id = ? AND status = 'rejected'`
+        )
+          .bind(orderId, session.student_id)
+          .run();
 
-    return reply(request, env, {
-      success: true,
-      action: "deleted",
-      message: "تم حذف الطلب المرفوض.",
-    });
-  }
+        return reply(request, env, {
+          success: true,
+          action: "deleted",
+          message: "تم حذف الطلب المرفوض.",
+        });
+      }
 
-  // الطلب المعتمد أو المكتمل: إخفاؤه فقط مع الاحتفاظ بحق الشراء
-  if (order.status === "approved" || order.status === "completed") {
-    await env.DB.prepare(
-      `INSERT OR IGNORE INTO student_hidden_purchases
-       (student_id, order_id)
-       VALUES (?, ?)`
-    )
-      .bind(session.student_id, orderId)
-      .run();
+      if (order.status === "approved" || order.status === "completed") {
+        await env.DB.prepare(
+          `INSERT OR IGNORE INTO student_hidden_purchases
+           (student_id, order_id)
+           VALUES (?, ?)`
+        )
+          .bind(session.student_id, orderId)
+          .run();
 
-    return reply(request, env, {
-      success: true,
-      action: "hidden",
-      message: "تمت إزالة المشتراة من القائمة.",
-    });
-  }
+        return reply(request, env, {
+          success: true,
+          action: "hidden",
+          message: "تمت إزالة المشتراة من القائمة.",
+        });
+      }
 
-  return reply(request, env, {
-    success: false,
-    error: "لا يمكن حذف طلب قيد المراجعة.",
-  }, 409);
-}
+      return reply(request, env, {
+        success: false,
+        error: "لا يمكن حذف طلب قيد المراجعة.",
+      }, 409);
+    }
 
     // تسجيل خروج الطالب
     if (method === "POST" && path === "/api/student/logout") {
@@ -2522,7 +2548,7 @@ if (method === "DELETE" && studentPurchaseDelete) {
       );
     }
 
-        await ensureArchivedSubjectsTable(env);
+    await ensureArchivedSubjectsTable(env);
     await ensureArchivedMaterialsTable(env);
 
     const material = await env.DB.prepare(
@@ -2593,7 +2619,6 @@ if (method === "DELETE" && studentPurchaseDelete) {
       );
     }
 
-    // إدراج ذري مشروط: حتى لو وصل طلبان متزامنان لن يتكرر الطلب.
     const result = await env.DB.prepare(
       `INSERT INTO orders (student_id, material_id, status)
        SELECT ?, ?, 'pending'
@@ -2662,4 +2687,3 @@ export default {
     }
   },
 };
-      
