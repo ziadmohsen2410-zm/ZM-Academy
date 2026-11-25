@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
@@ -18,14 +19,17 @@ main{max-width:1180px;margin:auto;padding:24px 18px 60px}
 .card{background:linear-gradient(145deg,rgba(13,21,47,.96),rgba(7,12,30,.98));border:1px solid rgba(102,220,255,.20);border-radius:18px;padding:21px;margin-bottom:18px;box-shadow:var(--glow)}
 h2{font-size:18px;margin:0 0 15px;color:#b9a5ff;display:flex;align-items:center;gap:10px}
 h2:before{content:"";width:4px;height:19px;border-radius:8px;background:linear-gradient(#4cecff,#a77bff)}
-input,select{width:100%;padding:13px 14px;margin:7px 0 14px;border:1px solid rgba(102,220,255,.25);border-radius:11px;background:rgba(3,8,23,.95);color:#f3f7ff;font-size:15px;outline:none}
-input:focus,select:focus{border-color:var(--cyan);box-shadow:0 0 0 3px rgba(76,236,255,.12)}
-input::placeholder{color:#7185ac}
-label{font-size:13px;color:#b7c9e8}
-button{border:1px solid rgba(154,238,255,.6);border-radius:11px;padding:11px 16px;background:linear-gradient(120deg,#63edff,#817bff);color:#071020;font-weight:800;font-size:14px;cursor:pointer;margin:4px}
+h3{font-size:15px;color:#8ceeff;margin:20px 0 10px}
+input,select,textarea{width:100%;padding:13px 14px;margin:7px 0 14px;border:1px solid rgba(102,220,255,.25);border-radius:11px;background:rgba(3,8,23,.95);color:#f3f7ff;font-size:15px;outline:none;font-family:inherit}
+textarea{min-height:95px;resize:vertical;line-height:1.8}
+input:focus,select:focus,textarea:focus{border-color:var(--cyan);box-shadow:0 0 0 3px rgba(76,236,255,.12)}
+input::placeholder,textarea::placeholder{color:#7185ac}
+label{font-size:13px;color:#b7c9e8;display:block}
+button{border:1px solid rgba(154,238,255,.6);border-radius:11px;padding:11px 16px;background:linear-gradient(120deg,#63edff,#817bff);color:#071020;font-weight:800;font-size:14px;cursor:pointer;margin:4px;font-family:inherit}
 button:hover{filter:brightness(1.1)}
 button.secondary{background:linear-gradient(120deg,#24366d,#35265f);border-color:rgba(167,123,255,.42);color:#e6eaff}
 button.danger{background:linear-gradient(120deg,#a52d67,#672b75);border-color:rgba(255,85,127,.5);color:#fff}
+button.success{background:linear-gradient(120deg,#1b987d,#2676a5);color:#fff;border-color:#45f0c0}
 button:disabled{opacity:.45;cursor:not-allowed}
 .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
 .row>*{flex:1}
@@ -44,7 +48,25 @@ small,.muted{color:var(--muted)}
 #loginSection{max-width:570px;margin:8vh auto 30px;padding:28px}
 #loginSection button{width:100%;margin:8px 0 0;padding:14px}
 .hint{font-size:12px;line-height:1.8;color:var(--muted);margin:0 0 12px}
-@media(max-width:650px){header{padding:18px 14px}main{padding:15px 11px 38px}.card{padding:16px 13px;border-radius:15px}.row{gap:5px}.row button{min-width:0;padding:10px 8px;font-size:12px}.item{padding:12px}#loginSection{margin:5vh auto 20px;padding:20px 15px}}
+.editor-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.editor-field{min-width:0}
+.editor-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:15px}
+.editor-actions button{flex:1;min-width:130px}
+.editor-note{padding:12px;border-radius:12px;background:rgba(76,236,255,.07);border:1px solid rgba(76,236,255,.2);line-height:1.8;color:#c6eaff;font-size:13px;margin:12px 0}
+.section-toggles{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.section-toggles .check{margin:0}
+.preview-image{width:100%;max-height:180px;object-fit:cover;border-radius:12px;border:1px solid var(--line);display:none;margin:8px 0}
+@media(max-width:650px){
+ header{padding:18px 14px}
+ main{padding:15px 11px 38px}
+ .card{padding:16px 13px;border-radius:15px}
+ .row{gap:5px}
+ .row button{min-width:0;padding:10px 8px;font-size:12px}
+ .item{padding:12px}
+ #loginSection{margin:5vh auto 20px;padding:20px 15px}
+ .editor-grid,.section-toggles{grid-template-columns:1fr}
+ .editor-actions button{min-width:100%}
+}
 @media(prefers-reduced-motion:reduce){*,*:before,*:after{scroll-behavior:auto!important;transition:none!important;animation:none!important}}
 </style>
 </head>
@@ -55,6 +77,7 @@ small,.muted{color:var(--muted)}
     <button id="logoutBtn" class="secondary hidden" onclick="logout()">تسجيل الخروج</button>
   </div>
 </header>
+
 <main>
   <div id="message" role="status" aria-live="polite"></div>
 
@@ -68,6 +91,107 @@ small,.muted{color:var(--muted)}
   </section>
 
   <section id="dashboard" class="hidden">
+
+    <!-- إدارة الصفحة الرئيسية -->
+    <div class="card" id="homepageEditor">
+      <div class="topline">
+        <h2>إدارة الصفحة الرئيسية</h2>
+        <span class="status" id="homepageStatus">لم يتم التحميل</span>
+      </div>
+
+      <p class="hint">من هنا تتحكم في المحتوى الذي يظهر للزوار. احفظ المسودة أولًا، ثم انشرها عندما تنتهي من مراجعتها.</p>
+
+      <div class="editor-note">
+        التعديلات المحفوظة كمسودة لا تظهر للزوار إلا بعد الضغط على «نشر الصفحة». لا تستخدم روابط صور غير موثوقة.
+      </div>
+
+      <h3>هوية الأكاديمية</h3>
+      <div class="editor-grid">
+        <div class="editor-field">
+          <label for="hpBrandName">اسم العلامة التجارية</label>
+          <input id="hpBrandName" maxlength="80" value="ZM Academy">
+        </div>
+        <div class="editor-field">
+          <label for="hpTagline">الشعار النصي</label>
+          <input id="hpTagline" maxlength="140" placeholder="التعلم بذكاء، والتفكير بلا حدود">
+        </div>
+      </div>
+
+      <h3>القسم الرئيسي Hero</h3>
+      <label for="hpEyebrow">النص الصغير أعلى العنوان</label>
+      <input id="hpEyebrow" maxlength="100" placeholder="WELCOME TO ZM ACADEMY">
+
+      <label for="hpTitle">العنوان الرئيسي</label>
+      <input id="hpTitle" maxlength="180" placeholder="معًا نحو تفكير أعمق">
+
+      <label for="hpHighlight">الكلمة أو العبارة المميزة</label>
+      <input id="hpHighlight" maxlength="100" placeholder="ومستقبل أفضل">
+
+      <label for="hpDescription">الوصف الرئيسي</label>
+      <textarea id="hpDescription" maxlength="1200" placeholder="اكتب وصف الأكاديمية الذي يظهر في الصفحة الرئيسية..."></textarea>
+
+      <div class="editor-grid">
+        <div class="editor-field">
+          <label for="hpPrimaryText">نص الزر الأول</label>
+          <input id="hpPrimaryText" maxlength="70" placeholder="ابدأ رحلتك التعليمية">
+        </div>
+        <div class="editor-field">
+          <label for="hpPrimaryUrl">رابط الزر الأول</label>
+          <input id="hpPrimaryUrl" maxlength="500" placeholder="register.html">
+        </div>
+        <div class="editor-field">
+          <label for="hpSecondaryText">نص الزر الثاني</label>
+          <input id="hpSecondaryText" maxlength="70" placeholder="تسجيل الدخول">
+        </div>
+        <div class="editor-field">
+          <label for="hpSecondaryUrl">رابط الزر الثاني</label>
+          <input id="hpSecondaryUrl" maxlength="500" placeholder="login.html">
+        </div>
+      </div>
+
+      <label for="hpHeroImage">رابط صورة القسم الرئيسي (اختياري)</label>
+      <input id="hpHeroImage" type="url" maxlength="1000" placeholder="https://example.com/image.webp" oninput="previewHomepageImage()">
+      <img id="hpImagePreview" class="preview-image" alt="معاينة صورة الصفحة الرئيسية">
+
+      <h3>الإعلان الرئيسي</h3>
+      <label class="check"><input id="hpAnnouncementEnabled" type="checkbox"> إظهار الإعلان</label>
+      <label for="hpAnnouncementText">نص الإعلان</label>
+      <textarea id="hpAnnouncementText" maxlength="500" placeholder="اكتب إعلانًا قصيرًا للطلاب..."></textarea>
+      <div class="editor-grid">
+        <div class="editor-field">
+          <label for="hpAnnouncementButton">نص رابط الإعلان</label>
+          <input id="hpAnnouncementButton" maxlength="70" placeholder="اعرف المزيد">
+        </div>
+        <div class="editor-field">
+          <label for="hpAnnouncementUrl">رابط الإعلان</label>
+          <input id="hpAnnouncementUrl" maxlength="500" placeholder="#subjects">
+        </div>
+      </div>
+
+      <h3>عن الأكاديمية</h3>
+      <label class="check"><input id="hpAboutEnabled" type="checkbox" checked> إظهار قسم عن الأكاديمية</label>
+      <label for="hpAboutTitle">عنوان القسم</label>
+      <input id="hpAboutTitle" maxlength="160" placeholder="مساحة تعليمية تصنع فرقًا">
+      <label for="hpAboutDescription">وصف الأكاديمية</label>
+      <textarea id="hpAboutDescription" maxlength="1500" placeholder="اكتب تعريفًا مختصرًا بالأكاديمية ورسالتها..."></textarea>
+
+      <h3>التحكم في ظهور الأقسام</h3>
+      <div class="section-toggles">
+        <label class="check"><input id="hpShowSubjects" type="checkbox" checked> المواد الدراسية</label>
+        <label class="check"><input id="hpShowCurriculum" type="checkbox" checked> المنهج</label>
+        <label class="check"><input id="hpShowLibrary" type="checkbox" checked> المكتبة</label>
+        <label class="check"><input id="hpShowAbout" type="checkbox" checked> عن الأكاديمية</label>
+        <label class="check"><input id="hpShowJoin" type="checkbox" checked> الانضمام للأكاديمية</label>
+      </div>
+
+      <div class="editor-actions">
+        <button class="secondary" onclick="loadHomepageSettings()">إعادة تحميل الإعدادات</button>
+        <button onclick="saveHomepageDraft()">حفظ المسودة</button>
+        <button class="success" onclick="publishHomepage()">نشر الصفحة الرئيسية</button>
+      </div>
+      <p class="hint" id="homepageUpdatedAt"></p>
+    </div>
+
     <div class="card">
       <div class="topline"><h2>إدارة المواد الدراسية</h2><button onclick="loadSubjects()">تحديث</button></div>
       <div id="subjectsList"><p class="muted">جارٍ تحميل المواد...</p></div>
@@ -149,6 +273,8 @@ let token=sessionStorage.getItem("zm_admin_token")||"";
 let subjects=[];
 let isSavingMaterial=false;
 let isSavingSubject=false;
+let isSavingHomepage=false;
+let homepageDraft={};
 
 function el(id){return document.getElementById(id)}
 function message(text,type="ok"){
@@ -183,6 +309,7 @@ async function request(path,method="GET",body=null){
   }
   return data;
 }
+
 function showDashboard(){
   el("loginSection").classList.add("hidden");
   el("dashboard").classList.remove("hidden");
@@ -195,7 +322,10 @@ function showLogin(){
 }
 async function loadDashboardData(){
   await loadSubjects();
-  await Promise.allSettled([loadStudents(),loadOrders(),loadDeviceRequests(),loadPasswordResetRequests()]);
+  await Promise.allSettled([
+    loadStudents(),loadOrders(),loadDeviceRequests(),
+    loadPasswordResetRequests(),loadHomepageSettings()
+  ]);
 }
 async function login(){
   const username=el("username").value.trim();
@@ -224,6 +354,208 @@ async function logout(){
   try{await request("/api/admin/logout","POST",{})}catch(e){}
   token="";sessionStorage.removeItem("zm_admin_token");
   showLogin();message("تم تسجيل الخروج");
+}
+
+/* أدوات إدارة الصفحة الرئيسية */
+function homepageDefault(){
+  return {
+    brandName:"ZM Academy",
+    tagline:"",
+    hero:{
+      eyebrow:"",
+      title:"معًا نحو",
+      highlight:"تفكير أعمق ومستقبل أفضل",
+      description:"",
+      primaryText:"تسجيل طالب جديد",
+      primaryUrl:"register.html",
+      secondaryText:"تسجيل الدخول",
+      secondaryUrl:"login.html",
+      image:""
+    },
+    announcement:{
+      enabled:false,
+      text:"",
+      buttonText:"",
+      url:""
+    },
+    about:{
+      enabled:true,
+      title:"أهلًا بك في أكاديميتك",
+      description:"أكاديمية تعليمية تهدف إلى تقديم تجربة تعلم واضحة ومنظمة."
+    },
+    sections:{
+      subjects:true,
+      curriculum:true,
+      library:true,
+      about:true,
+      join:true
+    }
+  };
+}
+function setField(id,value){
+  const node=el(id);
+  if(node)node.value=value??"";
+}
+function setCheck(id,value){
+  const node=el(id);
+  if(node)node.checked=Boolean(value);
+}
+function readHomepageForm(){
+  return {
+    brandName:el("hpBrandName").value.trim(),
+    tagline:el("hpTagline").value.trim(),
+    hero:{
+      eyebrow:el("hpEyebrow").value.trim(),
+      title:el("hpTitle").value.trim(),
+      highlight:el("hpHighlight").value.trim(),
+      description:el("hpDescription").value.trim(),
+      primaryText:el("hpPrimaryText").value.trim(),
+      primaryUrl:el("hpPrimaryUrl").value.trim(),
+      secondaryText:el("hpSecondaryText").value.trim(),
+      secondaryUrl:el("hpSecondaryUrl").value.trim(),
+      image:el("hpHeroImage").value.trim()
+    },
+    announcement:{
+      enabled:el("hpAnnouncementEnabled").checked,
+      text:el("hpAnnouncementText").value.trim(),
+      buttonText:el("hpAnnouncementButton").value.trim(),
+      url:el("hpAnnouncementUrl").value.trim()
+    },
+    about:{
+      enabled:el("hpAboutEnabled").checked,
+      title:el("hpAboutTitle").value.trim(),
+      description:el("hpAboutDescription").value.trim()
+    },
+    sections:{
+      subjects:el("hpShowSubjects").checked,
+      curriculum:el("hpShowCurriculum").checked,
+      library:el("hpShowLibrary").checked,
+      about:el("hpShowAbout").checked,
+      join:el("hpShowJoin").checked
+    }
+  };
+}
+function fillHomepageForm(settings){
+  const d=homepageDefault();
+  const s=settings&&typeof settings==="object"?settings:{};
+  const hero={...d.hero,...(s.hero||{})};
+  const announcement={...d.announcement,...(s.announcement||{})};
+  const about={...d.about,...(s.about||{})};
+  const sections={...d.sections,...(s.sections||{})};
+
+  setField("hpBrandName",s.brandName??d.brandName);
+  setField("hpTagline",s.tagline??d.tagline);
+  setField("hpEyebrow",hero.eyebrow);
+  setField("hpTitle",hero.title);
+  setField("hpHighlight",hero.highlight);
+  setField("hpDescription",hero.description);
+  setField("hpPrimaryText",hero.primaryText);
+  setField("hpPrimaryUrl",hero.primaryUrl);
+  setField("hpSecondaryText",hero.secondaryText);
+  setField("hpSecondaryUrl",hero.secondaryUrl);
+  setField("hpHeroImage",hero.image);
+  setCheck("hpAnnouncementEnabled",announcement.enabled);
+  setField("hpAnnouncementText",announcement.text);
+  setField("hpAnnouncementButton",announcement.buttonText);
+  setField("hpAnnouncementUrl",announcement.url);
+  setCheck("hpAboutEnabled",about.enabled);
+  setField("hpAboutTitle",about.title);
+  setField("hpAboutDescription",about.description);
+  setCheck("hpShowSubjects",sections.subjects);
+  setCheck("hpShowCurriculum",sections.curriculum);
+  setCheck("hpShowLibrary",sections.library);
+  setCheck("hpShowAbout",sections.about);
+  setCheck("hpShowJoin",sections.join);
+  previewHomepageImage();
+}
+async function loadHomepageSettings(){
+  const status=el("homepageStatus");
+  status.textContent="جارٍ التحميل...";
+  try{
+    const data=await request("/api/admin/homepage");
+    homepageDraft=data.draft&&typeof data.draft==="object"?data.draft:homepageDefault();
+    fillHomepageForm(homepageDraft);
+    status.textContent=data.status==="published"?"النسخة المنشورة":"توجد مسودة";
+    el("homepageUpdatedAt").textContent=data.updated_at?"آخر تحديث: "+data.updated_at:"";
+  }catch(e){
+    status.textContent="تعذر التحميل";
+    message("تعذر تحميل إعدادات الصفحة الرئيسية: "+e.message,"err");
+  }
+}
+function validateHomepageSettings(settings){
+  if(!settings.brandName)return "اكتب اسم العلامة التجارية.";
+  if(!settings.hero.title)return "اكتب العنوان الرئيسي.";
+  if(settings.hero.image){
+    try{
+      const u=new URL(settings.hero.image);
+      if(u.protocol!=="https:")return "رابط صورة القسم الرئيسي يجب أن يبدأ بـ https://";
+    }catch(e){return "رابط صورة القسم الرئيسي غير صحيح."}
+  }
+  for(const [label,url] of [
+    ["الزر الأول",settings.hero.primaryUrl],
+    ["الزر الثاني",settings.hero.secondaryUrl],
+    ["الإعلان",settings.announcement.url]
+  ]){
+    if(!url)continue;
+    if(url.startsWith("#")||!url.includes(":")||url.startsWith("/")||/^[a-z0-9_-]+\.html(?:[?#].*)?$/i.test(url))continue;
+    try{
+      const u=new URL(url);
+      if(u.protocol!=="https:")return "رابط "+label+" يجب أن يكون رابطًا آمنًا.";
+    }catch(e){return "رابط "+label+" غير صحيح."}
+  }
+  return "";
+}
+async function saveHomepageDraft(){
+  if(isSavingHomepage)return;
+  const settings=readHomepageForm();
+  const validation=validateHomepageSettings(settings);
+  if(validation)return message(validation,"err");
+  isSavingHomepage=true;
+  const buttons=el("homepageEditor").querySelectorAll("button");
+  buttons.forEach(b=>b.disabled=true);
+  try{
+    const data=await request("/api/admin/homepage","PUT",{settings});
+    homepageDraft=settings;
+    el("homepageStatus").textContent="مسودة محفوظة";
+    message(data.message||"تم حفظ مسودة الصفحة الرئيسية.");
+  }catch(e){message("فشل حفظ المسودة: "+e.message,"err")}
+  finally{
+    isSavingHomepage=false;
+    buttons.forEach(b=>b.disabled=false);
+  }
+}
+async function publishHomepage(){
+  if(isSavingHomepage)return;
+  if(!confirm("هل تريد نشر إعدادات الصفحة الرئيسية الحالية للزوار؟"))return;
+  const settings=readHomepageForm();
+  const validation=validateHomepageSettings(settings);
+  if(validation)return message(validation,"err");
+  isSavingHomepage=true;
+  const buttons=el("homepageEditor").querySelectorAll("button");
+  buttons.forEach(b=>b.disabled=true);
+  try{
+    await request("/api/admin/homepage","PUT",{settings});
+    const data=await request("/api/admin/homepage/publish","POST",{});
+    homepageDraft=settings;
+    el("homepageStatus").textContent="منشورة";
+    message(data.message||"تم نشر الصفحة الرئيسية بنجاح.");
+  }catch(e){message("تعذر نشر الصفحة: "+e.message,"err")}
+  finally{
+    isSavingHomepage=false;
+    buttons.forEach(b=>b.disabled=false);
+  }
+}
+function previewHomepageImage(){
+  const url=el("hpHeroImage").value.trim();
+  const img=el("hpImagePreview");
+  if(!url){img.style.display="none";img.removeAttribute("src");return}
+  try{
+    const parsed=new URL(url);
+    if(parsed.protocol!=="https:"){img.style.display="none";return}
+    img.src=url;
+    img.style.display="block";
+    img.onerror=()=>{img.style.display="none"};
+  }catch(e){img.style.display="none"}
 }
 
 async function loadSubjects(){
