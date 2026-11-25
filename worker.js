@@ -661,6 +661,29 @@ async function route(request, env) {
     }
   }
 
+  // إعدادات الصفحة الرئيسية المنشورة للزوار
+  if (method === "GET" && path === "/api/homepage") {
+    try {
+      await ensureHomepageSettingsTable(env);
+
+      const row = await env.DB.prepare(`
+        SELECT published_json
+        FROM homepage_settings
+        WHERE id = 1
+      `).first();
+
+      return reply(request, env, {
+        success: true,
+        settings: parseHomepageJson(row?.published_json)
+      });
+    } catch (error) {
+      return reply(request, env, {
+        success: false,
+        error: "تعذر تحميل إعدادات الصفحة الرئيسية."
+      }, 500);
+    }
+  }
+
   // إنشاء حساب الإدارة لأول مرة
   if (method === "POST" && path === "/api/admin/setup") {
     const setupKey = String(env.ADMIN_SETUP_KEY || "").trim();
