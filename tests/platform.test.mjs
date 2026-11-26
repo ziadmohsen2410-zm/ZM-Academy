@@ -116,6 +116,12 @@ test("shuffled question order is preserved across exam resume", () => {
   assert.ok(migration.includes("question_order_json TEXT"));
 });
 
+test("exam answer autosave is rate limited per attempt", () => {
+  const worker = read("worker.js");
+  assert.ok(worker.includes("consumeApiRateLimit(env,request,'exam-autosave',attemptId,120,60)"));
+  assert.ok(worker.includes("طلبات حفظ كثيرة جدًا"));
+});
+
 test("exam answers are autosaved and restored when a student resumes", () => {
   const worker = read("worker.js");
   const student = read("student.html");
