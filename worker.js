@@ -3795,7 +3795,7 @@ if (method === "POST" && rejectPasswordMatch) {
       if (!hasPerm(admin.role,'exams')) return reply(request, env, {success:false,error:'Forbidden'},403);
       const id = Number(path.split('/').pop());
       if (method==='GET') {
-        const exam = await env.DB.prepare(`SELECT * FROM exams WHERE id=?`).bind(id).first();
+        const exam = await env.DB.prepare(`SELECT e.*,(SELECT COUNT(*) FROM exam_attempts a WHERE a.exam_id=e.id) AS attempts_count FROM exams e WHERE e.id=?`).bind(id).first();
         const qs = await env.DB.prepare(`SELECT * FROM exam_questions WHERE exam_id=? ORDER BY order_index ASC, id ASC`).bind(id).all();
         return reply(request, env, {success:true, exam, questions: (qs.results||[]).map(q=>({...q, options:safeJsonParse(q.options_json,[]), correct_answer:safeJsonParse(q.correct_answer_json,null)}))});
       }
@@ -3803,6 +3803,11 @@ if (method === "POST" && rejectPasswordMatch) {
         const b=await readBody(request);
         if (!clean(b?.title,160)) return reply(request, env,{success:false,error:'عنوان الاختبار مطلوب'},400);
         const validationError = validateExamInput(b); if (validationError) return reply(request, env,{success:false,error:validationError},400);
+        const existingAttempts=await env.DB.prepare(`SELECT COUNT(*) AS c FROM exam_attempts WHERE exam_id=?`).bind(id).first();
+        if(Number(existingAttempts?.c||0)>0) {
+          await env.DB.prepare(`UPDATE exams SET title=?,description=?,status=?,updated_at=datetime('now') WHERE id=?`).bind(clean(b?.title,160),clean(b?.description,2000),clean(b?.status||'draft',20),id).run();
+          return reply(request,env,{success:true,settings_locked:true,message:'تم تحديث بيانات الاختبار. إعدادات التقييم والأسئلة ثابتة بعد بدء الطلاب.'});
+        }
         await env.DB.prepare(`UPDATE exams SET title=?,description=?,subject_id=?,grade=?,status=?,duration_minutes=?,attempts_allowed=?,starts_at=?,ends_at=?,shuffle_questions=?,show_results=?,updated_at=datetime('now') WHERE id=?`)
           .bind(clean(b?.title,160),clean(b?.description,2000),b?.subject_id?Number(b.subject_id):null,clean(b?.grade,40),clean(b?.status||'draft',20),b?.duration_minutes?Number(b.duration_minutes):null,b?.attempts_allowed?Number(b.attempts_allowed):1,b?.starts_at||null,b?.ends_at||null,b?.shuffle_questions?1:0,b?.show_results===false?0:1,id).run();
         return reply(request, env, {success:true});
