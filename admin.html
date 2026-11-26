@@ -279,25 +279,15 @@ const esc = (s='')=>String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">"
 const fmtDate = (v)=>v?new Date(v).toLocaleString('ar-EG'):'-';
 const tokenKey='zm_admin_token';
 const state={token:localStorage.getItem(tokenKey)||'', admin:null, section:'dashboard', cache:{}};
-const sections=[
-  ['dashboard','لوحة المعلومات','نظرة عامة على المنصة'],
-  ['students','الطلاب','إدارة حسابات الطلاب والبيانات'],
-  ['content','المحتوى التعليمي','المواد والدروس والأرشفة'],
-  ['orders','الطلبات','مراجعة الطلبات والمشتريات'],
-  ['devices','الأجهزة','طلبات الأجهزة والجلسات'],
-  ['parents','أولياء الأمور','الحسابات وطلبات الربط'],
-  ['exams','الاختبارات','إنشاء الاختبارات والأسئلة'],
-  ['ads','الإعلانات','إدارة الإعلانات والمواضع'],
-  ['notifications','الإشعارات','إرسال وإدارة الإشعارات'],
-  ['pages','محرر الصفحات','مسودات ونشر وصفحات آمنة'],
-  ['theme','استوديو التصميم','الثيم والإعدادات البصرية'],
-  ['ai','الذكاء الاصطناعي','مساعد الإدارة والبناء والمحتوى'],
-  ['settings','الإعدادات','إعدادات المنصة العامة'],
-  ['media','مكتبة الوسائط','إدارة الملفات والصور'],
-  ['roles','الأدوار والصلاحيات','إدارة المستخدمين الإداريين والأدوار'],
-  ['backups','النسخ والتقارير','تصدير البيانات والتقارير'],
-  ['audit','سجل العمليات','تتبع العمليات الإدارية'],
+const sectionGroups=[
+  {label:'الرئيسية', items:[['dashboard','لوحة المعلومات','نظرة عامة سريعة']]},
+  {label:'الإدارة', items:[['students','الطلاب','إدارة الطلاب'],['parents','أولياء الأمور','حسابات وربط'],['orders','الطلبات','مراجعة الطلبات'],['devices','الأجهزة','طلبات الأجهزة']]},
+  {label:'التعليم', items:[['content','المحتوى','المواد والدروس'],['exams','الاختبارات','إنشاء وإدارة الاختبارات']]},
+  {label:'التواصل', items:[['ads','الإعلانات','إدارة الإعلانات'],['notifications','الإشعارات','إرسال إشعارات']]},
+  {label:'التصميم', items:[['pages','محرر الصفحات','بناء ونشر الصفحات'],['theme','الثيم','الألوان والمظهر'],['media','الوسائط','الملفات والصور']]},
+  {label:'النظام', items:[['ai','الذكاء الاصطناعي','مساعد AI'],['roles','الأدوار','المستخدمون والصلاحيات'],['backups','النسخ','تصدير ونسخ احتياطي'],['settings','الإعدادات','إعدادات عامة'],['audit','السجل','سجل العمليات']]},
 ];
+const sections=sectionGroups.flatMap(g=>g.items);
 function showMsg(text, ok=false){const el=$('#appMsg');el.textContent=text;el.className='msg show '+(ok?'ok':'err');clearTimeout(showMsg.t);showMsg.t=setTimeout(()=>el.className='msg',5000);}
 function showLoginMsg(text){const el=$('#loginMsg');el.textContent=text;el.style.display=text?'block':'none';}
 async function api(path, opts={}){
@@ -318,7 +308,10 @@ function setSection(key){
 }
 function buildNav(){
   const nav=$('#nav'); nav.innerHTML='';
-  sections.forEach(([k,label])=>{const b=document.createElement('button'); b.textContent=label; b.dataset.sec=k; b.onclick=()=>setSection(k); if(k===state.section)b.classList.add('active'); nav.appendChild(b);});
+  sectionGroups.forEach(g=>{
+    const h=document.createElement('div'); h.textContent=g.label; h.style.cssText='font-size:12px;color:#8ea2c4;margin:10px 6px 4px;font-weight:700'; nav.appendChild(h);
+    g.items.forEach(([k,label])=>{const b=document.createElement('button'); b.textContent=label; b.dataset.sec=k; b.onclick=()=>setSection(k); if(k===state.section)b.classList.add('active'); nav.appendChild(b);});
+  });
 }
 async function login(){
   showLoginMsg('');
@@ -357,10 +350,9 @@ async function loadDashboard(){
   const grid=$('#statsGrid'); grid.innerHTML='<div class="card muted">جارٍ التحميل...</div>';
   try{
     const d = await api('/api/admin/platform/dashboard');
-    const s=d.stats||{};
+    const s=d.stats||{}; state.cache.stats=s;
     grid.innerHTML = [
-      statCard('الطلاب',s.students??'-'), statCard('الطلبات المعلقة',s.pendingOrders??'-'), statCard('كل الطلبات',s.orders??'-'), statCard('الأجهزة المعلقة',s.pendingDevices??'-'),
-      statCard('المواد',s.subjects??'-'), statCard('الدروس',s.materials??'-'), statCard('أولياء الأمور',s.parents??'-'), statCard('الاختبارات',s.exams??'-')
+      statCard('الطلاب',s.students??'-'), statCard('طلبات معلقة',s.pendingOrders??'-'), statCard('أجهزة معلقة',s.pendingDevices??'-'), statCard('الدروس',s.materials??'-')
     ].join('');
   }catch(e){ grid.innerHTML=`<div class="card muted">تعذر تحميل الإحصائيات: ${esc(e.message)}</div>`; }
   loadRecentAudit(); loadSystemStatus();
@@ -376,7 +368,9 @@ async function loadSystemStatus(){
   try{ await fetch(API+'/api/health'); checks.push(['Worker/DB','متصل','ok']); }catch{ checks.push(['Worker/DB','خطأ','danger']); }
   checks.push(['AI', 'يتطلب AI_API_KEY','warn']);
   checks.push(['GitHub Storage', 'يتطلب GITHUB_STORAGE_TOKEN','warn']);
-  el.innerHTML=checks.map(([k,v,c])=>`<div class="item"><div style="display:flex;justify-content:space-between;gap:10px"><span>${esc(k)}</span><span class="badge ${c}">${esc(v)}</span></div></div>`).join('');
+  const s=state.cache.stats||{};
+  const summary=`<div class="item small muted">إجمالي الطلبات: ${esc(s.orders??'-')} • المواد: ${esc(s.subjects??'-')} • أولياء الأمور: ${esc(s.parents??'-')} • الاختبارات: ${esc(s.exams??'-')}</div>`;
+  el.innerHTML=checks.map(([k,v,c])=>`<div class="item"><div style="display:flex;justify-content:space-between;gap:10px"><span>${esc(k)}</span><span class="badge ${c}">${esc(v)}</span></div></div>`).join('')+summary;
 }
 async function loadStudents(){
   const tb=$('#studentsTbody'); tb.innerHTML='<tr><td colspan="6" class="muted">جارٍ التحميل...</td></tr>';
