@@ -3839,7 +3839,7 @@ if (method === "POST" && rejectPasswordMatch) {
       const rows = await env.DB.prepare(`SELECT a.id,a.exam_id,a.student_id,a.status,a.score,a.max_score,a.started_at,a.submitted_at,s.name AS student_name FROM exam_attempts a JOIN students s ON s.id=a.student_id WHERE a.exam_id=? ORDER BY a.id DESC LIMIT 300`).bind(examId).all();
       return reply(request, env,{success:true,attempts:rows.results||[]});
     }
-    if (/^\\/api\\/admin\\/platform\\/exam-attempts\\/\\d+$/.test(path)) {
+    if (/^\/api\/admin\/platform\/exam-attempts\/\d+$/.test(path)) {
       if (!hasPerm(admin.role,'exams')) return reply(request, env,{success:false,error:'Forbidden'},403);
       const attemptId = Number(path.split('/').pop());
       if (method==='GET') {
@@ -3849,7 +3849,7 @@ if (method === "POST" && rejectPasswordMatch) {
         return reply(request, env,{success:true,attempt:{...attempt,answers:safeJsonParse(attempt.answers_json,{})},essay_questions:questions.results||[]});
       }
     }
-    if (/^\\/api\\/admin\\/platform\\/exam-attempts\\/\\d+\\/grade$/.test(path)) {
+    if (/^\/api\/admin\/platform\/exam-attempts\/\d+\/grade$/.test(path)) {
       if (!hasPerm(admin.role,'exams')) return reply(request, env,{success:false,error:'Forbidden'},403);
       const attemptId = Number(path.split('/')[5]);
       if (method==='PUT') {
