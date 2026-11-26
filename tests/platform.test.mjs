@@ -53,10 +53,8 @@ test("admin content forms send every field required by the Worker", () => {
 test("admin can archive and restore subjects and materials without deleting records", () => {
   const admin = read("admin.html");
   const worker = read("worker.js");
-  for (const route of [
-    "/api/admin/subjects/\\$\\{id\\}/\\$\\{action\\}",
-    "/api/admin/materials/\\$\\{id\\}/\\$\\{action\\}"
-  ]) assert.ok(admin.includes(route), "Missing archive/restore UI route: " + route);
+  assert.match(admin, /api\/admin\/subjects\/\$\{id\}\/\$\{action\}/);
+  assert.match(admin, /api\/admin\/materials\/\$\{id\}\/\$\{action\}/);
   assert.match(worker, /\/api\/admin\/subjects\/\(\\d\+\)\/\(archive\|restore\)/);
   assert.match(worker, /\/api\/admin\/materials\/\(\\d\+\)\/\(archive\|restore\)/);
 });
