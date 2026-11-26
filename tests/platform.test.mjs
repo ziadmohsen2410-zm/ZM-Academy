@@ -321,6 +321,9 @@ test("public page renderer inherits the published homepage brand theme", () => {
   assert.ok(page.includes("fetch(API+'/api/homepage'"));
   assert.ok(page.includes("applyBrandTheme(d.settings)"));
   assert.ok(page.includes("settings.brandName"));
+  assert.ok(page.includes("theme.mode==='system'&&window.matchMedia"));
+  assert.ok(page.includes("media.addEventListener?.('change',sync)"));
+
   assert.ok(page.includes("['primary','--blue']"));
   assert.ok(page.includes("document.body.classList.add('light')"));
 });
