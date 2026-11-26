@@ -228,6 +228,12 @@ test("student exam results respect the exam show_results setting", () => {
   assert.ok(route.includes("results_hidden:!showResults"));
 });
 
+test("parent-to-student link requests are rate limited per parent", () => {
+  const worker = read("worker.js");
+  assert.ok(worker.includes("consumeApiRateLimit(env,request,'parent-link-request',ps.parent_id,5,3600)"));
+  assert.ok(worker.includes("تجاوزت عدد طلبات ربط الطلاب المسموح بها"));
+});
+
 test("admin role management protects super-admin privilege and account continuity", () => {
   const worker = read("worker.js");
   assert.ok(worker.includes("role==='super_admin' && admin.role!=='super_admin'"));
