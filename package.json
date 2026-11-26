@@ -1,0 +1,12 @@
+{
+  "name": "zm-academy-platform",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test tests/*.test.mjs",
+    "check": "node --check worker.js && node --check sw.js && node --check admin-extensions.js && npm run check:html",
+    "check:html": "node tests/check-html.mjs",
+    "check:migrations": "python3 tests/validate-migrations.py",
+    "check:all": "npm test && npm run check && npm run check:migrations"
+  }
+}

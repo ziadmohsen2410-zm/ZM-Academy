@@ -6,6 +6,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="theme-color" content="#050611">
 <title>ZM Academy | لوحة التحكم</title>
+<link rel="stylesheet" href="admin-extensions.css">
 <style>
 :root{--bg:#050611;--panel:#0b1022;--panel2:#101a35;--text:#eef5ff;--muted:#9baed0;--red:#ff557f;--green:#45f0c0;--cyan:#4cecff;--violet:#a77bff;--line:rgba(102,220,255,.24);--glow:0 0 28px rgba(76,236,255,.12),0 18px 55px rgba(0,0,0,.42)}
 *{box-sizing:border-box}
@@ -180,13 +181,21 @@ fetch(API+'/api/homepage',{cache:'no-store'}).then(r=>r.ok?r.json():null).then(d
         <div class="admin-sidebar-title">مركز القيادة والتحكم</div>
         <input class="admin-search" id="adminNavSearch" type="search" placeholder="ابحث عن قسم..." aria-label="البحث في أقسام الإدارة">
         <nav class="admin-nav" id="adminNav">
+          <button type="button" data-page="quizzes" onclick="showAdminPage('quizzes')"><span class="nav-icon">✓</span><span>الاختبارات</span></button>
           <button type="button" class="active" data-page="overview" onclick="showAdminPage('overview')"><span class="nav-icon">⌂</span><span>نظرة عامة</span></button>
           <button type="button" data-page="design" onclick="showAdminPage('design')"><span class="nav-icon">✦</span><span>تصميم الموقع</span></button>
           <button type="button" data-page="content" onclick="showAdminPage('content')"><span class="nav-icon">▤</span><span>المواد والمحتوى</span></button>
           <button type="button" data-page="students" onclick="showAdminPage('students')"><span class="nav-icon">♙</span><span>الطلاب</span></button>
           <button type="button" data-page="orders" onclick="showAdminPage('orders')"><span class="nav-icon">▣</span><span>الطلبات</span></button>
           <button type="button" data-page="security" onclick="showAdminPage('security')"><span class="nav-icon">◈</span><span>الأمان والأجهزة</span></button>
+          <button type="button" data-page="builder" onclick="showAdminPage('builder')"><span class="nav-icon">▧</span><span>محرر الصفحات</span></button>
+          <button type="button" data-page="media" onclick="showAdminPage('media')"><span class="nav-icon">▣</span><span>مكتبة الوسائط</span></button>
           <button type="button" data-page="parents" onclick="showAdminPage('parents')"><span class="nav-icon">♧</span><span>أولياء الأمور</span></button>
+          <button type="button" data-page="ads" onclick="showAdminPage('ads')"><span class="nav-icon">▣</span><span>مركز الإعلانات</span></button>
+          <button type="button" data-page="notifications" onclick="showAdminPage('notifications')"><span class="nav-icon">◉</span><span>الإشعارات</span></button>
+          <button type="button" data-page="analytics" onclick="showAdminPage('analytics')"><span class="nav-icon">▥</span><span>التقارير وسجل التدقيق</span></button>
+          <button type="button" data-page="ai" onclick="showAdminPage('ai')"><span class="nav-icon">✧</span><span>مساعد الذكاء الاصطناعي</span></button>
+          <button type="button" data-page="roles" onclick="showAdminPage('roles')"><span class="nav-icon">♙</span><span>الأدوار والصلاحيات</span></button>
         </nav>
       </aside>
       <div class="admin-main">
@@ -406,12 +415,137 @@ fetch(API+'/api/homepage',{cache:'no-store'}).then(r=>r.ok?r.json():null).then(d
       <div class="topline"><h2>طلبات استعادة كلمة المرور</h2><button onclick="loadPasswordResetRequests()">تحديث</button></div>
       <div id="passwordResetRequestsList"><p class="muted">جارٍ تحميل طلبات استعادة كلمة المرور...</p></div>
     </div>
-        <div class="card" data-admin-page="parents">
-          <div class="topline"><h2>طلبات ربط ولي الأمر بالطالب</h2><button type="button" onclick="loadParentLinkRequests()">تحديث</button></div>
-          <p class="hint">لا تظهر بيانات الطالب لولي الأمر إلا بعد اعتماد طلب الربط من الإدارة.</p>
-          <div id="parentLinkRequests"><p class="muted">جارٍ تحميل الطلبات...</p></div>
-          <p class="hint">رابط بوابة ولي الأمر: <a href="parent.html" target="_blank" rel="noopener">فتح البوابة</a></p>
-        </div>
+        <section class="card zmx-panel" data-admin-page="builder" id="pageBuilderPanel">
+          <div class="topline"><h2>محرر الصفحات المرئي</h2><span class="status">مكونات آمنة فقط</span></div>
+          <p class="hint">أضف العناصر وعدّل محتواها ورتّبها. لا يقبل المحرر HTML أو JavaScript حرًا. كل حفظ ينشئ إصدارًا يمكن الرجوع إليه.</p>
+          <div class="zmz-grid">
+            <div><label for="builderSlug">معرّف الصفحة (بالإنجليزية)</label><input id="builderSlug" value="about" maxlength="60" pattern="[a-z0-9-]+"></div>
+            <div><label for="builderTitle">عنوان الصفحة</label><input id="builderTitle" maxlength="120" value="صفحة جديدة"></div>
+            <div><label for="builderDevice">معاينة الجهاز</label><select id="builderDevice"><option value="desktop">كمبيوتر</option><option value="tablet">تابلت</option><option value="mobile">هاتف</option></select></div>
+          </div>
+          <div class="zmz-toolbar">
+            <button type="button" onclick="builderAddBlock('heading')">+ عنوان</button>
+            <button type="button" onclick="builderAddBlock('text')">+ نص</button>
+            <button type="button" onclick="builderAddBlock('button')">+ زر</button>
+            <button type="button" onclick="builderAddBlock('card')">+ بطاقة</button>
+            <button type="button" onclick="builderAddBlock('image')">+ صورة</button>
+            <button type="button" onclick="builderAddBlock('alert')">+ تنبيه</button>
+            <button type="button" onclick="builderAddBlock('section')">+ قسم</button>
+            <button type="button" onclick="builderAddBlock('spacer')">+ مسافة</button>
+            <button type="button" onclick="builderAddBlock('video')">+ رابط فيديو</button>
+          </div>
+          <div class="zmz-builder-layout">
+            <div><h3>العناصر</h3><div id="builderBlocks" class="zmz-block-list"><p class="hint">جارٍ تجهيز المحرر...</p></div></div>
+            <div><h3>المعاينة المباشرة</h3><div id="builderPreview" class="zmz-preview"><p class="hint">أضف عنصرًا لعرض المعاينة.</p></div></div>
+          </div>
+          <div class="zmz-toolbar"><button type="button" class="secondary" onclick="builderLoad()">تحميل الصفحة</button><button type="button" onclick="builderSave()">حفظ المسودة</button><button type="button" class="success" onclick="builderPublish()">نشر الصفحة</button></div>
+          <div class="zmz-grid"><div><label for="builderRevision">الإصدارات السابقة</label><select id="builderRevision"><option value="">اختر إصدارًا</option></select></div><div class="zmz-align-end"><button type="button" class="secondary" onclick="builderLoadVersions()">تحديث الإصدارات</button><button type="button" class="secondary" onclick="builderRestore()">استعادة كمسودة</button></div></div>
+          <p class="hint" id="builderStatus" role="status"></p>
+        </section>
+
+        <section class="card zmx-panel" data-admin-page="media" id="mediaLibraryPanel">
+          <div class="topline"><h2>مكتبة الوسائط</h2><button type="button" class="secondary" onclick="loadMedia()">تحديث المكتبة</button></div>
+          <p class="hint">ارفع PDF أو صورة JPG/PNG/WEBP إلى مستودع التخزين عبر Worker. لا يظهر الملف للزوار إلا عند نشر الصورة صراحة. ملفات PDF تبقى خاصة وتستخدم عبر ربط المحتوى التعليمي.</p>
+          <div class="zmz-grid">
+            <div><label for="mediaFile">اختر ملفًا (حتى 8 MB)</label><input id="mediaFile" type="file" accept="application/pdf,image/jpeg,image/png,image/webp"></div>
+            <div><label for="mediaFolder">المجلد / التصنيف</label><input id="mediaFolder" maxlength="80" value="general" placeholder="مثال: صفحات الموقع"></div>
+            <div><label for="mediaAlt">الوصف البديل للصورة</label><input id="mediaAlt" maxlength="240" placeholder="وصف موجز للصورة"></div>
+          </div>
+          <label class="check"><input id="mediaPublic" type="checkbox"> نشر الصورة كرابط عام يمكن استخدامه في الصفحات</label>
+          <button type="button" onclick="uploadMedia()">رفع إلى مكتبة الوسائط</button>
+          <p id="mediaStatus" class="hint" role="status"></p>
+          <div id="mediaList" class="zmz-list"><p class="hint">اضغط تحديث لعرض الملفات.</p></div>
+        </section>
+
+        <section class="card zmx-panel" data-admin-page="parents" id="parentLinksPanel">
+          <div class="topline"><h2>طلبات ربط أولياء الأمور</h2><button type="button" onclick="loadParentRequests()">تحديث</button></div>
+          <p class="hint">لا يظهر لولي الأمر إلا الطلاب المرتبطون بحسابه بعد اعتماد الإدارة ومطابقة هاتف ولي الأمر مع رقم الهاتف المسجل للطالب.</p>
+          <div id="parentRequestsList"><p class="hint">اضغط تحديث لعرض الطلبات.</p></div>
+        </section>
+
+        <section class="card zmx-panel" data-admin-page="ads" id="adsPanel">
+          <div class="topline"><h2>مركز الإعلانات</h2><button type="button" onclick="loadAds()">تحديث</button></div>
+          <div class="zmz-grid">
+            <div><label for="adTitle">عنوان الإعلان</label><input id="adTitle" maxlength="140"></div>
+            <div><label for="adPlacement">موضع العرض</label><select id="adPlacement"><option value="home">الرئيسية</option><option value="login">تسجيل الدخول</option><option value="register">إنشاء الحساب</option><option value="student">لوحة الطالب</option><option value="parent">ولي الأمر</option><option value="content">المحتوى</option></select></div>
+            <div><label for="adAudience">الجمهور</label><select id="adAudience"><option value="all">الجميع</option><option value="students">الطلاب</option><option value="parents">أولياء الأمور</option></select></div>
+            <div><label for="adPriority">الأولوية</label><input id="adPriority" type="number" min="-100" max="1000" value="0"></div>
+            <div><label for="adButton">نص الزر</label><input id="adButton" maxlength="80"></div>
+            <div><label for="adImage">رابط الصورة HTTPS</label><input id="adImage" type="url" maxlength="1000"></div>
+            <div><label for="adUrl">رابط الوجهة HTTPS</label><input id="adUrl" type="url" maxlength="1000"></div>
+            <div><label for="adStart">بداية العرض</label><input id="adStart" type="datetime-local"></div>
+            <div><label for="adEnd">نهاية العرض</label><input id="adEnd" type="datetime-local"></div>
+          </div>
+          <label for="adBody">نص الإعلان</label><textarea id="adBody" maxlength="1000" rows="3"></textarea>
+          <button type="button" onclick="createAd()">إنشاء الإعلان</button>
+          <div id="adsList" class="zmz-list"><p class="hint">لا توجد بيانات محملة.</p></div>
+        </section>
+
+        <section class="card zmx-panel" data-admin-page="notifications" id="notificationsPanel">
+          <h2>إنشاء إشعار وإرساله</h2>
+          <div class="zmz-grid"><div><label for="noticeTitle">العنوان</label><input id="noticeTitle" maxlength="160"></div><div><label for="noticeTarget">الجمهور المستهدف</label><select id="noticeTarget"><option value="all_students">جميع الطلاب</option><option value="grade">صف دراسي</option><option value="student">طالب محدد</option><option value="all_parents">جميع أولياء الأمور</option><option value="parent">ولي أمر محدد</option></select></div><div><label for="noticeTargetValue">قيمة الاستهداف (الصف أو رقم الحساب)</label><input id="noticeTargetValue" maxlength="100"></div><div><label for="noticeSchedule">موعد الإرسال</label><input id="noticeSchedule" type="datetime-local"></div></div>
+          <label for="noticeBody">نص الإشعار</label><textarea id="noticeBody" rows="4" maxlength="1800"></textarea>
+          <label class="check"><input id="noticeImportant" type="checkbox"> إشعار مهم</label>
+          <button type="button" onclick="createNotification()">حفظ وجدولة الإشعار</button>
+          <div id="notificationsList" class="zmz-list"></div>
+        </section>
+
+        <section class="card zmx-panel" data-admin-page="analytics" id="analyticsPanel">
+          <div class="topline"><h2>التقارير ومؤشرات الأداء</h2><button type="button" onclick="loadAnalytics()">تحديث التقارير</button></div>
+          <div id="analyticsStats" class="zmz-stats"><p class="hint">حمّل التقارير لعرض المؤشرات.</p></div>
+          <h3>سجل التدقيق الإداري</h3><button type="button" class="secondary" onclick="loadAuditLogs()">تحديث السجل</button><div id="auditLogsList" class="zmz-list"></div>
+        </section>
+
+        <section class="card zmx-panel" data-admin-page="ai" id="aiPanel">
+          <h2>مساعد الإدارة وAI Builder</h2>
+          <p class="hint">يتطلب AI_API_KEY وAI_MODEL في أسرار Cloudflare Worker. النتائج اقتراحات فقط ولا يتم تطبيقها أو نشرها تلقائيًا.</p>
+          <label for="adminAiMode">وضع المساعد</label><select id="adminAiMode"><option value="assistant">مساعد الإدارة</option><option value="builder">اقتراح مكونات صفحة آمنة</option></select>
+          <label for="adminAiPrompt">اكتب طلبك</label><textarea id="adminAiPrompt" rows="4" maxlength="2400" placeholder="مثال: اقترح صفحة تعريف بالأكاديمية تحتوي على عنوان وفقرة وزر تواصل..."></textarea>
+          <button type="button" onclick="runAdminAI()">إنشاء اقتراح</button><pre id="adminAiResult" class="zmz-ai-output" aria-live="polite">ستظهر النتيجة هنا.</pre>
+          <button type="button" class="secondary" onclick="applyAIBuilderSuggestion()">تحميل اقتراح AI إلى محرر الصفحة كمسودة</button>
+        </section>
+
+        <section class="card zmx-panel" data-admin-page="quizzes" id="quizzesPanel">
+          <div class="topline"><h2>إدارة الاختبارات</h2><button type="button" class="secondary" onclick="loadQuizzes()">تحديث الاختبارات</button></div>
+          <p class="hint">أنشئ اختبارًا كمسودة، راجع الأسئلة، ثم انشره. الأسئلة الموضوعية تُصحح تلقائيًا والمقالي يحتاج مراجعة المدرس.</p>
+          <div class="zmz-grid">
+            <div><label for="quizTitle">عنوان الاختبار</label><input id="quizTitle" maxlength="160" placeholder="اختبار الوحدة الأولى"></div>
+            <div><label for="quizGrade">الصف</label><input id="quizGrade" maxlength="80" placeholder="الصف الثالث الثانوي"></div>
+            <div><label for="quizSubject">المادة (اختياري)</label><input id="quizSubject" type="number" min="1" placeholder="رقم المادة"></div>
+            <div><label for="quizDuration">المدة بالدقائق</label><input id="quizDuration" type="number" min="5" max="300" value="30"></div>
+            <div><label for="quizAttempts">عدد المحاولات</label><input id="quizAttempts" type="number" min="1" max="20" value="1"></div>
+          </div>
+          <div class="zmz-grid">
+            <div><label for="quizQuestionType">نوع السؤال</label><select id="quizQuestionType"><option value="mcq">اختيار من متعدد</option><option value="true_false">صح أو خطأ</option><option value="essay">مقالي</option></select></div>
+            <div><label for="quizQuestionPoints">الدرجة</label><input id="quizQuestionPoints" type="number" min="0.5" max="100" step="0.5" value="1"></div>
+          </div>
+          <label for="quizQuestionPrompt">نص السؤال</label><textarea id="quizQuestionPrompt" rows="2" maxlength="1200"></textarea>
+          <div id="quizChoiceFields"><label for="quizOptions">الاختيارات (كل اختيار في سطر مستقل)</label><textarea id="quizOptions" rows="4" placeholder="اختيار أول
+اختيار ثانٍ"></textarea><label for="quizCorrectIndex">رقم الإجابة الصحيحة (يبدأ من صفر)</label><input id="quizCorrectIndex" type="number" min="0" value="0"></div>
+          <div id="quizBooleanFields" hidden><label for="quizTrueFalse">الإجابة الصحيحة</label><select id="quizTrueFalse"><option value="true">صح</option><option value="false">خطأ</option></select></div>
+          <button type="button" class="secondary" onclick="addQuizQuestion()">إضافة السؤال إلى الاختبار</button>
+          <div id="quizQuestionDrafts" class="zmz-list"></div>
+          <button type="button" onclick="createQuiz()">حفظ الاختبار كمسودة</button>
+          <hr><h3>الاختبارات المنشأة</h3><div id="quizzesList" class="zmz-list"></div>
+          <hr><h3>محاولات تحتاج مراجعة</h3><div id="quizAttemptsList" class="zmz-list"></div>
+        </section>
+
+        <section class="card zmx-panel" data-admin-page="ai" id="aiContentStudioPanel">
+          <div class="topline"><h2>استوديو المحتوى التعليمي AI</h2><button type="button" class="secondary" onclick="loadAIContentDrafts()">تحديث المسودات</button></div>
+          <p class="hint">أنشئ ملخصات وشروحًا وأسئلة وبطاقات مراجعة وخطط مذاكرة. كل ناتج يُحفظ كمسودة بانتظار المراجعة، ولا ينشر تلقائيًا.</p>
+          <div class="zmz-grid"><div><label for="aiContentType">نوع المحتوى</label><select id="aiContentType"><option value="summary">ملخص</option><option value="lesson">شرح درس</option><option value="mcq">أسئلة اختيار من متعدد</option><option value="essay">أسئلة مقالية</option><option value="flashcards">بطاقات مراجعة</option><option value="study_plan">خطة مذاكرة</option></select></div><div><label for="aiContentTitle">عنوان المسودة</label><input id="aiContentTitle" maxlength="180"></div></div>
+          <label for="aiContentPrompt">المادة أو الوصف أو المصدر النصي</label><textarea id="aiContentPrompt" rows="5" maxlength="3000" placeholder="اكتب اسم المادة والدرس والصف والنقاط التي يجب أن يغطيها المحتوى..."></textarea>
+          <button type="button" onclick="generateAIContentDraft()">إنشاء مسودة للمراجعة</button>
+          <div id="aiContentStatus" class="hint" role="status"></div>
+          <h3>مسودات المحتوى</h3><div id="aiContentDraftList" class="zmz-list"></div>
+        </section>
+
+        <section class="card zmx-panel" data-admin-page="roles" id="rolesPanel">
+          <div class="topline"><h2>الأدوار والصلاحيات</h2><button type="button" onclick="loadAdminRoles()">تحديث</button></div>
+          <p class="hint">الأدوار مطبقة على واجهات API الجديدة. المسؤولون الحاليون يظلون Super Admin حتى تعيين دور صريح لهم.</p>
+          <div id="adminRolesList" class="zmz-list"></div>
+        </section>
+
       </div><!-- /.admin-main -->
     </div><!-- /.admin-shell -->
   </section>
@@ -433,8 +567,7 @@ const ADMIN_PAGE_META={
  content:["المواد والمحتوى","إدارة المواد الدراسية والدروس والملفات التعليمية"],
  students:["الطلاب","عرض حسابات الطلاب وإدارة بياناتهم"],
  orders:["الطلبات","مراجعة طلبات الشراء وتحديث حالتها"],
- security:["الأمان والأجهزة","مراجعة الأجهزة وطلبات استعادة كلمات المرور"],
- parents:["بوابة أولياء الأمور","مراجعة طلبات ربط أولياء الأمور بحسابات الطلاب"]
+ security:["الأمان والأجهزة","مراجعة الأجهزة وطلبات استعادة كلمات المرور"]
 };
 function showAdminPage(page){
   if(!ADMIN_PAGE_META[page])page="overview";
@@ -444,7 +577,6 @@ function showAdminPage(page){
   el("adminPageTitle").textContent=meta[0];el("adminPageSubtitle").textContent=meta[1];
   try{sessionStorage.setItem("zm_admin_last_page",page)}catch(e){}
   if(page==="design"&&!homepageDraft.theme)loadHomepageSettings();
-  if(page==="parents")loadParentLinkRequests();
   window.scrollTo({top:0,behavior:"smooth"});
 }
 function filterAdminNav(){
@@ -1103,28 +1235,6 @@ async function reviewDevice(id,decision){
   }catch(e){message(e.message,"err")}
 }
 
-async function loadParentLinkRequests(){
-  const box=el("parentLinkRequests");if(!box)return;box.innerHTML="<p class='muted'>جارٍ تحميل الطلبات...</p>";
-  try{
-    const data=await request("/api/admin/parent-link-requests");const list=data.requests||[];
-    if(!list.length){box.innerHTML="<p class='muted'>لا توجد طلبات ربط معلقة.</p>";return}
-    box.innerHTML=list.map(r=>`<div class="item"><strong>${escapeHTML(r.parent_name)} — ${escapeHTML(r.parent_phone)}</strong>
-      <small>الطالب: ${escapeHTML(r.student_name)} (رقم ${Number(r.student_id)})</small><br>
-      <small>هاتف الطالب: ${escapeHTML(r.student_phone||"—")} · الصف: ${escapeHTML(r.grade||"—")}</small><br>
-      <small>صلة القرابة: ${escapeHTML(r.relationship||"ولي أمر")}</small><br>
-      <small>ملاحظة: ${escapeHTML(r.request_note||"لا توجد")}</small><br>
-      <small>تاريخ الطلب: ${escapeHTML(r.created_at||"—")}</small>
-      <div class="row"><button class="success" onclick="reviewParentLink(${Number(r.id)},'approve')">اعتماد الربط</button>
-      <button class="danger" onclick="reviewParentLink(${Number(r.id)},'reject')">رفض الطلب</button></div></div>`).join("");
-  }catch(e){box.innerHTML=`<p class="muted">${escapeHTML(e.message)}</p>`}
-}
-async function reviewParentLink(id,decision){
-  if(!confirm(decision==="approve"?"اعتماد ربط حساب ولي الأمر بهذا الطالب؟":"رفض طلب الربط؟"))return;
-  try{await request(`/api/admin/parent-link-requests/${Number(id)}/${decision}`,"POST",{});
-    await loadParentLinkRequests();message(decision==="approve"?"تم اعتماد طلب الربط.":"تم رفض طلب الربط.");
-  }catch(e){message(e.message,"err")}
-}
-
 async function loadPasswordResetRequests(){
   const box=el("passwordResetRequestsList");box.innerHTML="<p class='muted'>جارٍ تحميل طلبات استعادة كلمة المرور...</p>";
   try{
@@ -1170,5 +1280,6 @@ el("adminNavSearch")?.addEventListener("input",filterAdminNav);
 syncPriceField();
 checkSession();
 </script>
+<script src="admin-extensions.js" defer></script>
 </body>
 </html>
