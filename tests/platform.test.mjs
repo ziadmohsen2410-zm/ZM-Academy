@@ -9,7 +9,7 @@ test("all primary platform files are present", () => {
   for (const file of [
     "worker.js", "admin.html", "student.html", "parent.html",
     "index.html", "login.html", "register.html", "migrations/001_platform_core.sql"
-  ]) assert.ok(fs.existsSync(path.join(process.cwd(), file)), `Missing ${file}`);
+  ]) assert.ok(fs.existsSync(path.join(process.cwd(), file)), "Missing " + file);
 });
 
 test("admin dashboard sections exist for core platform tools", () => {
@@ -18,7 +18,7 @@ test("admin dashboard sections exist for core platform tools", () => {
     "sec-dashboard", "sec-students", "sec-parents", "sec-exams",
     "sec-ads", "sec-notifications", "sec-pages", "sec-theme",
     "sec-ai", "sec-media", "sec-roles", "sec-backups", "sec-audit"
-  ]) assert.ok(admin.includes(`id="${id}"`), `Missing admin section ${id}`);
+  ]) assert.ok(admin.includes('id="' + id + '"'), "Missing admin section " + id);
 });
 
 test("worker exposes the platform routes used by the admin and student areas", () => {
@@ -30,7 +30,7 @@ test("worker exposes the platform routes used by the admin and student areas", (
     "/api/admin/platform/exams", "/api/admin/platform/exam-questions",
     "/api/student/platform/notifications", "/api/student/platform/exams",
     "/api/student/platform/ai", "/api/parent/login"
-  ]) assert.ok(worker.includes(route), `Worker route missing: ${route}`);
+  ]) assert.ok(worker.includes(route), "Worker route missing: " + route);
 });
 
 test("student area includes notifications, exams, and AI integration", () => {
@@ -39,19 +39,19 @@ test("student area includes notifications, exams, and AI integration", () => {
     "/api/student/platform/notifications",
     "/api/student/platform/exams",
     "/api/student/platform/ai"
-  ]) assert.ok(student.includes(route), `Student integration missing: ${route}`);
+  ]) assert.ok(student.includes(route), "Student integration missing: " + route);
 });
 
 test("private provider credentials are not embedded in public pages", () => {
   for (const file of ["index.html", "welcome.html", "login.html", "register.html", "admin.html", "student.html", "parent.html"]) {
     const source = fs.readFileSync(path.join(process.cwd(), file), "utf8");
-    assert.doesNotMatch(source, /(?:AI_API_KEY|GITHUB_STORAGE_TOKEN)\\s*[:=]\\s*["'][^"']{8,}/, `Possible secret embedded in ${file}`);
+    assert.doesNotMatch(source, /(?:AI_API_KEY|GITHUB_STORAGE_TOKEN)\s*[:=]\s*["'][^"']{8,}/, "Possible secret embedded in " + file);
   }
 });
 
 test("the platform core migration is additive and repeat-safe by declaration", () => {
   const sql = read("migrations/001_platform_core.sql");
-  assert.doesNotMatch(sql, /\\bDROP\\s+(?:TABLE|COLUMN|INDEX)\\b|\\bDELETE\\s+FROM\\b|\\bTRUNCATE\\b/i);
-  assert.match(sql, /CREATE\\s+TABLE\\s+IF\\s+NOT\\s+EXISTS\\s+roles/i);
-  assert.match(sql, /CREATE\\s+TABLE\\s+IF\\s+NOT\\s+EXISTS\\s+exams/i);
+  assert.doesNotMatch(sql, /\bDROP\s+(?:TABLE|COLUMN|INDEX)\b|\bDELETE\s+FROM\b|\bTRUNCATE\b/i);
+  assert.match(sql, /CREATE\s+TABLE\s+IF\s+NOT\s+EXISTS\s+roles/i);
+  assert.match(sql, /CREATE\s+TABLE\s+IF\s+NOT\s+EXISTS\s+exams/i);
 });
