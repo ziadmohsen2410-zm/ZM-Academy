@@ -153,7 +153,8 @@ test("student exam visibility and start enforce grade, schedule, open-attempt, a
 
 test("student exam routes lazily ensure the resume-order database column", () => {
   const worker = read("worker.js");
-  assert.ok(worker.includes("path.includes('/exam-attempts/') || (path.startsWith('/api/student/platform/exams/') && path.endsWith('/start'))"));
+  assert.ok(worker.includes("const isExamResumeRoute="));
+  assert.ok(worker.includes("const isExamStartRoute="));
   assert.ok(worker.includes("ensureColumn(env,'exam_attempts','question_order_json','TEXT')"));
 });
 
