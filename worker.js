@@ -3957,7 +3957,17 @@ if (method === "POST" && rejectPasswordMatch) {
       if (method==='PUT') {
         const b=await readBody(request);
         if (b.role!==undefined) { const role=clean(b.role,40); if(!ADMIN_PERMS[role]) return reply(request, env,{success:false,error:'Invalid role'},400); if(role==='super_admin' && admin.role!=='super_admin') return reply(request,env,{success:false,error:'لا يمكن منح صلاحية المدير الأعلى إلا للمدير الأعلى'},403); if(uid===admin.id && role!==admin.role) return reply(request,env,{success:false,error:'لا يمكنك تغيير دور حسابك الحالي'},403); await env.DB.prepare(`UPDATE admin_users SET role=? WHERE id=?`).bind(role,uid).run(); }
-        if (b.is_active!==undefined) { await env.DB.prepare(`UPDATE admin_users SET is_active=? WHERE id=?`).bind(b.is_active?1:0,uid).run(); }
+        if (b.is_active!==undefined) {
+          if (!b.is_active && uid===admin.id) return reply(request,env,{success:false,error:'لا يمكنك إيقاف حسابك الحالي'},403);
+          if (!b.is_active) {
+            const target=await env.DB.prepare(`SELECT role FROM admin_users WHERE id=?`).bind(uid).first();
+            if (target?.role==='super_admin') {
+              const count=await env.DB.prepare(`SELECT COUNT(*) AS c FROM admin_users WHERE role='super_admin' AND is_active=1`).first();
+              if (Number(count?.c||0)<=1) return reply(request,env,{success:false,error:'يجب أن يظل هناك مدير أعلى نشط واحد على الأقل'},409);
+            }
+          }
+          await env.DB.prepare(`UPDATE admin_users SET is_active=? WHERE id=?`).bind(b.is_active?1:0,uid).run();
+        }
         if (b.display_name!==undefined) { await env.DB.prepare(`UPDATE admin_users SET display_name=? WHERE id=?`).bind(clean(b.display_name,120),uid).run(); }
         if (b.email!==undefined) { await env.DB.prepare(`UPDATE admin_users SET email=? WHERE id=?`).bind(clean(b.email,120).toLowerCase(),uid).run(); }
         if (b.password) { const pw=String(b.password); if(pw.length<12) return reply(request, env,{success:false,error:'كلمة المرور 12+ حرف'},400); const hash=await passwordHash(pw); await env.DB.prepare(`UPDATE admin_users SET password_hash=? WHERE id=?`).bind(hash,uid).run(); }
