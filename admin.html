@@ -524,6 +524,43 @@ async function loadAds(){ try{ const d=await api('/api/admin/platform/ads'); con
 window.__editAd=(a)=>{ $('#adId').value=a.id; $('#adTitle').value=a.title||''; $('#adBody').value=a.body||''; $('#adImage').value=a.image_url||''; $('#adLink').value=a.link_url||''; $('#adCta').value=a.cta_text||''; $('#adPlacement').value=a.placement||'home'; $('#adPriority').value=a.priority||0; $('#adActive').value=a.is_active? '1':'0'; };
 window.__delAd=async(id)=>{ if(!confirm('حذف الإعلان؟'))return; try{ await api('/api/admin/platform/ads/'+id,{method:'DELETE'}); showMsg('تم الحذف',true); loadAds(); }catch(e){ showMsg(e.message); } };
 async function loadNotifications(){ try{ const d=await api('/api/admin/platform/notifications'); const rows=d.notifications||[]; $('#notifTbody').innerHTML=rows.map(n=>`<tr><td>${n.id}</td><td>${esc(n.title)}</td><td>${esc(n.type)}</td><td>${esc(n.audience_type)} ${esc(n.audience_value||'')}</td><td>${esc(fmtDate(n.created_at))}</td></tr>`).join('')||'<tr><td colspan="5" class="muted">لا يوجد</td></tr>'; }catch(e){ $('#notifTbody').innerHTML=`<tr><td colspan="5">${esc(e.message)}</td></tr>`; } }
+let homepageDraft={};
+const setHomeValue=(id,value)=>{const el=$('#'+id);if(el)el.value=value??'';};
+async function loadHomepage(){
+  try{
+    const d=await api('/api/admin/homepage');
+    homepageDraft=d.draft&&Object.keys(d.draft).length?d.draft:(d.published||{});
+    const x=homepageDraft, t=x.theme||{}, h=x.hero||{}, a=x.about||{}, b=x.branding||{}, n=x.announcement||{}, sec=x.sections||{};
+    setHomeValue('homeBrandName',x.brandName||'ZM Academy');setHomeValue('homeTagline',x.tagline||'');
+    setHomeValue('homeMode',t.mode||'dark');setHomeValue('homeTemplate',t.template||'future');
+    setHomeValue('homePrimary',t.primary||'#2F80FF');setHomeValue('homeSecondary',t.secondary||'#7B61FF');setHomeValue('homeBackground',t.background||'#071226');
+    setHomeValue('homeEyebrow',h.eyebrow||'');setHomeValue('homeHeroTitle',h.title||'');setHomeValue('homeHighlight',h.highlight||'');setHomeValue('homeHeroDescription',h.description||'');
+    setHomeValue('homePrimaryText',h.primaryText||'');setHomeValue('homePrimaryUrl',h.primaryUrl||'');setHomeValue('homeSecondaryText',h.secondaryText||'');setHomeValue('homeSecondaryUrl',h.secondaryUrl||'');
+    setHomeValue('homeAboutTitle',a.title||'');setHomeValue('homeAboutDescription',a.description||'');
+    setHomeValue('homeLogoUrl',b.logoUrl||'');setHomeValue('homeHeroImageUrl',b.heroImageUrl||'');setHomeValue('homeWhatsapp',b.whatsapp||'');setHomeValue('homeFacebook',b.facebook||'');setHomeValue('homeYoutube',b.youtube||'');setHomeValue('homeTelegram',b.telegram||'');
+    $('#homeAnnouncementEnabled').checked=!!n.enabled;setHomeValue('homeAnnouncementText',n.text||'');setHomeValue('homeAnnouncementButton',n.buttonText||'');setHomeValue('homeAnnouncementUrl',n.url||'');
+    $('#homeShowSubjects').checked=sec.subjects!==false;$('#homeShowCurriculum').checked=sec.curriculum!==false;$('#homeShowLibrary').checked=sec.library!==false;$('#homeShowAbout').checked=sec.about!==false;$('#homeShowJoin').checked=sec.join!==false;
+    $('#homepageStatus').textContent='الحالة: '+(d.status||'published')+' · آخر تحديث: '+(d.updated_at||'غير متاح');
+  }catch(e){$('#homepageStatus').textContent=e.message;showMsg(e.message);}
+}
+function collectHomepageSettings(){
+  const x=JSON.parse(JSON.stringify(homepageDraft||{}));
+  x.brandName=$('#homeBrandName').value.trim();x.tagline=$('#homeTagline').value.trim();
+  x.theme={...(x.theme||{}),mode:$('#homeMode').value,template:$('#homeTemplate').value,primary:$('#homePrimary').value,secondary:$('#homeSecondary').value,background:$('#homeBackground').value};
+  x.hero={...(x.hero||{}),eyebrow:$('#homeEyebrow').value.trim(),title:$('#homeHeroTitle').value.trim(),highlight:$('#homeHighlight').value.trim(),description:$('#homeHeroDescription').value.trim(),primaryText:$('#homePrimaryText').value.trim(),primaryUrl:$('#homePrimaryUrl').value.trim(),secondaryText:$('#homeSecondaryText').value.trim(),secondaryUrl:$('#homeSecondaryUrl').value.trim()};
+  x.about={...(x.about||{}),title:$('#homeAboutTitle').value.trim(),description:$('#homeAboutDescription').value.trim()};
+  x.branding={...(x.branding||{}),logoUrl:$('#homeLogoUrl').value.trim(),heroImageUrl:$('#homeHeroImageUrl').value.trim(),whatsapp:$('#homeWhatsapp').value.trim(),facebook:$('#homeFacebook').value.trim(),youtube:$('#homeYoutube').value.trim(),telegram:$('#homeTelegram').value.trim()};
+  x.announcement={...(x.announcement||{}),enabled:$('#homeAnnouncementEnabled').checked,text:$('#homeAnnouncementText').value.trim(),buttonText:$('#homeAnnouncementButton').value.trim(),url:$('#homeAnnouncementUrl').value.trim()};
+  x.sections={...(x.sections||{}),subjects:$('#homeShowSubjects').checked,curriculum:$('#homeShowCurriculum').checked,library:$('#homeShowLibrary').checked,about:$('#homeShowAbout').checked,join:$('#homeShowJoin').checked};
+  return x;
+}
+async function saveHomepageDraft(){
+  try{homepageDraft=collectHomepageSettings();await api('/api/admin/homepage',{method:'PUT',body:JSON.stringify({settings:homepageDraft})});showMsg('تم حفظ مسودة الصفحة الرئيسية',true);$('#homepageStatus').textContent='تم حفظ المسودة. لم يتم نشرها للزوار بعد.';}catch(e){showMsg(e.message);}
+}
+async function publishHomepage(){
+  if(!confirm('نشر إعدادات الصفحة الرئيسية الحالية للزوار؟'))return;
+  try{homepageDraft=collectHomepageSettings();await api('/api/admin/homepage',{method:'PUT',body:JSON.stringify({settings:homepageDraft})});await api('/api/admin/homepage/publish',{method:'POST'});showMsg('تم نشر الصفحة الرئيسية',true);$('#homepageStatus').textContent='تم النشر للزوار بنجاح.';}catch(e){showMsg(e.message);}
+}
 async function loadPage(){
   const key=$('#pageKey').value.trim()||'home';
   try{ const d=await api('/api/admin/platform/pages/'+encodeURIComponent(key)); const content=d.draft?.content || d.published?.content || {blocks:[]}; $('#pageTitle').value=d.draft?.title||d.published?.title||key; $('#pageJson').value=JSON.stringify(content,null,2); renderPagePreview(content); renderBlocksEditor(content);
@@ -559,6 +596,7 @@ async function loadSection(key){
   if(key==='exams') return loadExams();
   if(key==='ads') return loadAds();
   if(key==='notifications') return loadNotifications();
+  if(key==='homepage') return loadHomepage();
   if(key==='pages') return loadPage();
   if(key==='theme'||key==='settings') return loadSettings();
   if(key==='media') return loadMedia();
@@ -593,6 +631,9 @@ $('#addQuestionBtn').onclick=async()=>{ try{ const examId=Number($('#qExamId').v
 $('#saveAdBtn').onclick=async()=>{ try{ const id=$('#adId').value; const body={title:$('#adTitle').value.trim(), body:$('#adBody').value.trim(), image_url:$('#adImage').value.trim(), link_url:$('#adLink').value.trim(), cta_text:$('#adCta').value.trim(), placement:$('#adPlacement').value, priority:Number($('#adPriority').value||0), is_active:$('#adActive').value==='1'}; if(!body.title) return showMsg('عنوان الإعلان مطلوب'); if(id) await api('/api/admin/platform/ads/'+id,{method:'PUT',body:JSON.stringify(body)}); else await api('/api/admin/platform/ads',{method:'POST',body:JSON.stringify(body)}); showMsg('تم الحفظ',true); $('#resetAdBtn').click(); loadAds(); }catch(e){ showMsg(e.message); } };
 $('#resetAdBtn').onclick=()=>{ ['adId','adTitle','adBody','adImage','adLink','adCta'].forEach(id=>$('#'+id).value=''); $('#adPlacement').value='home'; $('#adPriority').value=0; $('#adActive').value='1'; };
 $('#sendNotifBtn').onclick=async()=>{ try{ const schedule=$('#notifSchedule').value; const body={title:$('#notifTitle').value.trim(), body:$('#notifBody').value.trim(), type:$('#notifType').value, audience_type:$('#notifAudience').value, audience_value:$('#notifAudienceValue').value.trim(), scheduled_at:schedule?new Date(schedule).toISOString().slice(0,19).replace('T',' '):null, is_important:$('#notifType').value==='important'}; if(!body.title||!body.body) return showMsg('العنوان والنص مطلوبان'); await api('/api/admin/platform/notifications',{method:'POST',body:JSON.stringify(body)}); showMsg('تم الإرسال/الحفظ',true); $('#notifTitle').value=''; $('#notifBody').value=''; $('#notifSchedule').value=''; loadNotifications(); }catch(e){ showMsg(e.message); } };
+$('#loadHomepageBtn').onclick=loadHomepage;
+$('#saveHomepageBtn').onclick=saveHomepageDraft;
+$('#publishHomepageBtn').onclick=publishHomepage;
 $('#loadPageBtn').onclick=loadPage;
 $('#savePageBtn').onclick=async()=>{ try{ const key=$('#pageKey').value.trim()||'home'; let content; try{ content=JSON.parse($('#pageJson').value||'{}'); }catch{ return showMsg('JSON غير صالح'); } await api('/api/admin/platform/pages/'+encodeURIComponent(key),{method:'PUT',body:JSON.stringify({title:$('#pageTitle').value.trim()||key, content})}); renderPagePreview(content); showMsg('تم حفظ المسودة',true); loadPage(); }catch(e){ showMsg(e.message); } };
 $('#publishPageBtn').onclick=async()=>{ try{ const key=$('#pageKey').value.trim()||'home'; if(!confirm('نشر الصفحة؟')) return; await api('/api/admin/platform/pages/'+encodeURIComponent(key)+'/publish',{method:'POST'}); showMsg('تم النشر',true); loadPage(); }catch(e){ showMsg(e.message); } };
