@@ -268,6 +268,12 @@ test("exam validation preserves the archived lifecycle state", () => {
   assert.ok(admin.includes('<option value="archived">مؤرشف</option>'));
 });
 
+test("AI homepage apply action is hidden when switching away from builder mode", () => {
+  const admin = read("admin.html");
+  assert.ok(admin.includes("$('#aiMode').addEventListener('change'"));
+  assert.ok(admin.includes("if($('#aiMode').value!=='builder')$('#applyAiHomepageBtn').style.display='none'"));
+});
+
 test("AI Builder can apply structured homepage settings without publishing automatically", () => {
   const worker = read("worker.js");
   const admin = read("admin.html");
