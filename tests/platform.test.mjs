@@ -280,6 +280,14 @@ test("AI Builder can apply structured homepage settings without publishing autom
   assert.ok(admin.includes("لم يتم حفظه أو نشره بعد"));
 });
 
+test("homepage editor preserves unsaved edits when navigating between sections", () => {
+  const admin = read("admin.html");
+  assert.ok(admin.includes("let homepageDraftDirty=false"));
+  assert.ok(admin.includes("if(homepageDraftDirty)return"));
+  assert.ok(admin.includes("homepageDraftDirty=true"));
+  assert.ok(admin.includes("سيتم تجاهل التعديلات غير المحفوظة"));
+});
+
 test("admin homepage editor is connected to the homepage draft and publish APIs", () => {
   const admin = read("admin.html");
   const worker = read("worker.js");
