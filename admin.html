@@ -232,6 +232,29 @@ kbd{background:#0b1222;border:1px solid var(--line);padding:2px 6px;border-radiu
       </div>
     </section>
 
+    <section id="sec-media" class="section">
+      <div class="card"><h3>مكتبة الوسائط</h3>
+        <p class="muted small">عرض/حذف الملفات من مجلد <code>media/</code> في GitHub Storage عبر Worker. الرفع يستخدم endpoint الإدارة الحالي <code>/api/admin/upload</code>.</p>
+        <div class="toolbar"><input id="mediaPrefix" value="media"><button class="ghost" id="reloadMedia">تحميل</button></div>
+        <div class="table-wrap"><table><thead><tr><th>الاسم</th><th>المسار</th><th>الحجم</th><th>معاينة</th><th>إجراء</th></tr></thead><tbody id="mediaTbody"></tbody></table></div>
+      </div>
+    </section>
+
+    <section id="sec-roles" class="section">
+      <div class="card"><h3>الأدوار والمستخدمون الإداريون</h3>
+        <div class="table-wrap"><table><thead><tr><th>ID</th><th>المستخدم</th><th>الاسم</th><th>الدور</th><th>نشط</th><th>تغيير الدور</th></tr></thead><tbody id="rolesTbody"></tbody></table></div>
+        <div id="rolesMap" class="item small muted" style="margin-top:12px"></div>
+      </div>
+    </section>
+
+    <section id="sec-backups" class="section">
+      <div class="card"><h3>النسخ الاحتياطي والتقارير</h3>
+        <div class="row"><button id="exportBackupBtn">تصدير JSON احتياطي</button><button class="ghost" id="exportCsvBtn">تصدير تحليلات CSV</button></div>
+        <pre id="backupOut" style="white-space:pre-wrap;background:#091123;padding:14px;border-radius:12px;margin-top:12px;max-height:360px;overflow:auto"></pre>
+        <p class="muted small">التصدير للقراءة/النسخ الاحتياطي. الاستعادة المدمرة تتطلب تأكيدًا صريحًا وإجراءًا منفصلاً على الخادم.</p>
+      </div>
+    </section>
+
     <section id="sec-audit" class="section">
       <div class="card"><h3>سجل العمليات الإدارية</h3>
         <div class="toolbar"><button class="ghost" id="reloadAudit">تحميل</button></div>
@@ -265,6 +288,9 @@ const sections=[
   ['theme','استوديو التصميم','الثيم والإعدادات البصرية'],
   ['ai','الذكاء الاصطناعي','مساعد الإدارة والبناء والمحتوى'],
   ['settings','الإعدادات','إعدادات المنصة العامة'],
+  ['media','مكتبة الوسائط','إدارة الملفات والصور'],
+  ['roles','الأدوار والصلاحيات','إدارة المستخدمين الإداريين والأدوار'],
+  ['backups','النسخ والتقارير','تصدير البيانات والتقارير'],
   ['audit','سجل العمليات','تتبع العمليات الإدارية'],
 ];
 function showMsg(text, ok=false){const el=$('#appMsg');el.textContent=text;el.className='msg show '+(ok?'ok':'err');clearTimeout(showMsg.t);showMsg.t=setTimeout(()=>el.className='msg',5000);}
@@ -416,6 +442,11 @@ window.applyPageTemplate=(type)=>{ const map={hero:{blocks:[{type:'hero',title:'
 async function loadSettings(){ try{ const d=await api('/api/admin/platform/settings'); const g=d.settings?.general||{}; $('#setName').value=g.academyName||''; $('#setDesc').value=g.description||''; $('#setPhone').value=g.supportPhone||''; $('#setWhatsapp').value=g.whatsapp||''; $('#setEmail').value=g.supportEmail||''; $('#setTz').value=g.timezone||'Africa/Cairo'; $('#setMaint').checked=!!g.maintenance; $('#setMaintMsg').value=g.maintenanceMessage||''; const t=d.settings?.theme||{}; $('#themeMode').value=t.mode||'dark'; $('#themeTemplate').value=t.template||'future'; $('#themePrimary').value=t.primary||'#35a8ff'; $('#themeSecondary').value=t.secondary||'#9b7bff'; $('#themeBg').value=t.background||'#080d1b'; $('#themeSurface').value=t.surface||'#111b34'; $('#themeRadius').value=t.radius||'18px'; previewTheme(); }catch(e){ showMsg('تعذر تحميل الإعدادات: '+e.message); } }
 function previewTheme(){ const r=document.documentElement.style; r.setProperty('--primary',$('#themePrimary').value); r.setProperty('--secondary',$('#themeSecondary').value); r.setProperty('--bg',$('#themeBg').value); r.setProperty('--surface',$('#themeSurface').value); r.setProperty('--radius',$('#themeRadius').value); $('#themePreview').innerHTML=`<div style="padding:18px;border-radius:var(--radius);background:linear-gradient(120deg,${$('#themePrimary').value}22,${$('#themeSecondary').value}22);border:1px solid var(--line)"><h3 style="margin-top:0">معاينة ZM Academy</h3><p class="muted">هذا مثال على الألوان والزوايا.</p><button>زر تجريبي</button></div>`; }
 async function loadAudit(){ try{ const d=await api('/api/admin/platform/audit?limit=100'); const rows=d.logs||[]; $('#auditTbody').innerHTML=rows.map(r=>`<tr><td>${esc(fmtDate(r.created_at))}</td><td>${esc(r.actor_label||r.actor_type||'-')}</td><td>${esc(r.action)}</td><td>${esc(r.entity_type||'-')} ${esc(r.entity_id||'')}</td><td><div class="small" style="max-width:360px;white-space:pre-wrap">${esc((r.details_json||'').slice(0,300))}</div></td></tr>`).join('')||'<tr><td colspan="5" class="muted">لا يوجد</td></tr>'; }catch(e){ $('#auditTbody').innerHTML=`<tr><td colspan="5">${esc(e.message)}</td></tr>`; } }
+async function loadMedia(){ try{ const prefix=$('#mediaPrefix').value.trim()||'media'; const d=await api('/api/admin/platform/media?prefix='+encodeURIComponent(prefix)); const rows=d.items||[]; $('#mediaTbody').innerHTML=rows.map(i=>`<tr><td>${esc(i.name)}</td><td class="small">${esc(i.path)}</td><td>${esc(i.size||'-')}</td><td>${/\.(png|jpg|jpeg|webp|gif)$/i.test(i.name)?`<a href="${API}${esc(i.download_url)}" target="_blank">فتح</a>`:'-'}</td><td><button class="ghost small" onclick="window.__delMedia('${esc(i.path).replace(/'/g,"&#39;")}')">حذف</button></td></tr>`).join('')||'<tr><td colspan="5" class="muted">لا توجد ملفات</td></tr>'; }catch(e){ $('#mediaTbody').innerHTML=`<tr><td colspan="5">${esc(e.message)}</td></tr>`; } }
+window.__delMedia=async(path)=>{ if(!confirm('حذف الملف '+path+'؟')) return; try{ await api('/api/admin/platform/media/'+encodeURIComponent(path).replace(/%2F/g,'/'),{method:'DELETE'}); showMsg('تم الحذف',true); loadMedia(); }catch(e){ showMsg(e.message); } };
+async function loadRoles(){ try{ const d=await api('/api/admin/platform/roles'); const admins=d.admins||[]; $('#rolesTbody').innerHTML=admins.map(a=>`<tr><td>${a.id}</td><td>${esc(a.username)}</td><td>${esc(a.display_name||'-')}</td><td><span class="badge">${esc(a.role||'-')}</span></td><td>${Number(a.is_active)===0?'<span class="badge danger">لا</span>':'<span class="badge ok">نعم</span>'}</td><td><select data-role-uid="${a.id}">${Object.keys(d.permissions_map||{}).map(r=>`<option value="${r}" ${r===a.role?'selected':''}>${r}</option>`).join('')}</select> <button class="ghost small" onclick="window.__setRole(${a.id})">حفظ</button></td></tr>`).join('')||'<tr><td colspan="6" class="muted">لا يوجد</td></tr>'; $('#rolesMap').textContent='خريطة الصلاحيات: '+JSON.stringify(d.permissions_map||{}); }catch(e){ $('#rolesTbody').innerHTML=`<tr><td colspan="6">${esc(e.message)}</td></tr>`; } }
+window.__setRole=async(id)=>{ const sel=document.querySelector(`[data-role-uid="${id}"]`); if(!sel) return; try{ await api('/api/admin/platform/admin-users/'+id+'/role',{method:'PUT',body:JSON.stringify({role:sel.value})}); showMsg('تم تحديث الدور',true); loadRoles(); }catch(e){ showMsg(e.message); } };
+async function loadBackups(){ $('#backupOut').textContent='جاهز. اضغط تصدير JSON أو CSV.'; }
 async function loadSection(key){
   if(key==='dashboard') return loadDashboard();
   if(key==='students') return loadStudents();
@@ -428,6 +459,9 @@ async function loadSection(key){
   if(key==='notifications') return loadNotifications();
   if(key==='pages') return loadPage();
   if(key==='theme'||key==='settings') return loadSettings();
+  if(key==='media') return loadMedia();
+  if(key==='roles') return loadRoles();
+  if(key==='backups') return loadBackups();
   if(key==='audit') return loadAudit();
   if(key==='ai') return;
 }
@@ -460,6 +494,9 @@ $('#saveThemeBtn').onclick=async()=>{ try{ const theme={mode:$('#themeMode').val
 $('#saveSettingsBtn').onclick=async()=>{ try{ const general={academyName:$('#setName').value.trim(),description:$('#setDesc').value.trim(),supportPhone:$('#setPhone').value.trim(),whatsapp:$('#setWhatsapp').value.trim(),supportEmail:$('#setEmail').value.trim(),timezone:$('#setTz').value.trim()||'Africa/Cairo',maintenance:$('#setMaint').checked,maintenanceMessage:$('#setMaintMsg').value.trim()}; await api('/api/admin/platform/settings',{method:'PUT',body:JSON.stringify({general})}); showMsg('تم حفظ الإعدادات',true); }catch(e){ showMsg(e.message); } };
 $('#runAiBtn').onclick=async()=>{ const prompt=$('#aiPrompt').value.trim(); if(!prompt) return showMsg('اكتب الطلب أولًا'); $('#runAiBtn').disabled=true; $('#aiResult').textContent='جارٍ التنفيذ...'; try{ const d=await api('/api/admin/platform/ai',{method:'POST',body:JSON.stringify({prompt,mode:$('#aiMode').value})}); $('#aiResult').textContent=d.text||JSON.stringify(d,null,2); }catch(e){ $('#aiResult').textContent='خطأ: '+(e.data?.error||e.message); } finally{ $('#runAiBtn').disabled=false; } };
 $('#reloadAudit').onclick=loadAudit;
+$('#reloadMedia').onclick=loadMedia;
+$('#exportBackupBtn') && ($('#exportBackupBtn').onclick=async()=>{ try{ const d=await api('/api/admin/platform/backup/export'); $('#backupOut').textContent=JSON.stringify(d.backup,null,2); showMsg('تم التصدير',true); }catch(e){ showMsg(e.message); } });
+$('#exportCsvBtn') && ($('#exportCsvBtn').onclick=async()=>{ try{ const r=await fetch(API+'/api/admin/platform/analytics/export.csv',{headers:{'Authorization':'Bearer '+state.token}}); const t=await r.text(); if(!r.ok) throw new Error(t); $('#backupOut').textContent=t; const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([t],{type:'text/csv'})); a.download='analytics.csv'; a.click(); }catch(e){ showMsg(e.message); } });
 
 // boot
 boot();

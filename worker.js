@@ -3832,6 +3832,71 @@ if (method === "POST" && rejectPasswordMatch) {
       }
     }
 
+    // Roles
+    if (path==='/api/admin/platform/roles') {
+      if (!hasPerm(admin.role,'roles') && !hasPerm(admin.role,'settings')) return reply(request, env,{success:false,error:'Forbidden'},403);
+      if (method==='GET') {
+        const roles = await env.DB.prepare(`SELECT r.*, (SELECT COUNT(*) FROM role_permissions rp WHERE rp.role_id=r.id) as perm_count FROM roles r ORDER BY r.id ASC`).all();
+        const admins = await env.DB.prepare(`SELECT id,username,display_name,role,is_active,created_at,last_login_at FROM admin_users ORDER BY id DESC LIMIT 200`).all();
+        return reply(request, env,{success:true, roles: roles.results||[], admins: admins.results||[], permissions_map: ADMIN_PERMS});
+      }
+    }
+    if (/^\/api\/admin\/platform\/admin-users\/\d+\/role$/.test(path)) {
+      if (!hasPerm(admin.role,'roles')) return reply(request, env,{success:false,error:'Forbidden'},403);
+      const uid = Number(path.split('/')[5]);
+      if (method==='PUT') {
+        const b=await readBody(request); const role=clean(b?.role,40);
+        if(!ADMIN_PERMS[role]) return reply(request, env,{success:false,error:'Invalid role'},400);
+        await env.DB.prepare(`UPDATE admin_users SET role=? WHERE id=?`).bind(role,uid).run();
+        await logAudit(env,{actor_type:'admin',actor_id:admin.id,actor_label:admin.username,action:'admin.role.update',entity_type:'admin_user',entity_id:uid,details_json:{role},ip,user_agent:ua});
+        return reply(request, env,{success:true});
+      }
+    }
+
+    // Backup export (JSON)
+    if (method==='GET' && path==='/api/admin/platform/backup/export') {
+      if (!hasPerm(admin.role,'backups')) return reply(request, env,{success:false,error:'Forbidden'},403);
+      const tables=['platform_settings','roles','role_permissions','page_drafts','page_published','page_versions','student_preferences','parents','parent_student_links','notifications','ads','exams','exam_questions','exam_attempts','audit_logs','ai_logs'];
+      const out={exported_at: nowIso(), tables:{}};
+      for (const t of tables) {
+        try { const r=await env.DB.prepare(`SELECT * FROM ${t} ORDER BY 1 DESC LIMIT 1000`).all(); out.tables[t]=r.results||[]; } catch(e){ out.tables[t]={error:e.message}; }
+      }
+      await env.DB.prepare(`INSERT INTO backup_runs(type,status,details_json,created_by) VALUES('export','success',?,?)`).bind(JSON.stringify({tables:Object.keys(out.tables)}), admin.username).run();
+      return reply(request, env,{success:true, backup: out});
+    }
+
+    // Analytics CSV
+    if (method==='GET' && path==='/api/admin/platform/analytics/export.csv') {
+      if (!hasPerm(admin.role,'analytics')) return reply(request, env,{success:false,error:'Forbidden'},403);
+      const rows = await env.DB.prepare(`SELECT date(created_at) as day, COUNT(*) as orders, SUM(CASE WHEN status='completed' THEN 1 ELSE 0 END) as completed FROM orders GROUP BY date(created_at) ORDER BY day DESC LIMIT 90`).all().catch(()=>({results:[]}));
+      const header='day,orders,completed\n';
+      const body=(rows.results||[]).map(r=>`${r.day||''},${r.orders||0},${r.completed||0}`).join('\n');
+      return new Response(header+body, {status:200, headers:{...corsHeaders(request,env),'Content-Type':'text/csv; charset=utf-8','Content-Disposition':'attachment; filename="analytics.csv"'}});
+    }
+
+    // Media library (GitHub storage)
+    if (path==='/api/admin/platform/media') {
+      if (!hasPerm(admin.role,'media')) return reply(request, env,{success:false,error:'Forbidden'},403);
+      if (method==='GET') {
+        if (!env.GITHUB_STORAGE_TOKEN) return reply(request, env,{success:false,error:'Storage not configured'},503);
+        const prefix = clean(url.searchParams.get('prefix')||'media', 120);
+        try {
+          const r = await fetch(githubContentsUrl(prefix), {headers: githubHeaders(env)});
+          if (!r.ok) return reply(request, env,{success:true, items:[]});
+          const items = await r.json();
+          const list = Array.isArray(items)?items.filter(i=>i.type==='file').map(i=>({name:i.name,path:i.path,size:i.size,download_url:`/api/media/${i.path}`})):[];
+          return reply(request, env,{success:true, items:list});
+        } catch(e){ return reply(request, env,{success:false,error:'Failed to list media'},500); }
+      }
+    }
+    if (method==='DELETE' && /^\/api\/admin\/platform\/media\/.+/.test(path)) {
+      if (!hasPerm(admin.role,'media')) return reply(request, env,{success:false,error:'Forbidden'},403);
+      const fileKey = decodeURIComponent(path.replace('/api/admin/platform/media/',''));
+      if (!fileKey.startsWith('media/') || fileKey.includes('..')) return reply(request, env,{success:false,error:'Invalid path'},400);
+      try { await deleteFromGitHub(env, fileKey); await logAudit(env,{actor_type:'admin',actor_id:admin.id,actor_label:admin.username,action:'media.delete',entity_type:'media',entity_id:fileKey,ip,user_agent:ua}); return reply(request, env,{success:true}); }
+      catch(e){ return reply(request, env,{success:false,error:'Delete failed'},500); }
+    }
+
     return reply(request, env, {success:false,error:'Not found'}, 404);
   }
 
