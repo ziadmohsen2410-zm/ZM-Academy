@@ -101,6 +101,20 @@ test("student exam visibility and start enforce grade, schedule, open-attempt, a
   assert.ok(routes.includes("انتهى الوقت المحدد للاختبار"));
 });
 
+test("essay attempts have an admin review and bounded manual grading workflow", () => {
+  const worker = read("worker.js");
+  const admin = read("admin.html");
+  assert.ok(worker.includes("path==='/api/admin/platform/exam-attempts'"));
+  assert.ok(worker.includes("exam-attempts\\/\\d+\\/grade"));
+  assert.ok(worker.includes("attempt.status!=='submitted'"));
+  assert.ok(worker.includes("value<0 || value>max"));
+  assert.ok(worker.includes("status='graded',graded_by=?"));
+  assert.ok(admin.includes('id="examAttemptsList"'));
+  assert.ok(admin.includes("window.__reviewAttempt=async(id)=>"));
+  assert.ok(admin.includes("window.__loadExamAttempts(id)"));
+  assert.ok(admin.includes("a.status==='submitted'"));
+});
+
 test("exam validation preserves the archived lifecycle state", () => {
   const worker = read("worker.js");
   const admin = read("admin.html");
