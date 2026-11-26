@@ -298,7 +298,7 @@ test("published page builder pages render through the public API", () => {
   assert.ok(page.includes("d.page.content||{}"));
   assert.ok(page.includes("content.blocks"));
   assert.ok(admin.includes('id="openPublishedPageBtn"'));
-  assert.ok(admin.includes("./page.html?key='));
+  assert.ok(admin.includes("./page.html?key="));
   assert.ok(worker.includes("path.startsWith('/api/public/pages/')"));
 });
 
