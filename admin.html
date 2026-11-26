@@ -255,8 +255,8 @@ fetch(API+'/api/homepage',{cache:'no-store'}).then(r=>r.ok?r.json():null).then(d
       </div>
       <h3>الشعار والصور وروابط التواصل</h3>
       <div class="editor-grid">
-        <div class="editor-field"><label for="hpLogoUrl">رابط الشعار</label><input id="hpLogoUrl" maxlength="800" placeholder="https://..."></div>
-        <div class="editor-field"><label for="hpHeroImageUrl">رابط صورة الخلفية الرئيسية</label><input id="hpHeroImageUrl" maxlength="800" placeholder="https://..."></div>
+        <div class="editor-field"><label for="hpLogoUrl">رابط الشعار</label><input id="hpLogoUrl" maxlength="800" placeholder="https://..."><input id="hpLogoFile" type="file" accept="image/png,image/jpeg,image/webp"><button type="button" class="secondary" onclick="uploadHomepageImage('hpLogoFile','hpLogoUrl')">اختيار ورفع الشعار من الجهاز</button><img id="hpLogoPreview" alt="معاينة الشعار" style="display:none;max-width:120px;max-height:90px;object-fit:contain;margin-top:8px;border-radius:10px"></div>
+        <div class="editor-field"><label for="hpHeroImageUrl">رابط صورة الخلفية الرئيسية</label><input id="hpHeroImageUrl" maxlength="800" placeholder="https://..."><input id="hpHeroFile" type="file" accept="image/png,image/jpeg,image/webp"><button type="button" class="secondary" onclick="uploadHomepageImage('hpHeroFile','hpHeroImageUrl')">اختيار ورفع صورة الخلفية</button><img id="hpHeroPreview" alt="معاينة الخلفية" style="display:none;max-width:180px;max-height:100px;object-fit:cover;margin-top:8px;border-radius:10px"></div>
         <div class="editor-field"><label for="hpWhatsapp">رقم واتساب الدولي</label><input id="hpWhatsapp" maxlength="30" placeholder="201xxxxxxxxx"></div>
         <div class="editor-field"><label for="hpFacebook">رابط فيسبوك</label><input id="hpFacebook" maxlength="800" placeholder="https://facebook.com/..."></div>
         <div class="editor-field"><label for="hpYoutube">رابط يوتيوب</label><input id="hpYoutube" maxlength="800" placeholder="https://youtube.com/..."></div>
@@ -449,6 +449,26 @@ async function logout(){
 const ZM_THEME_PRESETS={neon:{primary:"#35a8ff",secondary:"#9b70ff",background:"#080d1b",surface:"#111b34",text:"#f4f7ff",muted:"#a5b3d0"},royal:{primary:"#d6b36a",secondary:"#f0d99d",background:"#090b12",surface:"#171b27",text:"#f7f4ed",muted:"#aaa9b4"},ocean:{primary:"#00bcd4",secondary:"#3978ff",background:"#071923",surface:"#102b3a",text:"#effcff",muted:"#a3c5d0"},emerald:{primary:"#25c58a",secondary:"#a3df67",background:"#071811",surface:"#10291f",text:"#f0fff7",muted:"#a6c9b6"},rose:{primary:"#f06aa8",secondary:"#a77bff",background:"#190d1b",surface:"#2a1730",text:"#fff2fb",muted:"#d1afc8"},light:{primary:"#5143bd",secondary:"#168db8",background:"#f4f6ff",surface:"#ffffff",text:"#202747",muted:"#68708e"}};
 function applyAdminPreset(){const p=ZM_THEME_PRESETS[el("hpThemePreset").value];if(!p)return;for(const [k,v] of Object.entries(p))el({primary:"hpColorPrimary",secondary:"hpColorSecondary",background:"hpColorBackground",surface:"hpColorSurface",text:"hpColorText",muted:"hpColorMuted"}[k]).value=v;el("hpDefaultMode").value=el("hpThemePreset").value==="light"?"light":"dark";}
 
+async function uploadHomepageImage(fileInputId,urlInputId){
+  const fileInput=el(fileInputId),file=fileInput?.files?.[0];
+  if(!file)return message("اختَر صورة من جهازك أولًا.","err");
+  if(file.size>8*1024*1024)return message("حجم الصورة يجب ألا يتجاوز 8 ميجابايت.","err");
+  if(!["image/jpeg","image/png","image/webp"].includes(file.type))return message("الصيغ المدعومة JPG وPNG وWEBP فقط.","err");
+  const button=fileInput.parentElement.querySelector("button");
+  if(button){button.disabled=true;button.textContent="جارٍ رفع الصورة...";}
+  try{
+    const form=new FormData();form.append("file",file,file.name);
+    const response=await fetch(API+"/api/admin/upload",{method:"POST",headers:{Authorization:"Bearer "+token},body:form});
+    const data=await response.json().catch(()=>({}));
+    if(!response.ok||!data.success||!data.url)throw new Error(data.error||"تعذر رفع الصورة أو إنشاء رابطها.");
+    el(urlInputId).value=data.url;
+    const preview=el(urlInputId==="hpLogoUrl"?"hpLogoPreview":"hpHeroPreview");
+    if(preview){preview.src=data.url;preview.style.display="block";}
+    message("تم رفع الصورة. احفظ المسودة ثم انشر التعديلات.");
+  }catch(error){message(error.message||"فشل رفع الصورة.","err");}
+  finally{if(button){button.disabled=false;button.textContent=urlInputId==="hpLogoUrl"?"اختيار ورفع الشعار من الجهاز":"اختيار ورفع صورة الخلفية";}}
+}
+
 function homepageDefault(){
   return {
     brandName:"ZM Academy",
@@ -562,6 +582,8 @@ function fillHomepageForm(settings){
   setField("hpColorText",theme.text);setField("hpColorMuted",theme.muted);
   setField("hpDefaultMode",theme.mode);setField("hpCornerStyle",theme.corners);setField("hpFontFamily",theme.font);setField("hpButtonStyle",theme.buttons);setField("hpCardStyle",theme.cards);setField("hpMotion",theme.motion);
   setField("hpLogoUrl",branding.logoUrl);setField("hpHeroImageUrl",branding.heroImageUrl);
+  if(branding.logoUrl){el("hpLogoPreview").src=branding.logoUrl;el("hpLogoPreview").style.display="block";}
+  if(branding.heroImageUrl){el("hpHeroPreview").src=branding.heroImageUrl;el("hpHeroPreview").style.display="block";}
   setField("hpWhatsapp",branding.whatsapp);setField("hpFacebook",branding.facebook);
   setField("hpYoutube",branding.youtube);setField("hpTelegram",branding.telegram);
   setCheck("hpShowSubjects",sections.subjects);

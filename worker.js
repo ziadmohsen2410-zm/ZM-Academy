@@ -271,13 +271,7 @@ async function studentSession(request, env) {
       AND d.device_token_hash = ss.device_token_hash
       AND d.status = 'approved'
      WHERE ss.token_hash = ?
-       AND ss.expires_at > datetime('now')
-       AND NOT EXISTS (
-         SELECT 1
-         FROM student_devices pending
-         WHERE pending.student_id = ss.student_id
-           AND pending.status = 'pending'
-       )`
+       AND ss.expires_at > datetime('now')`
   )
     .bind(tokenHash)
     .first();
@@ -339,7 +333,8 @@ async function uploadToGitHub(env, fileBytes, fileName, contentType) {
       .replace(/[^a-zA-Z0-9._-]/g, "_")
       .slice(-100) || "file";
 
-  const path = `materials/${crypto.randomUUID()}-${safeName}`;
+  const folder = contentType.startsWith('image/') ? 'media' : 'materials';
+  const path = `${folder}/${crypto.randomUUID()}-${safeName}`;
 
   const response = await fetch(githubContentsUrl(path), {
     method: "PUT",
@@ -373,7 +368,7 @@ async function deleteFromGitHub(env, fileKey) {
   if (!env.GITHUB_STORAGE_TOKEN) return;
   if (
     !fileKey ||
-    !fileKey.startsWith("materials/") ||
+    !/^(materials|media)\//.test(fileKey) ||
     fileKey.includes("..")
   ) {
     return;
@@ -680,6 +675,37 @@ async function route(request, env) {
         },
         500
       );
+    }
+  }
+
+  // Public image delivery for academy media stored in the private GitHub storage repo.
+  if (method === "GET" && path.startsWith("/api/media/")) {
+    try {
+      const fileKey = decodeURIComponent(path.slice("/api/media/".length));
+      if (!fileKey.startsWith("media/") || fileKey.includes("..") || fileKey.includes("\\")) {
+        return reply(request, env, { success: false, error: "Invalid media path." }, 400);
+      }
+      if (!env.GITHUB_STORAGE_TOKEN) {
+        return reply(request, env, { success: false, error: "Storage is not configured." }, 503);
+      }
+      const stored = await fetch(githubContentsUrl(fileKey), { headers: githubHeaders(env) });
+      if (!stored.ok) return reply(request, env, { success: false, error: "Media not found." }, 404);
+      const item = await stored.json();
+      if (!item?.content || item.encoding !== "base64") {
+        return reply(request, env, { success: false, error: "Invalid stored media." }, 502);
+      }
+      const binary = atob(String(item.content).replace(/\s/g, ""));
+      const bytes = Uint8Array.from(binary, ch => ch.charCodeAt(0));
+      const ext = fileKey.toLowerCase().split(".").pop();
+      const type = ext === "png" ? "image/png" : ext === "webp" ? "image/webp" : "image/jpeg";
+      return new Response(bytes, { status: 200, headers: {
+        ...corsHeaders(request, env), "Content-Type": type,
+        "Cache-Control": "public, max-age=86400, stale-while-revalidate=604800",
+        "X-Content-Type-Options": "nosniff"
+      }});
+    } catch (error) {
+      console.error("MEDIA_DELIVERY_ERROR:", error?.message || error);
+      return reply(request, env, { success: false, error: "Unable to load media." }, 500);
     }
   }
 
@@ -1232,29 +1258,13 @@ if (method === "POST" && rejectPasswordMatch) {
       }
 
       if (decision === "approve") {
-        await env.DB.batch([
-          env.DB.prepare(
-            `UPDATE student_devices
-             SET status = 'rejected',
-                 reviewed_at = CURRENT_TIMESTAMP,
-                 reviewed_by = ?
-             WHERE student_id = ?
-               AND id != ?
-               AND status IN ('approved', 'pending')`
-          ).bind(session.admin_id, device.student_id, deviceId),
-
-          env.DB.prepare(
-            `UPDATE student_devices
-             SET status = 'approved',
-                 reviewed_at = CURRENT_TIMESTAMP,
-                 reviewed_by = ?
-             WHERE id = ? AND status = 'pending'`
-          ).bind(session.admin_id, deviceId),
-
-          env.DB.prepare(
-            "DELETE FROM student_sessions WHERE student_id = ?"
-          ).bind(device.student_id),
-        ]);
+        await env.DB.prepare(
+          `UPDATE student_devices
+           SET status = 'approved',
+               reviewed_at = CURRENT_TIMESTAMP,
+               reviewed_by = ?
+           WHERE id = ? AND status = 'pending'`
+        ).bind(session.admin_id, deviceId).run();
 
         return reply(request, env, {
           success: true,
@@ -1634,23 +1644,19 @@ if (method === "POST" && rejectPasswordMatch) {
       ]);
 
       if ((studentLinks?.n || 0) > 0 || (materials?.n || 0) > 0) {
-        return reply(
-          request,
-          env,
-          {
-            success: false,
-            error: "لا يمكن حذف المادة لارتباطها بطلاب أو محتوى دراسي.",
-          },
-          409
-        );
+        await ensureArchivedSubjectsTable(env);
+        await env.DB.prepare(
+          "INSERT OR IGNORE INTO archived_subjects (subject_id) VALUES (?)"
+        ).bind(id).run();
+        return reply(request, env, {
+          success: true,
+          archived: true,
+          message: "المادة مرتبطة بطلاب أو دروس؛ تم إخفاؤها بأمان وأرشفتها مع الاحتفاظ بكل السجلات. يمكنك استعادتها لاحقًا.",
+        });
       }
 
       await env.DB.prepare("DELETE FROM subjects WHERE id = ?").bind(id).run();
-
-      return reply(request, env, {
-        success: true,
-        message: "تم حذف المادة بنجاح.",
-      });
+      return reply(request, env, { success: true, message: "تم حذف المادة بنجاح." });
     }
 
     // عرض جميع المحتويات للإدارة بما فيها المؤرشفة
@@ -1759,15 +1765,15 @@ if (method === "POST" && rejectPasswordMatch) {
         .first();
 
       if ((linkedOrders?.n || 0) > 0) {
-        return reply(
-          request,
-          env,
-          {
-            success: false,
-            error: "لا يمكن حذف المحتوى لوجود طلبات مرتبطة به.",
-          },
-          409
-        );
+        await ensureArchivedMaterialsTable(env);
+        await env.DB.prepare(
+          "INSERT OR IGNORE INTO archived_materials (material_id) VALUES (?)"
+        ).bind(id).run();
+        return reply(request, env, {
+          success: true,
+          archived: true,
+          message: "الدرس مرتبط بطلبات أو مشتريات؛ تم إخفاؤه وأرشفته مع الاحتفاظ بسجلات الطلاب والطلبات. يمكنك استعادته لاحقًا.",
+        });
       }
 
       await ensureStudentLearningTables(env);
@@ -1839,24 +1845,21 @@ if (method === "POST" && rejectPasswordMatch) {
         const contentType = file.type;
         const bytes = new Uint8Array(await file.arrayBuffer());
 
-        const isPDF =
-          contentType === "application/pdf" &&
-          bytes.length >= 5 &&
+        const isPDF = contentType === "application/pdf" && bytes.length >= 5 &&
           new TextDecoder().decode(bytes.slice(0, 5)) === "%PDF-";
-
-        if (!isPDF) {
-          return reply(
-            request,
-            env,
-            {
-              success: false,
-              error: "يجب اختيار ملف PDF صحيح.",
-            },
-            400
-          );
+        const isImage = ["image/jpeg", "image/png", "image/webp"].includes(contentType) &&
+          bytes.length >= 12;
+        if (!isPDF && !isImage) {
+          return reply(request, env, {
+            success: false,
+            error: "الملف غير مدعوم. ارفع PDF أو صورة JPG أو PNG أو WEBP صحيحة.",
+          }, 400);
         }
 
         const fileKey = await uploadToGitHub(env, bytes, file.name, contentType);
+        const mediaUrl = isImage
+          ? `${new URL(request.url).origin}/api/media/${encodeURIComponent(fileKey)}`
+          : null;
 
         return reply(
           request,
@@ -1864,6 +1867,7 @@ if (method === "POST" && rejectPasswordMatch) {
           {
             success: true,
             file_key: fileKey,
+            url: mediaUrl,
             message: "File uploaded successfully.",
           },
           201
@@ -2423,7 +2427,7 @@ if (method === "POST" && rejectPasswordMatch) {
       .bind(account.student_id)
       .first();
 
-    if ((pending?.total || 0) > 0) {
+    if ((pending?.total || 0) > 0 && existingDevice?.status !== "approved") {
       if (existingDevice?.status === "rejected") {
         await env.DB.prepare(
           `UPDATE student_devices
