@@ -303,6 +303,13 @@ test("page builder accepts only URL-safe public page keys", () => {
   assert.ok(worker.includes("مفتاح الصفحة يجب أن يبدأ بحرف أو رقم"));
 });
 
+test("admin page-builder preview blocks unsafe link schemes", () => {
+  const admin = read("admin.html");
+  assert.ok(admin.includes("const safePreviewLink=value=>"));
+  assert.ok(admin.includes("if(!raw||raw.startsWith('//'))return '#'"));
+  assert.ok(admin.includes("safePreviewLink(b.buttonUrl)"));
+});
+
 test("published page builder pages render through the public API", () => {
   const page = read("page.html");
   const admin = read("admin.html");
