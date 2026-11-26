@@ -125,7 +125,7 @@ kbd{background:#0b1222;border:1px solid var(--line);padding:2px 6px;border-radiu
           <div class="table-wrap" style="margin-top:12px"><table><thead><tr><th>ID</th><th>الاسم</th><th>الصف</th><th>إجراءات</th></tr></thead><tbody id="subjectsTbody"></tbody></table></div>
         </div>
         <div class="card"><h3>الدروس/المحتوى</h3>
-          <div class="row"><input id="matTitle" placeholder="عنوان الدرس"><input id="matSubjectId" placeholder="subject_id" type="number"><input id="matPrice" placeholder="السعر" type="number"><select id="matFree"><option value="0">مدفوع</option><option value="1">مجاني</option></select><button id="addMaterialBtn">إضافة</button></div>
+          <div class="row"><input id="matTitle" placeholder="عنوان الدرس"><select id="matSubjectId"><option value="">اختر المادة</option></select><select id="matType"><option value="lesson">درس</option><option value="pdf">ملف PDF</option><option value="video">فيديو</option><option value="worksheet">ورقة عمل</option></select><input id="matPrice" placeholder="السعر" type="number" min="0"><select id="matFree"><option value="0">مدفوع</option><option value="1">مجاني</option></select><button id="addMaterialBtn">إضافة</button></div>
           <div class="table-wrap" style="margin-top:12px"><table><thead><tr><th>ID</th><th>العنوان</th><th>المادة</th><th>السعر</th><th>إجراءات</th></tr></thead><tbody id="materialsTbody"></tbody></table></div>
         </div>
       </div>
@@ -423,17 +423,39 @@ function renderStudents(rows){
   tb.innerHTML=filtered.length?filtered.map(s=>`<tr><td>${esc(s.id)}</td><td>${esc(s.name||'-')}</td><td>${esc(s.phone||'-')}</td><td>${esc(s.grade||'-')}</td><td>${esc(s.school||'-')}</td><td><span class="small muted">عرض عبر API الحالي</span></td></tr>`).join(''):'<tr><td colspan="6" class="muted">لا توجد نتائج</td></tr>';
 }
 async function loadSubjects(){
-  const tb=$('#subjectsTbody'); tb.innerHTML='<tr><td colspan="4" class="muted">...</td></tr>';
-  try{ const d=await api('/api/admin/subjects'); const rows=d.subjects||d.data||[]; tb.innerHTML=rows.map(s=>`<tr><td>${esc(s.id)}</td><td>${esc(s.name||'-')}</td><td>${esc(s.grade||s.stage||'-')}</td><td><button class="ghost small" onclick="window.__delSubject(${s.id})">حذف</button></td></tr>`).join('')||'<tr><td colspan="4" class="muted">لا توجد مواد</td></tr>'; }
-  catch(e){ tb.innerHTML=`<tr><td colspan="4">خطأ: ${esc(e.message)}</td></tr>`; }
+  const tb=$('#subjectsTbody'); tb.innerHTML='<tr><td colspan="4" class="muted">جارٍ التحميل...</td></tr>';
+  try{
+    const d=await api('/api/admin/subjects');
+    const rows=d.subjects||d.data||[];
+    const active=rows.filter(s=>Number(s.is_archived)!==1);
+    const select=$('#matSubjectId');
+    if(select){
+      const selected=select.value;
+      select.innerHTML='<option value="">اختر المادة</option>'+active.map(s=>`<option value="${Number(s.id)}">${esc(s.name)} — ${esc(s.grade||'')}</option>`).join('');
+      if(active.some(s=>String(s.id)===selected)) select.value=selected;
+    }
+    tb.innerHTML=rows.map(s=>`<tr><td>${esc(s.id)}</td><td>${esc(s.name||'-')}</td><td>${esc(s.grade||s.stage||'-')}</td><td>${Number(s.is_archived)===1?'<span class="badge warn">مؤرشفة</span>':'<span class="badge ok">نشطة</span>'} <button class="ghost small" onclick="window.__toggleSubjectArchive(${Number(s.id)},${Number(s.is_archived)===1?'restore':'archive'})">${Number(s.is_archived)===1?'استعادة':'أرشفة'}</button></td></tr>`).join('')||'<tr><td colspan="4" class="muted">لا توجد مواد</td></tr>';
+  }catch(e){ tb.innerHTML=`<tr><td colspan="4">خطأ: ${esc(e.message)}</td></tr>`; }
 }
-window.__delSubject = async (id)=>{ if(!confirm('حذف/أرشفة المادة؟')) return; try{ await api('/api/subjects',{method:'DELETE',body:JSON.stringify({id})}); showMsg('تمت العملية',true); loadSubjects(); }catch(e){ showMsg(e.message); } };
+window.__toggleSubjectArchive=async(id,action)=>{
+  const label=action==='archive'?'أرشفة المادة وإخفاؤها عن الطلاب؟':'استعادة المادة وإظهارها للطلاب؟';
+  if(!confirm(label)) return;
+  try{ await api(`/api/admin/subjects/${id}/${action}`,{method:'POST'}); showMsg(action==='archive'?'تمت أرشفة المادة':'تمت استعادة المادة',true); await loadSubjects(); }
+  catch(e){ showMsg(e.message); }
+};
 async function loadMaterials(){
-  const tb=$('#materialsTbody'); tb.innerHTML='<tr><td colspan="5" class="muted">...</td></tr>';
-  try{ const d=await api('/api/admin/materials'); const rows=d.materials||d.data||[]; tb.innerHTML=rows.map(m=>`<tr><td>${esc(m.id)}</td><td>${esc(m.title||m.name||'-')}</td><td>${esc(m.subject_id||'-')}</td><td>${esc(m.price ?? (m.is_free?0:'-'))}</td><td><button class="ghost small" onclick="window.__delMaterial(${m.id})">حذف</button></td></tr>`).join('')||'<tr><td colspan="5" class="muted">لا يوجد محتوى</td></tr>'; }
-  catch(e){ tb.innerHTML=`<tr><td colspan="5">خطأ: ${esc(e.message)}</td></tr>`; }
+  const tb=$('#materialsTbody'); tb.innerHTML='<tr><td colspan="5" class="muted">جارٍ التحميل...</td></tr>';
+  try{
+    const d=await api('/api/admin/materials'); const rows=d.materials||d.data||[];
+    tb.innerHTML=rows.map(m=>`<tr><td>${esc(m.id)}</td><td>${esc(m.title||m.name||'-')}</td><td>${esc(m.subject_name||m.subject_id||'-')}</td><td>${esc(m.price ?? (m.is_free?0:'-'))}</td><td>${Number(m.is_archived)===1?'<span class="badge warn">مؤرشف</span>':'<span class="badge ok">نشط</span>'} <button class="ghost small" onclick="window.__toggleMaterialArchive(${Number(m.id)},${Number(m.is_archived)===1?'restore':'archive'})">${Number(m.is_archived)===1?'استعادة':'أرشفة'}</button></td></tr>`).join('')||'<tr><td colspan="5" class="muted">لا يوجد محتوى</td></tr>';
+  }catch(e){ tb.innerHTML=`<tr><td colspan="5">خطأ: ${esc(e.message)}</td></tr>`; }
 }
-window.__delMaterial = async (id)=>{ if(!confirm('حذف/أرشفة الدرس؟')) return; try{ await api('/api/admin/materials',{method:'DELETE',body:JSON.stringify({id})}); showMsg('تمت العملية',true); loadMaterials(); }catch(e){ showMsg(e.message); } };
+window.__toggleMaterialArchive=async(id,action)=>{
+  const label=action==='archive'?'أرشفة الدرس وإخفاؤه عن الطلاب؟':'استعادة الدرس وإظهاره للطلاب؟';
+  if(!confirm(label)) return;
+  try{ await api(`/api/admin/materials/${id}/${action}`,{method:'POST'}); showMsg(action==='archive'?'تمت أرشفة الدرس':'تمت استعادة الدرس',true); await loadMaterials(); }
+  catch(e){ showMsg(e.message); }
+};
 async function loadOrders(){
   const tb=$('#ordersTbody'); tb.innerHTML='<tr><td colspan="6" class="muted">...</td></tr>';
   try{ const d=await api('/api/admin/orders'); let rows=d.orders||d.data||[]; const f=$('#orderFilter').value; if(f) rows=rows.filter(o=>o.status===f);
@@ -520,8 +542,8 @@ $('#globalSearch').addEventListener('keydown',e=>{if(e.key==='Enter'){const q=e.
 document.addEventListener('keydown',e=>{if(e.key==='/' && document.activeElement.tagName!=='INPUT' && document.activeElement.tagName!=='TEXTAREA'){e.preventDefault(); $('#globalSearch').focus();}});
 $('#studentSearch').addEventListener('input',()=>renderStudents(state.cache.students||[]));
 $('#reloadStudents').onclick=loadStudents;
-$('#addSubjectBtn').onclick=async()=>{ try{ const name=$('#subName').value.trim(), grade=$('#subGrade').value.trim(); if(!name) return showMsg('اسم المادة مطلوب'); await api('/api/subjects',{method:'POST',body:JSON.stringify({name,grade})}); $('#subName').value=''; showMsg('تمت الإضافة',true); loadSubjects(); }catch(e){ showMsg(e.message); } };
-$('#addMaterialBtn').onclick=async()=>{ try{ const body={title:$('#matTitle').value.trim(), subject_id:Number($('#matSubjectId').value||0), price:Number($('#matPrice').value||0), is_free:Number($('#matFree').value||0)}; if(!body.title||!body.subject_id) return showMsg('العنوان و subject_id مطلوبان'); await api('/api/admin/materials',{method:'POST',body:JSON.stringify(body)}); $('#matTitle').value=''; showMsg('تمت الإضافة',true); loadMaterials(); }catch(e){ showMsg(e.message); } };
+$('#addSubjectBtn').onclick=async()=>{ const btn=$('#addSubjectBtn'); try{ const name=$('#subName').value.trim(), grade=$('#subGrade').value.trim(); if(!name||!grade) return showMsg('اكتب اسم المادة والصف/المرحلة'); btn.disabled=true; const result=await api('/api/subjects',{method:'POST',body:JSON.stringify({name,grade})}); $('#subName').value=''; $('#subGrade').value=''; showMsg('تمت إضافة المادة بنجاح (رقم '+result.id+')',true); await loadSubjects(); }catch(e){ showMsg(e.message); }finally{btn.disabled=false;} };
+$('#addMaterialBtn').onclick=async()=>{ const btn=$('#addMaterialBtn'); try{ const body={title:$('#matTitle').value.trim(), subject_id:Number($('#matSubjectId').value||0), type:$('#matType').value, price:Number($('#matPrice').value||0), is_free:Number($('#matFree').value||0)}; if(!body.title||!body.subject_id) return showMsg('اكتب عنوان الدرس واختر المادة'); if(!Number.isFinite(body.price)||body.price<0) return showMsg('السعر غير صحيح'); btn.disabled=true; const result=await api('/api/admin/materials',{method:'POST',body:JSON.stringify(body)}); $('#matTitle').value=''; $('#matPrice').value=''; showMsg('تمت إضافة المحتوى بنجاح (رقم '+result.id+')',true); await loadMaterials(); }catch(e){ showMsg(e.message); }finally{btn.disabled=false;} };
 $('#reloadOrders').onclick=loadOrders; $('#orderFilter').onchange=loadOrders;
 $('#reloadDevices').onclick=loadDevices;
 $('#addExamBtn').onclick=async()=>{ try{ const body={title:$('#examTitle').value.trim(), grade:$('#examGrade').value.trim(), subject_id:$('#examSubject').value?Number($('#examSubject').value):null, status:$('#examStatus').value}; if(!body.title) return showMsg('عنوان الاختبار مطلوب'); await api('/api/admin/platform/exams',{method:'POST',body:JSON.stringify(body)}); $('#examTitle').value=''; showMsg('تم إنشاء الاختبار',true); loadExams(); }catch(e){ showMsg(e.message); } };
