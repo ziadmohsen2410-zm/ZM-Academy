@@ -272,7 +272,7 @@ test("AI Builder can apply structured homepage settings without publishing autom
   const admin = read("admin.html");
   assert.ok(worker.includes("brandName, tagline, theme, hero, about, branding, announcement, sections"));
   assert.ok(admin.includes('id="applyAiHomepageBtn"'));
-  assert.ok(admin.includes("const x=JSON.parse($('#aiResult').textContent)"));
+  assert.ok(admin.includes("const generated=JSON.parse($('#aiResult').textContent)"));
   assert.ok(admin.includes("await loadHomepage();const generated=JSON.parse"));
   assert.ok(admin.includes("theme:{...(homepageDraft.theme||{}),...(generated.theme||{})}"));
 
