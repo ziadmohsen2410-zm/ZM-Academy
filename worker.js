@@ -3400,6 +3400,7 @@ if (method === "POST" && rejectPasswordMatch) {
     await ensureColumn(env, 'orders', 'reviewed_by', 'TEXT');
     await ensureColumn(env, 'materials', 'is_archived', 'INTEGER NOT NULL DEFAULT 0');
     await ensureColumn(env, 'subjects', 'is_archived', 'INTEGER NOT NULL DEFAULT 0');
+    await ensureColumn(env, 'exam_attempts', 'question_order_json', 'TEXT');
 
     const stmts = [
       `CREATE TABLE IF NOT EXISTS platform_settings (key TEXT PRIMARY KEY, value_json TEXT NOT NULL DEFAULT '{}', updated_at TEXT NOT NULL DEFAULT (datetime('now')), updated_by TEXT)`,
@@ -4056,6 +4057,7 @@ if (method === "POST" && rejectPasswordMatch) {
     const session = await studentSession(request, env);
     if (!session) return reply(request, env, {success:false,error:'Unauthorized'}, 401);
     await ensurePlatformSchema(env);
+    await ensurePlatformSchema(env);
     if (method==='GET' && path==='/api/student/platform/notifications') {
       // Only show broadcasts and notifications explicitly addressed to this student or their grade.
       // Previously, every student could see every notification marked "student".
@@ -4112,14 +4114,17 @@ if (method === "POST" && rejectPasswordMatch) {
     }
 if (method==='GET' && /^\/api\/student\/platform\/exam-attempts\/\d+$/.test(path)) {
       const attemptId=Number(path.split('/').pop());
-      const attempt=await env.DB.prepare(`SELECT a.id AS attempt_id,a.exam_id,a.started_at,a.status,a.answers_json,e.title,e.description,e.duration_minutes,e.attempts_allowed,e.shuffle_questions,e.show_results,CASE WHEN e.duration_minutes>0 AND datetime(a.started_at,'+' || e.duration_minutes || ' minutes')<=datetime('now') THEN 1 ELSE 0 END AS is_expired FROM exam_attempts a JOIN exams e ON e.id=a.exam_id WHERE a.id=? AND a.student_id=? AND a.status='in_progress'`).bind(attemptId,session.student_id).first();
+      const attempt=await env.DB.prepare(`SELECT a.id AS attempt_id,a.exam_id,a.started_at,a.status,a.answers_json,a.question_order_json,e.title,e.description,e.duration_minutes,e.attempts_allowed,e.shuffle_questions,e.show_results,CASE WHEN e.duration_minutes>0 AND datetime(a.started_at,'+' || e.duration_minutes || ' minutes')<=datetime('now') THEN 1 ELSE 0 END AS is_expired FROM exam_attempts a JOIN exams e ON e.id=a.exam_id WHERE a.id=? AND a.student_id=? AND a.status='in_progress'`).bind(attemptId,session.student_id).first();
       if(!attempt) return reply(request,env,{success:false,error:'المحاولة المفتوحة غير موجودة'},404);
       if(Number(attempt.is_expired)===1) {
         await env.DB.prepare(`UPDATE exam_attempts SET status='expired',submitted_at=datetime('now') WHERE id=? AND student_id=? AND status='in_progress'`).bind(attemptId,session.student_id).run();
         return reply(request,env,{success:false,error:'انتهى وقت الاختبار. لا يمكن استكمال هذه المحاولة.'},410);
       }
       const qs=await env.DB.prepare(`SELECT id,type,question_text,options_json,points,order_index FROM exam_questions WHERE exam_id=? ORDER BY order_index ASC,id ASC`).bind(attempt.exam_id).all();
-      return reply(request,env,{success:true,attempt_id:attempt.attempt_id,exam:attempt,answers:safeJsonParse(attempt.answers_json,{}),questions:(qs.results||[]).map(q=>({...q,options:safeJsonParse(q.options_json,[])}))});
+      const questionRows=qs.results||[]; const byId=new Map(questionRows.map(q=>[Number(q.id),q]));
+      const savedOrder=safeJsonParse(attempt.question_order_json,[]);
+      const orderedQuestions=Array.isArray(savedOrder)&&savedOrder.length?[...savedOrder.map(id=>byId.get(Number(id))).filter(Boolean),...questionRows.filter(q=>!savedOrder.includes(q.id))]:questionRows;
+      return reply(request,env,{success:true,attempt_id:attempt.attempt_id,exam:attempt,answers:safeJsonParse(attempt.answers_json,{}),questions:orderedQuestions.map(q=>({...q,options:safeJsonParse(q.options_json,[])}))});
     }
 if (method==='POST' && /^\/api\/student\/platform\/exams\/\d+\/start$/.test(path)) {
       const examId = Number(path.split('/')[5]);
@@ -4142,7 +4147,7 @@ if (method==='POST' && /^\/api\/student\/platform\/exams\/\d+\/start$/.test(path
           [questions[i],questions[j]]=[questions[j],questions[i]];
         }
       }
-      const res = await env.DB.prepare(`INSERT INTO exam_attempts(exam_id,student_id,status,answers_json,max_score) VALUES(?, ?, 'in_progress','{}',?)`).bind(examId, session.student_id, maxScore).run();
+      const res = await env.DB.prepare(`INSERT INTO exam_attempts(exam_id,student_id,status,answers_json,max_score,question_order_json) VALUES(?, ?, 'in_progress','{}',?,?)`).bind(examId, session.student_id, maxScore, JSON.stringify(questions.map(q=>q.id))).run();
       return reply(request, env, {success:true, attempt_id: res.meta?.last_row_id, exam, questions:questions.map(q=>({...q, options:safeJsonParse(q.options_json,[])}))});
     }
     if (method==='POST' && /^\/api\/student\/platform\/exam-attempts\/\d+\/submit$/.test(path)) {
