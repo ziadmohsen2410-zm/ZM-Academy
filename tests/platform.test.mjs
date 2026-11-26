@@ -42,6 +42,25 @@ test("student area includes notifications, exams, and AI integration", () => {
   ]) assert.ok(student.includes(route), "Student integration missing: " + route);
 });
 
+test("admin content forms send every field required by the Worker", () => {
+  const admin = read("admin.html");
+  assert.match(admin, /id="matType"/, "Material type selector is required");
+  assert.match(admin, /type:\$('#matType'\)\.value/, "Material creation must send type");
+  assert.match(admin, /id="matSubjectId"><option value="">اختر المادة/, "Materials must select an existing subject");
+  assert.match(admin, /if\(!name\|\|!grade\)/, "Subject creation must validate grade");
+});
+
+test("admin can archive and restore subjects and materials without deleting records", () => {
+  const admin = read("admin.html");
+  const worker = read("worker.js");
+  for (const route of [
+    "/api/admin/subjects/\\$\\{id\\}/\\$\\{action\\}",
+    "/api/admin/materials/\\$\\{id\\}/\\$\\{action\\}"
+  ]) assert.ok(admin.includes(route), "Missing archive/restore UI route: " + route);
+  assert.match(worker, /\/api\/admin\/subjects\/\(\\d\+\)\/\(archive\|restore\)/);
+  assert.match(worker, /\/api\/admin\/materials\/\(\\d\+\)\/\(archive\|restore\)/);
+});
+
 test("private provider credentials are not embedded in public pages", () => {
   for (const file of ["index.html", "welcome.html", "login.html", "register.html", "admin.html", "student.html", "parent.html"]) {
     const source = fs.readFileSync(path.join(process.cwd(), file), "utf8");
