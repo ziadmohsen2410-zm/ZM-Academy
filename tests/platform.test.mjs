@@ -235,6 +235,7 @@ test("admin role management protects super-admin privilege and account continuit
   assert.ok(worker.includes("لا يمكنك إيقاف حسابك الحالي"));
   assert.ok(worker.includes("يجب أن يظل هناك مدير أعلى نشط واحد على الأقل"));
   assert.ok(worker.includes("لا يمكن إيقاف حساب مدير أعلى إلا بواسطة مدير أعلى"));
+  assert.ok(worker.includes("لا يمكن تعديل دور مدير أعلى إلا بواسطة مدير أعلى"));
 });
 
 test("legacy admin APIs enforce role permissions instead of authentication alone", () => {
