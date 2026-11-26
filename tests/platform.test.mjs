@@ -73,6 +73,15 @@ test("the platform core migration is additive and repeat-safe by declaration", (
   assert.match(sql, /CREATE\s+TABLE\s+IF\s+NOT\s+EXISTS\s+exams/i);
 });
 
+test("admin can schedule notifications with validated local-to-UTC timestamps", () => {
+  const worker = read("worker.js");
+  const admin = read("admin.html");
+  assert.ok(admin.includes('id="notifSchedule"'));
+  assert.ok(admin.includes("new Date(schedule).toISOString()"));
+  assert.ok(worker.includes("scheduledAt&&!Number.isFinite(Date.parse(scheduledAt.replace(' ','T')+'Z'))"));
+  assert.ok(worker.includes("scheduledAt?null:nowIso()"));
+});
+
 test("scheduled student notifications remain hidden until their scheduled time", () => {
   const worker = read("worker.js");
   const start = worker.indexOf("if (method==='GET' && path==='/api/student/platform/notifications')");
