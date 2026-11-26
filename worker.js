@@ -4135,7 +4135,7 @@ if (method === "POST" && rejectPasswordMatch) {
       const showResults = Number(attempt.show_results) !== 0;
       return reply(request, env, {success:true, score:showResults&&!needsManual?score:null, max_score:showResults?max:null, status, results_hidden:!showResults, results_pending_manual:needsManual});
     }
-    if (method==='GET' && /^\\/api\\/student\\/platform\\/exam-attempts\\/\\d+\\/result$/.test(path)) {
+    if (method==='GET' && /^\/api\/student\/platform\/exam-attempts\/\d+\/result$/.test(path)) {
       const attemptId=Number(path.split('/')[5]);
       const attempt=await env.DB.prepare(`SELECT a.id,a.status,a.score,a.max_score,a.feedback_json,e.show_results FROM exam_attempts a JOIN exams e ON e.id=a.exam_id WHERE a.id=? AND a.student_id=?`).bind(attemptId,session.student_id).first();
       if(!attempt) return reply(request, env,{success:false,error:'المحاولة غير موجودة'},404);
