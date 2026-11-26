@@ -4133,7 +4133,14 @@ if (method === "POST" && rejectPasswordMatch) {
       await env.DB.prepare(`UPDATE exam_attempts SET submitted_at=datetime('now'), answers_json=?, score=?, max_score=?, status=?, graded_at=CASE WHEN ?='graded' THEN datetime('now') ELSE NULL END WHERE id=?`)
         .bind(JSON.stringify(answers), score, max, status, status, attemptId).run();
       const showResults = Number(attempt.show_results) !== 0;
-      return reply(request, env, {success:true, score:showResults?score:null, max_score:showResults?max:null, status, results_hidden:!showResults});
+      return reply(request, env, {success:true, score:showResults&&!needsManual?score:null, max_score:showResults?max:null, status, results_hidden:!showResults, results_pending_manual:needsManual});
+    }
+    if (method==='GET' && /^\\/api\\/student\\/platform\\/exam-attempts\\/\\d+\\/result$/.test(path)) {
+      const attemptId=Number(path.split('/')[5]);
+      const attempt=await env.DB.prepare(`SELECT a.id,a.status,a.score,a.max_score,a.feedback_json,e.show_results FROM exam_attempts a JOIN exams e ON e.id=a.exam_id WHERE a.id=? AND a.student_id=?`).bind(attemptId,session.student_id).first();
+      if(!attempt) return reply(request, env,{success:false,error:'المحاولة غير موجودة'},404);
+      const showResults=Number(attempt.show_results)!==0;
+      return reply(request,env,{success:true,status:attempt.status,score:showResults&&attempt.status==='graded'?attempt.score:null,max_score:showResults&&attempt.status==='graded'?attempt.max_score:null,feedback:showResults&&attempt.status==='graded'?safeJsonParse(attempt.feedback_json,{}):{},results_hidden:!showResults,results_pending_manual:attempt.status==='submitted'});
     }
     if (method==='POST' && path==='/api/student/platform/ai') {
       const b = await readBody(request); const prompt = clean(b?.prompt,4000);
