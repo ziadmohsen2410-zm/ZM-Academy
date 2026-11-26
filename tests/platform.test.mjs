@@ -45,7 +45,7 @@ test("student area includes notifications, exams, and AI integration", () => {
 test("admin content forms send every field required by the Worker", () => {
   const admin = read("admin.html");
   assert.match(admin, /id="matType"/, "Material type selector is required");
-  assert.match(admin, /type:\$('#matType'\)\.value/, "Material creation must send type");
+  assert.ok(admin.includes("type:$('#matType').value"), "Material creation must send type");
   assert.match(admin, /id="matSubjectId"><option value="">اختر المادة/, "Materials must select an existing subject");
   assert.match(admin, /if\(!name\|\|!grade\)/, "Subject creation must validate grade");
 });
