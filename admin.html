@@ -355,7 +355,7 @@ function buildNav(){
     const h=document.createElement('div'); h.textContent=g.label; h.style.cssText='font-size:12px;color:#8ea2c4;margin:10px 6px 4px;font-weight:700'; nav.appendChild(h);
     visibleItems.forEach(([k,label])=>{const b=document.createElement('button'); b.textContent=label; b.dataset.sec=k; b.onclick=()=>setSection(k); if(k===state.section)b.classList.add('active'); nav.appendChild(b);});
   });
-  $('#bottomNav button[data-sec]').forEach(b=>{b.classList.toggle('hidden',!canSeeSection(b.dataset.sec));});
+  $('#bottomNav button[data-sec]').forEach(b=>{if(b.dataset.sec!=='more') b.classList.toggle('hidden',!canSeeSection(b.dataset.sec));});
 }
 async function login(){
   showLoginMsg('');
