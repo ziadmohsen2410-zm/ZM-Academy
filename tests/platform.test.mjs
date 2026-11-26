@@ -254,6 +254,19 @@ test("exam validation preserves the archived lifecycle state", () => {
   assert.ok(admin.includes('<option value="archived">مؤرشف</option>'));
 });
 
+test("admin homepage editor is connected to the homepage draft and publish APIs", () => {
+  const admin = read("admin.html");
+  const worker = read("worker.js");
+  const index = read("index.html");
+  assert.ok(admin.includes('id="sec-homepage"'));
+  assert.ok(admin.includes("async function loadHomepage()"));
+  assert.ok(admin.includes("api('/api/admin/homepage'"));
+  assert.ok(admin.includes("api('/api/admin/homepage/publish'"));
+  assert.ok(admin.includes("homepage:'page_builder'"));
+  assert.ok(worker.includes('path === "/api/admin/homepage"'));
+  assert.ok(index.includes("fetch(API+'/api/homepage'"));
+});
+
 test("admin exam editor exposes and saves all supported exam settings", () => {
   const admin = read("admin.html");
   assert.ok(admin.includes('id="examDuration"'));
