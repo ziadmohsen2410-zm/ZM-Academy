@@ -3448,7 +3448,7 @@ if (method === "POST" && rejectPasswordMatch) {
   function settingDefault(key) {
     const defaults = {
       general: { academyName:'ZM Academy', tagline:'التعلم بذكاء، والتفكير بلا حدود', logo:'', favicon:'', description:'', supportEmail:'', supportPhone:'', whatsapp:'', facebook:'', youtube:'', telegram:'', language:'ar', timezone:'Africa/Cairo', maintenance:false, maintenanceMessage:'الموقع في وضع الصيانة', registrationEnabled:true },
-      theme: { mode:'dark', primary:'#35a8ff', secondary:'#9b70ff', background:'#080d1b', surface:'#111b34', text:'#f4f7ff', muted:'#a5b3d0', radius:'18px', font:'Cairo', template:'future', motion:true },
+      theme: { mode:'dark', primary:'#2F80FF', secondary:'#7B61FF', background:'#071226', surface:'#0D1B35', text:'#FFFFFF', muted:'#9AA9C4', radius:'18px', font:'Cairo', template:'future', motion:true },
     };
     return defaults[key] || {};
   }
