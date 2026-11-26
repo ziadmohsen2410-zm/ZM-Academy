@@ -3977,7 +3977,7 @@ if (method === "POST" && rejectPasswordMatch) {
         const admins = await env.DB.prepare(`SELECT id,username,display_name,email,role,is_active,created_at,last_login_at FROM admin_users ORDER BY id DESC LIMIT 200`).all();
         const permissionsMap={...ADMIN_PERMS};
         if(admin.role!=='super_admin') delete permissionsMap.super_admin;
-        return reply(request, env,{success:true, roles: roles.results||[], admins: admins.results||[], permissions_map: permissionsMap});
+        return reply(request, env,{success:true, roles: roles.results||[], admins: admins.results||[], permissions_map: permissionsMap,current_role:admin.role,current_admin_id:admin.id});
       }
     }
     if (path==='/api/admin/platform/admin-users') {
