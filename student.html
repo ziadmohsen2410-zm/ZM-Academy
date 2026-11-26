@@ -1255,14 +1255,24 @@ async function loadDashboard(){
     " | دروس بدأت متابعتها: "+progressCount+
     " | مكتملة: "+completedCount;
 
-   showList("subjects",subjects,"لا توجد مواد مسجلة.",(div,s)=>{
-    div.textContent=s.name;
-   });
-
    const subjectIds=subjects.map(s=>Number(s.id));
    const mine=materials.filter(m=>subjectIds.includes(Number(m.subject_id)));
    const free=mine.filter(m=>Number(m.is_free)===1);
    const paid=mine.filter(m=>Number(m.is_free)!==1);
+
+   showList("subjects",subjects,"لا توجد مواد مسجلة.",(div,s)=>{
+    const sid=Number(s.id);
+    const subjectMaterials=mine.filter(m=>Number(m.subject_id)===sid);
+    const total=subjectMaterials.length;
+    const done=subjectMaterials.filter(m=>studentProgress.some(p=>Number(p.material_id)===Number(m.id)&&p.completed_at)).length;
+    const pct=total?Math.round((done/total)*100):0;
+    const title=document.createElement('strong'); title.textContent=s.name||'مادة';
+    const meta=document.createElement('div'); meta.className='muted'; meta.style.margin='6px 0'; meta.textContent='التقدم: '+done+' / '+total+' ('+pct+'%)';
+    const bar=document.createElement('div'); bar.style.cssText='height:8px;background:rgba(255,255,255,.08);border-radius:999px;overflow:hidden';
+    const fill=document.createElement('div'); fill.style.cssText='height:100%;width:'+pct+'%;background:linear-gradient(90deg,#39baff,#7df0c0)';
+    bar.appendChild(fill);
+    div.append(title,meta,bar);
+   });
 
    function renderMaterial(div,m){
     const id=Number(m.id);
@@ -1280,7 +1290,11 @@ async function loadDashboard(){
      ?"مجاني"
      :"السعر: "+(m.price??"غير محدد")+" جنيه";
 
-    div.append(title,type,price);
+    const prog=studentProgress.find(x=>Number(x.material_id)===id);
+    const progLine=document.createElement('div');
+    progLine.className='muted';
+    progLine.textContent=prog ? (prog.completed_at ? 'الحالة: مكتمل ✓' : 'آخر صفحة: '+Math.max(1,Number(prog.last_page)||1)) : 'لم تبدأ بعد';
+    div.append(title,type,price,progLine);
 
     const fav=studentFavorites.some(f=>Number(f.material_id)===id);
     const favBtn=document.createElement("button");
