@@ -554,7 +554,7 @@ function sanitizeHomepageSettings(value) {
   const safeImage=(v)=>{
     const raw=text(v,1000);
     if(!raw||raw.startsWith('//'))return '';
-    if(/^https:\/\/[^\s]+$/i.test(raw)||/^\/assets\/[a-z0-9_./-]+$/i.test(raw)||/^\/api\/media\/\d+$/.test(raw))return raw;
+    if(/^https:\/\/[a-z0-9.-]+(?::\d+)?(?:\/[a-z0-9._~:/?#@!if(/^https:\/\/[^\s]+$/i.test(raw)||/^\/assets\/[a-z0-9_./-]+$/i.test(raw)||/^\/api\/media\/\d+$/.test(raw))return raw;*+,=%-]*)?$/i.test(raw)||/^\/assets\/[a-z0-9_./-]+$/i.test(raw)||/^\/api\/media\/\d+$/.test(raw))return raw;
     return '';
   };
   const out={...source};
