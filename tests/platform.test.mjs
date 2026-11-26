@@ -99,6 +99,13 @@ test("parent portal receives parent-targeted notifications and can mark them rea
   assert.ok(parent.includes("/api/parent/notifications/"));
 });
 
+test("notification creation validates supported audiences and target values", () => {
+  const worker = read("worker.js");
+  assert.ok(worker.includes("!['all','parents','student','grade'].includes(audienceType)"));
+  assert.ok(worker.includes("!/^\\d+$/.test(audienceValue)"));
+  assert.ok(worker.includes("audienceType==='grade'&&!audienceValue"));
+});
+
 test("scheduled student notifications remain hidden until their scheduled time", () => {
   const worker = read("worker.js");
   const start = worker.indexOf("if (method==='GET' && path==='/api/student/platform/notifications')");
