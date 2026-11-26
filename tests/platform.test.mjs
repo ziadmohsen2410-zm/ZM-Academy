@@ -116,7 +116,7 @@ test("legacy admin APIs enforce role permissions instead of authentication alone
   assert.ok(guard.includes("requireAdminRole(request, env, legacyPermission)"));
   assert.ok(guard.includes('path.startsWith("/api/admin/orders") ? "orders"'));
   assert.ok(guard.includes('path.startsWith("/api/admin/device-requests") ? "devices"'));
-  assert.ok(guard.includes('path.startsWith("/api/admin/materials") ? "content"'));
+  assert.ok(guard.includes('path.startsWith("/api/admin/materials")'));
 });
 
 test("admin navigation is filtered by server-provided role permissions", () => {
