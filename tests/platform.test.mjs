@@ -296,6 +296,12 @@ test("public page renderer rejects protocol-relative external links", () => {
   assert.ok(page.includes("/^https:\\/\\//i.test(raw)"));
 });
 
+test("page builder accepts only URL-safe public page keys", () => {
+  const worker = read("worker.js");
+  assert.ok(worker.includes("/^[a-z0-9][a-z0-9_-]{0,79}$/i.test(key)"));
+  assert.ok(worker.includes("مفتاح الصفحة يجب أن يبدأ بحرف أو رقم"));
+});
+
 test("published page builder pages render through the public API", () => {
   const page = read("page.html");
   const admin = read("admin.html");
