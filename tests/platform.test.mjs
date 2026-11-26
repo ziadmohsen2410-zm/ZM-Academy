@@ -55,8 +55,8 @@ test("admin can archive and restore subjects and materials without deleting reco
   const worker = read("worker.js");
   assert.match(admin, /api\/admin\/subjects\/\$\{id\}\/\$\{action\}/);
   assert.match(admin, /api\/admin\/materials\/\$\{id\}\/\$\{action\}/);
-  assert.match(worker, /\/api\/admin\/subjects\/\(\\d\+\)\/\(archive\|restore\)/);
-  assert.match(worker, /\/api\/admin\/materials\/\(\\d\+\)\/\(archive\|restore\)/);
+  assert.ok(worker.includes('^\\/api\\/admin\\/subjects\\/(\\d+)\\/(archive|restore)$'));
+  assert.ok(worker.includes('^\\/api\\/admin\\/materials\\/(\\d+)\\/(archive|restore)$'));
 });
 
 test("private provider credentials are not embedded in public pages", () => {
