@@ -14,8 +14,10 @@
 <link rel="apple-touch-icon" href="./assets/icon-192.png">
 <title>دخول الطالب | ZM Academy</title>
 <style>
+@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&display=swap');
+
 *{box-sizing:border-box}:root{color-scheme:dark;--bg:#071226;--panel:#0D1B35;--panel2:#13284a;--text:#FFFFFF;--muted:#9AA9C4;--accent:#2F80FF;--accent2:#7B61FF;--line:#1B3157}
-body{margin:0;min-height:100vh;background:radial-gradient(ellipse at 12% 0%,rgba(47,128,255,.14),transparent 30%),radial-gradient(ellipse at 88% 100%,rgba(123,97,255,.12),transparent 30%),var(--bg);color:var(--text);font-family:Tahoma,Arial,sans-serif;display:flex;align-items:center;justify-content:center;padding:20px;transition:background .25s,color .25s}
+body{margin:0;min-height:100vh;background:radial-gradient(ellipse at 12% 0%,rgba(47,128,255,.14),transparent 30%),radial-gradient(ellipse at 88% 100%,rgba(123,97,255,.12),transparent 30%),var(--bg);color:var(--text);font-family:'Cairo',Tahoma,Arial,sans-serif;display:flex;align-items:center;justify-content:center;padding:20px;transition:background .25s,color .25s}
 .card{width:100%;max-width:460px;background:linear-gradient(145deg,rgba(13,27,53,.96),rgba(10,22,44,.96));border:1px solid var(--line);border-radius:24px;padding:28px;box-shadow:0 22px 65px rgba(0,0,0,.35);backdrop-filter:blur(10px);animation:zmEnter .55s ease both}
 .topbar{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:22px}.brand-link{color:var(--accent2);font-weight:800;letter-spacing:1.5px;text-decoration:none;font-size:13px}.theme-toggle{display:inline-flex;align-items:center;gap:7px;padding:8px 12px;border:1px solid var(--line);border-radius:30px;background:var(--panel2);color:var(--accent2);font-weight:700;cursor:pointer;width:auto;margin:0;font-size:13px;box-shadow:none}
 h1{text-align:center;color:var(--accent2);margin:0 0 8px}.sub{text-align:center;color:var(--muted);margin-bottom:25px;line-height:1.8}
@@ -68,8 +70,8 @@ html[data-zm-template="minimal"] :where(.btn,button:not(.theme-toggle)){box-shad
 
 :root{--zm-font:'Cairo',Tahoma,Arial,sans-serif}
 body{font-family:var(--zm-font)!important}
-html[data-zm-font="tajawal"] body{font-family:'Tajawal',Tahoma,Arial,sans-serif!important}
-html[data-zm-font="system"] body{font-family:system-ui,Arial,sans-serif!important}
+html[data-zm-font="tajawal"] body{font-family:'Cairo',Tahoma,Arial,sans-serif!important}
+html[data-zm-font="system"] body{font-family:'Cairo',Tahoma,Arial,sans-serif!important}
 html[data-zm-font="georgia"] body{font-family:Georgia,serif!important}
 html[data-zm-buttons="solid"] :where(.btn,button:not(.theme-toggle),.primary,.small-btn){background:var(--zm-primary)!important;color:#fff!important}
 html[data-zm-buttons="outline"] :where(.btn,button:not(.theme-toggle),.primary,.small-btn){background:transparent!important;color:var(--zm-primary)!important;border:1px solid var(--zm-primary)!important;box-shadow:none!important}
@@ -120,7 +122,7 @@ fetch(API+'/api/homepage',{cache:'no-store'}).then(r=>r.ok?r.json():null).then(d
  <nav class="auth-links" aria-label="روابط الحساب"><a class="primary-link" href="./register.html">تسجيل طالب جديد</a><a href="./parent.html">بوابة ولي الأمر</a><a href="./parent.html">بوابة ولي الأمر</a><a href="./index.html">العودة للصفحة الرئيسية</a></nav>
 </main>
 <script>
-(()=>{const key='zm-academy-theme';let saved=null;try{saved=localStorage.getItem(key)}catch(e){}const btn=document.getElementById('themeToggle');const icon=btn.querySelector('.theme-icon');const label=btn.querySelector('.theme-label');const meta=document.querySelector('meta[name="theme-color"]');function paint(t){document.body.dataset.theme=t;const light=t==='light';icon.textContent=light?'☾':'☀';label.textContent=light?'الوضع الداكن':'الوضع الفاتح';btn.setAttribute('aria-label',light?'تفعيل الوضع الداكن':'تفعيل الوضع الفاتح');meta.content=light?'#F5F7FB':'#08090d';try{localStorage.setItem(key,t)}catch(e){}}paint(saved==='light'?'light':'dark');btn.addEventListener('click',()=>paint(document.body.dataset.theme==='light'?'dark':'light'))})();
+(()=>{const key='zm-academy-theme';let saved=null;try{saved=localStorage.getItem(key)}catch(e){}const btn=document.getElementById('themeToggle');const icon=btn.querySelector('.theme-icon');const label=btn.querySelector('.theme-label');const meta=document.querySelector('meta[name="theme-color"]');function paint(t){document.body.dataset.theme=t;const light=t==='light';icon.textContent=light?'☾':'☀';label.textContent=light?'الوضع الداكن':'الوضع الفاتح';btn.setAttribute('aria-label',light?'تفعيل الوضع الداكن':'تفعيل الوضع الفاتح');meta.content=light?'#F5F7FB':'#071226';try{localStorage.setItem(key,t)}catch(e){}}paint(saved==='light'?'light':'dark');btn.addEventListener('click',()=>paint(document.body.dataset.theme==='light'?'dark':'light'))})();
 </script>
 <script>
 'use strict';

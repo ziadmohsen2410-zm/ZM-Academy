@@ -12,6 +12,8 @@
 <meta name="theme-color" content="#0b1020">
 <title>بوابة ZM Academy</title>
 <style>
+@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&display=swap');
+
 *{box-sizing:border-box}
 body{margin:0;min-height:100vh;display:grid;place-items:center;padding:20px;background:radial-gradient(circle at top,#26334c,#0b1020 65%);color:#f5f6fa;font-family:Arial,Tahoma,sans-serif}
 .card{width:100%;max-width:440px;text-align:center;background:#151d32;border:1px solid #34415c;border-radius:20px;padding:32px 24px;box-shadow:0 20px 60px #0006}
@@ -61,8 +63,8 @@ html[data-zm-template="minimal"] :where(.btn,button:not(.theme-toggle)){box-shad
 
 :root{--zm-font:'Cairo',Tahoma,Arial,sans-serif}
 body{font-family:var(--zm-font)!important}
-html[data-zm-font="tajawal"] body{font-family:'Tajawal',Tahoma,Arial,sans-serif!important}
-html[data-zm-font="system"] body{font-family:system-ui,Arial,sans-serif!important}
+html[data-zm-font="tajawal"] body{font-family:'Cairo',Tahoma,Arial,sans-serif!important}
+html[data-zm-font="system"] body{font-family:'Cairo',Tahoma,Arial,sans-serif!important}
 html[data-zm-font="georgia"] body{font-family:Georgia,serif!important}
 html[data-zm-buttons="solid"] :where(.btn,button:not(.theme-toggle),.primary,.small-btn){background:var(--zm-primary)!important;color:#fff!important}
 html[data-zm-buttons="outline"] :where(.btn,button:not(.theme-toggle),.primary,.small-btn){background:transparent!important;color:var(--zm-primary)!important;border:1px solid var(--zm-primary)!important;box-shadow:none!important}
