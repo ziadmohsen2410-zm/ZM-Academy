@@ -279,6 +279,47 @@ async function studentSession(request, env) {
   return row ? { ...row, tokenHash } : null;
 }
 
+async function parentSession(request, env) {
+  const token = bearer(request);
+  if (!token) return null;
+  const tokenHash = await sha256(token);
+  const row = await env.DB.prepare(
+    `SELECT s.id, s.parent_id, p.name, p.phone
+     FROM parent_sessions s JOIN parents p ON p.id = s.parent_id
+     WHERE s.token_hash = ? AND s.expires_at > datetime('now') AND p.status = 'active'`
+  ).bind(tokenHash).first();
+  return row ? { ...row, tokenHash } : null;
+}
+
+async function ensureParentTables(env) {
+  await env.DB.batch([
+    env.DB.prepare(`CREATE TABLE IF NOT EXISTS parents (
+      id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, phone TEXT NOT NULL UNIQUE,
+      password_hash TEXT NOT NULL, status TEXT NOT NULL DEFAULT 'active',
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP)`),
+    env.DB.prepare(`CREATE TABLE IF NOT EXISTS parent_sessions (
+      id INTEGER PRIMARY KEY AUTOINCREMENT, parent_id INTEGER NOT NULL, token_hash TEXT NOT NULL UNIQUE,
+      expires_at TEXT NOT NULL, created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY(parent_id) REFERENCES parents(id) ON DELETE CASCADE)`),
+    env.DB.prepare(`CREATE TABLE IF NOT EXISTS parent_student_links (
+      id INTEGER PRIMARY KEY AUTOINCREMENT, parent_id INTEGER NOT NULL, student_id INTEGER NOT NULL,
+      relationship TEXT DEFAULT 'ولي أمر', status TEXT NOT NULL DEFAULT 'pending', request_note TEXT,
+      reviewed_by INTEGER, reviewed_at TEXT, created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      UNIQUE(parent_id, student_id), FOREIGN KEY(parent_id) REFERENCES parents(id),
+      FOREIGN KEY(student_id) REFERENCES students(id))`),
+    env.DB.prepare("CREATE INDEX IF NOT EXISTS idx_parent_links_parent_status ON parent_student_links(parent_id, status)"),
+    env.DB.prepare("CREATE INDEX IF NOT EXISTS idx_parent_links_student_status ON parent_student_links(student_id, status)")
+  ]);
+}
+
+async function ensureStudentPreferencesTable(env) {
+  await env.DB.prepare(`CREATE TABLE IF NOT EXISTS student_preferences (
+    student_id INTEGER PRIMARY KEY, preferences_json TEXT NOT NULL DEFAULT '{}',
+    updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY(student_id) REFERENCES students(id) ON DELETE CASCADE
+  )`).run();
+}
+
 async function purgeExpiredSessions(env) {
   try {
     await Promise.all([
@@ -333,8 +374,7 @@ async function uploadToGitHub(env, fileBytes, fileName, contentType) {
       .replace(/[^a-zA-Z0-9._-]/g, "_")
       .slice(-100) || "file";
 
-  const folder = contentType.startsWith('image/') ? 'media' : 'materials';
-  const path = `${folder}/${crypto.randomUUID()}-${safeName}`;
+  const path = `materials/${crypto.randomUUID()}-${safeName}`;
 
   const response = await fetch(githubContentsUrl(path), {
     method: "PUT",
@@ -368,7 +408,7 @@ async function deleteFromGitHub(env, fileKey) {
   if (!env.GITHUB_STORAGE_TOKEN) return;
   if (
     !fileKey ||
-    !/^(materials|media)\//.test(fileKey) ||
+    !fileKey.startsWith("materials/") ||
     fileKey.includes("..")
   ) {
     return;
@@ -678,37 +718,6 @@ async function route(request, env) {
     }
   }
 
-  // Public image delivery for academy media stored in the private GitHub storage repo.
-  if (method === "GET" && path.startsWith("/api/media/")) {
-    try {
-      const fileKey = decodeURIComponent(path.slice("/api/media/".length));
-      if (!fileKey.startsWith("media/") || fileKey.includes("..") || fileKey.includes("\\")) {
-        return reply(request, env, { success: false, error: "Invalid media path." }, 400);
-      }
-      if (!env.GITHUB_STORAGE_TOKEN) {
-        return reply(request, env, { success: false, error: "Storage is not configured." }, 503);
-      }
-      const stored = await fetch(githubContentsUrl(fileKey), { headers: githubHeaders(env) });
-      if (!stored.ok) return reply(request, env, { success: false, error: "Media not found." }, 404);
-      const item = await stored.json();
-      if (!item?.content || item.encoding !== "base64") {
-        return reply(request, env, { success: false, error: "Invalid stored media." }, 502);
-      }
-      const binary = atob(String(item.content).replace(/\s/g, ""));
-      const bytes = Uint8Array.from(binary, ch => ch.charCodeAt(0));
-      const ext = fileKey.toLowerCase().split(".").pop();
-      const type = ext === "png" ? "image/png" : ext === "webp" ? "image/webp" : "image/jpeg";
-      return new Response(bytes, { status: 200, headers: {
-        ...corsHeaders(request, env), "Content-Type": type,
-        "Cache-Control": "public, max-age=86400, stale-while-revalidate=604800",
-        "X-Content-Type-Options": "nosniff"
-      }});
-    } catch (error) {
-      console.error("MEDIA_DELIVERY_ERROR:", error?.message || error);
-      return reply(request, env, { success: false, error: "Unable to load media." }, 500);
-    }
-  }
-
   // إعدادات الصفحة الرئيسية المنشورة للزوار
   if (method === "GET" && path === "/api/homepage") {
     try {
@@ -911,6 +920,74 @@ async function route(request, env) {
     });
   }
 
+  // Parent Portal API
+  if (path.startsWith("/api/parent") || path.startsWith("/api/parents/")) {
+    await ensureParentTables(env);
+    if (method === "POST" && path === "/api/parents/register") {
+      if (!(await consumeApiRateLimit(env, request, "parent-register", "global", 10, 3600)))
+        return reply(request, env, { success: false, error: "محاولات التسجيل كثيرة. حاول لاحقًا." }, 429);
+      const body = await readBody(request);
+      const name = clean(body?.name, 100);
+      const phone = clean(body?.phone, 30).replace(/[^0-9+]/g, "");
+      const password = typeof body?.password === "string" ? body.password : "";
+      if (name.length < 2 || phone.length < 8 || password.length < 10 || password.length > 200)
+        return reply(request, env, { success: false, error: "أدخل الاسم ورقم هاتف صحيحًا وكلمة مرور لا تقل عن 10 أحرف." }, 400);
+      const existing = await env.DB.prepare("SELECT id FROM parents WHERE phone = ?").bind(phone).first();
+      if (existing) return reply(request, env, { success: false, error: "يوجد حساب مرتبط بهذا الرقم بالفعل." }, 409);
+      const hash = await passwordHash(password);
+      const result = await env.DB.prepare("INSERT INTO parents (name, phone, password_hash) VALUES (?, ?, ?)").bind(name, phone, hash).run();
+      return reply(request, env, { success: true, parent_id: result.meta.last_row_id }, 201);
+    }
+    if (method === "POST" && path === "/api/parents/login") {
+      const body = await readBody(request);
+      const loginIdentity = clean(body?.phone, 30).replace(/[^0-9+]/g, "") || "unknown";
+      if (!(await consumeApiRateLimit(env, request, "parent-login", loginIdentity, 10, 900)))
+        return reply(request, env, { success: false, error: "محاولات الدخول كثيرة. حاول بعد قليل." }, 429);
+      const phone = clean(body?.phone, 30).replace(/[^0-9+]/g, "");
+      const password = typeof body?.password === "string" ? body.password : "";
+      const parent = await env.DB.prepare("SELECT id, name, phone, password_hash, status FROM parents WHERE phone = ?").bind(phone).first();
+      if (!parent || parent.status !== "active" || !(await verifyPassword(password, parent.password_hash)))
+        return reply(request, env, { success: false, error: "رقم الهاتف أو كلمة المرور غير صحيحة." }, 401);
+      const token = randomToken();
+      const tokenHash = await sha256(token);
+      await env.DB.prepare("INSERT INTO parent_sessions (parent_id, token_hash, expires_at) VALUES (?, ?, datetime('now', '+7 days'))").bind(parent.id, tokenHash).run();
+      return reply(request, env, { success: true, token, expiresInDays: 7, parent: { id: parent.id, name: parent.name, phone: parent.phone } });
+    }
+    const ps = await parentSession(request, env);
+    if (!ps) return reply(request, env, { success: false, error: "يجب تسجيل الدخول إلى حساب ولي الأمر." }, 401);
+    if (method === "POST" && path === "/api/parent/logout") {
+      await env.DB.prepare("DELETE FROM parent_sessions WHERE token_hash = ?").bind(ps.tokenHash).run();
+      return reply(request, env, { success: true });
+    }
+    if (method === "GET" && path === "/api/parent/me")
+      return reply(request, env, { success: true, parent: { id: ps.parent_id, name: ps.name, phone: ps.phone } });
+    if (method === "POST" && path === "/api/parent/link-requests") {
+      const body = await readBody(request);
+      const studentId = Number(body?.student_id);
+      const relationship = clean(body?.relationship, 40) || "ولي أمر";
+      const note = clean(body?.note, 500);
+      if (!Number.isSafeInteger(studentId) || studentId < 1)
+        return reply(request, env, { success: false, error: "رقم الطالب غير صحيح." }, 400);
+      const student = await env.DB.prepare("SELECT id FROM students WHERE id = ?").bind(studentId).first();
+      if (!student) return reply(request, env, { success: false, error: "تعذر العثور على الطالب." }, 404);
+      await env.DB.prepare(`INSERT INTO parent_student_links (parent_id, student_id, relationship, status, request_note)
+        VALUES (?, ?, ?, 'pending', ?)
+        ON CONFLICT(parent_id, student_id) DO UPDATE SET
+          status = CASE WHEN parent_student_links.status = 'rejected' THEN 'pending' ELSE parent_student_links.status END,
+          relationship = excluded.relationship, request_note = excluded.request_note,
+          reviewed_by = NULL, reviewed_at = NULL`).bind(ps.parent_id, studentId, relationship, note || null).run();
+      return reply(request, env, { success: true, message: "تم إرسال طلب الربط لمراجعة الإدارة." }, 201);
+    }
+    if (method === "GET" && path === "/api/parent/children") {
+      const rows = await env.DB.prepare(`SELECT s.id, s.name, s.grade, s.school, s.governorate,
+        l.relationship, l.created_at AS linked_at FROM parent_student_links l
+        JOIN students s ON s.id = l.student_id
+        WHERE l.parent_id = ? AND l.status = 'approved' ORDER BY s.name`).bind(ps.parent_id).all();
+      return reply(request, env, { success: true, children: rows.results || [] });
+    }
+    return reply(request, env, { success: false, error: "Parent endpoint not found." }, 404);
+  }
+
   // طلب استعادة كلمة مرور الطالب
 if (method === "POST" && path === "/api/password-reset/request") {
   await ensurePasswordResetRequestsTable(env);
@@ -1092,6 +1169,29 @@ if (method === "POST" && path === "/api/password-reset/request") {
       });
     }
 
+    // Parent-child link moderation
+    if (path === "/api/admin/parent-link-requests" && method === "GET") {
+      await ensureParentTables(env);
+      const rows = await env.DB.prepare(`SELECT l.id, l.parent_id, l.student_id, l.relationship,
+        l.request_note, l.created_at, p.name AS parent_name, p.phone AS parent_phone,
+        s.name AS student_name, s.phone AS student_phone, s.grade
+        FROM parent_student_links l JOIN parents p ON p.id = l.parent_id
+        JOIN students s ON s.id = l.student_id
+        WHERE l.status = 'pending' ORDER BY l.created_at ASC LIMIT 500`).all();
+      return reply(request, env, { success: true, requests: rows.results || [] });
+    }
+    const parentLinkDecision = path.match(/^\/api\/admin\/parent-link-requests\/(\d+)\/(approve|reject)$/);
+    if (parentLinkDecision && method === "POST") {
+      await ensureParentTables(env);
+      const result = await env.DB.prepare(`UPDATE parent_student_links SET status = ?,
+        reviewed_by = ?, reviewed_at = CURRENT_TIMESTAMP WHERE id = ? AND status = 'pending'`)
+        .bind(parentLinkDecision[2] === "approve" ? "approved" : "rejected",
+          session.admin_id, Number(parentLinkDecision[1])).run();
+      if (!(result.meta?.changes || 0))
+        return reply(request, env, { success: false, error: "طلب الربط غير موجود أو تمت مراجعته." }, 404);
+      return reply(request, env, { success: true, status: parentLinkDecision[2] === "approve" ? "approved" : "rejected" });
+    }
+
     // عرض طلبات استعادة كلمات المرور
 if (method === "GET" && path === "/api/admin/password-reset-requests") {
   await ensurePasswordResetRequestsTable(env);
@@ -1260,15 +1360,13 @@ if (method === "POST" && rejectPasswordMatch) {
       if (decision === "approve") {
         await env.DB.prepare(
           `UPDATE student_devices
-           SET status = 'approved',
-               reviewed_at = CURRENT_TIMESTAMP,
-               reviewed_by = ?
+           SET status = 'approved', reviewed_at = CURRENT_TIMESTAMP, reviewed_by = ?
            WHERE id = ? AND status = 'pending'`
         ).bind(session.admin_id, deviceId).run();
 
         return reply(request, env, {
           success: true,
-          message: "Device approved.",
+          message: "Device approved. Existing approved devices and sessions remain active.",
         });
       }
 
@@ -1644,19 +1742,23 @@ if (method === "POST" && rejectPasswordMatch) {
       ]);
 
       if ((studentLinks?.n || 0) > 0 || (materials?.n || 0) > 0) {
-        await ensureArchivedSubjectsTable(env);
-        await env.DB.prepare(
-          "INSERT OR IGNORE INTO archived_subjects (subject_id) VALUES (?)"
-        ).bind(id).run();
-        return reply(request, env, {
-          success: true,
-          archived: true,
-          message: "المادة مرتبطة بطلاب أو دروس؛ تم إخفاؤها بأمان وأرشفتها مع الاحتفاظ بكل السجلات. يمكنك استعادتها لاحقًا.",
-        });
+        return reply(
+          request,
+          env,
+          {
+            success: false,
+            error: "لا يمكن حذف المادة لارتباطها بطلاب أو محتوى دراسي.",
+          },
+          409
+        );
       }
 
       await env.DB.prepare("DELETE FROM subjects WHERE id = ?").bind(id).run();
-      return reply(request, env, { success: true, message: "تم حذف المادة بنجاح." });
+
+      return reply(request, env, {
+        success: true,
+        message: "تم حذف المادة بنجاح.",
+      });
     }
 
     // عرض جميع المحتويات للإدارة بما فيها المؤرشفة
@@ -1765,15 +1867,15 @@ if (method === "POST" && rejectPasswordMatch) {
         .first();
 
       if ((linkedOrders?.n || 0) > 0) {
-        await ensureArchivedMaterialsTable(env);
-        await env.DB.prepare(
-          "INSERT OR IGNORE INTO archived_materials (material_id) VALUES (?)"
-        ).bind(id).run();
-        return reply(request, env, {
-          success: true,
-          archived: true,
-          message: "الدرس مرتبط بطلبات أو مشتريات؛ تم إخفاؤه وأرشفته مع الاحتفاظ بسجلات الطلاب والطلبات. يمكنك استعادته لاحقًا.",
-        });
+        return reply(
+          request,
+          env,
+          {
+            success: false,
+            error: "لا يمكن حذف المحتوى لوجود طلبات مرتبطة به.",
+          },
+          409
+        );
       }
 
       await ensureStudentLearningTables(env);
@@ -1845,21 +1947,24 @@ if (method === "POST" && rejectPasswordMatch) {
         const contentType = file.type;
         const bytes = new Uint8Array(await file.arrayBuffer());
 
-        const isPDF = contentType === "application/pdf" && bytes.length >= 5 &&
+        const isPDF =
+          contentType === "application/pdf" &&
+          bytes.length >= 5 &&
           new TextDecoder().decode(bytes.slice(0, 5)) === "%PDF-";
-        const isImage = ["image/jpeg", "image/png", "image/webp"].includes(contentType) &&
-          bytes.length >= 12;
-        if (!isPDF && !isImage) {
-          return reply(request, env, {
-            success: false,
-            error: "الملف غير مدعوم. ارفع PDF أو صورة JPG أو PNG أو WEBP صحيحة.",
-          }, 400);
+
+        if (!isPDF) {
+          return reply(
+            request,
+            env,
+            {
+              success: false,
+              error: "يجب اختيار ملف PDF صحيح.",
+            },
+            400
+          );
         }
 
         const fileKey = await uploadToGitHub(env, bytes, file.name, contentType);
-        const mediaUrl = isImage
-          ? `${new URL(request.url).origin}/api/media/${encodeURIComponent(fileKey)}`
-          : null;
 
         return reply(
           request,
@@ -1867,7 +1972,6 @@ if (method === "POST" && rejectPasswordMatch) {
           {
             success: true,
             file_key: fileKey,
-            url: mediaUrl,
             message: "File uploaded successfully.",
           },
           201
@@ -2069,6 +2173,37 @@ if (method === "POST" && rejectPasswordMatch) {
       },
       404
     );
+  }
+
+  // Per-student preferences
+  if (path === "/api/student/preferences") {
+    const session = await studentSession(request, env);
+    if (!session) return reply(request, env, { success: false, error: "يجب تسجيل الدخول." }, 401);
+    await ensureStudentPreferencesTable(env);
+    if (method === "GET") {
+      const row = await env.DB.prepare("SELECT preferences_json, updated_at FROM student_preferences WHERE student_id = ?").bind(session.student_id).first();
+      let preferences = {};
+      try { preferences = JSON.parse(row?.preferences_json || "{}"); } catch {}
+      return reply(request, env, { success: true, preferences, updated_at: row?.updated_at || null });
+    }
+    if (method === "PUT") {
+      const body = await readBody(request), prefs = body?.preferences;
+      if (!prefs || typeof prefs !== "object" || Array.isArray(prefs))
+        return reply(request, env, { success: false, error: "صيغة التفضيلات غير صحيحة." }, 400);
+      const allowed = ["theme", "accent", "background", "cardStyle", "contentLayout", "fontScale"];
+      const safe = {};
+      for (const key of allowed) {
+        const value = prefs[key];
+        if (typeof value === "string" && value.length <= 80) safe[key] = value;
+        else if (key === "fontScale" && Number.isFinite(value)) safe[key] = Math.max(0.9, Math.min(1.2, value));
+      }
+      await env.DB.prepare(`INSERT INTO student_preferences (student_id, preferences_json, updated_at)
+        VALUES (?, ?, CURRENT_TIMESTAMP) ON CONFLICT(student_id) DO UPDATE SET
+        preferences_json = excluded.preferences_json, updated_at = CURRENT_TIMESTAMP`)
+        .bind(session.student_id, JSON.stringify(safe)).run();
+      return reply(request, env, { success: true, preferences: safe });
+    }
+    return reply(request, env, { success: false, error: "Method not allowed." }, 405);
   }
 
   // المواد والصفوف المتاحة للتسجيل
@@ -2427,7 +2562,7 @@ if (method === "POST" && rejectPasswordMatch) {
       .bind(account.student_id)
       .first();
 
-    if ((pending?.total || 0) > 0 && existingDevice?.status !== "approved") {
+    if ((pending?.total || 0) > 0) {
       if (existingDevice?.status === "rejected") {
         await env.DB.prepare(
           `UPDATE student_devices

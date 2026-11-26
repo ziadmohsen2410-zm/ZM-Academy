@@ -68,6 +68,25 @@ small,.muted{color:var(--muted)}
  .editor-actions button{min-width:100%}
 }
 @media(prefers-reduced-motion:reduce){*,*:before,*:after{scroll-behavior:auto!important;transition:none!important;animation:none!important}}
+/* ZM Academy Control Center navigation */
+.admin-shell{display:grid;grid-template-columns:230px minmax(0,1fr);gap:16px;align-items:start;margin:16px 0}
+.admin-sidebar{position:sticky;top:12px;padding:12px;border:1px solid rgba(102,220,255,.22);border-radius:18px;background:linear-gradient(160deg,rgba(12,22,48,.97),rgba(7,12,29,.98));box-shadow:var(--glow)}
+.admin-sidebar-title{font-size:12px;color:var(--muted);padding:8px 10px 12px}
+.admin-nav{display:grid;gap:6px}
+.admin-nav button{display:flex;align-items:center;gap:10px;width:100%;margin:0;text-align:right;background:transparent;color:var(--text);border:1px solid transparent;padding:12px;border-radius:12px;font-weight:700}
+.admin-nav button .nav-icon{width:27px;height:27px;display:grid;place-items:center;border-radius:9px;background:rgba(76,236,255,.10);font-size:16px}
+.admin-nav button.active{background:linear-gradient(110deg,rgba(76,236,255,.17),rgba(167,123,255,.16));border-color:rgba(76,236,255,.34);color:#a9f4ff}
+.admin-nav button:hover{border-color:rgba(167,123,255,.35);filter:none}
+.admin-main{min-width:0}
+.admin-page-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin:0 0 14px;padding:14px 17px;border:1px solid rgba(102,220,255,.2);border-radius:15px;background:linear-gradient(110deg,rgba(15,28,58,.94),rgba(30,22,65,.86))}
+.admin-page-heading h2{margin:0}.admin-page-heading p{margin:5px 0 0;color:var(--muted);font-size:12px}
+.admin-overview-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-bottom:16px}
+.admin-stat{padding:15px;border:1px solid rgba(102,220,255,.2);border-radius:14px;background:linear-gradient(145deg,rgba(16,31,64,.95),rgba(8,14,34,.96))}
+.admin-stat strong{display:block;font-size:23px;color:#9cefff;margin-top:7px}.admin-stat span{font-size:12px;color:var(--muted)}
+.admin-quick{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.admin-quick button{margin:0;min-height:58px;text-align:right;background:rgba(26,43,83,.75);color:var(--text);border-color:rgba(102,220,255,.2)}
+.admin-search{max-width:260px;margin:0}.admin-page[hidden], [data-admin-page][hidden]{display:none!important}
+@media(max-width:850px){.admin-shell{grid-template-columns:1fr}.admin-sidebar{position:static}.admin-nav{display:flex;overflow-x:auto;padding-bottom:3px}.admin-nav button{width:auto;min-width:max-content}.admin-nav button span:last-child{white-space:nowrap}.admin-overview-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:520px){.admin-overview-grid{grid-template-columns:1fr 1fr}.admin-stat{padding:12px}.admin-quick{grid-template-columns:1fr}}
 </style>
 <style id="zm-global-design-runtime">
 :root{--zm-primary:#35a8ff;--zm-secondary:#9b70ff;--zm-bg:#080d1b;--zm-surface:#111b34;--zm-text:#f4f7ff;--zm-muted:#a5b3d0;--zm-radius:18px}
@@ -156,8 +175,43 @@ fetch(API+'/api/homepage',{cache:'no-store'}).then(r=>r.ok?r.json():null).then(d
   </section>
 
   <section id="dashboard" class="hidden">
+    <div class="admin-shell">
+      <aside class="admin-sidebar" aria-label="أقسام لوحة الإدارة">
+        <div class="admin-sidebar-title">مركز القيادة والتحكم</div>
+        <input class="admin-search" id="adminNavSearch" type="search" placeholder="ابحث عن قسم..." aria-label="البحث في أقسام الإدارة">
+        <nav class="admin-nav" id="adminNav">
+          <button type="button" class="active" data-page="overview" onclick="showAdminPage('overview')"><span class="nav-icon">⌂</span><span>نظرة عامة</span></button>
+          <button type="button" data-page="design" onclick="showAdminPage('design')"><span class="nav-icon">✦</span><span>تصميم الموقع</span></button>
+          <button type="button" data-page="content" onclick="showAdminPage('content')"><span class="nav-icon">▤</span><span>المواد والمحتوى</span></button>
+          <button type="button" data-page="students" onclick="showAdminPage('students')"><span class="nav-icon">♙</span><span>الطلاب</span></button>
+          <button type="button" data-page="orders" onclick="showAdminPage('orders')"><span class="nav-icon">▣</span><span>الطلبات</span></button>
+          <button type="button" data-page="security" onclick="showAdminPage('security')"><span class="nav-icon">◈</span><span>الأمان والأجهزة</span></button>
+          <button type="button" data-page="parents" onclick="showAdminPage('parents')"><span class="nav-icon">♧</span><span>أولياء الأمور</span></button>
+        </nav>
+      </aside>
+      <div class="admin-main">
+        <div class="admin-page-heading"><div><h2 id="adminPageTitle">نظرة عامة</h2><p id="adminPageSubtitle">ملخص سريع وإمكانية الوصول إلى أقسام الأكاديمية</p></div><span class="status">ZM CONTROL CENTER</span></div>
+        <div class="card" data-admin-page="overview" id="adminOverview">
+          <h2>مرحبًا بك في مركز القيادة</h2>
+          <p class="hint">اختر القسم الذي تريد إدارته. سيتم فتح أدواته بصورة مستقلة بدل عرض جميع الإعدادات في صفحة طويلة.</p>
+          <div class="admin-overview-grid">
+            <div class="admin-stat"><span>إدارة التصميم</span><strong>01</strong><span>ألوان وقوالب الصفحة</span></div>
+            <div class="admin-stat"><span>المحتوى التعليمي</span><strong>02</strong><span>مواد ودروس وملفات</span></div>
+            <div class="admin-stat"><span>إدارة الطلاب</span><strong>03</strong><span>الحسابات والمتابعة</span></div>
+            <div class="admin-stat"><span>الطلبات</span><strong>04</strong><span>طلبات الشراء والمراجعة</span></div>
+            <div class="admin-stat"><span>الأمان</span><strong>05</strong><span>الأجهزة واستعادة الحساب</span></div>
+            <div class="admin-stat"><span>حالة النظام</span><strong>●</strong><span>لوحة الإدارة متصلة بالواجهة</span></div>
+          </div>
+          <h3>الوصول السريع</h3>
+          <div class="admin-quick">
+            <button type="button" onclick="showAdminPage('design')">✦ تعديل تصميم الموقع</button>
+            <button type="button" onclick="showAdminPage('content')">▤ إدارة المواد والدروس</button>
+            <button type="button" onclick="showAdminPage('students')">♙ إدارة الطلاب</button>
+            <button type="button" onclick="showAdminPage('orders')">▣ مراجعة الطلبات</button>
+          </div>
+        </div>
 
-    <div class="card" id="homepageEditor">
+    <div class="card" id="homepageEditor" data-admin-page="design">
       <div class="topline">
         <h2>إدارة الصفحة الرئيسية</h2>
         <span class="status" id="homepageStatus">لم يتم التحميل</span>
@@ -255,8 +309,8 @@ fetch(API+'/api/homepage',{cache:'no-store'}).then(r=>r.ok?r.json():null).then(d
       </div>
       <h3>الشعار والصور وروابط التواصل</h3>
       <div class="editor-grid">
-        <div class="editor-field"><label for="hpLogoUrl">رابط الشعار</label><input id="hpLogoUrl" maxlength="800" placeholder="https://..."><input id="hpLogoFile" type="file" accept="image/png,image/jpeg,image/webp"><button type="button" class="secondary" onclick="uploadHomepageImage('hpLogoFile','hpLogoUrl')">اختيار ورفع الشعار من الجهاز</button><img id="hpLogoPreview" alt="معاينة الشعار" style="display:none;max-width:120px;max-height:90px;object-fit:contain;margin-top:8px;border-radius:10px"></div>
-        <div class="editor-field"><label for="hpHeroImageUrl">رابط صورة الخلفية الرئيسية</label><input id="hpHeroImageUrl" maxlength="800" placeholder="https://..."><input id="hpHeroFile" type="file" accept="image/png,image/jpeg,image/webp"><button type="button" class="secondary" onclick="uploadHomepageImage('hpHeroFile','hpHeroImageUrl')">اختيار ورفع صورة الخلفية</button><img id="hpHeroPreview" alt="معاينة الخلفية" style="display:none;max-width:180px;max-height:100px;object-fit:cover;margin-top:8px;border-radius:10px"></div>
+        <div class="editor-field"><label for="hpLogoUrl">رابط الشعار</label><input id="hpLogoUrl" maxlength="800" placeholder="https://..."></div>
+        <div class="editor-field"><label for="hpHeroImageUrl">رابط صورة الخلفية الرئيسية</label><input id="hpHeroImageUrl" maxlength="800" placeholder="https://..."></div>
         <div class="editor-field"><label for="hpWhatsapp">رقم واتساب الدولي</label><input id="hpWhatsapp" maxlength="30" placeholder="201xxxxxxxxx"></div>
         <div class="editor-field"><label for="hpFacebook">رابط فيسبوك</label><input id="hpFacebook" maxlength="800" placeholder="https://facebook.com/..."></div>
         <div class="editor-field"><label for="hpYoutube">رابط يوتيوب</label><input id="hpYoutube" maxlength="800" placeholder="https://youtube.com/..."></div>
@@ -281,12 +335,12 @@ fetch(API+'/api/homepage',{cache:'no-store'}).then(r=>r.ok?r.json():null).then(d
       <p class="hint" id="homepageUpdatedAt"></p>
     </div>
 
-    <div class="card">
+    <div class="card" data-admin-page="content">
       <div class="topline"><h2>إدارة المواد الدراسية</h2><button onclick="loadSubjects()">تحديث</button></div>
       <div id="subjectsList"><p class="muted">جارٍ تحميل المواد...</p></div>
     </div>
 
-    <div class="card">
+    <div class="card" data-admin-page="content">
       <h2 id="subjectFormTitle">إضافة مادة دراسية</h2>
       <input id="subjectId" type="hidden">
       <label for="subjectName">اسم المادة</label>
@@ -299,14 +353,14 @@ fetch(API+'/api/homepage',{cache:'no-store'}).then(r=>r.ok?r.json():null).then(d
       </div>
     </div>
 
-    <div class="card">
+    <div class="card" data-admin-page="content">
       <h2>إدارة الدروس والمحتوى</h2>
       <label for="materialSubject">تصفية حسب المادة</label>
       <select id="materialSubject" onchange="loadMaterials()"><option value="">كل المواد</option></select>
       <div id="materialsList"><p class="muted">اختر تحديث المواد لعرض المحتوى.</p></div>
     </div>
 
-    <div class="card">
+    <div class="card" data-admin-page="content">
       <h2 id="materialFormTitle">إضافة محتوى تعليمي</h2>
       <input id="materialId" type="hidden">
       <label for="materialSubjectForm">المادة الدراسية</label>
@@ -332,26 +386,34 @@ fetch(API+'/api/homepage',{cache:'no-store'}).then(r=>r.ok?r.json():null).then(d
       </div>
     </div>
 
-    <div class="card">
+    <div class="card" data-admin-page="students">
       <div class="topline"><h2>إدارة الطلاب</h2><button onclick="loadStudents()">تحديث</button></div>
       <div id="studentsList"><p class="muted">جارٍ تحميل الطلاب...</p></div>
     </div>
 
-    <div class="card">
+    <div class="card" data-admin-page="orders">
       <div class="topline"><h2>طلبات الطلاب المعلقة</h2><button onclick="loadOrders()">تحديث</button></div>
       <p class="hint">الخادم يعرض الطلبات المعلقة فقط في هذا القسم. عند تحديث حالة الطلب سيختفي من القائمة.</p>
       <div id="ordersList"><p class="muted">جارٍ تحميل الطلبات...</p></div>
     </div>
 
-    <div class="card">
+    <div class="card" data-admin-page="security">
       <div class="topline"><h2>طلبات اعتماد الأجهزة</h2><button onclick="loadDeviceRequests()">تحديث</button></div>
       <div id="deviceRequestsList"><p class="muted">جارٍ تحميل طلبات الأجهزة...</p></div>
     </div>
 
-    <div class="card">
+    <div class="card" data-admin-page="security">
       <div class="topline"><h2>طلبات استعادة كلمة المرور</h2><button onclick="loadPasswordResetRequests()">تحديث</button></div>
       <div id="passwordResetRequestsList"><p class="muted">جارٍ تحميل طلبات استعادة كلمة المرور...</p></div>
     </div>
+        <div class="card" data-admin-page="parents">
+          <div class="topline"><h2>طلبات ربط ولي الأمر بالطالب</h2><button type="button" onclick="loadParentLinkRequests()">تحديث</button></div>
+          <p class="hint">لا تظهر بيانات الطالب لولي الأمر إلا بعد اعتماد طلب الربط من الإدارة.</p>
+          <div id="parentLinkRequests"><p class="muted">جارٍ تحميل الطلبات...</p></div>
+          <p class="hint">رابط بوابة ولي الأمر: <a href="parent.html" target="_blank" rel="noopener">فتح البوابة</a></p>
+        </div>
+      </div><!-- /.admin-main -->
+    </div><!-- /.admin-shell -->
   </section>
 </main>
 
@@ -364,6 +426,31 @@ let isSavingMaterial=false;
 let isSavingSubject=false;
 let isSavingHomepage=false;
 let homepageDraft={};
+
+const ADMIN_PAGE_META={
+ overview:["نظرة عامة","ملخص سريع وإمكانية الوصول إلى أقسام الأكاديمية"],
+ design:["تصميم الموقع","إدارة هوية الأكاديمية والألوان والقوالب ومحتوى الصفحة الرئيسية"],
+ content:["المواد والمحتوى","إدارة المواد الدراسية والدروس والملفات التعليمية"],
+ students:["الطلاب","عرض حسابات الطلاب وإدارة بياناتهم"],
+ orders:["الطلبات","مراجعة طلبات الشراء وتحديث حالتها"],
+ security:["الأمان والأجهزة","مراجعة الأجهزة وطلبات استعادة كلمات المرور"],
+ parents:["بوابة أولياء الأمور","مراجعة طلبات ربط أولياء الأمور بحسابات الطلاب"]
+};
+function showAdminPage(page){
+  if(!ADMIN_PAGE_META[page])page="overview";
+  document.querySelectorAll("[data-admin-page]").forEach(node=>{node.hidden=node.dataset.adminPage!==page});
+  document.querySelectorAll("#adminNav [data-page]").forEach(btn=>btn.classList.toggle("active",btn.dataset.page===page));
+  const meta=ADMIN_PAGE_META[page];
+  el("adminPageTitle").textContent=meta[0];el("adminPageSubtitle").textContent=meta[1];
+  try{sessionStorage.setItem("zm_admin_last_page",page)}catch(e){}
+  if(page==="design"&&!homepageDraft.theme)loadHomepageSettings();
+  if(page==="parents")loadParentLinkRequests();
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+function filterAdminNav(){
+  const q=String(el("adminNavSearch")?.value||"").trim().toLowerCase();
+  document.querySelectorAll("#adminNav [data-page]").forEach(btn=>{btn.hidden=!!q&&!btn.textContent.toLowerCase().includes(q)});
+}
 
 function el(id){return document.getElementById(id)}
 function message(text,type="ok"){
@@ -403,6 +490,8 @@ function showDashboard(){
   el("loginSection").classList.add("hidden");
   el("dashboard").classList.remove("hidden");
   el("logoutBtn").classList.remove("hidden");
+  let last="overview";try{last=sessionStorage.getItem("zm_admin_last_page")||"overview"}catch(e){}
+  showAdminPage(last);
 }
 function showLogin(){
   el("loginSection").classList.remove("hidden");
@@ -448,26 +537,6 @@ async function logout(){
 /* أدوات إدارة الصفحة الرئيسية */
 const ZM_THEME_PRESETS={neon:{primary:"#35a8ff",secondary:"#9b70ff",background:"#080d1b",surface:"#111b34",text:"#f4f7ff",muted:"#a5b3d0"},royal:{primary:"#d6b36a",secondary:"#f0d99d",background:"#090b12",surface:"#171b27",text:"#f7f4ed",muted:"#aaa9b4"},ocean:{primary:"#00bcd4",secondary:"#3978ff",background:"#071923",surface:"#102b3a",text:"#effcff",muted:"#a3c5d0"},emerald:{primary:"#25c58a",secondary:"#a3df67",background:"#071811",surface:"#10291f",text:"#f0fff7",muted:"#a6c9b6"},rose:{primary:"#f06aa8",secondary:"#a77bff",background:"#190d1b",surface:"#2a1730",text:"#fff2fb",muted:"#d1afc8"},light:{primary:"#5143bd",secondary:"#168db8",background:"#f4f6ff",surface:"#ffffff",text:"#202747",muted:"#68708e"}};
 function applyAdminPreset(){const p=ZM_THEME_PRESETS[el("hpThemePreset").value];if(!p)return;for(const [k,v] of Object.entries(p))el({primary:"hpColorPrimary",secondary:"hpColorSecondary",background:"hpColorBackground",surface:"hpColorSurface",text:"hpColorText",muted:"hpColorMuted"}[k]).value=v;el("hpDefaultMode").value=el("hpThemePreset").value==="light"?"light":"dark";}
-
-async function uploadHomepageImage(fileInputId,urlInputId){
-  const fileInput=el(fileInputId),file=fileInput?.files?.[0];
-  if(!file)return message("اختَر صورة من جهازك أولًا.","err");
-  if(file.size>8*1024*1024)return message("حجم الصورة يجب ألا يتجاوز 8 ميجابايت.","err");
-  if(!["image/jpeg","image/png","image/webp"].includes(file.type))return message("الصيغ المدعومة JPG وPNG وWEBP فقط.","err");
-  const button=fileInput.parentElement.querySelector("button");
-  if(button){button.disabled=true;button.textContent="جارٍ رفع الصورة...";}
-  try{
-    const form=new FormData();form.append("file",file,file.name);
-    const response=await fetch(API+"/api/admin/upload",{method:"POST",headers:{Authorization:"Bearer "+token},body:form});
-    const data=await response.json().catch(()=>({}));
-    if(!response.ok||!data.success||!data.url)throw new Error(data.error||"تعذر رفع الصورة أو إنشاء رابطها.");
-    el(urlInputId).value=data.url;
-    const preview=el(urlInputId==="hpLogoUrl"?"hpLogoPreview":"hpHeroPreview");
-    if(preview){preview.src=data.url;preview.style.display="block";}
-    message("تم رفع الصورة. احفظ المسودة ثم انشر التعديلات.");
-  }catch(error){message(error.message||"فشل رفع الصورة.","err");}
-  finally{if(button){button.disabled=false;button.textContent=urlInputId==="hpLogoUrl"?"اختيار ورفع الشعار من الجهاز":"اختيار ورفع صورة الخلفية";}}
-}
 
 function homepageDefault(){
   return {
@@ -582,8 +651,6 @@ function fillHomepageForm(settings){
   setField("hpColorText",theme.text);setField("hpColorMuted",theme.muted);
   setField("hpDefaultMode",theme.mode);setField("hpCornerStyle",theme.corners);setField("hpFontFamily",theme.font);setField("hpButtonStyle",theme.buttons);setField("hpCardStyle",theme.cards);setField("hpMotion",theme.motion);
   setField("hpLogoUrl",branding.logoUrl);setField("hpHeroImageUrl",branding.heroImageUrl);
-  if(branding.logoUrl){el("hpLogoPreview").src=branding.logoUrl;el("hpLogoPreview").style.display="block";}
-  if(branding.heroImageUrl){el("hpHeroPreview").src=branding.heroImageUrl;el("hpHeroPreview").style.display="block";}
   setField("hpWhatsapp",branding.whatsapp);setField("hpFacebook",branding.facebook);
   setField("hpYoutube",branding.youtube);setField("hpTelegram",branding.telegram);
   setCheck("hpShowSubjects",sections.subjects);
@@ -1036,6 +1103,28 @@ async function reviewDevice(id,decision){
   }catch(e){message(e.message,"err")}
 }
 
+async function loadParentLinkRequests(){
+  const box=el("parentLinkRequests");if(!box)return;box.innerHTML="<p class='muted'>جارٍ تحميل الطلبات...</p>";
+  try{
+    const data=await request("/api/admin/parent-link-requests");const list=data.requests||[];
+    if(!list.length){box.innerHTML="<p class='muted'>لا توجد طلبات ربط معلقة.</p>";return}
+    box.innerHTML=list.map(r=>`<div class="item"><strong>${escapeHTML(r.parent_name)} — ${escapeHTML(r.parent_phone)}</strong>
+      <small>الطالب: ${escapeHTML(r.student_name)} (رقم ${Number(r.student_id)})</small><br>
+      <small>هاتف الطالب: ${escapeHTML(r.student_phone||"—")} · الصف: ${escapeHTML(r.grade||"—")}</small><br>
+      <small>صلة القرابة: ${escapeHTML(r.relationship||"ولي أمر")}</small><br>
+      <small>ملاحظة: ${escapeHTML(r.request_note||"لا توجد")}</small><br>
+      <small>تاريخ الطلب: ${escapeHTML(r.created_at||"—")}</small>
+      <div class="row"><button class="success" onclick="reviewParentLink(${Number(r.id)},'approve')">اعتماد الربط</button>
+      <button class="danger" onclick="reviewParentLink(${Number(r.id)},'reject')">رفض الطلب</button></div></div>`).join("");
+  }catch(e){box.innerHTML=`<p class="muted">${escapeHTML(e.message)}</p>`}
+}
+async function reviewParentLink(id,decision){
+  if(!confirm(decision==="approve"?"اعتماد ربط حساب ولي الأمر بهذا الطالب؟":"رفض طلب الربط؟"))return;
+  try{await request(`/api/admin/parent-link-requests/${Number(id)}/${decision}`,"POST",{});
+    await loadParentLinkRequests();message(decision==="approve"?"تم اعتماد طلب الربط.":"تم رفض طلب الربط.");
+  }catch(e){message(e.message,"err")}
+}
+
 async function loadPasswordResetRequests(){
   const box=el("passwordResetRequestsList");box.innerHTML="<p class='muted'>جارٍ تحميل طلبات استعادة كلمة المرور...</p>";
   try{
@@ -1077,6 +1166,7 @@ async function rejectPasswordReset(id){
 }
 
 el("hpThemePreset").addEventListener("change",applyAdminPreset);
+el("adminNavSearch")?.addEventListener("input",filterAdminNav);
 syncPriceField();
 checkSession();
 </script>

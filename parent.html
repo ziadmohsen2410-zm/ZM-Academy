@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#080d1b"><title>ZM Academy | بوابة ولي الأمر</title>
+<style>
+:root{color-scheme:dark;--bg:#080d1b;--panel:#111b34;--line:#29476d;--cyan:#55dfff;--violet:#a58bff;--text:#f4f7ff;--muted:#a9b8d2}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at 10% 0%,#17254d,transparent 38%),radial-gradient(circle at 90% 90%,#241744,transparent 35%),var(--bg);color:var(--text);font-family:Tahoma,Arial,sans-serif;min-height:100vh}
+header{padding:24px max(18px,calc((100vw - 1080px)/2));border-bottom:1px solid var(--line);background:#080d1be8}header h1{margin:0;color:var(--cyan)}header p{color:var(--muted);margin:8px 0 0}
+main{max-width:1080px;margin:auto;padding:24px 16px}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}.card{background:linear-gradient(145deg,#14213e,#0d152a);border:1px solid #29476d;border-radius:18px;padding:20px;box-shadow:0 18px 50px #0005;margin-bottom:16px}h2{font-size:18px;color:#c4b7ff;margin:0 0 16px}
+label{display:block;font-size:13px;color:#c6d4ed;margin:10px 0 5px}input,select,textarea{width:100%;padding:12px;border-radius:10px;border:1px solid #355579;background:#071020;color:white;font:inherit}button{border:0;border-radius:10px;padding:12px 16px;background:linear-gradient(110deg,var(--cyan),var(--violet));font-weight:bold;color:#071020;cursor:pointer;margin-top:12px}button.alt{background:#263a61;color:white;border:1px solid #42608a}button:disabled{opacity:.5}
+.notice{padding:12px;border-radius:10px;background:#172744;color:#c8eaff;margin:12px 0;display:none}.notice.err{background:#4b1e36;color:#ffd5e4}.hidden{display:none!important}.child{padding:14px;border:1px solid #345079;border-radius:12px;margin:10px 0;background:#0a1429}.child strong{display:block;margin-bottom:8px}.muted{color:var(--muted);font-size:13px;line-height:1.8}.row{display:flex;gap:8px;flex-wrap:wrap}.row>*{flex:1}
+@media(max-width:720px){.grid{grid-template-columns:1fr}header{padding:20px 16px}.card{padding:16px}}
+</style></head>
+<body>
+<header><h1>ZM Academy</h1><p>بوابة ولي الأمر — متابعة الأبناء والتواصل مع الأكاديمية</p></header>
+<main>
+<div id="notice" class="notice" role="status"></div>
+<section id="auth" class="grid">
+<div class="card"><h2>تسجيل الدخول</h2>
+<label for="loginPhone">رقم الهاتف</label><input id="loginPhone" inputmode="tel" autocomplete="tel">
+<label for="loginPassword">كلمة المرور</label><input id="loginPassword" type="password" autocomplete="current-password">
+<button onclick="login()">دخول إلى حسابي</button></div>
+<div class="card"><h2>إنشاء حساب ولي أمر</h2>
+<label for="regName">الاسم</label><input id="regName" autocomplete="name">
+<label for="regPhone">رقم الهاتف</label><input id="regPhone" inputmode="tel">
+<label for="regPassword">كلمة المرور (10 أحرف على الأقل)</label><input id="regPassword" type="password" autocomplete="new-password">
+<button onclick="register()">إنشاء الحساب</button></div></section>
+<section id="portal" class="hidden">
+<div class="card"><div class="row"><div><h2 id="welcome">مرحبًا</h2><p class="muted">تظهر هنا بيانات الأبناء بعد موافقة إدارة الأكاديمية على طلب الربط.</p></div><button class="alt" onclick="logout()">تسجيل الخروج</button></div></div>
+<div class="grid"><div class="card"><h2>طلب ربط طالب</h2>
+<label for="studentId">رقم الطالب داخل الأكاديمية</label><input id="studentId" type="number" min="1">
+<label for="relationship">صلة القرابة</label><select id="relationship"><option>ولي أمر</option><option>الأب</option><option>الأم</option><option>وصي</option><option>أخرى</option></select>
+<label for="linkNote">ملاحظة (اختياري)</label><textarea id="linkNote" rows="2"></textarea>
+<button onclick="requestLink()">إرسال طلب الربط</button><p class="muted">طلب الربط لا يمنح الوصول إلا بعد مراجعته واعتماده من الإدارة.</p></div>
+<div class="card"><h2>الأبناء المرتبطون</h2><div id="children"><p class="muted">جارٍ تحميل البيانات...</p></div><button class="alt" onclick="loadChildren()">تحديث</button></div></div>
+</section>
+</main>
+<script>
+"use strict";
+const API="https://zm-academy-api.ziadmohsen4567.workers.dev";
+let token=sessionStorage.getItem("zm_parent_token")||"";
+const $=id=>document.getElementById(id);
+function say(msg,error=false){const n=$("notice");n.textContent=msg;n.className="notice"+(error?" err":"");n.style.display="block";window.scrollTo({top:0,behavior:"smooth"})}
+async function call(path,method="GET",body=null){const headers={};if(token)headers.Authorization="Bearer "+token;const opt={method,headers};if(body!==null){headers["Content-Type"]="application/json";opt.body=JSON.stringify(body)}const r=await fetch(API+path,opt);const d=await r.json().catch(()=>({}));if(!r.ok||d.success===false)throw new Error(d.error||"تعذر إتمام الطلب.");return d}
+async function register(){try{const d=await call("/api/parents/register","POST",{name:$("regName").value,phone:$("regPhone").value,password:$("regPassword").value});say("تم إنشاء الحساب. سجّل الدخول الآن.");$("loginPhone").value=$("regPhone").value;$("loginPassword").value=$("regPassword").value}catch(e){say(e.message,true)}}
+async function login(){try{const d=await call("/api/parents/login","POST",{phone:$("loginPhone").value,password:$("loginPassword").value});token=d.token;sessionStorage.setItem("zm_parent_token",token);await showPortal(d.parent)}catch(e){say(e.message,true)}}
+async function showPortal(parent){$("auth").classList.add("hidden");$("portal").classList.remove("hidden");$("welcome").textContent="مرحبًا، "+parent.name;await loadChildren()}
+async function loadChildren(){try{const d=await call("/api/parent/children");const rows=d.children||[];$("children").innerHTML=rows.length?rows.map(c=>`<div class="child"><strong>${esc(c.name)}</strong><span class="muted">الصف: ${esc(c.grade||"غير محدد")} · رقم الطالب: ${Number(c.id)}</span></div>`).join(""):"<p class='muted'>لا توجد حسابات أبناء معتمدة حتى الآن.</p>"}catch(e){$("children").textContent=e.message}}
+async function requestLink(){try{await call("/api/parent/link-requests","POST",{student_id:Number($("studentId").value),relationship:$("relationship").value,note:$("linkNote").value});say("تم إرسال طلب الربط إلى الإدارة للمراجعة.")}catch(e){say(e.message,true)}}
+async function logout(){try{await call("/api/parent/logout","POST",{})}catch(e){}token="";sessionStorage.removeItem("zm_parent_token");$("portal").classList.add("hidden");$("auth").classList.remove("hidden");say("تم تسجيل الخروج.")}
+function esc(v){return String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
+(async()=>{if(token){try{const d=await call("/api/parent/me");await showPortal(d.parent)}catch(e){token="";sessionStorage.removeItem("zm_parent_token")}}})();
+</script></body></html>
