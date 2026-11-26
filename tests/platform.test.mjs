@@ -286,6 +286,8 @@ test("homepage editor preserves unsaved edits when navigating between sections",
   assert.ok(admin.includes("if(homepageDraftDirty)return"));
   assert.ok(admin.includes("homepageDraftDirty=true"));
   assert.ok(admin.includes("سيتم تجاهل التعديلات غير المحفوظة"));
+  assert.equal((admin.match(/\$\('#loadHomepageBtn'\)\.onclick=/g)||[]).length,1);
+
 });
 
 test("admin homepage editor is connected to the homepage draft and publish APIs", () => {
