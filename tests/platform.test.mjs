@@ -101,6 +101,13 @@ test("student exam visibility and start enforce grade, schedule, open-attempt, a
   assert.ok(routes.includes("انتهى الوقت المحدد للاختبار"));
 });
 
+test("exam validation preserves the archived lifecycle state", () => {
+  const worker = read("worker.js");
+  const admin = read("admin.html");
+  assert.ok(worker.includes("['draft','published','closed','archived']"));
+  assert.ok(admin.includes('<option value="archived">مؤرشف</option>'));
+});
+
 test("admin exam editor exposes and saves all supported exam settings", () => {
   const admin = read("admin.html");
   assert.ok(admin.includes('id="examDuration"'));
