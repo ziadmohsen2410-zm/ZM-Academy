@@ -4107,12 +4107,13 @@ if (method === "POST" && rejectPasswordMatch) {
           ON r.notification_id=n.id
          AND r.user_type='student'
          AND r.user_id=?
-        WHERE n.audience_type='all'
+        WHERE (n.audience_type='all'
            OR (n.audience_type='student' AND n.audience_value=CAST(? AS TEXT))
            OR (n.audience_type='grade' AND EXISTS (
                 SELECT 1 FROM students s
                 WHERE s.id=? AND s.grade=n.audience_value
-           ))
+           )))
+          AND (n.scheduled_at IS NULL OR datetime(n.scheduled_at)<=datetime('now'))
         ORDER BY n.id DESC
         LIMIT 100
       `).bind(session.student_id, session.student_id, session.student_id).all();
