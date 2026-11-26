@@ -101,6 +101,15 @@ test("student exam visibility and start enforce grade, schedule, open-attempt, a
   assert.ok(routes.includes("انتهى الوقت المحدد للاختبار"));
 });
 
+test("shuffled question order is preserved across exam resume", () => {
+  const worker = read("worker.js");
+  const migration = read("migrations/001_platform_core.sql");
+  assert.ok(worker.includes("question_order_json"));
+  assert.ok(worker.includes("JSON.stringify(questions.map(q=>q.id))"));
+  assert.ok(worker.includes("const savedOrder=safeJsonParse(attempt.question_order_json,[])"));
+  assert.ok(migration.includes("question_order_json TEXT"));
+});
+
 test("exam answers are autosaved and restored when a student resumes", () => {
   const worker = read("worker.js");
   const student = read("student.html");
