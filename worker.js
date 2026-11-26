@@ -3566,7 +3566,7 @@ if (method === "POST" && rejectPasswordMatch) {
       const rows=await env.DB.prepare(`SELECT n.*,CASE WHEN r.id IS NULL THEN 0 ELSE 1 END AS is_read FROM notifications n LEFT JOIN notification_reads r ON r.notification_id=n.id AND r.user_type='parent' AND r.user_id=? WHERE (n.audience_type IN ('all','parents')) AND (n.scheduled_at IS NULL OR datetime(n.scheduled_at)<=datetime('now')) ORDER BY n.id DESC LIMIT 100`).bind(ps.parent_id).all();
       return reply(request,env,{success:true,notifications:rows.results||[]});
     }
-    if (method==='POST' && /^\\/api\\/parent\\/notifications\\/\\d+\\/read$/.test(path)) {
+    if (method==='POST' && /^\/api\/parent\/notifications\/\d+\/read$/.test(path)) {
       const nid=Number(path.split('/')[4]);
       const notification=await env.DB.prepare(`SELECT id FROM notifications WHERE id=? AND audience_type IN ('all','parents') AND (scheduled_at IS NULL OR datetime(scheduled_at)<=datetime('now'))`).bind(nid).first();
       if(!notification) return reply(request,env,{success:false,error:'الإشعار غير موجود'},404);
