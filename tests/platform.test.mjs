@@ -153,6 +153,14 @@ test("students can resume an in-progress exam after reopening the page", () => {
   assert.ok(student.includes("activeAttemptId?await api"));
 });
 
+test("released exam results include teacher feedback for essay questions", () => {
+  const worker = read("worker.js");
+  const student = read("student.html");
+  assert.ok(worker.includes("question_text:q.question_text,comment:saved[q.id]||''"));
+  assert.ok(student.includes("result.feedback||[]"));
+  assert.ok(student.includes("esc(x.comment)"));
+});
+
 test("students can refresh final exam results after manual essay grading", () => {
   const worker = read("worker.js");
   const student = read("student.html");
