@@ -79,8 +79,8 @@ test("student notifications are scoped to broadcast, matching student, or matchi
   assert.notEqual(start, -1, "Student notifications route must exist");
   const end = worker.indexOf("if (method==='POST' && /^\\/api\\/student\\/platform\\/notifications", start);
   const route = worker.slice(start, end === -1 ? start + 1800 : end);
-  assert.match(route, /n\\.audience_type='all'/);
-  assert.match(route, /n\\.audience_type='student' AND n\\.audience_value=CAST\\(\\? AS TEXT\\)/);
-  assert.match(route, /n\\.audience_type='grade'/);
-  assert.doesNotMatch(route, /audience_type IN \\('all','student'\\)/);
+  assert.ok(route.includes("n.audience_type='all'"));
+  assert.ok(route.includes("n.audience_type='student' AND n.audience_value=CAST(? AS TEXT)"));
+  assert.ok(route.includes("n.audience_type='grade'"));
+  assert.ok(!route.includes("audience_type IN ('all','student')"));
 });
