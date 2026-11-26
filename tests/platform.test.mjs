@@ -316,6 +316,14 @@ test("admin page-builder preview blocks unsafe link schemes", () => {
   assert.ok(admin.includes("safePreviewLink(b.buttonUrl)"));
 });
 
+test("public page renderer inherits the published homepage brand theme", () => {
+  const page = read("page.html");
+  assert.ok(page.includes("fetch(API+'/api/homepage'"));
+  assert.ok(page.includes("applyBrandTheme(d.settings?.theme)"));
+  assert.ok(page.includes("['primary','--blue']"));
+  assert.ok(page.includes("document.body.classList.add('light')"));
+});
+
 test("published page builder pages render through the public API", () => {
   const page = read("page.html");
   const admin = read("admin.html");
