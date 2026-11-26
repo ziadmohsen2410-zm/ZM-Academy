@@ -334,7 +334,7 @@ const sectionPermission={dashboard:'dashboard',students:'students',parents:'pare
 function canSeeSection(key){
   const permissions=state.admin?.permissions||[];
   const needed=sectionPermission[key]||key;
-  return permissions.includes('*')||permissions.includes(needed)||(key==='students'&&permissions.includes('students.view'));
+  return permissions.includes('*')||permissions.includes(needed)||(key==='students'&&permissions.includes('students.view'))||(key==='audit'&&permissions.includes('audit.view'));
 }
 function setSection(key){
   if(!canSeeSection(key)) return showMsg('ليس لديك صلاحية لفتح هذا القسم');
