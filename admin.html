@@ -330,7 +330,14 @@ async function api(path, opts={}){
 }
 function closeSidebar(){ $('#sidebar')?.classList.remove('open'); $('#sidebarOverlay')?.classList.remove('open'); }
 function openSidebar(){ $('#sidebar')?.classList.add('open'); $('#sidebarOverlay')?.classList.add('open'); }
+const sectionPermission={dashboard:'dashboard',students:'students',parents:'parents',orders:'orders',devices:'devices',content:'content',exams:'exams',ads:'ads',notifications:'notifications',pages:'page_builder',theme:'theme',media:'media',ai:'ai',roles:'roles',backups:'backups',settings:'settings',audit:'audit'};
+function canSeeSection(key){
+  const permissions=state.admin?.permissions||[];
+  const needed=sectionPermission[key]||key;
+  return permissions.includes('*')||permissions.includes(needed)||(key==='students'&&permissions.includes('students.view'));
+}
 function setSection(key){
+  if(!canSeeSection(key)) return showMsg('ليس لديك صلاحية لفتح هذا القسم');
   state.section=key;
   $$('.section').forEach(s=>s.classList.remove('active'));
   const sec=$('#sec-'+key); if(sec) sec.classList.add('active');
@@ -343,9 +350,12 @@ function setSection(key){
 function buildNav(){
   const nav=$('#nav'); nav.innerHTML='';
   sectionGroups.forEach(g=>{
+    const visibleItems=g.items.filter(([k])=>canSeeSection(k));
+    if(!visibleItems.length) return;
     const h=document.createElement('div'); h.textContent=g.label; h.style.cssText='font-size:12px;color:#8ea2c4;margin:10px 6px 4px;font-weight:700'; nav.appendChild(h);
-    g.items.forEach(([k,label])=>{const b=document.createElement('button'); b.textContent=label; b.dataset.sec=k; b.onclick=()=>setSection(k); if(k===state.section)b.classList.add('active'); nav.appendChild(b);});
+    visibleItems.forEach(([k,label])=>{const b=document.createElement('button'); b.textContent=label; b.dataset.sec=k; b.onclick=()=>setSection(k); if(k===state.section)b.classList.add('active'); nav.appendChild(b);});
   });
+  $('#bottomNav button[data-sec]').forEach(b=>{b.classList.toggle('hidden',!canSeeSection(b.dataset.sec));});
 }
 async function login(){
   showLoginMsg('');
