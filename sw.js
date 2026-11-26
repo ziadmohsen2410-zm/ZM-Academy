@@ -1,7 +1,7 @@
 'use strict';
 
 const CACHE_PREFIX = 'zm-academy-';
-const CACHE_NAME = 'zm-academy-v7';
+const CACHE_NAME = 'zm-academy-v8';
 const CORE_FILES = [
   './',
   './index.html',
