@@ -994,6 +994,7 @@ if (method === "POST" && path === "/api/password-reset/request") {
   ) {
     const legacyPermission =
       path === "/api/admin/me" ? "dashboard" :
+      path === "/api/admin/students" && method === "GET" ? "students.view" :
       path.startsWith("/api/admin/students") || path.startsWith("/api/admin/password-reset-requests") ? "students" :
       path.startsWith("/api/admin/orders") ? "orders" :
       path.startsWith("/api/admin/device-requests") ? "devices" :
