@@ -509,6 +509,37 @@ const social={facebook:b.facebook,youtube:b.youtube,telegram:b.telegram};let soc
 fetch(API+'/api/homepage',{cache:'no-store'}).then(r=>r.ok?r.json():null).then(d=>{if(d&&d.success)apply(d.settings)}).catch(()=>{});
 })();
 </script>
+
+<style id="zm-dashboard-v2">
+.zm-shell{display:grid;grid-template-columns:260px 1fr;gap:18px;align-items:start}
+.zm-sidebar{position:sticky;top:88px;background:linear-gradient(180deg,rgba(13,27,53,.96),rgba(10,22,44,.96));border:1px solid var(--border);border-radius:20px;padding:18px;box-shadow:var(--shadow)}
+.zm-side-brand{display:flex;align-items:center;gap:10px;padding-bottom:16px;border-bottom:1px solid var(--border);margin-bottom:14px}
+.zm-side-brand img{width:42px;height:42px;border-radius:12px;object-fit:contain;background:var(--surface3);padding:3px}
+.zm-side-brand b{display:block;font-size:15px} .zm-side-brand small{color:var(--muted);font-size:11px}
+.zm-side-nav{display:flex;flex-direction:column;gap:6px}
+.zm-side-nav a{padding:11px 12px;border-radius:12px;color:var(--muted);font-weight:700;display:flex;gap:8px;align-items:center}
+.zm-side-nav a:hover,.zm-side-nav a.active{background:rgba(47,128,255,.12);color:#fff}
+.zm-side-nav a.active{border:1px solid rgba(47,128,255,.25)}
+.zm-main{min-width:0}
+.zm-topbar{display:flex;justify-content:space-between;gap:12px;align-items:center;margin-bottom:16px}
+.zm-page-title{margin:0;font-size:22px}.zm-page-sub{margin:0;color:var(--muted);font-size:13px}
+.zm-topbar-actions{display:flex;gap:10px;align-items:center}
+.zm-user-chip .info-chip{margin:0}
+.zm-welcome{display:flex;justify-content:space-between;gap:18px;align-items:center;background:linear-gradient(115deg,rgba(47,128,255,.18),rgba(123,97,255,.14)),var(--surface);border:1px solid rgba(47,128,255,.2)}
+.zm-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin-bottom:16px}
+.zm-stat{padding:18px}
+.zm-stat-head{display:flex;justify-content:space-between;color:var(--muted);font-size:13px;margin-bottom:8px}
+.zm-stat b{display:block;font-size:28px;line-height:1.2;margin-bottom:8px}
+.zm-ic{width:30px;height:30px;border-radius:10px;display:grid;place-items:center;background:rgba(47,128,255,.12);color:var(--blue)}
+.zm-bar{height:8px;background:rgba(255,255,255,.08);border-radius:999px;overflow:hidden}
+.zm-bar>div{height:100%;background:linear-gradient(90deg,#2F80FF,#7B61FF);border-radius:999px}
+.zm-bottom-nav{display:none;position:fixed;bottom:0;left:0;right:0;background:rgba(13,27,53,.96);backdrop-filter:blur(12px);border-top:1px solid var(--border);padding:8px 10px calc(8px + env(safe-area-inset-bottom));z-index:80;justify-content:space-around}
+.zm-bottom-nav a{display:flex;flex-direction:column;align-items:center;gap:2px;color:var(--muted);font-size:11px;padding:6px 10px;border-radius:12px;min-width:64px}
+.zm-bottom-nav a span{font-size:18px;line-height:1}
+.zm-bottom-nav a.active,.zm-bottom-nav a:hover{color:#fff;background:rgba(47,128,255,.12)}
+@media(max-width:980px){.zm-shell{grid-template-columns:1fr}.zm-sidebar{display:none}.zm-stats{grid-template-columns:repeat(2,minmax(0,1fr))}.zm-bottom-nav{display:flex}main{padding-bottom:90px}}
+@media(max-width:640px){.zm-welcome{flex-direction:column;align-items:stretch}.zm-stats{grid-template-columns:1fr 1fr}.zm-topbar{flex-direction:column;align-items:stretch}}
+</style>
 </head>
 
 <body>
@@ -529,87 +560,116 @@ fetch(API+'/api/homepage',{cache:'no-store'}).then(r=>r.ok?r.json():null).then(d
  <div id="message">جارٍ تحميل بياناتك...</div>
 
  <section id="dashboard" class="hidden">
+  <div class="zm-shell">
+    <aside class="zm-sidebar" aria-label="القائمة الجانبية">
+      <div class="zm-side-brand"><img src="https://raw.githubusercontent.com/ziadmohsen2410-zm/ZM-Academy/main/Picsart_26-11-24_10-49-15-125.png" alt="ZM"><div><b>ZM Academy</b><small>منصة التعلم</small></div></div>
+      <nav class="zm-side-nav">
+        <a href="#welcomeCard" class="active">🏠 الرئيسية</a>
+        <a href="#subjectsSection">📚 المواد</a>
+        <a href="#learningSection">📈 تقدمي</a>
+        <a href="#paidSection">📖 المذكرات</a>
+        <a href="#purchasesSection">🛒 الطلبات</a>
+        <a href="#supportSection">⚙️ الدعم</a>
+      </nav>
+    </aside>
 
-  <div class="hero">
-   <div class="hero-content">
-    <h1 id="welcome">أهلاً بك</h1>
-    <p>مرحباً بك في عالم التعلم والتفوق</p>
-    <div id="studentInfo" class="info-chip"></div>
-   </div>
+    <div class="zm-main">
+      <div class="zm-topbar">
+        <div><h2 class="zm-page-title">لوحة الطالب</h2><p class="zm-page-sub">تابع رحلتك التعليمية</p></div>
+        <div class="zm-topbar-actions">
+          <div class="zm-user-chip"><span id="studentInfo" class="info-chip"></span></div>
+        </div>
+      </div>
 
-   <div class="profile">
-    <div class="avatar-wrap">
-     <img id="studentPhoto" alt="صورة الطالب" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='50' fill='%231b3155'/%3E%3Ccircle cx='50' cy='37' r='18' fill='%239bb9e8'/%3E%3Cpath d='M15 100 Q18 65 50 65 Q82 65 85 100' fill='%239bb9e8'/%3E%3C/svg%3E">
+      <div class="zm-welcome card" id="welcomeCard">
+        <div>
+          <div class="eyebrow" style="color:var(--gold);font-weight:800;font-size:12px;letter-spacing:1px">ZM ACADEMY</div>
+          <h1 id="welcome" style="margin:6px 0 6px;font-size:clamp(24px,4vw,36px)">أهلاً بك في ZM Academy</h1>
+          <p style="margin:0;color:var(--muted)">تابع رحلتك التعليمية وواصل التقدم من حيث توقفت.</p>
+        </div>
+        <div class="profile">
+          <div class="avatar-wrap">
+            <img id="studentPhoto" alt="صورة الطالب" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='50' fill='%231b3155'/%3E%3Ccircle cx='50' cy='37' r='18' fill='%239bb9e8'/%3E%3Cpath d='M15 100 Q18 65 50 65 Q82 65 85 100' fill='%239bb9e8'/%3E%3C/svg%3E">
+          </div>
+          <div>
+            <b>حسابك الشخصي</b>
+            <div class="muted">صورتك وبياناتك التعليمية</div>
+            <div class="profile-actions">
+              <label for="photoInput" class="small-btn" style="cursor:pointer;background:linear-gradient(110deg,#2F80FF,#7B61FF);border-radius:10px;padding:7px 11px;color:white">تغيير الصورة</label>
+              <input id="photoInput" type="file" accept="image/png,image/jpeg,image/webp">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="zm-stats" id="zmStats">
+        <div class="zm-stat card"><div class="zm-stat-head"><span>نسبة التقدم</span><span class="zm-ic">◎</span></div><b id="statProgress">0%</b><div class="zm-bar"><div id="statProgressBar" style="width:0%"></div></div></div>
+        <div class="zm-stat card"><div class="zm-stat-head"><span>المواد الدراسية</span><span class="zm-ic">📚</span></div><b id="statSubjects">0</b><small class="muted">مواد متاحة لك</small></div>
+        <div class="zm-stat card"><div class="zm-stat-head"><span>الدروس المكتملة</span><span class="zm-ic">✓</span></div><b id="statCompleted">0</b><small class="muted">درس مكتمل</small></div>
+        <div class="zm-stat card"><div class="zm-stat-head"><span>آخر نشاط</span><span class="zm-ic">↻</span></div><b id="statLast" style="font-size:16px">—</b><small class="muted">آخر متابعة</small></div>
+      </div>
+
+      <div class="grid">
+        <div class="card" id="continueSection">
+          <h2>متابعة التعلم</h2>
+          <div id="continueLearning" class="muted">جارٍ تحميل آخر درس...</div>
+        </div>
+        <div class="card" id="accountSection">
+          <h2>ملخص الحساب</h2>
+          <div id="accountSummary" class="muted">بيانات حسابك التعليمية</div>
+        </div>
+      </div>
+
+      <div class="grid">
+        <div class="card" id="subjectsSection">
+          <h2>موادي الدراسية</h2>
+          <div id="subjects"></div>
+        </div>
+        <div class="card" id="learningSection">
+          <h2>ملخص المذاكرة</h2>
+          <div id="learningSummary" class="muted">جارٍ تحميل تقدمك الدراسي...</div>
+        </div>
+      </div>
+
+      <div class="grid">
+        <div class="card" id="favoritesSection">
+          <h2>مذكراتي المفضلة</h2>
+          <div id="favoriteMaterials"></div>
+        </div>
+        <div class="card" id="purchasesSection">
+          <h2>طلباتي ومشترياتي</h2>
+          <div id="purchases"></div>
+        </div>
+      </div>
+
+      <div class="card" id="freeSection">
+        <h2>المحتوى المجاني</h2>
+        <div id="freeMaterials"></div>
+      </div>
+
+      <div class="card" id="paidSection">
+        <h2>المذكرات المتاحة للشراء</h2>
+        <div id="paidMaterials"></div>
+      </div>
+
+      <div class="card" id="supportSection">
+        <h2>التواصل والدعم</h2>
+        <div class="actions">
+          <a href="https://wa.me/201115336341" target="_blank" rel="noopener">
+            <button type="button">تواصل مع المدرس عبر واتساب</button>
+          </a>
+          <button type="button" class="secondary" id="logoutBtn">تسجيل الخروج</button>
+        </div>
+      </div>
     </div>
-    <div>
-     <b>الصورة الشخصية</b>
-     <div class="muted">صورتك المرتبطة بحسابك</div>
-     <div class="profile-actions">
-      <label for="photoInput" class="small-btn" style="cursor:pointer;background:linear-gradient(110deg,#35a8ff,#9b70ff);border-radius:10px;padding:7px 11px;color:white">تغيير الصورة</label>
-      <input id="photoInput" type="file" accept="image/png,image/jpeg,image/webp">
-     </div>
-    </div>
-   </div>
   </div>
 
-  <nav class="quick-nav" aria-label="التنقل السريع">
-   <a href="#subjectsSection"><span>📚</span> موادي</a>
-   <a href="#accountSection"><span>👤</span> حسابي</a>
-   <a href="#learningSection"><span>📈</span> تقدمي</a>
-   <a href="#favoritesSection"><span>⭐</span> المفضلة</a>
-   <a href="#freeSection"><span>🎁</span> المجاني</a>
-   <a href="#paidSection"><span>📖</span> المذكرات</a>
-   <a href="#purchasesSection"><span>🛒</span> مشترياتي</a>
-   <a href="#supportSection"><span>💬</span> الدعم</a>
+  <nav class="zm-bottom-nav" aria-label="تنقل الهاتف">
+    <a href="#welcomeCard" class="active"><span>🏠</span><small>الرئيسية</small></a>
+    <a href="#subjectsSection"><span>📚</span><small>المواد</small></a>
+    <a href="#learningSection"><span>📈</span><small>تقدمي</small></a>
+    <a href="#supportSection"><span>👤</span><small>حسابي</small></a>
   </nav>
-
-  <div class="grid">
-   <div class="card" id="subjectsSection">
-    <h2>موادي الدراسية</h2>
-    <div id="subjects"></div>
-   </div>
-   <div class="card" id="accountSection">
-    <h2>ملخص الحساب</h2>
-    <div id="accountSummary" class="muted">بيانات حسابك التعليمية</div>
-   </div>
-  </div>
-
-  <div class="grid">
-   <div class="card" id="learningSection">
-    <h2>ملخص المذاكرة</h2>
-    <div id="learningSummary" class="muted">جارٍ تحميل تقدمك الدراسي...</div>
-   </div>
-   <div class="card" id="favoritesSection">
-    <h2>مذكراتي المفضلة</h2>
-    <div id="favoriteMaterials"></div>
-   </div>
-  </div>
-
-  <div class="card" id="freeSection">
-   <h2>المحتوى المجاني</h2>
-   <div id="freeMaterials"></div>
-  </div>
-
-  <div class="card" id="paidSection">
-   <h2>المذكرات المتاحة للشراء</h2>
-   <div id="paidMaterials"></div>
-  </div>
-
-  <div class="card" id="purchasesSection">
-   <h2>طلباتي ومشترياتي</h2>
-   <div id="purchases"></div>
-  </div>
-
-  <div class="card" id="supportSection">
-   <h2>التواصل والدعم</h2>
-   <div class="actions">
-    <a href="https://wa.me/201115336341" target="_blank" rel="noopener">
-     <button type="button">تواصل مع المدرس عبر واتساب</button>
-    </a>
-    <button type="button" class="secondary" id="logoutBtn">تسجيل الخروج</button>
-   </div>
-  </div>
-
  </section>
 </main>
 
@@ -828,6 +888,35 @@ $("photoInput").addEventListener("change",async e=>{
 function getSavedPage(id){
  const p=studentProgress.find(x=>Number(x.material_id)===Number(id));
  return Math.max(1,Number(p?.last_page)||1);
+}
+
+
+function renderDashboardExtras(){
+ const started=new Set(studentProgress.map(p=>Number(p.material_id))).size;
+ const completed=studentProgress.filter(p=>p.completed_at).length;
+ const total=totalStudentMaterials||started||0;
+ const pct=total?Math.round((completed/total)*100):0;
+ const set=(id,val)=>{const el=$(id); if(el) el.textContent=val;};
+ set('statProgress', pct+'%');
+ const bar=$('statProgressBar'); if(bar) bar.style.width=pct+'%';
+ set('statSubjects', String(total||0));
+ set('statCompleted', String(completed));
+ const latest=[...studentProgress].sort((a,b)=>new Date(b.updated_at||b.updatedAt||0)-new Date(a.updated_at||a.updatedAt||0))[0];
+ set('statLast', latest ? (latest.title||'درس').slice(0,18) : '—');
+ const cont=$('continueLearning');
+ if(cont){
+  cont.replaceChildren();
+  if(latest){
+   const wrap=document.createElement('div');
+   const t=document.createElement('div'); t.style.fontWeight='800'; t.style.marginBottom='6px'; t.textContent=latest.title||'مذكرة';
+   const m=document.createElement('div'); m.className='muted'; m.style.marginBottom='10px'; m.textContent='آخر صفحة: '+getSavedPage(latest.material_id);
+   const b=document.createElement('button'); b.textContent='متابعة الدرس';
+   b.onclick=()=>openPdf(latest.material_id, latest.title||'مذكرة', getSavedPage(latest.material_id));
+   wrap.append(t,m,b); cont.appendChild(wrap);
+  } else {
+   cont.textContent='لم تبدأ مذاكرة أي مذكرة بعد.';
+  }
+ }
 }
 
 function renderLearningSummary(){
@@ -1508,6 +1597,7 @@ async function loadDashboard(){
    );
 
    renderLearningSummary();
+   renderDashboardExtras();
    renderFavoriteMaterials();
 
    dashboard.classList.remove("hidden");
