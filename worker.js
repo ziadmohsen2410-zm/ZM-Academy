@@ -554,9 +554,14 @@ function sanitizeHomepageSettings(value) {
   const safeImage=(v)=>{
     const raw=text(v,1000);
     if(!raw||raw.startsWith('//'))return '';
-    if(/^https:\/\/[a-z0-9.-]+(?::\d+)?(?:\/[a-z0-9._~:/?#@!if(/^https:\/\/[^\s]+$/i.test(raw)||/^\/assets\/[a-z0-9_./-]+$/i.test(raw)||/^\/api\/media\/\d+$/.test(raw))return raw;*+,=%-]*)?$/i.test(raw)||/^\/assets\/[a-z0-9_./-]+$/i.test(raw)||/^\/api\/media\/\d+$/.test(raw))return raw;
+    if(/^\/assets\/[a-z0-9_./-]+$/i.test(raw)||/^\/api\/media\/\d+$/.test(raw))return raw;
+    try {
+      const url=new URL(raw);
+      const forbidden=['"',"'",'(',')',';','\\','<','>'];
+      if(url.protocol==='https:'&&url.hostname&&!url.username&&!url.password&&!forbidden.some(ch=>raw.includes(ch)))return url.href;
+    } catch {}
     return '';
-  };
+  };;
   const out={...source};
   out.brandName=text(source.brandName,80);
   out.tagline=text(source.tagline,180);
