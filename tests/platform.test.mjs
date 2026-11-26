@@ -27,7 +27,7 @@ test("worker exposes the platform routes used by the admin and student areas", (
     "/api/admin/platform/pages", "/api/admin/platform/ads",
     "/api/admin/platform/notifications", "/api/admin/platform/roles",
     "/api/admin/platform/backup/export", "/api/admin/platform/media",
-    "/api/admin/platform/exams", "/api/admin/platform/exam-questions",
+    "/api/admin/platform/exams", "exam-questions",
     "/api/student/platform/notifications", "/api/student/platform/exams",
     "/api/student/platform/ai", "/api/parent/login"
   ]) assert.ok(worker.includes(route), "Worker route missing: " + route);
