@@ -125,4 +125,6 @@ test("admin navigation is filtered by server-provided role permissions", () => {
   assert.ok(admin.includes("state.admin?.permissions"));
   assert.ok(admin.includes("visibleItems=g.items.filter(([k])=>canSeeSection(k))"));
   assert.ok(admin.includes("if(!canSeeSection(key))"));
+  assert.ok(admin.includes("$('#bottomNav button[data-sec]')"));
+  assert.ok(admin.includes("permissions.includes('audit.view')"));
 });
