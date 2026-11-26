@@ -114,6 +114,7 @@ test("legacy admin APIs enforce role permissions instead of authentication alone
   const guard = worker.slice(start, end);
   assert.ok(guard.includes("legacyPermission"));
   assert.ok(guard.includes("requireAdminRole(request, env, legacyPermission)"));
+  assert.ok(guard.includes('path === "/api/admin/students" && method === "GET" ? "students.view"'));
   assert.ok(guard.includes('path.startsWith("/api/admin/orders") ? "orders"'));
   assert.ok(guard.includes('path.startsWith("/api/admin/device-requests") ? "devices"'));
   assert.ok(guard.includes('path.startsWith("/api/admin/materials")'));
