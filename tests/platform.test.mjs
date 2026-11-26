@@ -110,6 +110,8 @@ test("admin exam editor exposes and saves all supported exam settings", () => {
   assert.ok(admin.includes('id="examStartsAt"'));
   assert.ok(admin.includes('id="examEndsAt"'));
   assert.ok(admin.includes("method:id?'PUT':'POST'"));
+  assert.ok(admin.includes("new Date(value).toISOString()"));
+  assert.ok(admin.includes("String(value).replace(' ','T')+'Z'"));
   assert.ok(admin.includes("window.__editExam=async(id)=>"));
   assert.ok(admin.includes("$('#examShuffle').checked=Number(e.shuffle_questions)===1"));
   assert.ok(admin.includes("$('#examShowResults').checked=Number(e.show_results)!==0"));
