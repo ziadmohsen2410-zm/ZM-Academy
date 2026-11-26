@@ -101,6 +101,20 @@ test("student exam visibility and start enforce grade, schedule, open-attempt, a
   assert.ok(routes.includes("انتهى الوقت المحدد للاختبار"));
 });
 
+test("exam creation and question mutations validate unsafe values", () => {
+  const worker = read("worker.js");
+  assert.ok(worker.includes("const validateExamInput = (b) =>"));
+  assert.ok(worker.includes("duration < 1 || duration > 600"));
+  assert.ok(worker.includes("attempts < 1 || attempts > 20"));
+  assert.ok(worker.includes("ends <= starts"));
+  assert.ok(worker.includes("const validateExamQuestion = (b) =>"));
+  assert.ok(worker.includes("points <= 0 || points > 1000"));
+  assert.ok(worker.includes("type === 'mcq' && (!Array.isArray(b?.options) || b.options.length < 2)"));
+  const adminExamRoutes = worker.slice(worker.indexOf("if (path==='/api/admin/platform/exams')"), worker.indexOf("// Analytics"));
+  assert.ok((adminExamRoutes.match(/validateExamInput\(b\)/g)||[]).length >= 2);
+  assert.ok((adminExamRoutes.match(/validateExamQuestion\(b\)/g)||[]).length >= 2);
+});
+
 test("student exam start honors shuffle_questions without changing question IDs", () => {
   const worker = read("worker.js");
   const start = worker.indexOf("if (method==='POST' && /^\\/api\\/student\\/platform\\/exams\\/");
