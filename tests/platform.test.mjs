@@ -101,6 +101,17 @@ test("student exam visibility and start enforce grade, schedule, open-attempt, a
   assert.ok(routes.includes("انتهى الوقت المحدد للاختبار"));
 });
 
+test("students can refresh final exam results after manual essay grading", () => {
+  const worker = read("worker.js");
+  const student = read("student.html");
+  assert.ok(worker.includes("path==='/api/student/platform/exam-attempts/"));
+  assert.ok(worker.includes("results_pending_manual:attempt.status==='submitted'"));
+  assert.ok(worker.includes("attempt.status==='graded'?attempt.score:null"));
+  assert.ok(worker.includes("score:showResults&&!needsManual?score:null"));
+  assert.ok(student.includes("id=\\"refreshExamResult\\""));
+  assert.ok(student.includes("/result\x60"));
+});
+
 test("essay attempts have an admin review and bounded manual grading workflow", () => {
   const worker = read("worker.js");
   const admin = read("admin.html");
