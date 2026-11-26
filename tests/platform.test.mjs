@@ -101,6 +101,17 @@ test("student exam visibility and start enforce grade, schedule, open-attempt, a
   assert.ok(routes.includes("انتهى الوقت المحدد للاختبار"));
 });
 
+test("exam answers are autosaved and restored when a student resumes", () => {
+  const worker = read("worker.js");
+  const student = read("student.html");
+  assert.ok(worker.includes("method==='PUT' && /^\\/api\\/student\\/platform\\/exam-attempts\\/\\d+\\/answers$/.test(path)"));
+  assert.ok(worker.includes("UPDATE exam_attempts SET answers_json=?"));
+  assert.ok(worker.includes("answers:safeJsonParse(attempt.answers_json,{})"));
+  assert.ok(student.includes("/answers\x60"));
+  assert.ok(student.includes("form.addEventListener('change'"));
+  assert.ok(student.includes("const saved=d.answers||{}"));
+});
+
 test("students can resume an in-progress exam after reopening the page", () => {
   const worker = read("worker.js");
   const student = read("student.html");
