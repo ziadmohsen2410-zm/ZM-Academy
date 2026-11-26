@@ -315,6 +315,16 @@ test("published page builder pages render through the public API", () => {
   assert.ok(worker.includes("path.startsWith('/api/public/pages/')"));
 });
 
+test("homepage settings sanitize links, colors, and visitor-facing text", () => {
+  const worker = read("worker.js");
+  assert.ok(worker.includes("function sanitizeHomepageSettings(value)"));
+  assert.ok(worker.includes("if(!raw||raw.startsWith('//'))return ''"));
+  assert.ok(worker.includes("primaryUrl:safeLink(hero.primaryUrl)"));
+  assert.ok(worker.includes("facebook:safeLink(branding.facebook)"));
+  assert.ok(worker.includes("settings: sanitizeHomepageSettings(parseHomepageJson(row?.published_json))"));
+  assert.ok(worker.includes("const settings = sanitizeHomepageSettings(body?.settings)"));
+});
+
 test("admin homepage editor is connected to the homepage draft and publish APIs", () => {
   const admin = read("admin.html");
   const worker = read("worker.js");
