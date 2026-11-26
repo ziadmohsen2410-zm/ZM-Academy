@@ -3697,7 +3697,7 @@ if (method === "POST" && rejectPasswordMatch) {
       const parts = path.split('/').filter(Boolean); // api admin platform pages <key> [action]
       const key = clean(decodeURIComponent(parts[4]||''), 80);
       const action = parts[5] || '';
-      if (!key) return reply(request, env, {success:false,error:'Missing key'},400);
+      if (!/^[a-z0-9][a-z0-9_-]{0,79}$/i.test(key)) return reply(request, env, {success:false,error:'مفتاح الصفحة يجب أن يبدأ بحرف أو رقم ويحتوي على حروف أو أرقام أو شرطة فقط.'},400);
       if (method==='GET' && !action) {
         const draft = await env.DB.prepare(`SELECT * FROM page_drafts WHERE page_key=?`).bind(key).first();
         const pub = await env.DB.prepare(`SELECT * FROM page_published WHERE page_key=?`).bind(key).first();
