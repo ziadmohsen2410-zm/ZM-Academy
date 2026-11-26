@@ -191,7 +191,7 @@ test("student exam results respect the exam show_results setting", () => {
   const end = worker.indexOf("if (method==='POST' && path==='/api/student/platform/ai')", start);
   const route = worker.slice(start, end);
   assert.ok(route.includes("e.show_results"));
-  assert.ok(route.includes("score:showResults?score:null"));
+  assert.ok(route.includes("score:showResults&&!needsManual?score:null"));
   assert.ok(route.includes("results_hidden:!showResults"));
 });
 
