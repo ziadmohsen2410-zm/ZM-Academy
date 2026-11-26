@@ -99,13 +99,13 @@ fetch(API+'/api/homepage',{cache:'no-store'}).then(r=>r.ok?r.json():null).then(d
 <body>
 <main class="card">
  <div class="topbar"><a class="brand-link" href="./index.html">ZM ACADEMY</a><button class="theme-toggle" id="themeToggle" type="button"><span class="theme-icon">☀</span><span class="theme-label">الوضع الفاتح</span></button></div>
- <h1>ZM Academy</h1><div class="sub">تسجيل دخول الطالب</div>
+ <h1>ZM Academy</h1><div style="display:flex;justify-content:space-between;gap:8px;align-items:center"><div class="sub" data-i18n="sub">تسجيل دخول الطالب</div><button type="button" id="langToggle" class="secondary" style="width:auto;padding:8px 12px;min-height:40px">EN</button></div>
  <form id="loginForm" novalidate>
-  <label for="username">اسم المستخدم</label><input id="username" name="username" autocomplete="username" maxlength="40" autocapitalize="none" spellcheck="false" required>
-  <label for="password">كلمة المرور</label><input id="password" name="password" type="password" autocomplete="current-password" maxlength="200" required>
-  <button id="submitBtn" type="submit">تسجيل الدخول</button>
+  <label for="username" data-i18n="user">اسم المستخدم</label><input id="username" name="username" autocomplete="username" maxlength="40" autocapitalize="none" spellcheck="false" required>
+  <label for="password" data-i18n="pass">كلمة المرور</label><input id="password" name="password" type="password" autocomplete="current-password" maxlength="200" required>
+  <button id="submitBtn" type="submit" data-i18n="login">تسجيل الدخول</button>
  </form>
- <button type="button" class="reset-toggle" id="showResetForm" aria-expanded="false" aria-controls="resetForm">نسيت كلمة المرور؟</button>
+ <button type="button" class="reset-toggle" id="showResetForm" aria-expanded="false" aria-controls="resetForm" data-i18n="forgot">نسيت كلمة المرور؟</button>
  <form id="resetForm" class="reset-box" novalidate>
   <div class="sub">لاستعادة حسابك، اكتب اسم المستخدم ورقم الهاتف المسجل في حسابك. سيصل طلبك للإدارة للمراجعة والتحقق.</div>
   <label for="resetUsername">اسم المستخدم</label><input id="resetUsername" autocomplete="username" maxlength="40" autocapitalize="none" required>
@@ -142,5 +142,17 @@ const meResponse=await fetch(API+'/api/student/me',{method:'GET',headers:{'Autho
 }catch(error){if(token){try{localStorage.removeItem('zm_student_token');}catch(e){}}const text=error.name==='TypeError'?'تعذر الاتصال بالخادم. تحقق من الإنترنت وحاول مرة أخرى.':(error.message||'حدث خطأ غير متوقع، حاول مرة أخرى.');showMessage(text);}finally{loginBusy=false;button.disabled=false;button.textContent='تسجيل الدخول';}
 });
 </script>
+
+<script>
+(()=>{const d={en:{sub:'Student Login',user:'Username',pass:'Password',login:'Log in',forgot:'Forgot password?'},ar:{}};
+document.querySelectorAll('[data-i18n]').forEach(el=>d.ar[el.dataset.i18n]=el.textContent.trim());
+const b=document.getElementById('langToggle');
+function apply(l){const en=l==='en';document.documentElement.lang=en?'en':'ar';document.documentElement.dir=en?'ltr':'rtl';
+document.querySelectorAll('[data-i18n]').forEach(el=>{const k=el.dataset.i18n;el.textContent=(d[l]&&d[l][k])||d.ar[k]||el.textContent;});
+if(b){b.textContent=en?'AR':'EN';}localStorage.setItem('zm_lang',l);} 
+b?.addEventListener('click',()=>apply((localStorage.getItem('zm_lang')||'ar')==='ar'?'en':'ar'));
+apply(localStorage.getItem('zm_lang')||'ar');})();
+</script>
+
 </body>
 </html>

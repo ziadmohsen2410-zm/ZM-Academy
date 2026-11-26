@@ -26,16 +26,16 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,te
 <body>
 <main>
   <div class="card" style="display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap">
-    <div><h1>بوابة ولي الأمر</h1><p class="muted">متابعة الأبناء، النتائج، الطلبات، والتقارير.</p></div>
+    <div><h1 data-i18n="title">بوابة ولي الأمر</h1><p class="muted" data-i18n="sub">متابعة الأبناء، النتائج، الطلبات، والتقارير.</p></div>
     <div><a href="./index.html"><button class="ghost">الرئيسية</button></a> <button class="ghost hidden" id="logoutBtn">تسجيل الخروج</button></div>
   </div>
   <div id="msg" class="msg"></div>
 
   <section id="authSec" class="row">
-    <div class="card"><h2>تسجيل الدخول</h2>
+    <div class="card"><h2 data-i18n="login">تسجيل الدخول</h2>
       <label>اسم المستخدم</label><input id="lUser"><label>كلمة المرور</label><input id="lPass" type="password"><button id="loginBtn">دخول</button>
     </div>
-    <div class="card"><h2>إنشاء حساب ولي أمر</h2>
+    <div class="card"><h2 data-i18n="register">إنشاء حساب ولي أمر</h2>
       <label>الاسم</label><input id="rName"><label>اسم المستخدم</label><input id="rUser"><label>الهاتف</label><input id="rPhone"><label>البريد</label><input id="rEmail"><label>كلمة المرور</label><input id="rPass" type="password"><button id="regBtn">إنشاء حساب</button>
     </div>
   </section>

@@ -1245,20 +1245,22 @@ async function loadDashboard(){
 
    const visible=purchaseList.filter(p=>!Number(p.is_hidden));
 
+   const subjectIds=subjects.map(s=>Number(s.id));
+   const mine=materials.filter(m=>subjectIds.includes(Number(m.subject_id)));
+   const free=mine.filter(m=>Number(m.is_free)===1);
+   const paid=mine.filter(m=>Number(m.is_free)!==1);
    const progressCount = (studentProgress||[]).length;
    const completedCount = (studentProgress||[]).filter(p=>p.completed_at).length;
+   const totalMine=mine.length;
+   const overallPct=totalMine?Math.round((completedCount/totalMine)*100):0;
    $("accountSummary").textContent=
     "اسم الطالب: "+(student.name||"غير محدد")+
     " | الصف: "+(student.grade||"غير محدد")+
     " | عدد المواد: "+subjects.length+
     " | الطلبات والمشتريات الظاهرة: "+visible.length+
     " | دروس بدأت متابعتها: "+progressCount+
-    " | مكتملة: "+completedCount;
-
-   const subjectIds=subjects.map(s=>Number(s.id));
-   const mine=materials.filter(m=>subjectIds.includes(Number(m.subject_id)));
-   const free=mine.filter(m=>Number(m.is_free)===1);
-   const paid=mine.filter(m=>Number(m.is_free)!==1);
+    " | مكتملة: "+completedCount+
+    " | نسبة الإكمال: "+overallPct+"%";
 
    showList("subjects",subjects,"لا توجد مواد مسجلة.",(div,s)=>{
     const sid=Number(s.id);

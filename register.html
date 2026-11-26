@@ -99,8 +99,8 @@ fetch(API+'/api/homepage',{cache:'no-store'}).then(r=>r.ok?r.json():null).then(d
 <main class="panel">
  <div class="topbar"><a class="brand-link" href="./index.html">ZM ACADEMY</a><button class="theme-toggle" id="themeToggle" type="button"><span class="theme-icon">☀</span><span class="theme-label">الوضع الفاتح</span></button></div>
  <div class="brand">أكاديمية أ. زياد محسن<small>ZIAD MOHSEN ACADEMY</small></div>
- <h1>تسجيل طالب جديد</h1>
- <p class="sub">أدخل بياناتك بدقة لإنشاء حسابك ومتابعة المواد والطلبات التعليمية.</p>
+ <div style="display:flex;justify-content:space-between;gap:8px;align-items:center"><h1 data-i18n="title">تسجيل طالب جديد</h1><button type="button" id="langToggle" class="secondary" style="width:auto;padding:8px 12px;min-height:40px">EN</button></div>
+ <p class="sub" data-i18n="sub">أدخل بياناتك بدقة لإنشاء حسابك ومتابعة المواد والطلبات التعليمية.</p>
  <form id="registerForm" novalidate>
   <label for="name">اسم الطالب بالكامل *</label><input id="name" name="name" autocomplete="name" maxlength="120" required placeholder="اكتب الاسم رباعي">
   <label for="phone">رقم هاتف الطالب *</label><input id="phone" name="phone" type="tel" inputmode="tel" autocomplete="tel" maxlength="30" required placeholder="01xxxxxxxxx">
@@ -110,11 +110,11 @@ fetch(API+'/api/homepage',{cache:'no-store'}).then(r=>r.ok?r.json():null).then(d
   <label for="school">اسم المدرسة *</label><input id="school" name="school" maxlength="160" required placeholder="اكتب اسم المدرسة">
   <label for="governorate">المحافظة *</label><select id="governorate" name="governorate" required><option value="">اختر المحافظة</option><option>القاهرة</option><option>الجيزة</option><option>القليوبية</option><option>الإسكندرية</option><option>البحيرة</option><option>الغربية</option><option>المنوفية</option><option>الشرقية</option><option>الدقهلية</option><option>كفر الشيخ</option><option>دمياط</option><option>بورسعيد</option><option>الإسماعيلية</option><option>السويس</option><option>شمال سيناء</option><option>جنوب سيناء</option><option>الفيوم</option><option>بني سويف</option><option>المنيا</option><option>أسيوط</option><option>سوهاج</option><option>قنا</option><option>الأقصر</option><option>أسوان</option><option>البحر الأحمر</option><option>الوادي الجديد</option><option>مطروح</option></select>
   <div class="section"><h3>بيانات حسابك</h3>
-   <label for="username">اسم المستخدم *</label><input id="username" name="username" maxlength="40" required autocomplete="username" dir="ltr" autocapitalize="none" spellcheck="false" placeholder="مثال: ziad2026"><p class="muted">استخدم حروفًا إنجليزية صغيرة أو أرقامًا أو . أو _ أو - فقط، من 3 إلى 40 حرفًا.</p>
-   <label for="password">كلمة المرور *</label><input id="password" name="password" type="password" minlength="8" maxlength="200" required autocomplete="new-password" placeholder="8 أحرف على الأقل">
+   <label for="username" data-i18n="user">اسم المستخدم *</label><input id="username" name="username" maxlength="40" required autocomplete="username" dir="ltr" autocapitalize="none" spellcheck="false" placeholder="مثال: ziad2026"><p class="muted">استخدم حروفًا إنجليزية صغيرة أو أرقامًا أو . أو _ أو - فقط، من 3 إلى 40 حرفًا.</p>
+   <label for="password" data-i18n="pass">كلمة المرور *</label><input id="password" name="password" type="password" minlength="8" maxlength="200" required autocomplete="new-password" placeholder="8 أحرف على الأقل">
    <label for="confirmPassword">تأكيد كلمة المرور *</label><input id="confirmPassword" type="password" minlength="8" maxlength="200" required autocomplete="new-password" placeholder="أعد كتابة كلمة المرور">
   </div>
-  <button id="submitBtn" type="submit">إنشاء حساب الطالب</button>
+  <button id="submitBtn" type="submit" data-i18n="create">إنشاء حساب الطالب</button>
  </form>
  <div id="message" role="status" aria-live="polite"></div>
  <nav class="auth-links" aria-label="روابط الحساب"><a class="back" href="./login.html">لديك حساب بالفعل؟ تسجيل الدخول</a><a class="back home-link" href="./parent.html">بوابة ولي الأمر</a><a href="./parent.html">بوابة ولي الأمر</a><a href="./index.html">العودة للصفحة الرئيسية</a></nav>
@@ -142,5 +142,17 @@ try{const response=await fetch(API+'/api/students/register',{method:'POST',heade
 });
 loadSubjects();
 </script>
+
+<script>
+(()=>{const d={en:{title:'Create Student Account',sub:'Enter your details accurately to create your account.',user:'Username *',pass:'Password *',create:'Create account'},ar:{}};
+document.querySelectorAll('[data-i18n]').forEach(el=>d.ar[el.dataset.i18n]=el.textContent.trim());
+const b=document.getElementById('langToggle');
+function apply(l){const en=l==='en';document.documentElement.lang=en?'en':'ar';document.documentElement.dir=en?'ltr':'rtl';
+document.querySelectorAll('[data-i18n]').forEach(el=>{const k=el.dataset.i18n;el.textContent=(d[l]&&d[l][k])||d.ar[k]||el.textContent;});
+if(b)b.textContent=en?'AR':'EN';localStorage.setItem('zm_lang',l);}
+b?.addEventListener('click',()=>apply((localStorage.getItem('zm_lang')||'ar')==='ar'?'en':'ar'));
+apply(localStorage.getItem('zm_lang')||'ar');})();
+</script>
+
 </body>
 </html>
