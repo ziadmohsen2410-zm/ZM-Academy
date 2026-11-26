@@ -188,6 +188,15 @@ test("essay attempts have an admin review and bounded manual grading workflow", 
   assert.ok(admin.includes("a.status==='submitted'"));
 });
 
+test("exam scoring configuration is locked after the first student attempt", () => {
+  const worker = read("worker.js");
+  const admin = read("admin.html");
+  assert.ok(worker.includes("settings_locked:true"));
+  assert.ok(worker.includes("UPDATE exams SET title=?,description=?,status=?,updated_at=datetime('now') WHERE id=?"));
+  assert.ok(admin.includes("const settingsLocked=Number(e.attempts_count||0)>0"));
+  assert.ok(admin.includes("$('#'+field).disabled=settingsLocked"));
+});
+
 test("exam history cannot be destroyed or have questions changed after attempts begin", () => {
   const worker = read("worker.js");
   assert.ok(worker.includes("لا يمكن حذف اختبار له محاولات طلاب"));
