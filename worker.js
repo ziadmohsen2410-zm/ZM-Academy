@@ -3351,7 +3351,7 @@ if (method === "POST" && rejectPasswordMatch) {
     const status = clean(b?.status || 'draft', 20);
     if (duration !== null && (!Number.isInteger(duration) || duration < 1 || duration > 600)) return 'مدة الاختبار يجب أن تكون من 1 إلى 600 دقيقة';
     if (!Number.isInteger(attempts) || attempts < 1 || attempts > 20) return 'عدد المحاولات يجب أن يكون من 1 إلى 20';
-    if (!['draft','published','closed'].includes(status)) return 'حالة الاختبار غير صالحة';
+    if (!['draft','published','closed','archived'].includes(status)) return 'حالة الاختبار غير صالحة';
     const starts = b?.starts_at ? Date.parse(b.starts_at) : null;
     const ends = b?.ends_at ? Date.parse(b.ends_at) : null;
     if (b?.starts_at && !Number.isFinite(starts)) return 'تاريخ بداية الاختبار غير صالح';
