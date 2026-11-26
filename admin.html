@@ -225,6 +225,25 @@ kbd{background:#0b1222;border:1px solid var(--line);padding:2px 6px;border-radiu
       </div>
     </section>
 
+    <section id="sec-homepage" class="section">
+      <div class="card"><h3>محرر الصفحة الرئيسية للموقع</h3><p class="muted small">عدّل محتوى الصفحة الرئيسية وشعار الأكاديمية والألوان والروابط والأقسام، ثم احفظ كمسودة وراجعها قبل النشر.</p>
+        <div class="row"><div><label>اسم الأكاديمية</label><input id="homeBrandName"></div><div><label>الشعار النصي</label><input id="homeTagline"></div></div>
+        <h4>ألوان ومظهر الصفحة</h4>
+        <div class="row"><div><label>الوضع الافتراضي</label><select id="homeMode"><option value="dark">داكن</option><option value="light">فاتح</option><option value="system">حسب الجهاز</option></select></div><div><label>القالب</label><select id="homeTemplate"><option value="future">مستقبلي</option><option value="glass">زجاجي</option><option value="minimal">بسيط</option><option value="luxury">فاخر</option><option value="editorial">تحريري</option></select></div></div>
+        <div class="row"><div><label>اللون الأساسي</label><input id="homePrimary" type="color"></div><div><label>اللون الثانوي</label><input id="homeSecondary" type="color"></div><div><label>الخلفية</label><input id="homeBackground" type="color"></div></div>
+        <h4>قسم الواجهة الرئيسية</h4>
+        <div class="row"><div><label>عنوان صغير</label><input id="homeEyebrow"></div><div><label>العنوان</label><input id="homeHeroTitle"></div><div><label>الكلمة المميزة</label><input id="homeHighlight"></div></div>
+        <label>وصف الواجهة</label><textarea id="homeHeroDescription"></textarea>
+        <div class="row"><div><label>نص الزر الأساسي</label><input id="homePrimaryText"></div><div><label>رابط الزر الأساسي</label><input id="homePrimaryUrl"></div><div><label>نص الزر الثاني</label><input id="homeSecondaryText"></div><div><label>رابط الزر الثاني</label><input id="homeSecondaryUrl"></div></div>
+        <h4>نبذة الأكاديمية</h4><div class="row"><div><label>عنوان النبذة</label><input id="homeAboutTitle"></div><div><label>الوصف</label><textarea id="homeAboutDescription"></textarea></div></div>
+        <h4>الشعار والروابط</h4><div class="row"><div><label>رابط صورة الشعار</label><input id="homeLogoUrl"></div><div><label>صورة خلفية الواجهة</label><input id="homeHeroImageUrl"></div><div><label>واتساب (رقم)</label><input id="homeWhatsapp"></div><div><label>فيسبوك</label><input id="homeFacebook"></div><div><label>يوتيوب</label><input id="homeYoutube"></div><div><label>تيليجرام</label><input id="homeTelegram"></div></div>
+        <h4>الإعلان العلوي</h4><label><input type="checkbox" id="homeAnnouncementEnabled"> تفعيل الإعلان</label><div class="row"><div><label>نص الإعلان</label><input id="homeAnnouncementText"></div><div><label>نص الزر</label><input id="homeAnnouncementButton"></div><div><label>رابط الزر</label><input id="homeAnnouncementUrl"></div></div>
+        <h4>الأقسام الظاهرة</h4><div class="row"><label><input type="checkbox" id="homeShowSubjects"> المواد</label><label><input type="checkbox" id="homeShowCurriculum"> المنهج</label><label><input type="checkbox" id="homeShowLibrary"> المكتبة</label><label><input type="checkbox" id="homeShowAbout"> من نحن</label><label><input type="checkbox" id="homeShowJoin"> الانضمام</label></div>
+        <div class="row" style="margin-top:14px"><button class="ghost" id="loadHomepageBtn">تحميل الإعدادات</button><button id="saveHomepageBtn">حفظ مسودة</button><button class="ok" id="publishHomepageBtn">نشر للزوار</button></div>
+        <div id="homepageStatus" class="item small muted">لم يتم تحميل الإعدادات بعد.</div>
+      </div>
+    </section>
+
     <section id="sec-theme" class="section">
       <div class="split">
         <div class="card"><h3>Theme & Design Studio</h3>
@@ -320,7 +339,7 @@ const sectionGroups=[
   {label:'الإدارة', items:[['students','الطلاب','إدارة الطلاب'],['parents','أولياء الأمور','حسابات وربط'],['orders','الطلبات','مراجعة الطلبات'],['devices','الأجهزة','طلبات الأجهزة']]},
   {label:'التعليم', items:[['content','المحتوى','المواد والدروس'],['exams','الاختبارات','إنشاء وإدارة الاختبارات']]},
   {label:'التواصل', items:[['ads','الإعلانات','إدارة الإعلانات'],['notifications','الإشعارات','إرسال إشعارات']]},
-  {label:'التصميم', items:[['pages','محرر الصفحات','بناء ونشر الصفحات'],['theme','الثيم','الألوان والمظهر'],['media','الوسائط','الملفات والصور']]},
+  {label:'التصميم', items:[['homepage','الصفحة الرئيسية','محتوى الموقع الرئيسي'],['pages','محرر الصفحات','بناء ونشر الصفحات'],['theme','الثيم','الألوان والمظهر'],['media','الوسائط','الملفات والصور']]},
   {label:'النظام', items:[['ai','الذكاء الاصطناعي','مساعد AI'],['roles','الأدوار','المستخدمون والصلاحيات'],['backups','النسخ','تصدير ونسخ احتياطي'],['settings','الإعدادات','إعدادات عامة'],['audit','السجل','سجل العمليات']]},
 ];
 const sections=sectionGroups.flatMap(g=>g.items);
@@ -336,7 +355,7 @@ async function api(path, opts={}){
 }
 function closeSidebar(){ $('#sidebar')?.classList.remove('open'); $('#sidebarOverlay')?.classList.remove('open'); }
 function openSidebar(){ $('#sidebar')?.classList.add('open'); $('#sidebarOverlay')?.classList.add('open'); }
-const sectionPermission={dashboard:'dashboard',students:'students',parents:'parents',orders:'orders',devices:'devices',content:'content',exams:'exams',ads:'ads',notifications:'notifications',pages:'page_builder',theme:'theme',media:'media',ai:'ai',roles:'roles',backups:'backups',settings:'settings',audit:'audit'};
+const sectionPermission={dashboard:'dashboard',homepage:'page_builder',students:'students',parents:'parents',orders:'orders',devices:'devices',content:'content',exams:'exams',ads:'ads',notifications:'notifications',pages:'page_builder',theme:'theme',media:'media',ai:'ai',roles:'roles',backups:'backups',settings:'settings',audit:'audit'};
 function canSeeSection(key){
   const permissions=state.admin?.permissions||[];
   const needed=sectionPermission[key]||key;
