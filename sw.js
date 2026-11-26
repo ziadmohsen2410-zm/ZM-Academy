@@ -1,12 +1,13 @@
 'use strict';
 
 const CACHE_PREFIX = 'zm-academy-';
-const CACHE_NAME = 'zm-academy-v5';
+const CACHE_NAME = 'zm-academy-v6';
 const CORE_FILES = [
   './',
   './index.html',
   './parent.html',
   './manifest.webmanifest',
+  './certificate.html',
   './assets/icon-192.png',
   './assets/icon-512.png'
 ];
