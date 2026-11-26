@@ -4088,15 +4088,15 @@ if (method === "POST" && rejectPasswordMatch) {
     }
             if (method==='PUT' && /^\/api\/student\/platform\/exam-attempts\/\d+\/answers$/.test(path)) {
       const attemptId=Number(path.split('/')[5]);
-      const attempt=await env.DB.prepare(\`SELECT a.id,a.exam_id,CASE WHEN e.duration_minutes>0 AND datetime(a.started_at,'+' || e.duration_minutes || ' minutes')<=datetime('now') THEN 1 ELSE 0 END AS is_expired FROM exam_attempts a JOIN exams e ON e.id=a.exam_id WHERE a.id=? AND a.student_id=? AND a.status='in_progress'\`).bind(attemptId,session.student_id).first();
+      const attempt=await env.DB.prepare(`SELECT a.id,a.exam_id,CASE WHEN e.duration_minutes>0 AND datetime(a.started_at,'+' || e.duration_minutes || ' minutes')<=datetime('now') THEN 1 ELSE 0 END AS is_expired FROM exam_attempts a JOIN exams e ON e.id=a.exam_id WHERE a.id=? AND a.student_id=? AND a.status='in_progress'`).bind(attemptId,session.student_id).first();
       if(!attempt) return reply(request,env,{success:false,error:'المحاولة غير متاحة'},404);
       if(Number(attempt.is_expired)===1) {
-        await env.DB.prepare(\`UPDATE exam_attempts SET status='expired',submitted_at=datetime('now') WHERE id=? AND student_id=? AND status='in_progress'\`).bind(attemptId,session.student_id).run();
+        await env.DB.prepare(`UPDATE exam_attempts SET status='expired',submitted_at=datetime('now') WHERE id=? AND student_id=? AND status='in_progress'`).bind(attemptId,session.student_id).run();
         return reply(request,env,{success:false,error:'انتهى وقت الاختبار'},410);
       }
       const body=await readBody(request); const incoming=body?.answers;
       if(!incoming || typeof incoming!=='object' || Array.isArray(incoming)) return reply(request,env,{success:false,error:'الإجابات غير صالحة'},400);
-      const questionRows=await env.DB.prepare(\`SELECT id FROM exam_questions WHERE exam_id=?\`).bind(attempt.exam_id).all();
+      const questionRows=await env.DB.prepare(`SELECT id FROM exam_questions WHERE exam_id=?`).bind(attempt.exam_id).all();
       const allowed=new Set((questionRows.results||[]).map(q=>String(q.id)));
       const answers={};
       for(const [key,value] of Object.entries(incoming)) {
@@ -4106,7 +4106,7 @@ if (method === "POST" && rejectPasswordMatch) {
         else if(value && typeof value==='object') answers[key]=value;
       }
       if(JSON.stringify(answers).length>30000) return reply(request,env,{success:false,error:'حجم الإجابات أكبر من المسموح'},413);
-      await env.DB.prepare(\`UPDATE exam_attempts SET answers_json=? WHERE id=? AND student_id=? AND status='in_progress'\`).bind(JSON.stringify(answers),attemptId,session.student_id).run();
+      await env.DB.prepare(`UPDATE exam_attempts SET answers_json=? WHERE id=? AND student_id=? AND status='in_progress'`).bind(JSON.stringify(answers),attemptId,session.student_id).run();
       return reply(request,env,{success:true,saved:true});
     }
 if (method==='GET' && /^\/api\/student\/platform\/exam-attempts\/\d+$/.test(path)) {
