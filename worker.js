@@ -3345,6 +3345,30 @@ if (method === "POST" && rejectPasswordMatch) {
   const nowIso = () => new Date().toISOString();
   const safeJsonParse = (v, fallback) => { try { return JSON.parse(v); } catch { return fallback; } };
   const asInt = (v, d=0) => { const n = Number(v); return Number.isFinite(n) ? Math.trunc(n) : d; };
+  const validateExamInput = (b) => {
+    const duration = b?.duration_minutes === '' || b?.duration_minutes == null ? null : Number(b.duration_minutes);
+    const attempts = b?.attempts_allowed === '' || b?.attempts_allowed == null ? 1 : Number(b.attempts_allowed);
+    const status = clean(b?.status || 'draft', 20);
+    if (duration !== null && (!Number.isInteger(duration) || duration < 1 || duration > 600)) return 'مدة الاختبار يجب أن تكون من 1 إلى 600 دقيقة';
+    if (!Number.isInteger(attempts) || attempts < 1 || attempts > 20) return 'عدد المحاولات يجب أن يكون من 1 إلى 20';
+    if (!['draft','published','closed'].includes(status)) return 'حالة الاختبار غير صالحة';
+    const starts = b?.starts_at ? Date.parse(b.starts_at) : null;
+    const ends = b?.ends_at ? Date.parse(b.ends_at) : null;
+    if (b?.starts_at && !Number.isFinite(starts)) return 'تاريخ بداية الاختبار غير صالح';
+    if (b?.ends_at && !Number.isFinite(ends)) return 'تاريخ نهاية الاختبار غير صالح';
+    if (starts !== null && ends !== null && ends <= starts) return 'يجب أن يكون موعد النهاية بعد موعد البداية';
+    return null;
+  };
+  const validateExamQuestion = (b) => {
+    const type = clean(b?.type, 20);
+    const question = clean(b?.question_text, 4000);
+    const points = b?.points == null || b?.points === '' ? 1 : Number(b.points);
+    if (!['mcq','true_false','essay'].includes(type)) return 'نوع السؤال غير صالح';
+    if (!question) return 'نص السؤال مطلوب';
+    if (!Number.isFinite(points) || points <= 0 || points > 1000) return 'درجة السؤال يجب أن تكون أكبر من صفر وحتى 1000';
+    if (type === 'mcq' && (!Array.isArray(b?.options) || b.options.length < 2)) return 'سؤال الاختيار من متعدد يحتاج إلى اختيارين على الأقل';
+    return null;
+  };
   const isAdminRole = (role) => ['super_admin','admin','content_manager','teacher','support'].includes(role);
   const ADMIN_PERMS = {
     super_admin: ['*'],
@@ -3757,6 +3781,7 @@ if (method === "POST" && rejectPasswordMatch) {
       if (method==='GET') { const rows = await env.DB.prepare(`SELECT e.*, (SELECT COUNT(*) FROM exam_questions q WHERE q.exam_id=e.id) as questions_count, (SELECT COUNT(*) FROM exam_attempts a WHERE a.exam_id=e.id) as attempts_count FROM exams e ORDER BY e.id DESC LIMIT 200`).all(); return reply(request, env,{success:true, exams: rows.results||[]}); }
       if (method==='POST') {
         const b=await readBody(request); const title=clean(b?.title,160); if(!title) return reply(request, env,{success:false,error:'title required'},400);
+        const validationError = validateExamInput(b); if (validationError) return reply(request, env,{success:false,error:validationError},400);
         const res = await env.DB.prepare(`INSERT INTO exams(title,description,subject_id,grade,status,duration_minutes,attempts_allowed,starts_at,ends_at,shuffle_questions,show_results,created_by) VALUES(?,?,?,?,?,?,?,?,?,?,?,?)`)
           .bind(title,clean(b?.description,2000),b?.subject_id?Number(b.subject_id):null,clean(b?.grade,40),clean(b?.status||'draft',20),b?.duration_minutes?Number(b.duration_minutes):null,b?.attempts_allowed?Number(b.attempts_allowed):1,b?.starts_at||null,b?.ends_at||null,b?.shuffle_questions?1:0,b?.show_results===false?0:1,admin.username).run();
         await logAudit(env,{actor_type:'admin',actor_id:admin.id,actor_label:admin.username,action:'exam.create',entity_type:'exam',entity_id:res.meta?.last_row_id,ip,user_agent:ua});
@@ -3773,6 +3798,8 @@ if (method === "POST" && rejectPasswordMatch) {
       }
       if (method==='PUT') {
         const b=await readBody(request);
+        if (!clean(b?.title,160)) return reply(request, env,{success:false,error:'عنوان الاختبار مطلوب'},400);
+        const validationError = validateExamInput(b); if (validationError) return reply(request, env,{success:false,error:validationError},400);
         await env.DB.prepare(`UPDATE exams SET title=?,description=?,subject_id=?,grade=?,status=?,duration_minutes=?,attempts_allowed=?,starts_at=?,ends_at=?,shuffle_questions=?,show_results=?,updated_at=datetime('now') WHERE id=?`)
           .bind(clean(b?.title,160),clean(b?.description,2000),b?.subject_id?Number(b.subject_id):null,clean(b?.grade,40),clean(b?.status||'draft',20),b?.duration_minutes?Number(b.duration_minutes):null,b?.attempts_allowed?Number(b.attempts_allowed):1,b?.starts_at||null,b?.ends_at||null,b?.shuffle_questions?1:0,b?.show_results===false?0:1,id).run();
         return reply(request, env, {success:true});
@@ -3784,7 +3811,8 @@ if (method === "POST" && rejectPasswordMatch) {
       const examId = Number(path.split('/')[5]);
       if (method==='POST') {
         const b=await readBody(request);
-        const type = clean(b?.type,20); if(!['mcq','true_false','essay'].includes(type)) return reply(request, env,{success:false,error:'bad type'},400);
+        const validationError = validateExamQuestion(b); if (validationError) return reply(request, env,{success:false,error:validationError},400);
+        const type = clean(b?.type,20);
         await env.DB.prepare(`INSERT INTO exam_questions(exam_id,type,question_text,options_json,correct_answer_json,points,order_index,explanation) VALUES(?,?,?,?,?,?,?,?)`)
           .bind(examId,type,clean(b?.question_text,4000),JSON.stringify(b?.options||[]),JSON.stringify(b?.correct_answer??null),Number(b?.points||1),asInt(b?.order_index,0),clean(b?.explanation,2000)).run();
         return reply(request, env, {success:true});
@@ -3795,6 +3823,7 @@ if (method === "POST" && rejectPasswordMatch) {
       const qid = Number(path.split('/').pop());
       if (method==='PUT') {
         const b=await readBody(request);
+        const validationError = validateExamQuestion(b); if (validationError) return reply(request, env,{success:false,error:validationError},400);
         await env.DB.prepare(`UPDATE exam_questions SET type=?,question_text=?,options_json=?,correct_answer_json=?,points=?,order_index=?,explanation=? WHERE id=?`)
           .bind(clean(b?.type,20),clean(b?.question_text,4000),JSON.stringify(b?.options||[]),JSON.stringify(b?.correct_answer??null),Number(b?.points||1),asInt(b?.order_index,0),clean(b?.explanation,2000),qid).run();
         return reply(request, env, {success:true});
