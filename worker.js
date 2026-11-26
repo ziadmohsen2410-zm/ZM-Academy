@@ -4131,6 +4131,7 @@ if (method === "POST" && rejectPasswordMatch) {
       const attemptId=Number(path.split('/')[5]);
       const attempt=await env.DB.prepare(`SELECT a.id,a.exam_id,CASE WHEN e.duration_minutes>0 AND datetime(a.started_at,'+' || e.duration_minutes || ' minutes')<=datetime('now') THEN 1 ELSE 0 END AS is_expired FROM exam_attempts a JOIN exams e ON e.id=a.exam_id WHERE a.id=? AND a.student_id=? AND a.status='in_progress'`).bind(attemptId,session.student_id).first();
       if(!attempt) return reply(request,env,{success:false,error:'المحاولة غير متاحة'},404);
+      if (!(await consumeApiRateLimit(env,request,'exam-autosave',attemptId,120,60))) return reply(request,env,{success:false,error:'طلبات حفظ كثيرة جدًا. انتظر دقيقة ثم حاول مرة أخرى.'},429);
       if(Number(attempt.is_expired)===1) {
         await env.DB.prepare(`UPDATE exam_attempts SET status='expired',submitted_at=datetime('now') WHERE id=? AND student_id=? AND status='in_progress'`).bind(attemptId,session.student_id).run();
         return reply(request,env,{success:false,error:'انتهى وقت الاختبار'},410);
