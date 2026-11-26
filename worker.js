@@ -561,7 +561,7 @@ function sanitizeHomepageSettings(value) {
       if(url.protocol==='https:'&&url.hostname&&!url.username&&!url.password&&!forbidden.some(ch=>raw.includes(ch)))return url.href;
     } catch {}
     return '';
-  };;
+  };
   const out={...source};
   out.brandName=text(source.brandName,80);
   out.tagline=text(source.tagline,180);
