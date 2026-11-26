@@ -274,7 +274,7 @@ kbd{background:#0b1222;border:1px solid var(--line);padding:2px 6px;border-radiu
 
     <section id="sec-backups" class="section">
       <div class="card"><h3>النسخ الاحتياطي والتقارير</h3>
-        <div class="row"><button id="exportBackupBtn">تصدير JSON احتياطي</button><button class="ghost" id="exportCsvBtn">تصدير تحليلات CSV</button></div>
+        <div class="row"><button id="exportBackupBtn">تصدير JSON احتياطي</button><button class="ghost" id="exportCsvBtn">تصدير تحليلات CSV</button><button class="ghost" id="exportProgressCsvBtn">تصدير تقدم الطلاب CSV</button></div>
         <pre id="backupOut" style="white-space:pre-wrap;background:#091123;padding:14px;border-radius:12px;margin-top:12px;max-height:360px;overflow:auto"></pre>
         <p class="muted small">التصدير للقراءة/النسخ الاحتياطي. الاستعادة المدمرة تتطلب تأكيدًا صريحًا وإجراءًا منفصلاً على الخادم.</p>
       </div>
@@ -541,6 +541,7 @@ $('#reloadMedia').onclick=loadMedia;
 $('#uploadMediaBtn') && ($('#uploadMediaBtn').onclick=async()=>{ const f=$('#mediaFile').files[0]; if(!f) return showMsg('اختر ملفًا'); const fd=new FormData(); fd.append('file',f); $('#uploadMediaBtn').disabled=true; try{ const r=await fetch(API+'/api/admin/upload',{method:'POST',headers:{'Authorization':'Bearer '+state.token},body:fd}); const d=await r.json(); if(!r.ok||d.success===false) throw new Error(d.error||'فشل الرفع'); showMsg('تم الرفع: '+(d.file_key||''),true); $('#mediaFile').value=''; loadMedia(); }catch(e){ showMsg(e.message); } finally{ $('#uploadMediaBtn').disabled=false; } });
 $('#exportBackupBtn') && ($('#exportBackupBtn').onclick=async()=>{ try{ const d=await api('/api/admin/platform/backup/export'); $('#backupOut').textContent=JSON.stringify(d.backup,null,2); showMsg('تم التصدير',true); }catch(e){ showMsg(e.message); } });
 $('#exportCsvBtn') && ($('#exportCsvBtn').onclick=async()=>{ try{ const r=await fetch(API+'/api/admin/platform/analytics/export.csv',{headers:{'Authorization':'Bearer '+state.token}}); const t=await r.text(); if(!r.ok) throw new Error(t); $('#backupOut').textContent=t; const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([t],{type:'text/csv'})); a.download='analytics.csv'; a.click(); }catch(e){ showMsg(e.message); } });
+$('#exportProgressCsvBtn') && ($('#exportProgressCsvBtn').onclick=async()=>{ try{ const r=await fetch(API+'/api/admin/platform/progress/export.csv',{headers:{'Authorization':'Bearer '+state.token}}); const t=await r.text(); if(!r.ok) throw new Error(t); $('#backupOut').textContent=t; const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([t],{type:'text/csv;charset=utf-8;'})); a.download='student-progress.csv'; a.click(); }catch(e){ showMsg(e.message); } });
 
 // boot
 boot();
