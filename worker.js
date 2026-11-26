@@ -3970,7 +3970,9 @@ if (method === "POST" && rejectPasswordMatch) {
       if (method==='GET') {
         const roles = await env.DB.prepare(`SELECT r.*, (SELECT COUNT(*) FROM role_permissions rp WHERE rp.role_id=r.id) as perm_count FROM roles r ORDER BY r.id ASC`).all();
         const admins = await env.DB.prepare(`SELECT id,username,display_name,email,role,is_active,created_at,last_login_at FROM admin_users ORDER BY id DESC LIMIT 200`).all();
-        return reply(request, env,{success:true, roles: roles.results||[], admins: admins.results||[], permissions_map: ADMIN_PERMS});
+        const permissionsMap={...ADMIN_PERMS};
+        if(admin.role!=='super_admin') delete permissionsMap.super_admin;
+        return reply(request, env,{success:true, roles: roles.results||[], admins: admins.results||[], permissions_map: permissionsMap});
       }
     }
     if (path==='/api/admin/platform/admin-users') {
