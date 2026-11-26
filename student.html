@@ -1212,11 +1212,13 @@ async function loadDashboard(){
 
    const visible=purchaseList.filter(p=>!Number(p.is_hidden));
 
+   const progressCount = (studentProgress||[]).length;
    $("accountSummary").textContent=
     "اسم الطالب: "+(student.name||"غير محدد")+
     " | الصف: "+(student.grade||"غير محدد")+
     " | عدد المواد: "+subjects.length+
-    " | الطلبات والمشتريات الظاهرة: "+visible.length;
+    " | الطلبات والمشتريات الظاهرة: "+visible.length+
+    " | دروس بدأت متابعتها: "+progressCount;
 
    showList("subjects",subjects,"لا توجد مواد مسجلة.",(div,s)=>{
     div.textContent=s.name;

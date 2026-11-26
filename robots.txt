@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://ziadmohsen2410-zm.github.io/ZM-Academy/sitemap.xml
