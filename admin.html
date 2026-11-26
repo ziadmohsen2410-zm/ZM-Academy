@@ -274,8 +274,9 @@ kbd{background:#0b1222;border:1px solid var(--line);padding:2px 6px;border-radiu
 
     <section id="sec-backups" class="section">
       <div class="card"><h3>النسخ الاحتياطي والتقارير</h3>
-        <div class="row"><button id="exportBackupBtn">تصدير JSON احتياطي</button><button class="ghost" id="exportCsvBtn">تصدير تحليلات CSV</button><button class="ghost" id="exportProgressCsvBtn">تصدير تقدم الطلاب CSV</button></div>
+        <div class="row"><button id="exportBackupBtn">تصدير JSON احتياطي</button><button class="ghost" id="exportCsvBtn">تصدير تحليلات CSV</button><button class="ghost" id="exportProgressCsvBtn">تصدير تقدم الطلاب CSV</button><button class="ghost" id="loadProgressBtn">عرض تقدم الطلاب</button></div>
         <pre id="backupOut" style="white-space:pre-wrap;background:#091123;padding:14px;border-radius:12px;margin-top:12px;max-height:360px;overflow:auto"></pre>
+        <div class="table-wrap" style="margin-top:12px"><table><thead><tr><th>الطالب</th><th>الصف</th><th>الدرس</th><th>آخر صفحة</th><th>مكتمل</th><th>آخر تحديث</th></tr></thead><tbody id="progressTbody"></tbody></table></div>
         <p class="muted small">التصدير للقراءة/النسخ الاحتياطي. الاستعادة المدمرة تتطلب تأكيدًا صريحًا وإجراءًا منفصلاً على الخادم.</p>
       </div>
     </section>
@@ -484,7 +485,7 @@ window.__delMedia=async(path)=>{ if(!confirm('حذف الملف '+path+'؟')) re
 async function loadRoles(){ try{ const d=await api('/api/admin/platform/roles'); const admins=d.admins||[]; $('#rolesTbody').innerHTML=admins.map(a=>`<tr><td>${a.id}</td><td>${esc(a.username)}</td><td>${esc(a.display_name||'-')}</td><td><span class="badge">${esc(a.role||'-')}</span></td><td>${Number(a.is_active)===0?'<span class="badge danger">لا</span>':'<span class="badge ok">نعم</span>'}</td><td><select data-role-uid="${a.id}">${Object.keys(d.permissions_map||{}).map(r=>`<option value="${r}" ${r===a.role?'selected':''}>${r}</option>`).join('')}</select> <button class="ghost small" onclick="window.__setRole(${a.id})">حفظ الدور</button> <button class="ghost small" onclick="window.__toggleAdmin(${a.id},${Number(a.is_active)===0?1:0})">${Number(a.is_active)===0?'تفعيل':'إيقاف'}</button></td></tr>`).join('')||'<tr><td colspan="6" class="muted">لا يوجد</td></tr>'; $('#rolesMap').textContent='خريطة الصلاحيات: '+JSON.stringify(d.permissions_map||{}); }catch(e){ $('#rolesTbody').innerHTML=`<tr><td colspan="6">${esc(e.message)}</td></tr>`; } }
 window.__setRole=async(id)=>{ const sel=document.querySelector(`[data-role-uid="${id}"]`); if(!sel) return; try{ await api('/api/admin/platform/admin-users/'+id+'/role',{method:'PUT',body:JSON.stringify({role:sel.value})}); showMsg('تم تحديث الدور',true); loadRoles(); }catch(e){ showMsg(e.message); } };
 window.__toggleAdmin=async(id,is_active)=>{ if(!confirm(is_active?'تفعيل المستخدم؟':'إيقاف المستخدم؟')) return; try{ await api('/api/admin/platform/admin-users/'+id,{method:'PUT',body:JSON.stringify({is_active:!!is_active})}); showMsg('تم التحديث',true); loadRoles(); }catch(e){ showMsg(e.message); } };
-async function loadBackups(){ $('#backupOut').textContent='جاهز. اضغط تصدير JSON أو CSV.'; }
+async function loadBackups(){ $('#backupOut').textContent='جاهز. اضغط تصدير JSON أو CSV.'; loadProgress(); }
 async function loadSection(key){
   if(key==='dashboard') return loadDashboard();
   if(key==='students') return loadStudents();
@@ -542,6 +543,8 @@ $('#uploadMediaBtn') && ($('#uploadMediaBtn').onclick=async()=>{ const f=$('#med
 $('#exportBackupBtn') && ($('#exportBackupBtn').onclick=async()=>{ try{ const d=await api('/api/admin/platform/backup/export'); $('#backupOut').textContent=JSON.stringify(d.backup,null,2); showMsg('تم التصدير',true); }catch(e){ showMsg(e.message); } });
 $('#exportCsvBtn') && ($('#exportCsvBtn').onclick=async()=>{ try{ const r=await fetch(API+'/api/admin/platform/analytics/export.csv',{headers:{'Authorization':'Bearer '+state.token}}); const t=await r.text(); if(!r.ok) throw new Error(t); $('#backupOut').textContent=t; const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([t],{type:'text/csv'})); a.download='analytics.csv'; a.click(); }catch(e){ showMsg(e.message); } });
 $('#exportProgressCsvBtn') && ($('#exportProgressCsvBtn').onclick=async()=>{ try{ const r=await fetch(API+'/api/admin/platform/progress/export.csv',{headers:{'Authorization':'Bearer '+state.token}}); const t=await r.text(); if(!r.ok) throw new Error(t); $('#backupOut').textContent=t; const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([t],{type:'text/csv;charset=utf-8;'})); a.download='student-progress.csv'; a.click(); }catch(e){ showMsg(e.message); } });
+async function loadProgress(){ try{ const d=await api('/api/admin/platform/progress'); const rows=d.rows||[]; $('#progressTbody').innerHTML=rows.map(r=>`<tr><td>${esc(r.student_name||'')}</td><td>${esc(r.grade||'')}</td><td>${esc(r.material_title||'')}</td><td>${esc(r.last_page||'')}</td><td>${r.completed_at?'نعم':'لا'}</td><td class="small muted">${esc((r.updated_at||'').replace('T',' ').slice(0,19))}</td></tr>`).join('')||'<tr><td colspan="6" class="muted">لا يوجد تقدم مسجل.</td></tr>'; }catch(e){ showMsg(e.message); } }
+$('#loadProgressBtn') && ($('#loadProgressBtn').onclick=loadProgress);
 
 // boot
 boot();

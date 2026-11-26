@@ -3936,6 +3936,19 @@ if (method === "POST" && rejectPasswordMatch) {
       const body=(rows.results||[]).map(r=>[r.student_id,r.student_name,r.grade,r.material_title,r.last_page,r.completed_at,r.updated_at].map(esc).join(',')).join('\n');
       return new Response(header+body, {status:200, headers:{...corsHeaders(request,env),'Content-Type':'text/csv; charset=utf-8','Content-Disposition':'attachment; filename="student-progress.csv"'}});
     }
+    // Student progress (admin view)
+    if (method==='GET' && path==='/api/admin/platform/progress') {
+      if (!hasPerm(admin.role,'analytics') && !hasPerm(admin.role,'students')) return reply(request, env,{success:false,error:'Forbidden'},403);
+      await ensureStudentLearningTables(env);
+      const rows = await env.DB.prepare(`
+        SELECT s.id as student_id, s.name as student_name, s.grade, m.title as material_title, p.last_page, p.completed_at, p.updated_at
+        FROM student_material_progress p
+        JOIN students s ON s.id=p.student_id
+        JOIN materials m ON m.id=p.material_id
+        ORDER BY p.updated_at DESC LIMIT 200
+      `).all().catch(()=>({results:[]}));
+      return reply(request, env, {success:true, rows: rows.results||[]});
+    }
 
     // Media library (GitHub storage)
     if (path==='/api/admin/platform/media') {
