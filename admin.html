@@ -157,7 +157,7 @@ kbd{background:#0b1222;border:1px solid var(--line);padding:2px 6px;border-radiu
       <div class="split">
         <div class="card"><h3>الاختبارات</h3>
           <input id="examEditId" type="hidden">
-          <div class="row"><input id="examTitle" placeholder="عنوان الاختبار"><input id="examGrade" placeholder="الصف"><input id="examSubject" placeholder="subject_id" type="number"><select id="examStatus"><option value="draft">مسودة</option><option value="published">منشور</option><option value="closed">مغلق</option></select></div>
+          <div class="row"><input id="examTitle" placeholder="عنوان الاختبار"><input id="examGrade" placeholder="الصف"><input id="examSubject" placeholder="subject_id" type="number"><select id="examStatus"><option value="draft">مسودة</option><option value="published">منشور</option><option value="closed">مغلق</option><option value="archived">مؤرشف</option></select></div>
           <div class="row"><input id="examDuration" type="number" min="1" max="600" placeholder="المدة بالدقائق (اختياري)"><input id="examAttempts" type="number" min="1" max="20" value="1" placeholder="عدد المحاولات"><label><input id="examShuffle" type="checkbox"> خلط ترتيب الأسئلة</label><label><input id="examShowResults" type="checkbox" checked> إظهار النتيجة</label></div>
           <div class="row"><label>موعد البداية <input id="examStartsAt" type="datetime-local"></label><label>موعد النهاية <input id="examEndsAt" type="datetime-local"></label></div>
           <div class="row"><button id="addExamBtn">إنشاء اختبار</button><button class="ghost" id="resetExamBtn" type="button">تفريغ النموذج</button></div>
