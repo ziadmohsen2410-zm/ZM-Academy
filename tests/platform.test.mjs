@@ -121,6 +121,12 @@ test("exam answers are autosaved and restored when a student resumes", () => {
   assert.ok(student.includes("const saved=d.answers||{}"));
 });
 
+test("student exam UI disables new attempts when the allowed count is exhausted", () => {
+  const student = read("student.html");
+  assert.ok(student.includes("Number(e.my_attempts||0)>=Number(e.attempts_allowed||1)?'disabled':''"));
+  assert.ok(student.includes("انتهت المحاولات"));
+});
+
 test("students can resume an in-progress exam after reopening the page", () => {
   const worker = read("worker.js");
   const student = read("student.html");
