@@ -3982,7 +3982,25 @@ if (method === "POST" && rejectPasswordMatch) {
     if (!session) return reply(request, env, {success:false,error:'Unauthorized'}, 401);
     await ensurePlatformSchema(env);
     if (method==='GET' && path==='/api/student/platform/notifications') {
-      const rows = await env.DB.prepare(`SELECT n.*, CASE WHEN r.id IS NULL THEN 0 ELSE 1 END as is_read FROM notifications n LEFT JOIN notification_reads r ON r.notification_id=n.id AND r.user_type='student' AND r.user_id=? WHERE n.audience_type IN ('all','student') ORDER BY n.id DESC LIMIT 100`).bind(session.student_id).all();
+      // Only show broadcasts and notifications explicitly addressed to this student or their grade.
+      // Previously, every student could see every notification marked "student".
+      const rows = await env.DB.prepare(`
+        SELECT n.*,
+               CASE WHEN r.id IS NULL THEN 0 ELSE 1 END AS is_read
+        FROM notifications n
+        LEFT JOIN notification_reads r
+          ON r.notification_id=n.id
+         AND r.user_type='student'
+         AND r.user_id=?
+        WHERE n.audience_type='all'
+           OR (n.audience_type='student' AND n.audience_value=CAST(? AS TEXT))
+           OR (n.audience_type='grade' AND EXISTS (
+                SELECT 1 FROM students s
+                WHERE s.id=? AND s.grade=n.audience_value
+           ))
+        ORDER BY n.id DESC
+        LIMIT 100
+      `).bind(session.student_id, session.student_id, session.student_id).all();
       return reply(request, env, {success:true, notifications: rows.results||[]});
     }
     if (method==='POST' && /^\/api\/student\/platform\/notifications\/\d+\/read$/.test(path)) {
