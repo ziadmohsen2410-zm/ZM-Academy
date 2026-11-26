@@ -156,5 +156,13 @@ b?.addEventListener('click',()=>apply((localStorage.getItem('zm_lang')||'ar')===
 apply(localStorage.getItem('zm_lang')||'ar');})();
 </script>
 
+<script>
+(function(){try{
+  var k='zm-sw-reset-v13';
+  if(!localStorage.getItem(k) && 'serviceWorker' in navigator){
+    Promise.all([navigator.serviceWorker.getRegistrations().then(function(rs){return Promise.all(rs.map(function(r){return r.unregister()}))}), caches.keys().then(function(ks){return Promise.all(ks.map(function(c){return caches.delete(c)}))})]).finally(function(){localStorage.setItem(k,'1'); location.reload();});
+  }
+}catch(e){}})();
+</script>
 </body>
 </html>
