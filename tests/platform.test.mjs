@@ -353,6 +353,12 @@ test("parent-to-student link requests are rate limited per parent", () => {
   assert.ok(worker.includes("تجاوزت عدد طلبات ربط الطلاب المسموح بها"));
 });
 
+test("admin creation form hides super-admin for lower-privilege administrators", () => {
+  const admin = read("admin.html");
+  assert.ok(admin.includes("superOption.hidden=!d.permissions_map?.super_admin"));
+  assert.ok(admin.includes("$('#newAdminRole').value==='super_admin'"));
+});
+
 test("lower-privilege admins do not receive super-admin as an assignable role", () => {
   const worker = read("worker.js");
   assert.ok(worker.includes("if(admin.role!=='super_admin') delete permissionsMap.super_admin"));
