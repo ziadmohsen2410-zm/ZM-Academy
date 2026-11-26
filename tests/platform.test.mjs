@@ -228,6 +228,15 @@ test("student exam results respect the exam show_results setting", () => {
   assert.ok(route.includes("results_hidden:!showResults"));
 });
 
+test("admin role management protects super-admin privilege and account continuity", () => {
+  const worker = read("worker.js");
+  assert.ok(worker.includes("role==='super_admin' && admin.role!=='super_admin'"));
+  assert.ok(worker.includes("لا يمكنك تغيير دور حسابك الحالي"));
+  assert.ok(worker.includes("لا يمكنك إيقاف حسابك الحالي"));
+  assert.ok(worker.includes("يجب أن يظل هناك مدير أعلى نشط واحد على الأقل"));
+  assert.ok(worker.includes("لا يمكن إيقاف حساب مدير أعلى إلا بواسطة مدير أعلى"));
+});
+
 test("legacy admin APIs enforce role permissions instead of authentication alone", () => {
   const worker = read("worker.js");
   const start = worker.indexOf("// جميع مسارات الإدارة محمية");
