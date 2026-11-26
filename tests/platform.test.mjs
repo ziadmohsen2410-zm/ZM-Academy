@@ -101,6 +101,12 @@ test("student exam visibility and start enforce grade, schedule, open-attempt, a
   assert.ok(routes.includes("انتهى الوقت المحدد للاختبار"));
 });
 
+test("student exam routes lazily ensure the resume-order database column", () => {
+  const worker = read("worker.js");
+  assert.ok(worker.includes("path.includes('/exam-attempts/') || (path.startsWith('/api/student/platform/exams/') && path.endsWith('/start'))"));
+  assert.ok(worker.includes("ensureColumn(env,'exam_attempts','question_order_json','TEXT')"));
+});
+
 test("shuffled question order is preserved across exam resume", () => {
   const worker = read("worker.js");
   const migration = read("migrations/001_platform_core.sql");
