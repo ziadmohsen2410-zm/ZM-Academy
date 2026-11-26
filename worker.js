@@ -3601,7 +3601,7 @@ if (method === "POST" && rejectPasswordMatch) {
       const student = await env.DB.prepare(`SELECT id,name,phone,grade,school,governorate FROM students WHERE id=?`).bind(studentId).first();
       const subjects = await env.DB.prepare(`SELECT s.id,s.name FROM student_subjects ss JOIN subjects s ON s.id=ss.subject_id WHERE ss.student_id=?`).bind(studentId).all();
       const orders = await env.DB.prepare(`SELECT o.id,o.status,o.created_at,m.title as material_title FROM orders o LEFT JOIN materials m ON m.id=o.material_id WHERE o.student_id=? ORDER BY o.id DESC LIMIT 50`).bind(studentId).all();
-      const attempts = await env.DB.prepare(`SELECT a.id,a.exam_id,a.score,a.max_score,a.status,a.submitted_at,e.title as exam_title FROM exam_attempts a JOIN exams e ON e.id=a.exam_id WHERE a.student_id=? ORDER BY a.id DESC LIMIT 50`).bind(studentId).all();
+      const attempts = await env.DB.prepare(`SELECT a.id,a.exam_id,CASE WHEN a.status='graded' AND e.show_results<>0 THEN a.score ELSE NULL END AS score,CASE WHEN a.status='graded' AND e.show_results<>0 THEN a.max_score ELSE NULL END AS max_score,a.status,a.submitted_at,e.title as exam_title FROM exam_attempts a JOIN exams e ON e.id=a.exam_id WHERE a.student_id=? ORDER BY a.id DESC LIMIT 50`).bind(studentId).all();
       return reply(request, env, {success:true, student, subjects:subjects.results||[], orders:orders.results||[], attempts:attempts.results||[]});
     }
     return reply(request, env, {success:false,error:'Not found'}, 404);
