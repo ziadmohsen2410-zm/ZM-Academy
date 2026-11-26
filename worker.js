@@ -630,6 +630,7 @@ async function ensureStudentLearningTables(env) {
       )
     `)
   ]);
+  await ensureColumn(env, 'student_material_progress', 'completed_at', 'TEXT');
 }
 
 async function route(request, env) {
@@ -2550,7 +2551,7 @@ if (method === "POST" && rejectPasswordMatch) {
 
       if (method === "GET" && path === "/api/student/progress") {
         const rows = await env.DB.prepare(`
-          SELECT p.material_id, p.last_page, p.updated_at,
+          SELECT p.material_id, p.last_page, p.updated_at, p.completed_at,
                  m.title, m.type, sub.name AS subject_name
           FROM student_material_progress p
           JOIN materials m ON m.id = p.material_id
@@ -2660,6 +2661,7 @@ if (method === "POST" && rejectPasswordMatch) {
         const body = await readBody(request);
         const materialId = Number(body?.material_id);
         const lastPage = Number(body?.last_page);
+        const completed = body?.completed === true || body?.completed === 1 || body?.completed === "1";
 
         if (
           !Number.isInteger(materialId) || materialId < 1 ||
@@ -2713,12 +2715,17 @@ if (method === "POST" && rejectPasswordMatch) {
         await env.DB.batch([
           env.DB.prepare(`
             INSERT INTO student_material_progress
-              (student_id, material_id, last_page, updated_at)
-            VALUES (?, ?, ?, CURRENT_TIMESTAMP)
+              (student_id, material_id, last_page, completed_at, updated_at)
+            VALUES (?, ?, ?, CASE WHEN ? = 1 THEN CURRENT_TIMESTAMP ELSE NULL END, CURRENT_TIMESTAMP)
             ON CONFLICT(student_id, material_id) DO UPDATE SET
               last_page = excluded.last_page,
+              completed_at = CASE
+                WHEN ? = 1 THEN COALESCE(student_material_progress.completed_at, CURRENT_TIMESTAMP)
+                WHEN ? = 0 THEN NULL
+                ELSE student_material_progress.completed_at
+              END,
               updated_at = CURRENT_TIMESTAMP
-          `).bind(session.student_id, materialId, lastPage),
+          `).bind(session.student_id, materialId, lastPage, completed ? 1 : 0, completed ? 1 : 0, body?.completed === false ? 0 : 1),
           env.DB.prepare(`
             INSERT OR IGNORE INTO student_activity_days
               (student_id, activity_date)
@@ -2730,7 +2737,8 @@ if (method === "POST" && rejectPasswordMatch) {
           success: true,
           material_id: materialId,
           last_page: lastPage,
-          message: "تم حفظ تقدمك الدراسي.",
+          completed,
+          message: completed ? "تم حفظ التقدم وتم تحديد الدرس كمكتمل." : "تم حفظ تقدمك الدراسي.",
         });
       }
     }
