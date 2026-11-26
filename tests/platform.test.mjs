@@ -319,7 +319,8 @@ test("admin page-builder preview blocks unsafe link schemes", () => {
 test("public page renderer inherits the published homepage brand theme", () => {
   const page = read("page.html");
   assert.ok(page.includes("fetch(API+'/api/homepage'"));
-  assert.ok(page.includes("applyBrandTheme(d.settings?.theme)"));
+  assert.ok(page.includes("applyBrandTheme(d.settings)"));
+  assert.ok(page.includes("settings.brandName"));
   assert.ok(page.includes("['primary','--blue']"));
   assert.ok(page.includes("document.body.classList.add('light')"));
 });
