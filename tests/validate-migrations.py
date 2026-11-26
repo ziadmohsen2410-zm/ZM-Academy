@@ -9,6 +9,7 @@ if not files:
 
 for file in files:
     sql = file.read_text(encoding="utf-8")
+    sql = re.sub(r"(?m)^\\s*--.*$", "", sql)
     if re.search(r"\bDROP\s+(?:TABLE|COLUMN|INDEX)\b|\bTRUNCATE\b|\bDELETE\s+FROM\b", sql, re.I):
         raise SystemExit(f"Destructive SQL is not allowed in additive migrations: {file.name}")
 
@@ -20,7 +21,8 @@ for table in ("platform_settings", "roles", "audit_logs", "page_drafts", "studen
 extensions = migration_dir / "002_column_extensions.sql"
 if extensions.exists():
     sql = extensions.read_text(encoding="utf-8")
-    statements = [s.strip() for s in sql.split(";") if s.strip() and not s.strip().startswith("--")]
+    sql = re.sub(r"(?m)^\\s*--.*$", "", sql)
+    statements = [s.strip() for s in sql.split(";") if s.strip()]
     for statement in statements:
         if not re.match(r"ALTER\s+TABLE\s+\w+\s+ADD\s+COLUMN\s+", statement, re.I):
             raise SystemExit(f"Unexpected non-additive statement in {extensions.name}: {statement[:80]}")
