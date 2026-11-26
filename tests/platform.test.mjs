@@ -101,6 +101,16 @@ test("student exam visibility and start enforce grade, schedule, open-attempt, a
   assert.ok(routes.includes("انتهى الوقت المحدد للاختبار"));
 });
 
+test("student and admin AI endpoints enforce per-user rate limits", () => {
+  const worker = read("worker.js");
+  const student = worker.slice(worker.indexOf("if (method==='POST' && path==='/api/student/platform/ai')"));
+  const admin = worker.slice(worker.indexOf("if (method==='POST' && path==='/api/admin/platform/ai')"));
+  assert.ok(student.includes("consumeApiRateLimit(env,request,'student_ai',session.student_id,10,60)"));
+  assert.ok(admin.includes("consumeApiRateLimit(env,request,'admin_ai',admin.id,20,60)"));
+  assert.ok(student.includes("code:'RATE_LIMITED'"));
+  assert.ok(admin.includes("code:'RATE_LIMITED'"));
+});
+
 test("exam creation and question mutations validate unsafe values", () => {
   const worker = read("worker.js");
   assert.ok(worker.includes("const validateExamInput = (b) =>"));
