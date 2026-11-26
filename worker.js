@@ -4086,16 +4086,39 @@ if (method === "POST" && rejectPasswordMatch) {
       const rows = await env.DB.prepare(`SELECT e.id,e.title,e.description,e.subject_id,e.grade,e.duration_minutes,e.attempts_allowed,e.starts_at,e.ends_at,e.show_results,(SELECT COUNT(*) FROM exam_attempts a WHERE a.exam_id=e.id AND a.student_id=?) as my_attempts,(SELECT a.id FROM exam_attempts a WHERE a.exam_id=e.id AND a.student_id=? AND a.status='in_progress' ORDER BY a.id DESC LIMIT 1) as active_attempt_id,(SELECT a.id FROM exam_attempts a WHERE a.exam_id=e.id AND a.student_id=? ORDER BY a.id DESC LIMIT 1) as last_attempt_id,(SELECT a.status FROM exam_attempts a WHERE a.exam_id=e.id AND a.student_id=? ORDER BY a.id DESC LIMIT 1) as last_attempt_status FROM exams e WHERE e.status='published' AND (COALESCE(TRIM(e.grade),'')='' OR e.grade=(SELECT s.grade FROM students s WHERE s.id=?)) AND (e.starts_at IS NULL OR datetime(e.starts_at)<=datetime('now')) AND (e.ends_at IS NULL OR datetime(e.ends_at)>=datetime('now')) ORDER BY e.id DESC LIMIT 100`).bind(session.student_id, session.student_id, session.student_id, session.student_id, session.student_id).all();
       return reply(request, env, {success:true, exams: rows.results||[]});
     }
-        if (method==='GET' && /^\/api\/student\/platform\/exam-attempts\/\d+$/.test(path)) {
+            if (method==='PUT' && /^\/api\/student\/platform\/exam-attempts\/\d+\/answers$/.test(path)) {
+      const attemptId=Number(path.split('/')[5]);
+      const attempt=await env.DB.prepare(\`SELECT a.id,a.exam_id,CASE WHEN e.duration_minutes>0 AND datetime(a.started_at,'+' || e.duration_minutes || ' minutes')<=datetime('now') THEN 1 ELSE 0 END AS is_expired FROM exam_attempts a JOIN exams e ON e.id=a.exam_id WHERE a.id=? AND a.student_id=? AND a.status='in_progress'\`).bind(attemptId,session.student_id).first();
+      if(!attempt) return reply(request,env,{success:false,error:'المحاولة غير متاحة'},404);
+      if(Number(attempt.is_expired)===1) {
+        await env.DB.prepare(\`UPDATE exam_attempts SET status='expired',submitted_at=datetime('now') WHERE id=? AND student_id=? AND status='in_progress'\`).bind(attemptId,session.student_id).run();
+        return reply(request,env,{success:false,error:'انتهى وقت الاختبار'},410);
+      }
+      const body=await readBody(request); const incoming=body?.answers;
+      if(!incoming || typeof incoming!=='object' || Array.isArray(incoming)) return reply(request,env,{success:false,error:'الإجابات غير صالحة'},400);
+      const questionRows=await env.DB.prepare(\`SELECT id FROM exam_questions WHERE exam_id=?\`).bind(attempt.exam_id).all();
+      const allowed=new Set((questionRows.results||[]).map(q=>String(q.id)));
+      const answers={};
+      for(const [key,value] of Object.entries(incoming)) {
+        if(!allowed.has(String(key))) continue;
+        if(typeof value==='string') answers[key]=value.slice(0,5000);
+        else if(typeof value==='boolean' || typeof value==='number') answers[key]=value;
+        else if(value && typeof value==='object') answers[key]=value;
+      }
+      if(JSON.stringify(answers).length>30000) return reply(request,env,{success:false,error:'حجم الإجابات أكبر من المسموح'},413);
+      await env.DB.prepare(\`UPDATE exam_attempts SET answers_json=? WHERE id=? AND student_id=? AND status='in_progress'\`).bind(JSON.stringify(answers),attemptId,session.student_id).run();
+      return reply(request,env,{success:true,saved:true});
+    }
+if (method==='GET' && /^\/api\/student\/platform\/exam-attempts\/\d+$/.test(path)) {
       const attemptId=Number(path.split('/').pop());
-      const attempt=await env.DB.prepare(`SELECT a.id AS attempt_id,a.exam_id,a.started_at,a.status,e.title,e.description,e.duration_minutes,e.attempts_allowed,e.shuffle_questions,e.show_results,CASE WHEN e.duration_minutes>0 AND datetime(a.started_at,'+' || e.duration_minutes || ' minutes')<=datetime('now') THEN 1 ELSE 0 END AS is_expired FROM exam_attempts a JOIN exams e ON e.id=a.exam_id WHERE a.id=? AND a.student_id=? AND a.status='in_progress'`).bind(attemptId,session.student_id).first();
+      const attempt=await env.DB.prepare(`SELECT a.id AS attempt_id,a.exam_id,a.started_at,a.status,a.answers_json,e.title,e.description,e.duration_minutes,e.attempts_allowed,e.shuffle_questions,e.show_results,CASE WHEN e.duration_minutes>0 AND datetime(a.started_at,'+' || e.duration_minutes || ' minutes')<=datetime('now') THEN 1 ELSE 0 END AS is_expired FROM exam_attempts a JOIN exams e ON e.id=a.exam_id WHERE a.id=? AND a.student_id=? AND a.status='in_progress'`).bind(attemptId,session.student_id).first();
       if(!attempt) return reply(request,env,{success:false,error:'المحاولة المفتوحة غير موجودة'},404);
       if(Number(attempt.is_expired)===1) {
         await env.DB.prepare(`UPDATE exam_attempts SET status='expired',submitted_at=datetime('now') WHERE id=? AND student_id=? AND status='in_progress'`).bind(attemptId,session.student_id).run();
         return reply(request,env,{success:false,error:'انتهى وقت الاختبار. لا يمكن استكمال هذه المحاولة.'},410);
       }
       const qs=await env.DB.prepare(`SELECT id,type,question_text,options_json,points,order_index FROM exam_questions WHERE exam_id=? ORDER BY order_index ASC,id ASC`).bind(attempt.exam_id).all();
-      return reply(request,env,{success:true,attempt_id:attempt.attempt_id,exam:attempt,questions:(qs.results||[]).map(q=>({...q,options:safeJsonParse(q.options_json,[])}))});
+      return reply(request,env,{success:true,attempt_id:attempt.attempt_id,exam:attempt,answers:safeJsonParse(attempt.answers_json,{}),questions:(qs.results||[]).map(q=>({...q,options:safeJsonParse(q.options_json,[])}))});
     }
 if (method==='POST' && /^\/api\/student\/platform\/exams\/\d+\/start$/.test(path)) {
       const examId = Number(path.split('/')[5]);
