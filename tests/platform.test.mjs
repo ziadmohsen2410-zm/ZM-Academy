@@ -262,6 +262,8 @@ test("admin homepage editor is connected to the homepage draft and publish APIs"
   assert.ok(admin.includes("async function loadHomepage()"));
   assert.ok(admin.includes("api('/api/admin/homepage'"));
   assert.ok(admin.includes("api('/api/admin/homepage/publish'"));
+  for (const id of ['homeSurface','homeText','homeMuted','homeFont','homeCorners','homeButtons','homeCards','homeMotion']) assert.ok(admin.includes('id="'+id+'"'));
+
   assert.ok(admin.includes("homepage:'page_builder'"));
   assert.ok(worker.includes('path === "/api/admin/homepage"'));
   assert.ok(index.includes("fetch(API+'/api/homepage'"));
