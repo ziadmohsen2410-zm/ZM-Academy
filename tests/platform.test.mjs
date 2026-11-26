@@ -82,6 +82,17 @@ test("admin can schedule notifications with validated local-to-UTC timestamps", 
   assert.ok(worker.includes("scheduledAt?null:nowIso()"));
 });
 
+test("parent portal receives parent-targeted notifications and can mark them read", () => {
+  const worker = read("worker.js");
+  const parent = read("parent.html");
+  assert.ok(worker.includes("path==='/api/parent/notifications'"));
+  assert.ok(worker.includes("n.audience_type IN ('all','parents')"));
+  assert.ok(worker.includes("r.user_type='parent'"));
+  assert.ok(parent.includes("id=\\"parentNotifications\\""));
+  assert.ok(parent.includes("loadParentNotifications()"));
+  assert.ok(parent.includes("/api/parent/notifications/"));
+});
+
 test("scheduled student notifications remain hidden until their scheduled time", () => {
   const worker = read("worker.js");
   const start = worker.indexOf("if (method==='GET' && path==='/api/student/platform/notifications')");
