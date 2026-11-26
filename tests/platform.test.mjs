@@ -107,7 +107,7 @@ test("students can resume an in-progress exam after reopening the page", () => {
   assert.ok(worker.includes("active_attempt_id"));
   assert.ok(worker.includes("exam-attempts\\/\\d+$"));
   assert.ok(worker.includes("a.status='in_progress'"));
-  assert.ok(student.includes("data-active=\\""));
+  assert.ok(student.includes('data-active="'));
   assert.ok(student.includes("استكمال الاختبار"));
   assert.ok(student.includes("activeAttemptId?await api"));
 });
