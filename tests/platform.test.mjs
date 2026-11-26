@@ -290,6 +290,18 @@ test("homepage editor preserves unsaved edits when navigating between sections",
 
 });
 
+test("published page builder pages render through the public API", () => {
+  const page = read("page.html");
+  const admin = read("admin.html");
+  const worker = read("worker.js");
+  assert.ok(page.includes("/api/public/pages/"));
+  assert.ok(page.includes("d.page.content||{}"));
+  assert.ok(page.includes("content.blocks"));
+  assert.ok(admin.includes('id="openPublishedPageBtn"'));
+  assert.ok(admin.includes("./page.html?key='));
+  assert.ok(worker.includes("path.startsWith('/api/public/pages/')"));
+});
+
 test("admin homepage editor is connected to the homepage draft and publish APIs", () => {
   const admin = read("admin.html");
   const worker = read("worker.js");
