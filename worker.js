@@ -4083,10 +4083,21 @@ if (method === "POST" && rejectPasswordMatch) {
       return reply(request, env, {success:true});
     }
     if (method==='GET' && path==='/api/student/platform/exams') {
-      const rows = await env.DB.prepare(`SELECT e.id,e.title,e.description,e.subject_id,e.grade,e.duration_minutes,e.attempts_allowed,e.starts_at,e.ends_at,e.show_results,(SELECT COUNT(*) FROM exam_attempts a WHERE a.exam_id=e.id AND a.student_id=?) as my_attempts FROM exams e WHERE e.status='published' AND (COALESCE(TRIM(e.grade),'')='' OR e.grade=(SELECT s.grade FROM students s WHERE s.id=?)) AND (e.starts_at IS NULL OR datetime(e.starts_at)<=datetime('now')) AND (e.ends_at IS NULL OR datetime(e.ends_at)>=datetime('now')) ORDER BY e.id DESC LIMIT 100`).bind(session.student_id, session.student_id).all();
+      const rows = await env.DB.prepare(`SELECT e.id,e.title,e.description,e.subject_id,e.grade,e.duration_minutes,e.attempts_allowed,e.starts_at,e.ends_at,e.show_results,(SELECT COUNT(*) FROM exam_attempts a WHERE a.exam_id=e.id AND a.student_id=?) as my_attempts,(SELECT a.id FROM exam_attempts a WHERE a.exam_id=e.id AND a.student_id=? AND a.status='in_progress' ORDER BY a.id DESC LIMIT 1) as active_attempt_id,(SELECT a.id FROM exam_attempts a WHERE a.exam_id=e.id AND a.student_id=? ORDER BY a.id DESC LIMIT 1) as last_attempt_id,(SELECT a.status FROM exam_attempts a WHERE a.exam_id=e.id AND a.student_id=? ORDER BY a.id DESC LIMIT 1) as last_attempt_status FROM exams e WHERE e.status='published' AND (COALESCE(TRIM(e.grade),'')='' OR e.grade=(SELECT s.grade FROM students s WHERE s.id=?)) AND (e.starts_at IS NULL OR datetime(e.starts_at)<=datetime('now')) AND (e.ends_at IS NULL OR datetime(e.ends_at)>=datetime('now')) ORDER BY e.id DESC LIMIT 100`).bind(session.student_id, session.student_id, session.student_id, session.student_id, session.student_id).all();
       return reply(request, env, {success:true, exams: rows.results||[]});
     }
-    if (method==='POST' && /^\/api\/student\/platform\/exams\/\d+\/start$/.test(path)) {
+        if (method==='GET' && /^\/api\/student\/platform\/exam-attempts\/\d+$/.test(path)) {
+      const attemptId=Number(path.split('/').pop());
+      const attempt=await env.DB.prepare(`SELECT a.id AS attempt_id,a.exam_id,a.started_at,a.status,e.title,e.description,e.duration_minutes,e.attempts_allowed,e.shuffle_questions,e.show_results,CASE WHEN e.duration_minutes>0 AND datetime(a.started_at,'+' || e.duration_minutes || ' minutes')<=datetime('now') THEN 1 ELSE 0 END AS is_expired FROM exam_attempts a JOIN exams e ON e.id=a.exam_id WHERE a.id=? AND a.student_id=? AND a.status='in_progress'`).bind(attemptId,session.student_id).first();
+      if(!attempt) return reply(request,env,{success:false,error:'المحاولة المفتوحة غير موجودة'},404);
+      if(Number(attempt.is_expired)===1) {
+        await env.DB.prepare(`UPDATE exam_attempts SET status='expired',submitted_at=datetime('now') WHERE id=? AND student_id=? AND status='in_progress'`).bind(attemptId,session.student_id).run();
+        return reply(request,env,{success:false,error:'انتهى وقت الاختبار. لا يمكن استكمال هذه المحاولة.'},410);
+      }
+      const qs=await env.DB.prepare(`SELECT id,type,question_text,options_json,points,order_index FROM exam_questions WHERE exam_id=? ORDER BY order_index ASC,id ASC`).bind(attempt.exam_id).all();
+      return reply(request,env,{success:true,attempt_id:attempt.attempt_id,exam:attempt,questions:(qs.results||[]).map(q=>({...q,options:safeJsonParse(q.options_json,[])}))});
+    }
+if (method==='POST' && /^\/api\/student\/platform\/exams\/\d+\/start$/.test(path)) {
       const examId = Number(path.split('/')[5]);
       const exam = await env.DB.prepare(`SELECT * FROM exams WHERE id=? AND status='published' AND (COALESCE(TRIM(grade),'')='' OR grade=(SELECT s.grade FROM students s WHERE s.id=?)) AND (starts_at IS NULL OR datetime(starts_at)<=datetime('now')) AND (ends_at IS NULL OR datetime(ends_at)>=datetime('now'))`).bind(examId, session.student_id).first();
       if (!exam) return reply(request, env, {success:false,error:'الاختبار غير متاح لهذا الطالب أو خارج موعده'},404);
