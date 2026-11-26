@@ -213,7 +213,7 @@ kbd{background:#0b1222;border:1px solid var(--line);padding:2px 6px;border-radiu
           <p class="muted small">يحفظ مخطط JSON آمن للصفحة. لا يتم تنفيذ JavaScript. استخدمه لبناء أقسام/بطاقات/نصوص/روابط.</p>
           <div class="row"><input id="pageKey" placeholder="page key مثل home/login/student" value="home"><input id="pageTitle" placeholder="عنوان الصفحة" value="الصفحة الرئيسية"></div>
           <label>محتوى JSON</label><textarea id="pageJson" style="min-height:260px;font-family:monospace;direction:ltr;text-align:left"></textarea>
-          <div class="row" style="margin-top:10px"><button id="loadPageBtn" class="ghost">تحميل</button><button id="savePageBtn">حفظ مسودة</button><button id="publishPageBtn" class="ok">نشر</button></div>
+          <div class="row" style="margin-top:10px"><button id="loadPageBtn" class="ghost">تحميل</button><button id="savePageBtn">حفظ مسودة</button><button id="publishPageBtn" class="ok">نشر</button><button id="openPublishedPageBtn" class="ghost">فتح الصفحة المنشورة</button></div>
           <div id="pageVersions" class="list" style="margin-top:12px"></div>
         </div>
         <div class="card"><h3>محرر كتل بصري بسيط + معاينة</h3>
@@ -639,6 +639,7 @@ $('#sec-homepage').addEventListener('input',()=>{homepageDraftDirty=true;});
 $('#loadHomepageBtn').onclick=()=>{if(confirm('إعادة تحميل الإعدادات من الخادم؟ سيتم تجاهل التعديلات غير المحفوظة.')){homepageDraftDirty=false;loadHomepage();}};
 $('#saveHomepageBtn').onclick=saveHomepageDraft;
 $('#publishHomepageBtn').onclick=publishHomepage;
+$('#openPublishedPageBtn').onclick=()=>{const key=$('#pageKey').value.trim()||'home';window.open('./page.html?key='+encodeURIComponent(key),'_blank','noopener,noreferrer');};
 $('#loadPageBtn').onclick=loadPage;
 $('#savePageBtn').onclick=async()=>{ try{ const key=$('#pageKey').value.trim()||'home'; let content; try{ content=JSON.parse($('#pageJson').value||'{}'); }catch{ return showMsg('JSON غير صالح'); } await api('/api/admin/platform/pages/'+encodeURIComponent(key),{method:'PUT',body:JSON.stringify({title:$('#pageTitle').value.trim()||key, content})}); renderPagePreview(content); showMsg('تم حفظ المسودة',true); loadPage(); }catch(e){ showMsg(e.message); } };
 $('#publishPageBtn').onclick=async()=>{ try{ const key=$('#pageKey').value.trim()||'home'; if(!confirm('نشر الصفحة؟')) return; await api('/api/admin/platform/pages/'+encodeURIComponent(key)+'/publish',{method:'POST'}); showMsg('تم النشر',true); loadPage(); }catch(e){ showMsg(e.message); } };
