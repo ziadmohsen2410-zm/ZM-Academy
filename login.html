@@ -99,7 +99,6 @@ fetch(API+'/api/homepage',{cache:'no-store'}).then(r=>r.ok?r.json():null).then(d
   <label for="password">كلمة المرور</label><input id="password" name="password" type="password" autocomplete="current-password" maxlength="200" required>
   <button id="submitBtn" type="submit">تسجيل الدخول</button>
  </form>
-<p class="parent-portal-link"><a href="parent.html">أنا ولي أمر وأريد متابعة الأبناء</a></p>
  <button type="button" class="reset-toggle" id="showResetForm" aria-expanded="false" aria-controls="resetForm">نسيت كلمة المرور؟</button>
  <form id="resetForm" class="reset-box" novalidate>
   <div class="sub">لاستعادة حسابك، اكتب اسم المستخدم ورقم الهاتف المسجل في حسابك. سيصل طلبك للإدارة للمراجعة والتحقق.</div>
@@ -112,7 +111,7 @@ fetch(API+'/api/homepage',{cache:'no-store'}).then(r=>r.ok?r.json():null).then(d
  <div id="message" role="status" aria-live="polite"></div>
  <div id="deviceContact"><p>هذا الجهاز يحتاج إلى اعتماد قبل تسجيل الدخول. برجاء التواصل مع المدرس:</p><a href="https://wa.me/201115336341" target="_blank" rel="noopener noreferrer">تواصل عبر واتساب</a><br><br><a href="tel:+201115336341">اتصال هاتفي</a></div>
  <div id="profile" class="profile"></div>
- <nav class="auth-links" aria-label="روابط الحساب"><a class="primary-link" href="./register.html">تسجيل طالب جديد</a><a href="./index.html">العودة للصفحة الرئيسية</a></nav>
+ <nav class="auth-links" aria-label="روابط الحساب"><a class="primary-link" href="./register.html">تسجيل طالب جديد</a><a href="./parent.html">بوابة ولي الأمر</a><a href="./parent.html">بوابة ولي الأمر</a><a href="./index.html">العودة للصفحة الرئيسية</a></nav>
 </main>
 <script>
 (()=>{const key='zm-academy-theme';let saved=null;try{saved=localStorage.getItem(key)}catch(e){}const btn=document.getElementById('themeToggle');const icon=btn.querySelector('.theme-icon');const label=btn.querySelector('.theme-label');const meta=document.querySelector('meta[name="theme-color"]');function paint(t){document.body.dataset.theme=t;const light=t==='light';icon.textContent=light?'☾':'☀';label.textContent=light?'الوضع الداكن':'الوضع الفاتح';btn.setAttribute('aria-label',light?'تفعيل الوضع الداكن':'تفعيل الوضع الفاتح');meta.content=light?'#f4f6ff':'#08090d';try{localStorage.setItem(key,t)}catch(e){}}paint(saved==='light'?'light':'dark');btn.addEventListener('click',()=>paint(document.body.dataset.theme==='light'?'dark':'light'))})();

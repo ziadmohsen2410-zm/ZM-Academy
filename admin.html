@@ -1,1285 +1,469 @@
-
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="theme-color" content="#050611">
+<meta name="theme-color" content="#070b18">
 <title>ZM Academy | لوحة التحكم</title>
-<link rel="stylesheet" href="admin-extensions.css">
+<link rel="icon" type="image/png" sizes="192x192" href="./assets/icon-192.png">
 <style>
-:root{--bg:#050611;--panel:#0b1022;--panel2:#101a35;--text:#eef5ff;--muted:#9baed0;--red:#ff557f;--green:#45f0c0;--cyan:#4cecff;--violet:#a77bff;--line:rgba(102,220,255,.24);--glow:0 0 28px rgba(76,236,255,.12),0 18px 55px rgba(0,0,0,.42)}
-*{box-sizing:border-box}
-html{scroll-behavior:smooth}
-body{margin:0;min-height:100vh;overflow-x:hidden;color:var(--text);font-family:Arial,Tahoma,sans-serif;background:radial-gradient(ellipse at 12% 12%,rgba(92,55,190,.28),transparent 34%),radial-gradient(ellipse at 88% 18%,rgba(0,183,255,.20),transparent 31%),radial-gradient(ellipse at 52% 100%,rgba(79,60,180,.20),transparent 42%),#050611}
-body:before{content:"";position:fixed;inset:0;pointer-events:none;z-index:-1;opacity:.28;background-image:radial-gradient(1px 1px at 20px 30px,#fff 98%,transparent),radial-gradient(1px 1px at 80px 110px,#80eaff 98%,transparent),radial-gradient(2px 2px at 160px 70px,#b99aff 98%,transparent);background-size:270px 220px}
-header{position:relative;padding:22px 18px;background:linear-gradient(110deg,rgba(5,9,25,.97),rgba(17,18,52,.94));border-bottom:1px solid rgba(76,236,255,.35);box-shadow:0 12px 45px rgba(0,0,0,.38)}
-header h1{margin:0;color:#8ceeff;font-size:clamp(24px,4vw,32px);text-shadow:0 0 12px rgba(76,236,255,.5)}
-header p{margin:8px 0 0;color:var(--muted);font-size:13px}
-main{max-width:1180px;margin:auto;padding:24px 18px 60px}
-.card{background:linear-gradient(145deg,rgba(13,21,47,.96),rgba(7,12,30,.98));border:1px solid rgba(102,220,255,.20);border-radius:18px;padding:21px;margin-bottom:18px;box-shadow:var(--glow)}
-h2{font-size:18px;margin:0 0 15px;color:#b9a5ff;display:flex;align-items:center;gap:10px}
-h2:before{content:"";width:4px;height:19px;border-radius:8px;background:linear-gradient(#4cecff,#a77bff)}
-h3{font-size:15px;color:#8ceeff;margin:20px 0 10px}
-input,select,textarea{width:100%;padding:13px 14px;margin:7px 0 14px;border:1px solid rgba(102,220,255,.25);border-radius:11px;background:rgba(3,8,23,.95);color:#f3f7ff;font-size:15px;outline:none;font-family:inherit}
-textarea{min-height:95px;resize:vertical;line-height:1.8}
-input:focus,select:focus,textarea:focus{border-color:var(--cyan);box-shadow:0 0 0 3px rgba(76,236,255,.12)}
-input::placeholder,textarea::placeholder{color:#7185ac}
-label{font-size:13px;color:#b7c9e8;display:block}
-button{border:1px solid rgba(154,238,255,.6);border-radius:11px;padding:11px 16px;background:linear-gradient(120deg,#63edff,#817bff);color:#071020;font-weight:800;font-size:14px;cursor:pointer;margin:4px;font-family:inherit}
-button:hover{filter:brightness(1.1)}
-button.secondary{background:linear-gradient(120deg,#24366d,#35265f);border-color:rgba(167,123,255,.42);color:#e6eaff}
-button.danger{background:linear-gradient(120deg,#a52d67,#672b75);border-color:rgba(255,85,127,.5);color:#fff}
-button.success{background:linear-gradient(120deg,#1b987d,#2676a5);color:#fff;border-color:#45f0c0}
-button.preview{background:linear-gradient(120deg,#7b55d9,#277fba);color:#fff;border-color:#a77bff}
-button:disabled{opacity:.45;cursor:not-allowed}
-.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
-.row>*{flex:1}
-.item{background:linear-gradient(125deg,rgba(17,31,66,.96),rgba(9,16,39,.96));border:1px solid rgba(102,220,255,.18);border-radius:14px;padding:15px;margin:11px 0}
-.item strong{display:block;font-size:15px;color:#f0f6ff;margin-bottom:7px}
-.item small{display:inline-block;margin:3px 8px 3px 0;line-height:1.8}
-small,.muted{color:var(--muted)}
+:root{--bg:#070b18;--bg2:#0d1428;--surface:#121b33;--surface2:#182444;--surface3:#0f172c;--text:#eef4ff;--muted:#97a8c8;--primary:#4cc9ff;--secondary:#9b7bff;--ok:#45e0b3;--warn:#ffcc66;--danger:#ff6b93;--line:rgba(118,170,255,.18);--radius:18px;--shadow:0 18px 50px rgba(0,0,0,.28);--font:Tahoma,Arial,sans-serif}
+*{box-sizing:border-box}html,body{margin:0;min-height:100%;background:radial-gradient(ellipse at 10% 0,rgba(76,201,255,.12),transparent 30%),radial-gradient(ellipse at 90% 10%,rgba(155,123,255,.14),transparent 30%),var(--bg);color:var(--text);font-family:var(--font)}body{overflow-x:hidden}
+a{color:inherit;text-decoration:none}button,input,select,textarea{font:inherit}
+button{border:0;border-radius:12px;padding:10px 14px;background:linear-gradient(120deg,var(--primary),var(--secondary));color:#08101f;font-weight:700;cursor:pointer}button:hover{filter:brightness(1.06)}button.ghost{background:rgba(255,255,255,.04);color:var(--text);border:1px solid var(--line)}button.danger{background:linear-gradient(120deg,#d94b72,#8b4bd9);color:#fff}button.ok{background:linear-gradient(120deg,#22b88f,#3ea0ff);color:#041018}
+input,select,textarea{width:100%;padding:12px 13px;border-radius:12px;border:1px solid var(--line);background:rgba(6,12,24,.8);color:var(--text);outline:none}input:focus,select:focus,textarea:focus{border-color:rgba(76,201,255,.55);box-shadow:0 0 0 3px rgba(76,201,255,.12)}textarea{min-height:100px;resize:vertical}
+label{display:block;font-size:13px;color:#c6d6f2;margin:10px 0 6px}
+.app{display:grid;grid-template-columns:280px 1fr;min-height:100vh}
+.sidebar{position:sticky;top:0;height:100vh;padding:18px;border-left:1px solid var(--line);background:linear-gradient(180deg,rgba(18,27,51,.98),rgba(10,15,28,.98));overflow:auto}
+.brand{display:flex;gap:12px;align-items:center;padding:10px;border-radius:16px;background:rgba(255,255,255,.03);margin-bottom:16px}.brand img{width:46px;height:46px;border-radius:14px;object-fit:cover;border:1px solid var(--line)}.brand h1{font-size:18px;margin:0}.brand p{margin:2px 0 0;color:var(--muted);font-size:12px}
+.nav{display:flex;flex-direction:column;gap:6px}.nav button{width:100%;text-align:right;background:transparent;color:var(--muted);border:1px solid transparent;padding:11px 12px;border-radius:12px}.nav button.active,.nav button:hover{background:rgba(76,201,255,.08);color:var(--text);border-color:rgba(76,201,255,.14)}
+.main{padding:22px;min-width:0}
+.topbar{display:flex;gap:12px;justify-content:space-between;align-items:center;margin-bottom:18px;flex-wrap:wrap}.topbar .title h2{margin:0;font-size:26px}.topbar .title p{margin:4px 0 0;color:var(--muted);font-size:13px}.topbar .actions{display:flex;gap:8px;flex-wrap:wrap}
+.grid{display:grid;gap:14px}.stats{grid-template-columns:repeat(4,minmax(0,1fr));margin-bottom:18px}
+.card{background:linear-gradient(160deg,rgba(18,27,51,.96),rgba(12,19,36,.96));border:1px solid var(--line);border-radius:var(--radius);padding:18px;box-shadow:var(--shadow)}.card h3{margin:0 0 12px;font-size:16px;color:#cfe0ff}
+.stat .k{font-size:28px;font-weight:800;margin:4px 0}.stat .l{color:var(--muted);font-size:13px}
+.section{display:none}.section.active{display:block}
+.table-wrap{overflow:auto;border:1px solid var(--line);border-radius:14px}table{width:100%;border-collapse:collapse;min-width:700px}th,td{padding:11px 10px;border-bottom:1px solid rgba(255,255,255,.06);text-align:right;font-size:14px;vertical-align:top}th{color:#c7d8f5;background:rgba(255,255,255,.02);position:sticky;top:0}
+.badge{display:inline-flex;align-items:center;padding:4px 10px;border-radius:999px;font-size:12px;border:1px solid var(--line);background:rgba(255,255,255,.04)}.badge.ok{color:#8ff0cc;border-color:rgba(69,224,179,.25);background:rgba(69,224,179,.08)}.badge.warn{color:#ffe0a3;border-color:rgba(255,204,102,.25);background:rgba(255,204,102,.08)}.badge.danger{color:#ffb1c5;border-color:rgba(255,107,147,.25);background:rgba(255,107,147,.08)}
+.row{display:flex;gap:10px;flex-wrap:wrap}.row>*{flex:1;min-width:180px}
+.toolbar{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px}.toolbar>*{flex:1;min-width:160px}
+.muted{color:var(--muted)}.small{font-size:12px}
+.list{display:flex;flex-direction:column;gap:10px}.item{padding:14px;border:1px solid var(--line);border-radius:14px;background:rgba(255,255,255,.02)}
+.split{display:grid;grid-template-columns:1.3fr .7fr;gap:14px}
+.login-wrap{min-height:100vh;display:grid;place-items:center;padding:20px}.login{width:min(460px,100%)}
+.msg{padding:12px 14px;border-radius:12px;margin-bottom:14px;border:1px solid var(--line);display:none}.msg.show{display:block}.msg.ok{background:rgba(69,224,179,.08);color:#b8ffe8;border-color:rgba(69,224,179,.2)}.msg.err{background:rgba(255,107,147,.08);color:#ffd0dc;border-color:rgba(255,107,147,.2)}
 .hidden{display:none!important}
-#message{padding:12px;border-radius:10px;margin:12px 0;display:none;border:1px solid transparent;box-shadow:var(--glow)}
-#message.ok{display:block;background:rgba(14,92,77,.48);border-color:rgba(69,240,192,.35);color:#a8ffe5}
-#message.err{display:block;background:rgba(105,25,61,.5);border-color:rgba(255,85,127,.4);color:#ffc1d5}
-.topline{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
-.check{display:flex;align-items:center;gap:8px;margin:8px 0 14px;padding:9px 12px;border:1px solid rgba(102,220,255,.2);border-radius:10px;background:rgba(4,9,25,.55)}
-.check input{width:auto;margin:0;accent-color:var(--cyan)}
-.status{display:inline-block;padding:5px 10px;border-radius:8px;background:rgba(76,236,255,.11);border:1px solid rgba(76,236,255,.3);color:#9cefff;font-size:12px;margin-top:7px}
-#loginSection{max-width:570px;margin:8vh auto 30px;padding:28px}
-#loginSection button{width:100%;margin:8px 0 0;padding:14px}
-.hint{font-size:12px;line-height:1.8;color:var(--muted);margin:0 0 12px}
-.editor-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
-.editor-field{min-width:0}
-.editor-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:15px}
-.editor-actions button{flex:1;min-width:130px}
-.editor-note{padding:12px;border-radius:12px;background:rgba(76,236,255,.07);border:1px solid rgba(76,236,255,.2);line-height:1.8;color:#c6eaff;font-size:13px;margin:12px 0}
-.section-toggles{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
-.section-toggles .check{margin:0}
-@media(max-width:650px){
- header{padding:18px 14px}
- main{padding:15px 11px 38px}
- .card{padding:16px 13px;border-radius:15px}
- .row{gap:5px}
- .row button{min-width:0;padding:10px 8px;font-size:12px}
- .item{padding:12px}
- #loginSection{margin:5vh auto 20px;padding:20px 15px}
- .editor-grid,.section-toggles{grid-template-columns:1fr}
- .editor-actions button{min-width:100%}
-}
-@media(prefers-reduced-motion:reduce){*,*:before,*:after{scroll-behavior:auto!important;transition:none!important;animation:none!important}}
-/* ZM Academy Control Center navigation */
-.admin-shell{display:grid;grid-template-columns:230px minmax(0,1fr);gap:16px;align-items:start;margin:16px 0}
-.admin-sidebar{position:sticky;top:12px;padding:12px;border:1px solid rgba(102,220,255,.22);border-radius:18px;background:linear-gradient(160deg,rgba(12,22,48,.97),rgba(7,12,29,.98));box-shadow:var(--glow)}
-.admin-sidebar-title{font-size:12px;color:var(--muted);padding:8px 10px 12px}
-.admin-nav{display:grid;gap:6px}
-.admin-nav button{display:flex;align-items:center;gap:10px;width:100%;margin:0;text-align:right;background:transparent;color:var(--text);border:1px solid transparent;padding:12px;border-radius:12px;font-weight:700}
-.admin-nav button .nav-icon{width:27px;height:27px;display:grid;place-items:center;border-radius:9px;background:rgba(76,236,255,.10);font-size:16px}
-.admin-nav button.active{background:linear-gradient(110deg,rgba(76,236,255,.17),rgba(167,123,255,.16));border-color:rgba(76,236,255,.34);color:#a9f4ff}
-.admin-nav button:hover{border-color:rgba(167,123,255,.35);filter:none}
-.admin-main{min-width:0}
-.admin-page-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin:0 0 14px;padding:14px 17px;border:1px solid rgba(102,220,255,.2);border-radius:15px;background:linear-gradient(110deg,rgba(15,28,58,.94),rgba(30,22,65,.86))}
-.admin-page-heading h2{margin:0}.admin-page-heading p{margin:5px 0 0;color:var(--muted);font-size:12px}
-.admin-overview-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-bottom:16px}
-.admin-stat{padding:15px;border:1px solid rgba(102,220,255,.2);border-radius:14px;background:linear-gradient(145deg,rgba(16,31,64,.95),rgba(8,14,34,.96))}
-.admin-stat strong{display:block;font-size:23px;color:#9cefff;margin-top:7px}.admin-stat span{font-size:12px;color:var(--muted)}
-.admin-quick{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.admin-quick button{margin:0;min-height:58px;text-align:right;background:rgba(26,43,83,.75);color:var(--text);border-color:rgba(102,220,255,.2)}
-.admin-search{max-width:260px;margin:0}.admin-page[hidden], [data-admin-page][hidden]{display:none!important}
-@media(max-width:850px){.admin-shell{grid-template-columns:1fr}.admin-sidebar{position:static}.admin-nav{display:flex;overflow-x:auto;padding-bottom:3px}.admin-nav button{width:auto;min-width:max-content}.admin-nav button span:last-child{white-space:nowrap}.admin-overview-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
-@media(max-width:520px){.admin-overview-grid{grid-template-columns:1fr 1fr}.admin-stat{padding:12px}.admin-quick{grid-template-columns:1fr}}
+.pill{display:inline-block;padding:2px 8px;border-radius:999px;background:rgba(76,201,255,.12);color:#aee8ff;font-size:12px}
+kbd{background:#0b1222;border:1px solid var(--line);padding:2px 6px;border-radius:6px;font-size:12px}
+@media(max-width:1100px){.stats{grid-template-columns:repeat(2,1fr)}.split{grid-template-columns:1fr}}
+@media(max-width:860px){.app{grid-template-columns:1fr}.sidebar{position:static;height:auto;border-left:0;border-bottom:1px solid var(--line)}}
+@media(max-width:560px){.main{padding:14px}.stats{grid-template-columns:1fr}.topbar .title h2{font-size:22px}}
 </style>
-<style id="zm-global-design-runtime">
-:root{--zm-primary:#35a8ff;--zm-secondary:#9b70ff;--zm-bg:#080d1b;--zm-surface:#111b34;--zm-text:#f4f7ff;--zm-muted:#a5b3d0;--zm-radius:18px}
-html[data-zm-template="glass"] body{background-image:radial-gradient(circle at 10% 0%,color-mix(in srgb,var(--zm-primary) 20%,transparent),transparent 42%),radial-gradient(circle at 90% 100%,color-mix(in srgb,var(--zm-secondary) 18%,transparent),transparent 45%),linear-gradient(135deg,var(--zm-bg),var(--zm-surface))!important}
-html[data-zm-template="minimal"] body{background:var(--zm-bg)!important}
-html[data-zm-template="luxury"] body{background:radial-gradient(ellipse at top,var(--zm-surface),var(--zm-bg) 72%)!important}
-html[data-zm-template="editorial"] body{background:linear-gradient(180deg,var(--zm-bg),color-mix(in srgb,var(--zm-surface) 75%,var(--zm-bg)))!important}
-body{color:var(--zm-text)!important}
-:where(.card,.panel,.item,.section,.profile,.notice,.tile,.course-card,.step,.about,.announcement,main>section,.hero-content){border-radius:var(--zm-radius)}
-:where(h1,h2,h3,.brand,.eyebrow,.tag,.chip){--zm-heading:var(--zm-primary)}
-:where(.btn,button:not(.theme-toggle),.primary,.small-btn){background-image:linear-gradient(115deg,var(--zm-primary),var(--zm-secondary))!important;border-color:color-mix(in srgb,var(--zm-primary) 55%,transparent)!important}
-:where(a,.eyebrow,.tag,.brand-link,.theme-toggle,label){--zm-link:var(--zm-primary)}
-:where(.card,.panel,.item,.section,.profile,.notice,.tile,.course-card,.step){border-color:color-mix(in srgb,var(--zm-primary) 25%,transparent)}
-body[data-zm-mode="light"],html[data-zm-mode="light"] body{color-scheme:light!important;--zm-bg:#f4f6ff;--zm-surface:#fff;--zm-text:#202747;--zm-muted:#68708e}
-body[data-zm-mode="light"] :where(.card,.panel,.item,.section,.profile,.tile,.course-card,.step){background:var(--zm-surface)!important;color:var(--zm-text)!important}
-html[data-zm-template="glass"] :where(.card,.panel,.item,.section,.profile,.tile,.course-card){backdrop-filter:blur(16px);box-shadow:0 16px 45px color-mix(in srgb,var(--zm-primary) 12%,transparent)}
-html[data-zm-template="minimal"] :where(.card,.panel,.item,.section,.profile,.tile,.course-card){box-shadow:none!important}
-html[data-zm-template="luxury"] :where(.card,.panel,.item,.section,.profile,.tile,.course-card){box-shadow:0 18px 55px #0005,0 0 0 1px color-mix(in srgb,var(--zm-secondary) 12%,transparent)}
-
-/* Global design-token bridge: connects the central palette to each page's native tokens. */
-:root{--accent:var(--zm-primary);--accent2:var(--zm-secondary);--blue:var(--zm-primary);--purple:var(--zm-secondary);--cyan:var(--zm-primary);--violet:var(--zm-secondary);--line:color-mix(in srgb,var(--zm-primary) 28%,transparent);--border:color-mix(in srgb,var(--zm-primary) 24%,transparent);--bg:var(--zm-bg);--panel:var(--zm-surface);--panel2:color-mix(in srgb,var(--zm-surface) 82%,var(--zm-primary));--surface:var(--zm-surface);--surface2:var(--zm-surface);--surface-2:var(--zm-surface);--text:var(--zm-text);--muted:var(--zm-muted)}
-html[data-zm-mode="light"]{color-scheme:light!important}
-html[data-zm-mode="light"] body{background:var(--zm-bg)!important;color:var(--zm-text)!important}
-html[data-zm-mode="light"] :where(input,select,textarea){background:var(--zm-surface)!important;color:var(--zm-text)!important;border-color:var(--line)!important}
-:where(h1,h2,h3,.brand,.eyebrow,.tag,.chip,.brand-link,label){color:var(--zm-primary)}
-:where(.card,.panel,.item,.section,.profile,.tile,.course-card,.step){background-color:var(--zm-surface)}
-
-
-html[data-zm-template="future"] body{background:radial-gradient(ellipse at 12% 8%,color-mix(in srgb,var(--zm-secondary) 18%,transparent),transparent 36%),radial-gradient(ellipse at 88% 18%,color-mix(in srgb,var(--zm-primary) 16%,transparent),transparent 34%),var(--zm-bg)!important}
-html[data-zm-template="glass"] body{background:radial-gradient(circle at 10% 0%,color-mix(in srgb,var(--zm-primary) 20%,transparent),transparent 42%),radial-gradient(circle at 90% 100%,color-mix(in srgb,var(--zm-secondary) 18%,transparent),transparent 45%),linear-gradient(135deg,var(--zm-bg),var(--zm-surface))!important}
-html[data-zm-template="editorial"] body{font-family:Georgia,'Cairo',Tahoma,serif!important}html[data-zm-template="editorial"] h1,html[data-zm-template="editorial"] h2,html[data-zm-template="editorial"] h3{letter-spacing:.1px}
-html[data-zm-template="future"] :where(.card,.panel,.item,.section,.profile,.tile,.course-card){box-shadow:0 14px 42px color-mix(in srgb,var(--zm-primary) 9%,transparent)}
-html[data-zm-template="luxury"] :where(.btn,button:not(.theme-toggle)){letter-spacing:.2px;text-transform:none}
-html[data-zm-template="minimal"] :where(.btn,button:not(.theme-toggle)){box-shadow:none!important}
-:where(h2,h3,.eyebrow,.tag,.brand-link,label){color:var(--zm-primary)!important}
-
-
-:root{--zm-font:'Cairo',Tahoma,Arial,sans-serif}
-body{font-family:var(--zm-font)!important}
-html[data-zm-font="tajawal"] body{font-family:'Tajawal',Tahoma,Arial,sans-serif!important}
-html[data-zm-font="system"] body{font-family:system-ui,Arial,sans-serif!important}
-html[data-zm-font="georgia"] body{font-family:Georgia,serif!important}
-html[data-zm-buttons="solid"] :where(.btn,button:not(.theme-toggle),.primary,.small-btn){background:var(--zm-primary)!important;color:#fff!important}
-html[data-zm-buttons="outline"] :where(.btn,button:not(.theme-toggle),.primary,.small-btn){background:transparent!important;color:var(--zm-primary)!important;border:1px solid var(--zm-primary)!important;box-shadow:none!important}
-html[data-zm-cards="glass"] :where(.card,.panel,.item,.section,.profile,.tile,.course-card,.step){background:color-mix(in srgb,var(--zm-surface) 72%,transparent)!important;backdrop-filter:blur(16px)}
-html[data-zm-cards="outline"] :where(.card,.panel,.item,.section,.profile,.tile,.course-card,.step){background:transparent!important;border:1px solid color-mix(in srgb,var(--zm-primary) 45%,transparent)!important;box-shadow:none!important}
-html[data-zm-motion="off"] *,html[data-zm-motion="off"] *:before,html[data-zm-motion="off"] *:after{animation:none!important;transition:none!important;scroll-behavior:auto!important}
-
-</style>
-<script id="zm-global-design-loader">
-(()=>{const API='https://zm-academy-api.ziadmohsen4567.workers.dev';const safeHex=(v,d)=>/^#[0-9a-f]{6}$/i.test(String(v||''))?v:d;const text=(sel,val)=>{const n=document.querySelector(sel);if(n&&typeof val==='string'&&val.trim())n.textContent=val};const attr=(sel,name,val)=>{const n=document.querySelector(sel);if(n&&typeof val==='string'&&val.trim())n.setAttribute(name,val)};
-function apply(s){if(!s||typeof s!=='object')return;const t=s.theme||{},b=s.branding||{},root=document.documentElement;const vals={primary:safeHex(t.primary,'#35a8ff'),secondary:safeHex(t.secondary,'#9b70ff'),background:safeHex(t.background,'#080d1b'),surface:safeHex(t.surface,'#111b34'),text:safeHex(t.text,'#f4f7ff'),muted:safeHex(t.muted,'#a5b3d0')};for(const [k,v] of Object.entries(vals))root.style.setProperty('--zm-'+k,v);root.style.setProperty('--zm-radius',t.corners==='sharp'?'5px':t.corners==='round'?'28px':'18px');root.dataset.zmTemplate=['glass','minimal','luxury','editorial'].includes(t.template)?t.template:'future';root.dataset.zmFont=['tajawal','system','georgia'].includes(t.font)?t.font:'cairo';root.dataset.zmButtons=['solid','outline'].includes(t.buttons)?t.buttons:'gradient';root.dataset.zmCards=['glass','outline'].includes(t.cards)?t.cards:'solid';root.dataset.zmMotion=t.motion==='off'?'off':'on';const mode=t.mode==='light'?'light':t.mode==='system'?(matchMedia('(prefers-color-scheme: light)').matches?'light':'dark'):'dark';root.dataset.zmMode=mode;document.body.dataset.zmMode=mode;
-if(s.brandName){document.title=document.title.replace(/ZM Academy|ZM ACADEMY|Ziad Mohsen Academy/gi,s.brandName);const brandSpan=document.querySelector('.brand span');if(brandSpan&&brandSpan.firstChild&&brandSpan.firstChild.nodeType===3)brandSpan.firstChild.nodeValue=s.brandName;text('.brand-link',s.brandName.toUpperCase());text('header h1',s.brandName);}
-if(s.tagline){text('.brand small',s.tagline);text('.tagline',s.tagline);}
-const h=s.hero||{};text('.hero-copy .eyebrow',h.eyebrow);const heroTitle=document.querySelector('.hero-copy h1');if(heroTitle&&h.title){heroTitle.textContent='';heroTitle.append(document.createTextNode(h.title+' '));if(h.highlight){const span=document.createElement('span');span.textContent=h.highlight;heroTitle.append(span);}}
-text('.hero-copy>p',h.description);const links=document.querySelectorAll('.hero-actions a');if(links[0]){if(h.primaryText)links[0].textContent=h.primaryText;if(h.primaryUrl)links[0].href=h.primaryUrl;}if(links[1]){if(h.secondaryText)links[1].textContent=h.secondaryText;if(h.secondaryUrl)links[1].href=h.secondaryUrl;}
-const a=s.about||{};if(a.title)text('#about h2',a.title);if(a.description){const p=document.querySelector('#about .about-copy p');if(p)p.textContent=a.description;}
-const an=s.announcement||{};if(an.enabled&&an.text){let n=document.getElementById('zmPublishedAnnouncement');if(!n){n=document.createElement('aside');n.id='zmPublishedAnnouncement';n.style.cssText='max-width:1100px;margin:24px auto;padding:18px 22px;border:1px solid var(--zm-primary);border-radius:var(--zm-radius);background:var(--zm-surface);color:var(--zm-text);width:92%;';const target=document.querySelector('main');if(target)target.prepend(n);}n.textContent=an.text;if(an.buttonText&&an.url){const link=document.createElement('a');link.href=an.url;link.textContent=' '+an.buttonText;link.style.color='var(--zm-primary)';n.append(link);}}else document.getElementById('zmPublishedAnnouncement')?.remove();
-const sections=s.sections||{};for(const [key,id] of Object.entries({subjects:'subjects',curriculum:'curriculum',library:'library',about:'about',join:'join'})){const node=document.getElementById(id);if(node&&typeof sections[key]==='boolean')node.hidden=!sections[key];}
-if(b.logoUrl){document.querySelectorAll('.brand img,.logo-large').forEach(n=>n.src=b.logoUrl);}if(b.heroImageUrl){const hero=document.querySelector('.hero');if(hero)hero.style.backgroundImage='linear-gradient(90deg,rgba(5,8,20,.82),rgba(5,8,20,.48)),url("'+b.heroImageUrl.replace(/["\\]/g,'')+'")';}
-if(b.whatsapp){document.querySelectorAll('a[href*="wa.me/"]').forEach(n=>{try{const u=new URL(n.href);u.pathname='/'+b.whatsapp.replace(/\D/g,'');n.href=u.href;}catch(e){}})}
-const social={facebook:b.facebook,youtube:b.youtube,telegram:b.telegram};let socialBox=document.getElementById('zmSocialLinks');if(Object.values(social).some(Boolean)&&!socialBox){socialBox=document.createElement('nav');socialBox.id='zmSocialLinks';socialBox.style.cssText='display:flex;justify-content:center;gap:12px;flex-wrap:wrap;padding:18px;color:var(--zm-primary)';const footer=document.querySelector('footer')||document.body;footer.append(socialBox);}if(socialBox){socialBox.replaceChildren();for(const [k,url] of Object.entries(social)){if(url){const a=document.createElement('a');a.href=url;a.target='_blank';a.rel='noopener noreferrer';a.textContent={facebook:'Facebook',youtube:'YouTube',telegram:'Telegram'}[k];socialBox.append(a);}}}
-}
-fetch(API+'/api/homepage',{cache:'no-store'}).then(r=>r.ok?r.json():null).then(d=>{if(d&&d.success)apply(d.settings)}).catch(()=>{});
-})();
-</script>
 </head>
 <body>
-<header>
-  <div class="topline">
-    <div><h1>ZM Academy</h1><p>لوحة الإدارة والتحكم في الأكاديمية</p></div>
-    <button id="logoutBtn" class="secondary hidden" onclick="logout()">تسجيل الخروج</button>
+<div id="loginView" class="login-wrap">
+  <div class="card login">
+    <div class="brand" style="margin-bottom:18px"><img src="./assets/academy-logo.jpg" alt="ZM"><div><h1>ZM Academy</h1><p>لوحة التحكم الإدارية</p></div></div>
+    <div id="loginMsg" class="msg err"></div>
+    <label>اسم المستخدم</label><input id="loginUser" autocomplete="username">
+    <label>كلمة المرور</label><input id="loginPass" type="password" autocomplete="current-password">
+    <div class="row" style="margin-top:14px"><button id="loginBtn">تسجيل الدخول</button></div>
+    <p class="muted small" style="margin-top:14px">يتم التحقق من الصلاحيات على الخادم. تأكد من نشر Worker المحدث.</p>
   </div>
-</header>
+</div>
 
-<main>
-  <div id="message" role="status" aria-live="polite"></div>
-
-  <section id="loginSection" class="card">
-    <h2>تسجيل دخول الإدارة</h2>
-    <label for="username">اسم المستخدم</label>
-    <input id="username" autocomplete="username" placeholder="اسم المستخدم">
-    <label for="password">كلمة المرور</label>
-    <input id="password" type="password" autocomplete="current-password" placeholder="كلمة المرور">
-    <button id="loginBtn" onclick="login()">دخول لوحة التحكم</button>
-  </section>
-
-  <section id="dashboard" class="hidden">
-    <div class="admin-shell">
-      <aside class="admin-sidebar" aria-label="أقسام لوحة الإدارة">
-        <div class="admin-sidebar-title">مركز القيادة والتحكم</div>
-        <input class="admin-search" id="adminNavSearch" type="search" placeholder="ابحث عن قسم..." aria-label="البحث في أقسام الإدارة">
-        <nav class="admin-nav" id="adminNav">
-          <button type="button" data-page="quizzes" onclick="showAdminPage('quizzes')"><span class="nav-icon">✓</span><span>الاختبارات</span></button>
-          <button type="button" class="active" data-page="overview" onclick="showAdminPage('overview')"><span class="nav-icon">⌂</span><span>نظرة عامة</span></button>
-          <button type="button" data-page="design" onclick="showAdminPage('design')"><span class="nav-icon">✦</span><span>تصميم الموقع</span></button>
-          <button type="button" data-page="content" onclick="showAdminPage('content')"><span class="nav-icon">▤</span><span>المواد والمحتوى</span></button>
-          <button type="button" data-page="students" onclick="showAdminPage('students')"><span class="nav-icon">♙</span><span>الطلاب</span></button>
-          <button type="button" data-page="orders" onclick="showAdminPage('orders')"><span class="nav-icon">▣</span><span>الطلبات</span></button>
-          <button type="button" data-page="security" onclick="showAdminPage('security')"><span class="nav-icon">◈</span><span>الأمان والأجهزة</span></button>
-          <button type="button" data-page="builder" onclick="showAdminPage('builder')"><span class="nav-icon">▧</span><span>محرر الصفحات</span></button>
-          <button type="button" data-page="media" onclick="showAdminPage('media')"><span class="nav-icon">▣</span><span>مكتبة الوسائط</span></button>
-          <button type="button" data-page="parents" onclick="showAdminPage('parents')"><span class="nav-icon">♧</span><span>أولياء الأمور</span></button>
-          <button type="button" data-page="ads" onclick="showAdminPage('ads')"><span class="nav-icon">▣</span><span>مركز الإعلانات</span></button>
-          <button type="button" data-page="notifications" onclick="showAdminPage('notifications')"><span class="nav-icon">◉</span><span>الإشعارات</span></button>
-          <button type="button" data-page="analytics" onclick="showAdminPage('analytics')"><span class="nav-icon">▥</span><span>التقارير وسجل التدقيق</span></button>
-          <button type="button" data-page="ai" onclick="showAdminPage('ai')"><span class="nav-icon">✧</span><span>مساعد الذكاء الاصطناعي</span></button>
-          <button type="button" data-page="roles" onclick="showAdminPage('roles')"><span class="nav-icon">♙</span><span>الأدوار والصلاحيات</span></button>
-        </nav>
-      </aside>
-      <div class="admin-main">
-        <div class="admin-page-heading"><div><h2 id="adminPageTitle">نظرة عامة</h2><p id="adminPageSubtitle">ملخص سريع وإمكانية الوصول إلى أقسام الأكاديمية</p></div><span class="status">ZM CONTROL CENTER</span></div>
-        <div class="card" data-admin-page="overview" id="adminOverview">
-          <h2>مرحبًا بك في مركز القيادة</h2>
-          <p class="hint">اختر القسم الذي تريد إدارته. سيتم فتح أدواته بصورة مستقلة بدل عرض جميع الإعدادات في صفحة طويلة.</p>
-          <div class="admin-overview-grid">
-            <div class="admin-stat"><span>إدارة التصميم</span><strong>01</strong><span>ألوان وقوالب الصفحة</span></div>
-            <div class="admin-stat"><span>المحتوى التعليمي</span><strong>02</strong><span>مواد ودروس وملفات</span></div>
-            <div class="admin-stat"><span>إدارة الطلاب</span><strong>03</strong><span>الحسابات والمتابعة</span></div>
-            <div class="admin-stat"><span>الطلبات</span><strong>04</strong><span>طلبات الشراء والمراجعة</span></div>
-            <div class="admin-stat"><span>الأمان</span><strong>05</strong><span>الأجهزة واستعادة الحساب</span></div>
-            <div class="admin-stat"><span>حالة النظام</span><strong>●</strong><span>لوحة الإدارة متصلة بالواجهة</span></div>
-          </div>
-          <h3>الوصول السريع</h3>
-          <div class="admin-quick">
-            <button type="button" onclick="showAdminPage('design')">✦ تعديل تصميم الموقع</button>
-            <button type="button" onclick="showAdminPage('content')">▤ إدارة المواد والدروس</button>
-            <button type="button" onclick="showAdminPage('students')">♙ إدارة الطلاب</button>
-            <button type="button" onclick="showAdminPage('orders')">▣ مراجعة الطلبات</button>
-          </div>
-        </div>
-
-    <div class="card" id="homepageEditor" data-admin-page="design">
-      <div class="topline">
-        <h2>إدارة الصفحة الرئيسية</h2>
-        <span class="status" id="homepageStatus">لم يتم التحميل</span>
-      </div>
-
-      <p class="hint">من هنا تتحكم في المحتوى الذي يظهر للزوار. يمكنك معاينة التعديلات قبل حفظها أو نشرها.</p>
-
-      <div class="editor-note">
-        التعديلات المحفوظة كمسودة لا تظهر للزوار إلا بعد الضغط على «نشر الصفحة». استخدم زر المعاينة لمراجعة الشكل الحالي أولًا.
-      </div>
-
-      <h3>هوية الأكاديمية</h3>
-      <div class="editor-grid">
-        <div class="editor-field">
-          <label for="hpBrandName">اسم العلامة التجارية</label>
-          <input id="hpBrandName" maxlength="80" value="ZM Academy">
-        </div>
-        <div class="editor-field">
-          <label for="hpTagline">الشعار النصي</label>
-          <input id="hpTagline" maxlength="140" placeholder="التعلم بذكاء، والتفكير بلا حدود">
-        </div>
-      </div>
-
-      <h3>القسم الرئيسي Hero</h3>
-      <label for="hpEyebrow">النص الصغير أعلى العنوان</label>
-      <input id="hpEyebrow" maxlength="100" placeholder="WELCOME TO ZM ACADEMY">
-
-      <label for="hpTitle">العنوان الرئيسي</label>
-      <input id="hpTitle" maxlength="180" placeholder="معًا نحو تفكير أعمق">
-
-      <label for="hpHighlight">الكلمة أو العبارة المميزة</label>
-      <input id="hpHighlight" maxlength="100" placeholder="ومستقبل أفضل">
-
-      <label for="hpDescription">الوصف الرئيسي</label>
-      <textarea id="hpDescription" maxlength="1200" placeholder="اكتب وصف الأكاديمية الذي يظهر في الصفحة الرئيسية..."></textarea>
-
-      <div class="editor-grid">
-        <div class="editor-field">
-          <label for="hpPrimaryText">نص الزر الأول</label>
-          <input id="hpPrimaryText" maxlength="70" placeholder="ابدأ رحلتك التعليمية">
-        </div>
-        <div class="editor-field">
-          <label for="hpPrimaryUrl">رابط الزر الأول</label>
-          <input id="hpPrimaryUrl" maxlength="500" placeholder="register.html">
-        </div>
-        <div class="editor-field">
-          <label for="hpSecondaryText">نص الزر الثاني</label>
-          <input id="hpSecondaryText" maxlength="70" placeholder="تسجيل الدخول">
-        </div>
-        <div class="editor-field">
-          <label for="hpSecondaryUrl">رابط الزر الثاني</label>
-          <input id="hpSecondaryUrl" maxlength="500" placeholder="login.html">
-        </div>
-      </div>
-
-      <h3>الإعلان الرئيسي</h3>
-      <label class="check"><input id="hpAnnouncementEnabled" type="checkbox"> إظهار الإعلان</label>
-      <label for="hpAnnouncementText">نص الإعلان</label>
-      <textarea id="hpAnnouncementText" maxlength="500" placeholder="اكتب إعلانًا قصيرًا للطلاب..."></textarea>
-      <div class="editor-grid">
-        <div class="editor-field">
-          <label for="hpAnnouncementButton">نص رابط الإعلان</label>
-          <input id="hpAnnouncementButton" maxlength="70" placeholder="اعرف المزيد">
-        </div>
-        <div class="editor-field">
-          <label for="hpAnnouncementUrl">رابط الإعلان</label>
-          <input id="hpAnnouncementUrl" maxlength="500" placeholder="#subjects">
-        </div>
-      </div>
-
-      <h3>عن الأكاديمية</h3>
-      <label class="check"><input id="hpAboutEnabled" type="checkbox" checked> إظهار قسم عن الأكاديمية</label>
-      <label for="hpAboutTitle">عنوان القسم</label>
-      <input id="hpAboutTitle" maxlength="160" placeholder="مساحة تعليمية تصنع فرقًا">
-      <label for="hpAboutDescription">وصف الأكاديمية</label>
-      <textarea id="hpAboutDescription" maxlength="1500" placeholder="اكتب تعريفًا مختصرًا بالأكاديمية ورسالتها..."></textarea>
-
-      <h3>مركز التصميم الشامل — الألوان والثيمات والقوالب</h3>
-      <p class="hint">الإعدادات التالية تُنشر على الصفحة الرئيسية وصفحات الدخول والتسجيل ولوحة الطالب والإدارة.</p>
-      <div class="editor-grid">
-        <div class="editor-field"><label for="hpThemePreset">الثيم الجاهز</label><select id="hpThemePreset"><option value="neon">Future Neon — أزرق وبنفسجي</option><option value="royal">Royal Gold — أسود وذهبي</option><option value="ocean">Ocean — أزرق سماوي</option><option value="emerald">Emerald — أخضر زمردي</option><option value="rose">Rose — وردي وبنفسجي</option><option value="light">Clean Light — فاتح</option><option value="custom">ألوان مخصصة</option></select></div>
-        <div class="editor-field"><label for="hpTemplate">قالب الموقع</label><select id="hpTemplate"><option value="future">Future — تقني متطور</option><option value="glass">Glass — زجاجي</option><option value="minimal">Minimal — بسيط</option><option value="luxury">Luxury — فاخر</option><option value="editorial">Editorial — تعليمي تحريري</option></select></div>
-        <div class="editor-field"><label for="hpColorPrimary">اللون الأساسي</label><input id="hpColorPrimary" type="color" value="#35a8ff"></div>
-        <div class="editor-field"><label for="hpColorSecondary">اللون الثانوي</label><input id="hpColorSecondary" type="color" value="#9b70ff"></div>
-        <div class="editor-field"><label for="hpColorBackground">لون الخلفية</label><input id="hpColorBackground" type="color" value="#080d1b"></div>
-        <div class="editor-field"><label for="hpColorSurface">لون البطاقات والأسطح</label><input id="hpColorSurface" type="color" value="#111b34"></div>
-        <div class="editor-field"><label for="hpColorText">لون النص</label><input id="hpColorText" type="color" value="#f4f7ff"></div>
-        <div class="editor-field"><label for="hpColorMuted">لون النص الثانوي</label><input id="hpColorMuted" type="color" value="#a5b3d0"></div>
-        <div class="editor-field"><label for="hpDefaultMode">الوضع الافتراضي</label><select id="hpDefaultMode"><option value="dark">داكن</option><option value="light">فاتح</option><option value="system">حسب الجهاز</option></select></div>
-        <div class="editor-field"><label for="hpCornerStyle">استدارة العناصر</label><select id="hpCornerStyle"><option value="soft">ناعمة</option><option value="sharp">حادة</option><option value="round">دائرية</option></select></div>
-        <div class="editor-field"><label for="hpFontFamily">خط الموقع</label><select id="hpFontFamily"><option value="cairo">Cairo</option><option value="tajawal">Tajawal</option><option value="system">خط الجهاز</option><option value="georgia">Georgia</option></select></div>
-        <div class="editor-field"><label for="hpButtonStyle">شكل الأزرار</label><select id="hpButtonStyle"><option value="gradient">متدرجة</option><option value="solid">موحدة</option><option value="outline">محددة بإطار</option></select></div>
-        <div class="editor-field"><label for="hpCardStyle">شكل البطاقات</label><select id="hpCardStyle"><option value="solid">مصمتة</option><option value="glass">زجاجية</option><option value="outline">شفافة بإطار</option></select></div>
-        <div class="editor-field"><label for="hpMotion">الحركة والمؤثرات</label><select id="hpMotion"><option value="on">مفعّلة</option><option value="off">إيقاف الحركة</option></select></div>
-      </div>
-      <h3>الشعار والصور وروابط التواصل</h3>
-      <div class="editor-grid">
-        <div class="editor-field"><label for="hpLogoUrl">رابط الشعار</label><input id="hpLogoUrl" maxlength="800" placeholder="https://..."></div>
-        <div class="editor-field"><label for="hpHeroImageUrl">رابط صورة الخلفية الرئيسية</label><input id="hpHeroImageUrl" maxlength="800" placeholder="https://..."></div>
-        <div class="editor-field"><label for="hpWhatsapp">رقم واتساب الدولي</label><input id="hpWhatsapp" maxlength="30" placeholder="201xxxxxxxxx"></div>
-        <div class="editor-field"><label for="hpFacebook">رابط فيسبوك</label><input id="hpFacebook" maxlength="800" placeholder="https://facebook.com/..."></div>
-        <div class="editor-field"><label for="hpYoutube">رابط يوتيوب</label><input id="hpYoutube" maxlength="800" placeholder="https://youtube.com/..."></div>
-        <div class="editor-field"><label for="hpTelegram">رابط تليجرام</label><input id="hpTelegram" maxlength="800" placeholder="https://t.me/..."></div>
-      </div>
-
-      <h3>التحكم في ظهور الأقسام</h3>
-      <div class="section-toggles">
-        <label class="check"><input id="hpShowSubjects" type="checkbox" checked> المواد الدراسية</label>
-        <label class="check"><input id="hpShowCurriculum" type="checkbox" checked> المنهج</label>
-        <label class="check"><input id="hpShowLibrary" type="checkbox" checked> المكتبة</label>
-        <label class="check"><input id="hpShowAbout" type="checkbox" checked> عن الأكاديمية</label>
-        <label class="check"><input id="hpShowJoin" type="checkbox" checked> الانضمام للأكاديمية</label>
-      </div>
-
-      <div class="editor-actions">
-        <button class="preview" onclick="previewHomepage()">معاينة الصفحة</button>
-        <button class="secondary" onclick="loadHomepageSettings()">إعادة تحميل الإعدادات</button>
-        <button onclick="saveHomepageDraft()">حفظ المسودة</button>
-        <button class="success" onclick="publishHomepage()">نشر الصفحة الرئيسية</button>
-      </div>
-      <p class="hint" id="homepageUpdatedAt"></p>
+<div id="appView" class="app hidden">
+  <aside class="sidebar">
+    <div class="brand"><img src="./assets/academy-logo.jpg" alt="ZM"><div><h1>ZM Academy</h1><p id="adminIdentity">الإدارة</p></div></div>
+    <div class="nav" id="nav"></div>
+    <div style="margin-top:16px;padding:12px;border:1px solid var(--line);border-radius:14px" class="small muted">
+      <div>اختصار: <kbd>/</kbd> للبحث</div>
+      <div style="margin-top:6px">الحالة: <span id="healthBadge" class="badge warn">غير معروف</span></div>
     </div>
-
-    <div class="card" data-admin-page="content">
-      <div class="topline"><h2>إدارة المواد الدراسية</h2><button onclick="loadSubjects()">تحديث</button></div>
-      <div id="subjectsList"><p class="muted">جارٍ تحميل المواد...</p></div>
-    </div>
-
-    <div class="card" data-admin-page="content">
-      <h2 id="subjectFormTitle">إضافة مادة دراسية</h2>
-      <input id="subjectId" type="hidden">
-      <label for="subjectName">اسم المادة</label>
-      <input id="subjectName" maxlength="120" placeholder="مثال: الفلسفة والمنطق">
-      <label for="subjectGrade">الصف الدراسي</label>
-      <input id="subjectGrade" maxlength="80" placeholder="مثال: الصف الأول الثانوي">
-      <div class="row">
-        <button id="saveSubjectBtn" onclick="saveSubject()">حفظ المادة</button>
-        <button class="secondary" onclick="resetSubjectForm()">إلغاء</button>
+  </aside>
+  <main class="main">
+    <div class="topbar">
+      <div class="title"><h2 id="sectionTitle">لوحة المعلومات</h2><p id="sectionDesc">نظرة عامة على المنصة</p></div>
+      <div class="actions">
+        <input id="globalSearch" placeholder="بحث سريع..." style="min-width:220px">
+        <button class="ghost" id="refreshBtn">تحديث</button>
+        <button class="danger" id="logoutBtn">خروج</button>
       </div>
     </div>
+    <div id="appMsg" class="msg"></div>
 
-    <div class="card" data-admin-page="content">
-      <h2>إدارة الدروس والمحتوى</h2>
-      <label for="materialSubject">تصفية حسب المادة</label>
-      <select id="materialSubject" onchange="loadMaterials()"><option value="">كل المواد</option></select>
-      <div id="materialsList"><p class="muted">اختر تحديث المواد لعرض المحتوى.</p></div>
-    </div>
-
-    <div class="card" data-admin-page="content">
-      <h2 id="materialFormTitle">إضافة محتوى تعليمي</h2>
-      <input id="materialId" type="hidden">
-      <label for="materialSubjectForm">المادة الدراسية</label>
-      <select id="materialSubjectForm"></select>
-      <label for="materialTitle">عنوان المحتوى</label>
-      <input id="materialTitle" maxlength="180" placeholder="عنوان الدرس">
-      <label for="materialType">نوع المحتوى</label>
-      <select id="materialType">
-        <option value="lesson">درس</option><option value="video">فيديو</option><option value="pdf">ملف PDF</option>
-      </select>
-      <label for="materialFileUrl">رابط الفيديو أو الملف الخارجي</label>
-      <input id="materialFileUrl" type="url" placeholder="https://...">
-      <label for="materialFile">رفع ملف PDF من الجهاز (حد أقصى 8 ميجابايت)</label>
-      <input id="materialFile" type="file" accept="application/pdf,.pdf">
-      <input id="materialExistingFileKey" type="hidden">
-      <p class="hint">يمكنك رفع ملف PDF أو وضع رابط خارجي آمن يبدأ بـ https://. لا تضع رابطًا وملفًا في الوقت نفسه.</p>
-      <label for="materialPrice">السعر بالجنيه المصري</label>
-      <input id="materialPrice" type="number" min="0" max="1000000" step="1" value="0">
-      <label class="check"><input id="materialFree" type="checkbox" checked onchange="syncPriceField()"> محتوى مجاني</label>
-      <div class="row">
-        <button id="saveMaterialBtn" onclick="saveMaterial()">حفظ المحتوى</button>
-        <button class="secondary" onclick="resetMaterialForm()">إلغاء</button>
+    <section id="sec-dashboard" class="section active">
+      <div class="grid stats" id="statsGrid"></div>
+      <div class="split">
+        <div class="card"><h3>آخر النشاطات الإدارية</h3><div id="recentAudit" class="list muted">جارٍ التحميل...</div></div>
+        <div class="card"><h3>حالة النظام</h3><div id="systemStatus" class="list"></div></div>
       </div>
-    </div>
+    </section>
 
-    <div class="card" data-admin-page="students">
-      <div class="topline"><h2>إدارة الطلاب</h2><button onclick="loadStudents()">تحديث</button></div>
-      <div id="studentsList"><p class="muted">جارٍ تحميل الطلاب...</p></div>
-    </div>
+    <section id="sec-students" class="section">
+      <div class="card"><h3>إدارة الطلاب</h3>
+        <div class="toolbar"><input id="studentSearch" placeholder="بحث بالاسم/الهاتف/المعرف"><button class="ghost" id="reloadStudents">تحميل</button></div>
+        <div class="table-wrap"><table><thead><tr><th>ID</th><th>الاسم</th><th>الهاتف</th><th>الصف</th><th>المدرسة</th><th>إجراءات</th></tr></thead><tbody id="studentsTbody"></tbody></table></div>
+      </div>
+    </section>
 
-    <div class="card" data-admin-page="orders">
-      <div class="topline"><h2>طلبات الطلاب المعلقة</h2><button onclick="loadOrders()">تحديث</button></div>
-      <p class="hint">الخادم يعرض الطلبات المعلقة فقط في هذا القسم. عند تحديث حالة الطلب سيختفي من القائمة.</p>
-      <div id="ordersList"><p class="muted">جارٍ تحميل الطلبات...</p></div>
-    </div>
+    <section id="sec-content" class="section">
+      <div class="grid" style="grid-template-columns:1fr 1fr;gap:14px">
+        <div class="card"><h3>المواد الدراسية</h3>
+          <div class="row"><input id="subName" placeholder="اسم المادة"><input id="subGrade" placeholder="الصف/المرحلة"><button id="addSubjectBtn">إضافة</button></div>
+          <div class="table-wrap" style="margin-top:12px"><table><thead><tr><th>ID</th><th>الاسم</th><th>الصف</th><th>إجراءات</th></tr></thead><tbody id="subjectsTbody"></tbody></table></div>
+        </div>
+        <div class="card"><h3>الدروس/المحتوى</h3>
+          <div class="row"><input id="matTitle" placeholder="عنوان الدرس"><input id="matSubjectId" placeholder="subject_id" type="number"><input id="matPrice" placeholder="السعر" type="number"><select id="matFree"><option value="0">مدفوع</option><option value="1">مجاني</option></select><button id="addMaterialBtn">إضافة</button></div>
+          <div class="table-wrap" style="margin-top:12px"><table><thead><tr><th>ID</th><th>العنوان</th><th>المادة</th><th>السعر</th><th>إجراءات</th></tr></thead><tbody id="materialsTbody"></tbody></table></div>
+        </div>
+      </div>
+    </section>
 
-    <div class="card" data-admin-page="security">
-      <div class="topline"><h2>طلبات اعتماد الأجهزة</h2><button onclick="loadDeviceRequests()">تحديث</button></div>
-      <div id="deviceRequestsList"><p class="muted">جارٍ تحميل طلبات الأجهزة...</p></div>
-    </div>
+    <section id="sec-orders" class="section">
+      <div class="card"><h3>الطلبات والمشتريات</h3>
+        <div class="toolbar"><select id="orderFilter"><option value="">كل الحالات</option><option value="pending">pending</option><option value="approved">approved</option><option value="rejected">rejected</option><option value="completed">completed</option></select><button class="ghost" id="reloadOrders">تحميل</button></div>
+        <div class="table-wrap"><table><thead><tr><th>ID</th><th>الطالب</th><th>المحتوى</th><th>الحالة</th><th>التاريخ</th><th>إجراءات</th></tr></thead><tbody id="ordersTbody"></tbody></table></div>
+      </div>
+    </section>
 
-    <div class="card" data-admin-page="security">
-      <div class="topline"><h2>طلبات استعادة كلمة المرور</h2><button onclick="loadPasswordResetRequests()">تحديث</button></div>
-      <div id="passwordResetRequestsList"><p class="muted">جارٍ تحميل طلبات استعادة كلمة المرور...</p></div>
-    </div>
-        <section class="card zmx-panel" data-admin-page="builder" id="pageBuilderPanel">
-          <div class="topline"><h2>محرر الصفحات المرئي</h2><span class="status">مكونات آمنة فقط</span></div>
-          <p class="hint">أضف العناصر وعدّل محتواها ورتّبها. لا يقبل المحرر HTML أو JavaScript حرًا. كل حفظ ينشئ إصدارًا يمكن الرجوع إليه.</p>
-          <div class="zmz-grid">
-            <div><label for="builderSlug">معرّف الصفحة (بالإنجليزية)</label><input id="builderSlug" value="about" maxlength="60" pattern="[a-z0-9-]+"></div>
-            <div><label for="builderTitle">عنوان الصفحة</label><input id="builderTitle" maxlength="120" value="صفحة جديدة"></div>
-            <div><label for="builderDevice">معاينة الجهاز</label><select id="builderDevice"><option value="desktop">كمبيوتر</option><option value="tablet">تابلت</option><option value="mobile">هاتف</option></select></div>
+    <section id="sec-devices" class="section">
+      <div class="card"><h3>الأجهزة والجلسات</h3>
+        <p class="muted small">يعرض طلبات الأجهزة المعلقة من API الحالي. الموافقة/الرفض يستخدمان نقاط الإدارة الموجودة.</p>
+        <div class="toolbar"><button class="ghost" id="reloadDevices">تحميل الطلبات</button></div>
+        <div class="table-wrap"><table><thead><tr><th>ID</th><th>الطالب</th><th>الجهاز</th><th>الحالة</th><th>التاريخ</th><th>إجراءات</th></tr></thead><tbody id="devicesTbody"></tbody></table></div>
+      </div>
+    </section>
+
+    <section id="sec-parents" class="section">
+      <div class="split">
+        <div class="card"><h3>حسابات أولياء الأمور</h3><div class="table-wrap"><table><thead><tr><th>ID</th><th>الاسم</th><th>المستخدم</th><th>الهاتف</th><th>الأبناء المعتمدون</th></tr></thead><tbody id="parentsTbody"></tbody></table></div></div>
+        <div class="card"><h3>طلبات الربط</h3><div class="table-wrap"><table><thead><tr><th>ID</th><th>ولي الأمر</th><th>الطالب</th><th>الحالة</th><th>إجراء</th></tr></thead><tbody id="parentLinksTbody"></tbody></table></div></div>
+      </div>
+    </section>
+
+    <section id="sec-exams" class="section">
+      <div class="split">
+        <div class="card"><h3>الاختبارات</h3>
+          <div class="row"><input id="examTitle" placeholder="عنوان الاختبار"><input id="examGrade" placeholder="الصف"><input id="examSubject" placeholder="subject_id" type="number"><select id="examStatus"><option value="draft">draft</option><option value="published">published</option></select><button id="addExamBtn">إنشاء</button></div>
+          <div class="table-wrap" style="margin-top:12px"><table><thead><tr><th>ID</th><th>العنوان</th><th>الحالة</th><th>أسئلة</th><th>محاولات</th><th>إجراءات</th></tr></thead><tbody id="examsTbody"></tbody></table></div>
+        </div>
+        <div class="card"><h3>محرر الأسئلة</h3>
+          <div class="muted small" id="examEditorHint">اختر اختبارًا للتعديل.</div>
+          <input id="qExamId" type="hidden">
+          <label>نوع السؤال</label><select id="qType"><option value="mcq">اختيار من متعدد</option><option value="true_false">صح/خطأ</option><option value="essay">مقالي</option></select>
+          <label>نص السؤال</label><textarea id="qText"></textarea>
+          <label>الخيارات (JSON array لـ MCQ)</label><textarea id="qOptions" placeholder='["أ","ب","ج","د"]'></textarea>
+          <label>الإجابة الصحيحة (JSON)</label><input id="qAnswer" placeholder='"أ" أو true'>
+          <label>الدرجة</label><input id="qPoints" type="number" value="1">
+          <div class="row" style="margin-top:10px"><button id="addQuestionBtn">إضافة سؤال</button></div>
+          <div id="questionsList" class="list" style="margin-top:12px"></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="sec-ads" class="section">
+      <div class="split">
+        <div class="card"><h3>إنشاء/تعديل إعلان</h3>
+          <input id="adId" type="hidden">
+          <label>العنوان</label><input id="adTitle">
+          <label>النص</label><textarea id="adBody"></textarea>
+          <div class="row"><div><label>الصورة URL</label><input id="adImage"></div><div><label>الرابط</label><input id="adLink"></div></div>
+          <div class="row"><div><label>CTA</label><input id="adCta"></div><div><label>المكان</label><select id="adPlacement"><option value="home">home</option><option value="login">login</option><option value="register">register</option><option value="student">student</option><option value="parent">parent</option><option value="all">all</option></select></div></div>
+          <div class="row"><div><label>الأولوية</label><input id="adPriority" type="number" value="0"></div><div><label>نشط</label><select id="adActive"><option value="1">نعم</option><option value="0">لا</option></select></div></div>
+          <div class="row" style="margin-top:10px"><button id="saveAdBtn">حفظ الإعلان</button><button class="ghost" id="resetAdBtn">جديد</button></div>
+        </div>
+        <div class="card"><h3>الإعلانات</h3><div class="table-wrap"><table><thead><tr><th>ID</th><th>العنوان</th><th>المكان</th><th>نشط</th><th>مشاهدات</th><th>نقرات</th><th>إجراءات</th></tr></thead><tbody id="adsTbody"></tbody></table></div></div>
+      </div>
+    </section>
+
+    <section id="sec-notifications" class="section">
+      <div class="split">
+        <div class="card"><h3>إرسال إشعار</h3>
+          <label>العنوان</label><input id="notifTitle">
+          <label>النص</label><textarea id="notifBody"></textarea>
+          <div class="row"><div><label>النوع</label><select id="notifType"><option value="general">عام</option><option value="important">مهم</option><option value="exam">اختبار</option><option value="lesson">درس</option><option value="order">طلب</option></select></div><div><label>الجمهور</label><select id="notifAudience"><option value="all">كل الطلاب</option><option value="parents">أولياء الأمور</option><option value="student">طالب محدد</option><option value="grade">صف</option></select></div></div>
+          <label>قيمة الجمهور (student_id أو grade)</label><input id="notifAudienceValue">
+          <div class="row" style="margin-top:10px"><button id="sendNotifBtn">إرسال/حفظ</button></div>
+        </div>
+        <div class="card"><h3>سجل الإشعارات</h3><div class="table-wrap"><table><thead><tr><th>ID</th><th>العنوان</th><th>النوع</th><th>الجمهور</th><th>التاريخ</th></tr></thead><tbody id="notifTbody"></tbody></table></div></div>
+      </div>
+    </section>
+
+    <section id="sec-pages" class="section">
+      <div class="split">
+        <div class="card"><h3>Page Builder (أساسي آمن)</h3>
+          <p class="muted small">يحفظ مخطط JSON آمن للصفحة. لا يتم تنفيذ JavaScript. استخدمه لبناء أقسام/بطاقات/نصوص/روابط.</p>
+          <div class="row"><input id="pageKey" placeholder="page key مثل home/login/student" value="home"><input id="pageTitle" placeholder="عنوان الصفحة" value="الصفحة الرئيسية"></div>
+          <label>محتوى JSON</label><textarea id="pageJson" style="min-height:260px;font-family:monospace;direction:ltr;text-align:left"></textarea>
+          <div class="row" style="margin-top:10px"><button id="loadPageBtn" class="ghost">تحميل</button><button id="savePageBtn">حفظ مسودة</button><button id="publishPageBtn" class="ok">نشر</button></div>
+          <div id="pageVersions" class="list" style="margin-top:12px"></div>
+        </div>
+        <div class="card"><h3>معاينة / قوالب سريعة</h3>
+          <div class="row"><button class="ghost" onclick="applyPageTemplate('hero')">قالب Hero</button><button class="ghost" onclick="applyPageTemplate('cards')">قالب بطاقات</button><button class="ghost" onclick="applyPageTemplate('announcement')">إعلان</button></div>
+          <div id="pagePreview" class="item" style="margin-top:12px;min-height:260px"></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="sec-theme" class="section">
+      <div class="split">
+        <div class="card"><h3>Theme & Design Studio</h3>
+          <div class="row"><div><label>الوضع الافتراضي</label><select id="themeMode"><option value="dark">داكن</option><option value="light">فاتح</option><option value="system">حسب النظام</option></select></div><div><label>القالب</label><select id="themeTemplate"><option value="future">Future</option><option value="glass">Glass</option><option value="minimal">Minimal</option><option value="luxury">Luxury</option></select></div></div>
+          <div class="row"><div><label>Primary</label><input id="themePrimary" type="color" value="#35a8ff"></div><div><label>Secondary</label><input id="themeSecondary" type="color" value="#9b7bff"></div></div>
+          <div class="row"><div><label>Background</label><input id="themeBg" type="color" value="#080d1b"></div><div><label>Surface</label><input id="themeSurface" type="color" value="#111b34"></div></div>
+          <label>نصف القطر</label><input id="themeRadius" value="18px">
+          <div class="row" style="margin-top:10px"><button id="saveThemeBtn">حفظ الثيم</button><button class="ghost" id="previewThemeBtn">معاينة</button></div>
+        </div>
+        <div class="card"><h3>معاينة الثيم</h3><div id="themePreview" class="item" style="min-height:260px"></div></div>
+      </div>
+    </section>
+
+    <section id="sec-ai" class="section">
+      <div class="split">
+        <div class="card"><h3>مساعد الإدارة / AI Builder / Content Studio</h3>
+          <label>الوضع</label><select id="aiMode"><option value="admin_assistant">مساعد الإدارة</option><option value="builder">AI Builder</option><option value="content_studio">Content Studio</option></select>
+          <label>الأمر / الطلب</label><textarea id="aiPrompt" style="min-height:160px" placeholder="اكتب طلبك هنا..."></textarea>
+          <div class="row"><button id="runAiBtn">تنفيذ عبر AI</button></div>
+          <p class="muted small">يتم الاتصال عبر Worker. ضع AI_API_KEY في Secrets. لا يتم تنفيذ أكواد مولدة تلقائيًا.</p>
+        </div>
+        <div class="card"><h3>النتيجة</h3><pre id="aiResult" style="white-space:pre-wrap;word-break:break-word;background:#091123;padding:14px;border-radius:12px;min-height:260px;margin:0"></pre></div>
+      </div>
+    </section>
+
+    <section id="sec-settings" class="section">
+      <div class="split">
+        <div class="card"><h3>إعدادات المنصة</h3>
+          <label>اسم الأكاديمية</label><input id="setName">
+          <label>الوصف</label><textarea id="setDesc"></textarea>
+          <div class="row"><div><label>هاتف الدعم</label><input id="setPhone"></div><div><label>واتساب</label><input id="setWhatsapp"></div></div>
+          <div class="row"><div><label>البريد</label><input id="setEmail"></div><div><label>المنطقة الزمنية</label><input id="setTz" value="Africa/Cairo"></div></div>
+          <label><input type="checkbox" id="setMaint" style="width:auto;margin-left:8px"> وضع الصيانة</label>
+          <label>رسالة الصيانة</label><input id="setMaintMsg">
+          <div class="row" style="margin-top:10px"><button id="saveSettingsBtn">حفظ الإعدادات</button></div>
+        </div>
+        <div class="card"><h3>ملاحظات النشر</h3>
+          <div class="list small muted">
+            <div class="item">ضع الأسرار في Cloudflare Worker Secrets: <code>AI_API_KEY</code>، <code>GITHUB_STORAGE_TOKEN</code>، <code>ADMIN_SETUP_KEY</code>.</div>
+            <div class="item">شغّل migrations على D1 قبل الاعتماد على الميزات الجديدة.</div>
+            <div class="item">التحقق من الصلاحيات يجب أن يكون على الخادم. الواجهة فقط للعرض.</div>
           </div>
-          <div class="zmz-toolbar">
-            <button type="button" onclick="builderAddBlock('heading')">+ عنوان</button>
-            <button type="button" onclick="builderAddBlock('text')">+ نص</button>
-            <button type="button" onclick="builderAddBlock('button')">+ زر</button>
-            <button type="button" onclick="builderAddBlock('card')">+ بطاقة</button>
-            <button type="button" onclick="builderAddBlock('image')">+ صورة</button>
-            <button type="button" onclick="builderAddBlock('alert')">+ تنبيه</button>
-            <button type="button" onclick="builderAddBlock('section')">+ قسم</button>
-            <button type="button" onclick="builderAddBlock('spacer')">+ مسافة</button>
-            <button type="button" onclick="builderAddBlock('video')">+ رابط فيديو</button>
-          </div>
-          <div class="zmz-builder-layout">
-            <div><h3>العناصر</h3><div id="builderBlocks" class="zmz-block-list"><p class="hint">جارٍ تجهيز المحرر...</p></div></div>
-            <div><h3>المعاينة المباشرة</h3><div id="builderPreview" class="zmz-preview"><p class="hint">أضف عنصرًا لعرض المعاينة.</p></div></div>
-          </div>
-          <div class="zmz-toolbar"><button type="button" class="secondary" onclick="builderLoad()">تحميل الصفحة</button><button type="button" onclick="builderSave()">حفظ المسودة</button><button type="button" class="success" onclick="builderPublish()">نشر الصفحة</button></div>
-          <div class="zmz-grid"><div><label for="builderRevision">الإصدارات السابقة</label><select id="builderRevision"><option value="">اختر إصدارًا</option></select></div><div class="zmz-align-end"><button type="button" class="secondary" onclick="builderLoadVersions()">تحديث الإصدارات</button><button type="button" class="secondary" onclick="builderRestore()">استعادة كمسودة</button></div></div>
-          <p class="hint" id="builderStatus" role="status"></p>
-        </section>
+        </div>
+      </div>
+    </section>
 
-        <section class="card zmx-panel" data-admin-page="media" id="mediaLibraryPanel">
-          <div class="topline"><h2>مكتبة الوسائط</h2><button type="button" class="secondary" onclick="loadMedia()">تحديث المكتبة</button></div>
-          <p class="hint">ارفع PDF أو صورة JPG/PNG/WEBP إلى مستودع التخزين عبر Worker. لا يظهر الملف للزوار إلا عند نشر الصورة صراحة. ملفات PDF تبقى خاصة وتستخدم عبر ربط المحتوى التعليمي.</p>
-          <div class="zmz-grid">
-            <div><label for="mediaFile">اختر ملفًا (حتى 8 MB)</label><input id="mediaFile" type="file" accept="application/pdf,image/jpeg,image/png,image/webp"></div>
-            <div><label for="mediaFolder">المجلد / التصنيف</label><input id="mediaFolder" maxlength="80" value="general" placeholder="مثال: صفحات الموقع"></div>
-            <div><label for="mediaAlt">الوصف البديل للصورة</label><input id="mediaAlt" maxlength="240" placeholder="وصف موجز للصورة"></div>
-          </div>
-          <label class="check"><input id="mediaPublic" type="checkbox"> نشر الصورة كرابط عام يمكن استخدامه في الصفحات</label>
-          <button type="button" onclick="uploadMedia()">رفع إلى مكتبة الوسائط</button>
-          <p id="mediaStatus" class="hint" role="status"></p>
-          <div id="mediaList" class="zmz-list"><p class="hint">اضغط تحديث لعرض الملفات.</p></div>
-        </section>
+    <section id="sec-audit" class="section">
+      <div class="card"><h3>سجل العمليات الإدارية</h3>
+        <div class="toolbar"><button class="ghost" id="reloadAudit">تحميل</button></div>
+        <div class="table-wrap"><table><thead><tr><th>الوقت</th><th>الفاعل</th><th>الإجراء</th><th>الكيان</th><th>تفاصيل</th></tr></thead><tbody id="auditTbody"></tbody></table></div>
+      </div>
+    </section>
 
-        <section class="card zmx-panel" data-admin-page="parents" id="parentLinksPanel">
-          <div class="topline"><h2>طلبات ربط أولياء الأمور</h2><button type="button" onclick="loadParentRequests()">تحديث</button></div>
-          <p class="hint">لا يظهر لولي الأمر إلا الطلاب المرتبطون بحسابه بعد اعتماد الإدارة ومطابقة هاتف ولي الأمر مع رقم الهاتف المسجل للطالب.</p>
-          <div id="parentRequestsList"><p class="hint">اضغط تحديث لعرض الطلبات.</p></div>
-        </section>
-
-        <section class="card zmx-panel" data-admin-page="ads" id="adsPanel">
-          <div class="topline"><h2>مركز الإعلانات</h2><button type="button" onclick="loadAds()">تحديث</button></div>
-          <div class="zmz-grid">
-            <div><label for="adTitle">عنوان الإعلان</label><input id="adTitle" maxlength="140"></div>
-            <div><label for="adPlacement">موضع العرض</label><select id="adPlacement"><option value="home">الرئيسية</option><option value="login">تسجيل الدخول</option><option value="register">إنشاء الحساب</option><option value="student">لوحة الطالب</option><option value="parent">ولي الأمر</option><option value="content">المحتوى</option></select></div>
-            <div><label for="adAudience">الجمهور</label><select id="adAudience"><option value="all">الجميع</option><option value="students">الطلاب</option><option value="parents">أولياء الأمور</option></select></div>
-            <div><label for="adPriority">الأولوية</label><input id="adPriority" type="number" min="-100" max="1000" value="0"></div>
-            <div><label for="adButton">نص الزر</label><input id="adButton" maxlength="80"></div>
-            <div><label for="adImage">رابط الصورة HTTPS</label><input id="adImage" type="url" maxlength="1000"></div>
-            <div><label for="adUrl">رابط الوجهة HTTPS</label><input id="adUrl" type="url" maxlength="1000"></div>
-            <div><label for="adStart">بداية العرض</label><input id="adStart" type="datetime-local"></div>
-            <div><label for="adEnd">نهاية العرض</label><input id="adEnd" type="datetime-local"></div>
-          </div>
-          <label for="adBody">نص الإعلان</label><textarea id="adBody" maxlength="1000" rows="3"></textarea>
-          <button type="button" onclick="createAd()">إنشاء الإعلان</button>
-          <div id="adsList" class="zmz-list"><p class="hint">لا توجد بيانات محملة.</p></div>
-        </section>
-
-        <section class="card zmx-panel" data-admin-page="notifications" id="notificationsPanel">
-          <h2>إنشاء إشعار وإرساله</h2>
-          <div class="zmz-grid"><div><label for="noticeTitle">العنوان</label><input id="noticeTitle" maxlength="160"></div><div><label for="noticeTarget">الجمهور المستهدف</label><select id="noticeTarget"><option value="all_students">جميع الطلاب</option><option value="grade">صف دراسي</option><option value="student">طالب محدد</option><option value="all_parents">جميع أولياء الأمور</option><option value="parent">ولي أمر محدد</option></select></div><div><label for="noticeTargetValue">قيمة الاستهداف (الصف أو رقم الحساب)</label><input id="noticeTargetValue" maxlength="100"></div><div><label for="noticeSchedule">موعد الإرسال</label><input id="noticeSchedule" type="datetime-local"></div></div>
-          <label for="noticeBody">نص الإشعار</label><textarea id="noticeBody" rows="4" maxlength="1800"></textarea>
-          <label class="check"><input id="noticeImportant" type="checkbox"> إشعار مهم</label>
-          <button type="button" onclick="createNotification()">حفظ وجدولة الإشعار</button>
-          <div id="notificationsList" class="zmz-list"></div>
-        </section>
-
-        <section class="card zmx-panel" data-admin-page="analytics" id="analyticsPanel">
-          <div class="topline"><h2>التقارير ومؤشرات الأداء</h2><button type="button" onclick="loadAnalytics()">تحديث التقارير</button></div>
-          <div id="analyticsStats" class="zmz-stats"><p class="hint">حمّل التقارير لعرض المؤشرات.</p></div>
-          <h3>سجل التدقيق الإداري</h3><button type="button" class="secondary" onclick="loadAuditLogs()">تحديث السجل</button><div id="auditLogsList" class="zmz-list"></div>
-        </section>
-
-        <section class="card zmx-panel" data-admin-page="ai" id="aiPanel">
-          <h2>مساعد الإدارة وAI Builder</h2>
-          <p class="hint">يتطلب AI_API_KEY وAI_MODEL في أسرار Cloudflare Worker. النتائج اقتراحات فقط ولا يتم تطبيقها أو نشرها تلقائيًا.</p>
-          <label for="adminAiMode">وضع المساعد</label><select id="adminAiMode"><option value="assistant">مساعد الإدارة</option><option value="builder">اقتراح مكونات صفحة آمنة</option></select>
-          <label for="adminAiPrompt">اكتب طلبك</label><textarea id="adminAiPrompt" rows="4" maxlength="2400" placeholder="مثال: اقترح صفحة تعريف بالأكاديمية تحتوي على عنوان وفقرة وزر تواصل..."></textarea>
-          <button type="button" onclick="runAdminAI()">إنشاء اقتراح</button><pre id="adminAiResult" class="zmz-ai-output" aria-live="polite">ستظهر النتيجة هنا.</pre>
-          <button type="button" class="secondary" onclick="applyAIBuilderSuggestion()">تحميل اقتراح AI إلى محرر الصفحة كمسودة</button>
-        </section>
-
-        <section class="card zmx-panel" data-admin-page="quizzes" id="quizzesPanel">
-          <div class="topline"><h2>إدارة الاختبارات</h2><button type="button" class="secondary" onclick="loadQuizzes()">تحديث الاختبارات</button></div>
-          <p class="hint">أنشئ اختبارًا كمسودة، راجع الأسئلة، ثم انشره. الأسئلة الموضوعية تُصحح تلقائيًا والمقالي يحتاج مراجعة المدرس.</p>
-          <div class="zmz-grid">
-            <div><label for="quizTitle">عنوان الاختبار</label><input id="quizTitle" maxlength="160" placeholder="اختبار الوحدة الأولى"></div>
-            <div><label for="quizGrade">الصف</label><input id="quizGrade" maxlength="80" placeholder="الصف الثالث الثانوي"></div>
-            <div><label for="quizSubject">المادة (اختياري)</label><input id="quizSubject" type="number" min="1" placeholder="رقم المادة"></div>
-            <div><label for="quizDuration">المدة بالدقائق</label><input id="quizDuration" type="number" min="5" max="300" value="30"></div>
-            <div><label for="quizAttempts">عدد المحاولات</label><input id="quizAttempts" type="number" min="1" max="20" value="1"></div>
-          </div>
-          <div class="zmz-grid">
-            <div><label for="quizQuestionType">نوع السؤال</label><select id="quizQuestionType"><option value="mcq">اختيار من متعدد</option><option value="true_false">صح أو خطأ</option><option value="essay">مقالي</option></select></div>
-            <div><label for="quizQuestionPoints">الدرجة</label><input id="quizQuestionPoints" type="number" min="0.5" max="100" step="0.5" value="1"></div>
-          </div>
-          <label for="quizQuestionPrompt">نص السؤال</label><textarea id="quizQuestionPrompt" rows="2" maxlength="1200"></textarea>
-          <div id="quizChoiceFields"><label for="quizOptions">الاختيارات (كل اختيار في سطر مستقل)</label><textarea id="quizOptions" rows="4" placeholder="اختيار أول
-اختيار ثانٍ"></textarea><label for="quizCorrectIndex">رقم الإجابة الصحيحة (يبدأ من صفر)</label><input id="quizCorrectIndex" type="number" min="0" value="0"></div>
-          <div id="quizBooleanFields" hidden><label for="quizTrueFalse">الإجابة الصحيحة</label><select id="quizTrueFalse"><option value="true">صح</option><option value="false">خطأ</option></select></div>
-          <button type="button" class="secondary" onclick="addQuizQuestion()">إضافة السؤال إلى الاختبار</button>
-          <div id="quizQuestionDrafts" class="zmz-list"></div>
-          <button type="button" onclick="createQuiz()">حفظ الاختبار كمسودة</button>
-          <hr><h3>الاختبارات المنشأة</h3><div id="quizzesList" class="zmz-list"></div>
-          <hr><h3>محاولات تحتاج مراجعة</h3><div id="quizAttemptsList" class="zmz-list"></div>
-        </section>
-
-        <section class="card zmx-panel" data-admin-page="ai" id="aiContentStudioPanel">
-          <div class="topline"><h2>استوديو المحتوى التعليمي AI</h2><button type="button" class="secondary" onclick="loadAIContentDrafts()">تحديث المسودات</button></div>
-          <p class="hint">أنشئ ملخصات وشروحًا وأسئلة وبطاقات مراجعة وخطط مذاكرة. كل ناتج يُحفظ كمسودة بانتظار المراجعة، ولا ينشر تلقائيًا.</p>
-          <div class="zmz-grid"><div><label for="aiContentType">نوع المحتوى</label><select id="aiContentType"><option value="summary">ملخص</option><option value="lesson">شرح درس</option><option value="mcq">أسئلة اختيار من متعدد</option><option value="essay">أسئلة مقالية</option><option value="flashcards">بطاقات مراجعة</option><option value="study_plan">خطة مذاكرة</option></select></div><div><label for="aiContentTitle">عنوان المسودة</label><input id="aiContentTitle" maxlength="180"></div></div>
-          <label for="aiContentPrompt">المادة أو الوصف أو المصدر النصي</label><textarea id="aiContentPrompt" rows="5" maxlength="3000" placeholder="اكتب اسم المادة والدرس والصف والنقاط التي يجب أن يغطيها المحتوى..."></textarea>
-          <button type="button" onclick="generateAIContentDraft()">إنشاء مسودة للمراجعة</button>
-          <div id="aiContentStatus" class="hint" role="status"></div>
-          <h3>مسودات المحتوى</h3><div id="aiContentDraftList" class="zmz-list"></div>
-        </section>
-
-        <section class="card zmx-panel" data-admin-page="roles" id="rolesPanel">
-          <div class="topline"><h2>الأدوار والصلاحيات</h2><button type="button" onclick="loadAdminRoles()">تحديث</button></div>
-          <p class="hint">الأدوار مطبقة على واجهات API الجديدة. المسؤولون الحاليون يظلون Super Admin حتى تعيين دور صريح لهم.</p>
-          <div id="adminRolesList" class="zmz-list"></div>
-        </section>
-
-      </div><!-- /.admin-main -->
-    </div><!-- /.admin-shell -->
-  </section>
-</main>
+  </main>
+</div>
 
 <script>
-"use strict";
-const API="https://zm-academy-api.ziadmohsen4567.workers.dev";
-let token=sessionStorage.getItem("zm_admin_token")||"";
-let subjects=[];
-let isSavingMaterial=false;
-let isSavingSubject=false;
-let isSavingHomepage=false;
-let homepageDraft={};
-
-const ADMIN_PAGE_META={
- overview:["نظرة عامة","ملخص سريع وإمكانية الوصول إلى أقسام الأكاديمية"],
- design:["تصميم الموقع","إدارة هوية الأكاديمية والألوان والقوالب ومحتوى الصفحة الرئيسية"],
- content:["المواد والمحتوى","إدارة المواد الدراسية والدروس والملفات التعليمية"],
- students:["الطلاب","عرض حسابات الطلاب وإدارة بياناتهم"],
- orders:["الطلبات","مراجعة طلبات الشراء وتحديث حالتها"],
- security:["الأمان والأجهزة","مراجعة الأجهزة وطلبات استعادة كلمات المرور"]
-};
-function showAdminPage(page){
-  if(!ADMIN_PAGE_META[page])page="overview";
-  document.querySelectorAll("[data-admin-page]").forEach(node=>{node.hidden=node.dataset.adminPage!==page});
-  document.querySelectorAll("#adminNav [data-page]").forEach(btn=>btn.classList.toggle("active",btn.dataset.page===page));
-  const meta=ADMIN_PAGE_META[page];
-  el("adminPageTitle").textContent=meta[0];el("adminPageSubtitle").textContent=meta[1];
-  try{sessionStorage.setItem("zm_admin_last_page",page)}catch(e){}
-  if(page==="design"&&!homepageDraft.theme)loadHomepageSettings();
-  window.scrollTo({top:0,behavior:"smooth"});
-}
-function filterAdminNav(){
-  const q=String(el("adminNavSearch")?.value||"").trim().toLowerCase();
-  document.querySelectorAll("#adminNav [data-page]").forEach(btn=>{btn.hidden=!!q&&!btn.textContent.toLowerCase().includes(q)});
-}
-
-function el(id){return document.getElementById(id)}
-function message(text,type="ok"){
-  const box=el("message");
-  box.textContent=String(text||"");
-  box.className=type==="err"?"err":"ok";
-  box.style.display="block";
-  window.scrollTo({top:0,behavior:"smooth"});
-}
-function escapeHTML(value){
-  return String(value??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
-}
-async function request(path,method="GET",body=null){
-  const headers={};
-  if(token)headers.Authorization="Bearer "+token;
-  const options={method,headers};
-  if(body!==null){
-    headers["Content-Type"]="application/json";
-    options.body=JSON.stringify(body);
-  }
-  let response;
-  try{response=await fetch(API+path,options)}
-  catch(e){throw new Error("تعذر الاتصال بالخادم. تحقق من الإنترنت وحاول مرة أخرى.")}
-  const data=await response.json().catch(()=>({}));
-  if(!response.ok||data.success===false){
-    if(response.status===401){
-      token="";
-      sessionStorage.removeItem("zm_admin_token");
-      showLogin();
-    }
-    throw new Error(data.error||"حدث خطأ في الاتصال بالخادم.");
-  }
+(()=>{
+const API = 'https://zm-academy-api.ziadmohsen4567.workers.dev';
+const $ = (s)=>document.querySelector(s);
+const $$ = (s)=>Array.from(document.querySelectorAll(s));
+const esc = (s='')=>String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c]));
+const fmtDate = (v)=>v?new Date(v).toLocaleString('ar-EG'):'-';
+const tokenKey='zm_admin_token';
+const state={token:localStorage.getItem(tokenKey)||'', admin:null, section:'dashboard', cache:{}};
+const sections=[
+  ['dashboard','لوحة المعلومات','نظرة عامة على المنصة'],
+  ['students','الطلاب','إدارة حسابات الطلاب والبيانات'],
+  ['content','المحتوى التعليمي','المواد والدروس والأرشفة'],
+  ['orders','الطلبات','مراجعة الطلبات والمشتريات'],
+  ['devices','الأجهزة','طلبات الأجهزة والجلسات'],
+  ['parents','أولياء الأمور','الحسابات وطلبات الربط'],
+  ['exams','الاختبارات','إنشاء الاختبارات والأسئلة'],
+  ['ads','الإعلانات','إدارة الإعلانات والمواضع'],
+  ['notifications','الإشعارات','إرسال وإدارة الإشعارات'],
+  ['pages','محرر الصفحات','مسودات ونشر وصفحات آمنة'],
+  ['theme','استوديو التصميم','الثيم والإعدادات البصرية'],
+  ['ai','الذكاء الاصطناعي','مساعد الإدارة والبناء والمحتوى'],
+  ['settings','الإعدادات','إعدادات المنصة العامة'],
+  ['audit','سجل العمليات','تتبع العمليات الإدارية'],
+];
+function showMsg(text, ok=false){const el=$('#appMsg');el.textContent=text;el.className='msg show '+(ok?'ok':'err');clearTimeout(showMsg.t);showMsg.t=setTimeout(()=>el.className='msg',5000);}
+function showLoginMsg(text){const el=$('#loginMsg');el.textContent=text;el.style.display=text?'block':'none';}
+async function api(path, opts={}){
+  const headers = Object.assign({'Content-Type':'application/json'}, opts.headers||{});
+  if(state.token) headers.Authorization = 'Bearer '+state.token;
+  const res = await fetch(API+path, {...opts, headers});
+  const data = await res.json().catch(()=>({success:false,error:'Invalid JSON'}));
+  if(!res.ok || data.success===false){ const err = new Error(data.error||('HTTP '+res.status)); err.data=data; err.status=res.status; throw err; }
   return data;
 }
-
-function showDashboard(){
-  el("loginSection").classList.add("hidden");
-  el("dashboard").classList.remove("hidden");
-  el("logoutBtn").classList.remove("hidden");
-  let last="overview";try{last=sessionStorage.getItem("zm_admin_last_page")||"overview"}catch(e){}
-  showAdminPage(last);
+function setSection(key){
+  state.section=key;
+  $$('.section').forEach(s=>s.classList.remove('active'));
+  const sec=$('#sec-'+key); if(sec) sec.classList.add('active');
+  $$('#nav button').forEach(b=>b.classList.toggle('active', b.dataset.sec===key));
+  const meta=sections.find(s=>s[0]===key); if(meta){$('#sectionTitle').textContent=meta[1]; $('#sectionDesc').textContent=meta[2];}
+  loadSection(key).catch(e=>showMsg(e.message||'خطأ'));
 }
-function showLogin(){
-  el("loginSection").classList.remove("hidden");
-  el("dashboard").classList.add("hidden");
-  el("logoutBtn").classList.add("hidden");
-}
-async function loadDashboardData(){
-  await loadSubjects();
-  await Promise.allSettled([
-    loadStudents(),loadOrders(),loadDeviceRequests(),
-    loadPasswordResetRequests(),loadHomepageSettings()
-  ]);
+function buildNav(){
+  const nav=$('#nav'); nav.innerHTML='';
+  sections.forEach(([k,label])=>{const b=document.createElement('button'); b.textContent=label; b.dataset.sec=k; b.onclick=()=>setSection(k); if(k===state.section)b.classList.add('active'); nav.appendChild(b);});
 }
 async function login(){
-  const username=el("username").value.trim();
-  const password=el("password").value;
-  if(!username||!password)return message("اكتب اسم المستخدم وكلمة المرور","err");
-  const btn=el("loginBtn");btn.disabled=true;btn.textContent="جارٍ تسجيل الدخول...";
+  showLoginMsg('');
+  const username=$('#loginUser').value.trim(), password=$('#loginPass').value;
+  if(!username||!password) return showLoginMsg('أدخل اسم المستخدم وكلمة المرور');
+  $('#loginBtn').disabled=true;
   try{
-    const data=await request("/api/admin/login","POST",{username,password});
-    const newToken=data.token||data.access_token||data.session?.token;
-    if(!newToken)throw new Error("لم يصل رمز الجلسة من الخادم.");
-    token=newToken;
-    sessionStorage.setItem("zm_admin_token",token);
-    el("password").value="";
-    showDashboard();
-    await loadDashboardData();
-    message("تم تسجيل الدخول بنجاح");
-  }catch(e){message(e.message,"err")}
-  finally{btn.disabled=false;btn.textContent="دخول لوحة التحكم"}
-}
-async function checkSession(){
-  if(!token){showLogin();return}
-  try{await request("/api/admin/me");showDashboard();await loadDashboardData()}
-  catch(e){token="";sessionStorage.removeItem("zm_admin_token");showLogin()}
+    const data = await api('/api/admin/login',{method:'POST',body:JSON.stringify({username,password})});
+    state.token=data.token; localStorage.setItem(tokenKey,state.token);
+    await boot();
+  }catch(e){ showLoginMsg(e.message||'فشل تسجيل الدخول'); }
+  finally{$('#loginBtn').disabled=false;}
 }
 async function logout(){
-  try{await request("/api/admin/logout","POST",{})}catch(e){}
-  token="";sessionStorage.removeItem("zm_admin_token");
-  showLogin();message("تم تسجيل الخروج");
+  try{ await api('/api/admin/logout',{method:'POST'}); }catch{}
+  state.token=''; state.admin=null; localStorage.removeItem(tokenKey);
+  $('#appView').classList.add('hidden'); $('#loginView').classList.remove('hidden');
 }
-
-/* أدوات إدارة الصفحة الرئيسية */
-const ZM_THEME_PRESETS={neon:{primary:"#35a8ff",secondary:"#9b70ff",background:"#080d1b",surface:"#111b34",text:"#f4f7ff",muted:"#a5b3d0"},royal:{primary:"#d6b36a",secondary:"#f0d99d",background:"#090b12",surface:"#171b27",text:"#f7f4ed",muted:"#aaa9b4"},ocean:{primary:"#00bcd4",secondary:"#3978ff",background:"#071923",surface:"#102b3a",text:"#effcff",muted:"#a3c5d0"},emerald:{primary:"#25c58a",secondary:"#a3df67",background:"#071811",surface:"#10291f",text:"#f0fff7",muted:"#a6c9b6"},rose:{primary:"#f06aa8",secondary:"#a77bff",background:"#190d1b",surface:"#2a1730",text:"#fff2fb",muted:"#d1afc8"},light:{primary:"#5143bd",secondary:"#168db8",background:"#f4f6ff",surface:"#ffffff",text:"#202747",muted:"#68708e"}};
-function applyAdminPreset(){const p=ZM_THEME_PRESETS[el("hpThemePreset").value];if(!p)return;for(const [k,v] of Object.entries(p))el({primary:"hpColorPrimary",secondary:"hpColorSecondary",background:"hpColorBackground",surface:"hpColorSurface",text:"hpColorText",muted:"hpColorMuted"}[k]).value=v;el("hpDefaultMode").value=el("hpThemePreset").value==="light"?"light":"dark";}
-
-function homepageDefault(){
-  return {
-    brandName:"ZM Academy",
-    tagline:"",
-    hero:{
-      eyebrow:"",
-      title:"معًا نحو",
-      highlight:"تفكير أعمق ومستقبل أفضل",
-      description:"",
-      primaryText:"تسجيل طالب جديد",
-      primaryUrl:"register.html",
-      secondaryText:"تسجيل الدخول",
-      secondaryUrl:"login.html"
-    },
-    announcement:{
-      enabled:false,
-      text:"",
-      buttonText:"",
-      url:""
-    },
-    about:{
-      enabled:true,
-      title:"أهلًا بك في أكاديميتك",
-      description:"أكاديمية تعليمية تهدف إلى تقديم تجربة تعلم واضحة ومنظمة."
-    },
-    theme:{preset:"neon",template:"future",primary:"#35a8ff",secondary:"#9b70ff",background:"#080d1b",surface:"#111b34",text:"#f4f7ff",muted:"#a5b3d0",mode:"dark",corners:"soft",font:"cairo",buttons:"gradient",cards:"solid",motion:"on"},
-    branding:{logoUrl:"",heroImageUrl:"",whatsapp:"201115336341",facebook:"",youtube:"",telegram:""},
-    sections:{
-      subjects:true,
-      curriculum:true,
-      library:true,
-      about:true,
-      join:true
-    }
-  };
-}
-function setField(id,value){
-  const node=el(id);
-  if(node)node.value=value??"";
-}
-function setCheck(id,value){
-  const node=el(id);
-  if(node)node.checked=Boolean(value);
-}
-function readHomepageForm(){
-  return {
-    brandName:el("hpBrandName").value.trim(),
-    tagline:el("hpTagline").value.trim(),
-    hero:{
-      eyebrow:el("hpEyebrow").value.trim(),
-      title:el("hpTitle").value.trim(),
-      highlight:el("hpHighlight").value.trim(),
-      description:el("hpDescription").value.trim(),
-      primaryText:el("hpPrimaryText").value.trim(),
-      primaryUrl:el("hpPrimaryUrl").value.trim(),
-      secondaryText:el("hpSecondaryText").value.trim(),
-      secondaryUrl:el("hpSecondaryUrl").value.trim()
-    },
-    announcement:{
-      enabled:el("hpAnnouncementEnabled").checked,
-      text:el("hpAnnouncementText").value.trim(),
-      buttonText:el("hpAnnouncementButton").value.trim(),
-      url:el("hpAnnouncementUrl").value.trim()
-    },
-    about:{
-      enabled:el("hpAboutEnabled").checked,
-      title:el("hpAboutTitle").value.trim(),
-      description:el("hpAboutDescription").value.trim()
-    },
-    theme:{preset:el("hpThemePreset").value,template:el("hpTemplate").value,primary:el("hpColorPrimary").value,secondary:el("hpColorSecondary").value,background:el("hpColorBackground").value,surface:el("hpColorSurface").value,text:el("hpColorText").value,muted:el("hpColorMuted").value,mode:el("hpDefaultMode").value,corners:el("hpCornerStyle").value,font:el("hpFontFamily").value,buttons:el("hpButtonStyle").value,cards:el("hpCardStyle").value,motion:el("hpMotion").value},
-    branding:{logoUrl:el("hpLogoUrl").value.trim(),heroImageUrl:el("hpHeroImageUrl").value.trim(),whatsapp:el("hpWhatsapp").value.trim(),facebook:el("hpFacebook").value.trim(),youtube:el("hpYoutube").value.trim(),telegram:el("hpTelegram").value.trim()},
-    sections:{
-      subjects:el("hpShowSubjects").checked,
-      curriculum:el("hpShowCurriculum").checked,
-      library:el("hpShowLibrary").checked,
-      about:el("hpShowAbout").checked,
-      join:el("hpShowJoin").checked
-    }
-  };
-}
-function fillHomepageForm(settings){
-  const d=homepageDefault();
-  const s=settings&&typeof settings==="object"?settings:{};
-  const hero={...d.hero,...(s.hero||{})};
-  const announcement={...d.announcement,...(s.announcement||{})};
-  const about={...d.about,...(s.about||{})};
-  const sections={...d.sections,...(s.sections||{})};
-  const theme={...d.theme,...(s.theme||{})};
-  const branding={...d.branding,...(s.branding||{})};
-
-  setField("hpBrandName",s.brandName??d.brandName);
-  setField("hpTagline",s.tagline??d.tagline);
-  setField("hpEyebrow",hero.eyebrow);
-  setField("hpTitle",hero.title);
-  setField("hpHighlight",hero.highlight);
-  setField("hpDescription",hero.description);
-  setField("hpPrimaryText",hero.primaryText);
-  setField("hpPrimaryUrl",hero.primaryUrl);
-  setField("hpSecondaryText",hero.secondaryText);
-  setField("hpSecondaryUrl",hero.secondaryUrl);
-  setCheck("hpAnnouncementEnabled",announcement.enabled);
-  setField("hpAnnouncementText",announcement.text);
-  setField("hpAnnouncementButton",announcement.buttonText);
-  setField("hpAnnouncementUrl",announcement.url);
-  setCheck("hpAboutEnabled",about.enabled);
-  setField("hpAboutTitle",about.title);
-  setField("hpAboutDescription",about.description);
-  setField("hpThemePreset",theme.preset);setField("hpTemplate",theme.template);
-  setField("hpColorPrimary",theme.primary);setField("hpColorSecondary",theme.secondary);
-  setField("hpColorBackground",theme.background);setField("hpColorSurface",theme.surface);
-  setField("hpColorText",theme.text);setField("hpColorMuted",theme.muted);
-  setField("hpDefaultMode",theme.mode);setField("hpCornerStyle",theme.corners);setField("hpFontFamily",theme.font);setField("hpButtonStyle",theme.buttons);setField("hpCardStyle",theme.cards);setField("hpMotion",theme.motion);
-  setField("hpLogoUrl",branding.logoUrl);setField("hpHeroImageUrl",branding.heroImageUrl);
-  setField("hpWhatsapp",branding.whatsapp);setField("hpFacebook",branding.facebook);
-  setField("hpYoutube",branding.youtube);setField("hpTelegram",branding.telegram);
-  setCheck("hpShowSubjects",sections.subjects);
-  setCheck("hpShowCurriculum",sections.curriculum);
-  setCheck("hpShowLibrary",sections.library);
-  setCheck("hpShowAbout",sections.about);
-  setCheck("hpShowJoin",sections.join);
-}
-async function loadHomepageSettings(){
-  const status=el("homepageStatus");
-  status.textContent="جارٍ التحميل...";
+async function boot(){
+  if(!state.token){ $('#loginView').classList.remove('hidden'); return; }
   try{
-    const data=await request("/api/admin/homepage");
-    homepageDraft=data.draft&&typeof data.draft==="object"?data.draft:homepageDefault();
-    fillHomepageForm(homepageDraft);
-    status.textContent=data.status==="published"?"النسخة المنشورة":"توجد مسودة";
-    el("homepageUpdatedAt").textContent=data.updated_at?"آخر تحديث: "+data.updated_at:"";
-  }catch(e){
-    status.textContent="تعذر التحميل";
-    message("تعذر تحميل إعدادات الصفحة الرئيسية: "+e.message,"err");
-  }
+    let me;
+    try { me = await api('/api/admin/platform/me'); } catch { me = await api('/api/admin/me'); }
+    state.admin = me.admin || me;
+    $('#adminIdentity').textContent = (state.admin.display_name||state.admin.username||'الإدارة') + (state.admin.role?` (${state.admin.role})`:'');
+    $('#loginView').classList.add('hidden'); $('#appView').classList.remove('hidden');
+    buildNav(); checkHealth(); setSection(state.section);
+  }catch(e){ state.token=''; localStorage.removeItem(tokenKey); $('#loginView').classList.remove('hidden'); showLoginMsg('انتهت الجلسة، سجل الدخول مرة أخرى'); }
 }
-function validateHomepageSettings(settings){
-  if(!settings.brandName)return "اكتب اسم العلامة التجارية.";
-  if(!settings.hero.title)return "اكتب العنوان الرئيسي.";
-  for(const [label,url] of [["الشعار",settings.branding?.logoUrl],["صورة الخلفية",settings.branding?.heroImageUrl],["فيسبوك",settings.branding?.facebook],["يوتيوب",settings.branding?.youtube],["تليجرام",settings.branding?.telegram]]){if(url){try{if(new URL(url).protocol!=="https:")return "رابط "+label+" يجب أن يبدأ بـ https."}catch(e){return "رابط "+label+" غير صحيح."}}}
-  for(const [label,url] of [
-    ["الزر الأول",settings.hero.primaryUrl],
-    ["الزر الثاني",settings.hero.secondaryUrl],
-    ["الإعلان",settings.announcement.url]
-  ]){
-    if(!url)continue;
-    if(url.startsWith("#")||!url.includes(":")||url.startsWith("/")||/^[a-z0-9_-]+\.html(?:[?#].*)?$/i.test(url))continue;
-    try{
-      const u=new URL(url);
-      if(u.protocol!=="https:")return "رابط "+label+" يجب أن يكون رابطًا آمنًا.";
-    }catch(e){return "رابط "+label+" غير صحيح."}
-  }
-  return "";
+async function checkHealth(){
+  try{ await fetch(API+'/api/health'); $('#healthBadge').textContent='متصل'; $('#healthBadge').className='badge ok'; }
+  catch{ $('#healthBadge').textContent='خطأ'; $('#healthBadge').className='badge danger'; }
 }
-
-/* معاينة مستقلة للمحتوى الحالي قبل الحفظ */
-function previewHomepage(){
-  const settings=readHomepageForm();
-  const validation=validateHomepageSettings(settings);
-  if(validation)return message(validation,"err");
-
-  const safe=(value)=>escapeHTML(value);
-  const link=(url)=>safe(url||"#");
-  const hero=settings.hero;
-  const announcement=settings.announcement;
-  const about=settings.about;
-  const sections=settings.sections;
-
-  const sectionCards=[
-    sections.subjects?`<article class="tile"><span>01</span><h3>المواد الدراسية</h3><p>استكشف المواد الدراسية المتاحة داخل الأكاديمية.</p></article>`:"",
-    sections.curriculum?`<article class="tile"><span>02</span><h3>المنهج</h3><p>تابع محتوى المنهج والدروس التعليمية.</p></article>`:"",
-    sections.library?`<article class="tile"><span>03</span><h3>المكتبة التعليمية</h3><p>مصادر وملفات تعليمية في مكان واحد.</p></article>`:"",
-    sections.join?`<article class="tile"><span>04</span><h3>انضم إلينا</h3><p>ابدأ رحلتك التعليمية مع ZM Academy.</p><a class="button" href="${link(hero.primaryUrl)}">${safe(hero.primaryText||"ابدأ الآن")}</a></article>`:""
-  ].join("");
-
-  const announcementHTML=announcement.enabled?`
-    <section class="announcement">
-      <div><span class="eyebrow">إعلان الأكاديمية</span><h2>${safe(announcement.text)}</h2></div>
-      ${announcement.buttonText?`<a class="button light" href="${link(announcement.url)}">${safe(announcement.buttonText)}</a>`:""}
-    </section>`:"";
-
-  const aboutHTML=(about.enabled&&sections.about)?`
-    <section class="about">
-      <span class="eyebrow">من نحن</span>
-      <h2>${safe(about.title)}</h2>
-      <p>${safe(about.description)}</p>
-    </section>`:"";
-
-  const previewHTML=`<!DOCTYPE html>
-<html lang="ar" dir="rtl">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="theme-color" content="#080b1c">
-<title>${safe(settings.brandName)} | معاينة</title>
-<style>
-*{box-sizing:border-box}
-html{scroll-behavior:smooth}
-body{margin:0;background:#080b1c;color:#f2f5ff;font-family:Arial,Tahoma,sans-serif;line-height:1.8}
-a{text-decoration:none}
-.nav{display:flex;justify-content:space-between;align-items:center;gap:15px;padding:20px max(6%,calc((100% - 1150px)/2));background:rgba(8,12,31,.94);border-bottom:1px solid #26385f;flex-wrap:wrap}
-.brand{font-size:23px;font-weight:900;color:#82edff}
-.tagline{font-size:12px;color:#a8b6d6}
-.navlinks{display:flex;gap:12px;flex-wrap:wrap}
-.navlinks a{color:#dce7ff;font-size:13px}
-.hero{min-height:530px;padding:90px 7%;display:flex;align-items:center;background:radial-gradient(circle at 80% 20%,rgba(79,87,211,.28),transparent 36%),radial-gradient(circle at 10% 90%,rgba(0,197,235,.18),transparent 36%),linear-gradient(135deg,#0d1533,#090b1c 70%);border-bottom:1px solid #26385f}
-.hero-inner{max-width:1050px;margin:auto;width:100%}
-.eyebrow{display:inline-block;color:#7ceaff;font-size:13px;letter-spacing:1px;margin-bottom:12px}
-.hero h1{font-size:clamp(35px,7vw,68px);line-height:1.25;margin:8px 0 18px;max-width:850px}
-.highlight{color:#78eaff;text-shadow:0 0 25px #247caa}
-.hero p{max-width:700px;color:#bdc9e2;font-size:17px;line-height:2}
-.actions{display:flex;gap:12px;flex-wrap:wrap;margin-top:28px}
-.button{display:inline-flex;align-items:center;justify-content:center;padding:12px 23px;border-radius:12px;background:linear-gradient(120deg,#5cecff,#9a7cff);color:#071021;font-weight:800}
-.button.outline{background:transparent;border:1px solid #68dff5;color:#dffaff}
-.button.light{background:#e9f8ff;color:#10162d;white-space:nowrap}
-.announcement{max-width:1100px;margin:35px auto;padding:25px 30px;border:1px solid #4c82b7;border-radius:20px;background:linear-gradient(120deg,#182e57,#28204e);display:flex;justify-content:space-between;align-items:center;gap:20px;flex-wrap:wrap;width:90%}
-.announcement h2{margin:0;font-size:19px}
-.content{max-width:1100px;margin:55px auto;padding:0 20px}
-.content>h2,.about h2{font-size:30px;margin:0 0 12px}
-.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;margin-top:24px}
-.tile{padding:25px;border:1px solid #263e68;border-radius:18px;background:linear-gradient(145deg,#121d3c,#0d142b);min-height:190px}
-.tile span{color:#65e7ff;font-weight:bold}
-.tile h3{font-size:20px;color:#f4f7ff;margin:12px 0 5px}
-.tile p,.about p{color:#b7c5e0}
-.about{margin:55px auto;padding:40px;width:90%;max-width:1100px;border:1px solid #344b79;border-radius:20px;background:linear-gradient(135deg,#151d3d,#11172d)}
-.footer{text-align:center;padding:35px 15px;color:#8295b9;border-top:1px solid #26385f;margin-top:65px}
-.preview-label{position:fixed;bottom:12px;left:12px;background:#15254a;color:#9beeff;border:1px solid #4cecff;padding:7px 12px;border-radius:20px;font-size:11px;z-index:5}
-@media(max-width:650px){.hero{min-height:470px;padding:65px 7%}.hero p{font-size:15px}.announcement{padding:20px}.about{padding:25px}.nav{padding:16px 5%}}
-:root{--p:${safe(settings.theme?.primary||"#35a8ff")};--s:${safe(settings.theme?.secondary||"#9b70ff")};--bg:${safe(settings.theme?.background||"#080d1b")};--surface:${safe(settings.theme?.surface||"#111b34")};--fg:${safe(settings.theme?.text||"#f4f7ff")};--muted:${safe(settings.theme?.muted||"#a5b3d0")}}
-body{background:var(--bg);color:var(--fg)}.nav{background:var(--surface);border-color:var(--p)}.brand,.eyebrow,.highlight,.tile span{color:var(--p)}.hero{background:radial-gradient(circle at 80% 20%,color-mix(in srgb,var(--s) 24%,transparent),transparent 36%),linear-gradient(135deg,var(--surface),var(--bg))}.button{background:linear-gradient(120deg,var(--p),var(--s))}.tile,.about{background:var(--surface);border-color:color-mix(in srgb,var(--p) 45%,transparent);border-radius:${settings.theme?.corners==="sharp"?"5px":settings.theme?.corners==="round"?"28px":"18px"}}.hero h1,.tile h3{color:var(--fg)}.hero p,.tile p,.about p{color:var(--muted)}
-</style>
-</head>
-<body>
-<nav class="nav">
-  <div><div class="brand">${safe(settings.brandName)}</div><div class="tagline">${safe(settings.tagline)}</div></div>
-  <div class="navlinks">
-    <a href="#home">الرئيسية</a>
-    ${sections.subjects?'<a href="#subjects">المواد</a>':""}
-    ${sections.library?'<a href="#library">المكتبة</a>':""}
-    ${sections.about?'<a href="#about">عن الأكاديمية</a>':""}
-  </div>
-</nav>
-<main>
-<section class="hero" id="home">
-  <div class="hero-inner">
-    <span class="eyebrow">${safe(hero.eyebrow)}</span>
-    <h1>${safe(hero.title)} <span class="highlight">${safe(hero.highlight)}</span></h1>
-    <p>${safe(hero.description)}</p>
-    <div class="actions">
-      <a class="button" href="${link(hero.primaryUrl)}">${safe(hero.primaryText)}</a>
-      <a class="button outline" href="${link(hero.secondaryUrl)}">${safe(hero.secondaryText)}</a>
-    </div>
-  </div>
-</section>
-${announcementHTML}
-${sectionCards?`<section class="content" id="subjects"><span class="eyebrow">اكتشف الأكاديمية</span><h2>رحلتك التعليمية تبدأ هنا</h2><div class="tiles">${sectionCards}</div></section>`:""}
-${aboutHTML}
-</main>
-<footer class="footer">${safe(settings.brandName)} — ${safe(settings.tagline)}</footer>
-<div class="preview-label">معاينة غير منشورة</div>
-</body>
-</html>`;
-
-  const previewWindow=window.open("","_blank");
-  if(!previewWindow){
-    message("المتصفح منع فتح المعاينة. اسمح بالنوافذ المنبثقة لهذا الموقع ثم حاول مرة أخرى.","err");
-    return;
-  }
-  previewWindow.document.open();
-  previewWindow.document.write(previewHTML);
-  previewWindow.document.close();
-}
-
-async function saveHomepageDraft(){
-  if(isSavingHomepage)return;
-  const settings=readHomepageForm();
-  const validation=validateHomepageSettings(settings);
-  if(validation)return message(validation,"err");
-  isSavingHomepage=true;
-  const buttons=el("homepageEditor").querySelectorAll("button");
-  buttons.forEach(b=>b.disabled=true);
+function statCard(label,val){return `<div class="card stat"><div class="l">${esc(label)}</div><div class="k">${esc(val)}</div></div>`;}
+async function loadDashboard(){
+  const grid=$('#statsGrid'); grid.innerHTML='<div class="card muted">جارٍ التحميل...</div>';
   try{
-    const data=await request("/api/admin/homepage","PUT",{settings});
-    homepageDraft=settings;
-    el("homepageStatus").textContent="مسودة محفوظة";
-    message(data.message||"تم حفظ مسودة الصفحة الرئيسية.");
-  }catch(e){message("فشل حفظ المسودة: "+e.message,"err")}
-  finally{
-    isSavingHomepage=false;
-    buttons.forEach(b=>b.disabled=false);
-  }
+    const d = await api('/api/admin/platform/dashboard');
+    const s=d.stats||{};
+    grid.innerHTML = [
+      statCard('الطلاب',s.students??'-'), statCard('الطلبات المعلقة',s.pendingOrders??'-'), statCard('كل الطلبات',s.orders??'-'), statCard('الأجهزة المعلقة',s.pendingDevices??'-'),
+      statCard('المواد',s.subjects??'-'), statCard('الدروس',s.materials??'-'), statCard('أولياء الأمور',s.parents??'-'), statCard('الاختبارات',s.exams??'-')
+    ].join('');
+  }catch(e){ grid.innerHTML=`<div class="card muted">تعذر تحميل الإحصائيات: ${esc(e.message)}</div>`; }
+  loadRecentAudit(); loadSystemStatus();
 }
-async function publishHomepage(){
-  if(isSavingHomepage)return;
-  if(!confirm("هل تريد نشر إعدادات الصفحة الرئيسية الحالية للزوار؟"))return;
-  const settings=readHomepageForm();
-  const validation=validateHomepageSettings(settings);
-  if(validation)return message(validation,"err");
-  isSavingHomepage=true;
-  const buttons=el("homepageEditor").querySelectorAll("button");
-  buttons.forEach(b=>b.disabled=true);
-  try{
-    await request("/api/admin/homepage","PUT",{settings});
-    const data=await request("/api/admin/homepage/publish","POST",{});
-    homepageDraft=settings;
-    el("homepageStatus").textContent="منشورة";
-    message(data.message||"تم نشر الصفحة الرئيسية بنجاح.");
-  }catch(e){message("تعذر نشر الصفحة: "+e.message,"err")}
-  finally{
-    isSavingHomepage=false;
-    buttons.forEach(b=>b.disabled=false);
-  }
+async function loadRecentAudit(){
+  const el=$('#recentAudit');
+  try{ const d=await api('/api/admin/platform/audit?limit=8'); const rows=d.logs||[]; el.innerHTML=rows.length?rows.map(r=>`<div class="item"><div><strong>${esc(r.action)}</strong> <span class="muted small">بواسطة ${esc(r.actor_label||r.actor_type||'-')}</span></div><div class="small muted">${esc(fmtDate(r.created_at))}</div></div>`).join(''):'<div class="muted">لا يوجد نشاط بعد.</div>'; }
+  catch(e){ el.innerHTML=`<div class="muted">غير متاح: ${esc(e.message)}</div>`; }
 }
-
-async function loadSubjects(){
-  const previousFilter=el("materialSubject").value;
-  try{
-    const data=await request("/api/admin/subjects");
-    subjects=Array.isArray(data.subjects)?data.subjects:[];
-    renderSubjects();
-    fillSubjectOptions(previousFilter);
-    await loadMaterials();
-  }catch(e){message(e.message,"err")}
+async function loadSystemStatus(){
+  const el=$('#systemStatus');
+  const checks=[];
+  try{ await fetch(API+'/api/health'); checks.push(['Worker/DB','متصل','ok']); }catch{ checks.push(['Worker/DB','خطأ','danger']); }
+  checks.push(['AI', 'يتطلب AI_API_KEY','warn']);
+  checks.push(['GitHub Storage', 'يتطلب GITHUB_STORAGE_TOKEN','warn']);
+  el.innerHTML=checks.map(([k,v,c])=>`<div class="item"><div style="display:flex;justify-content:space-between;gap:10px"><span>${esc(k)}</span><span class="badge ${c}">${esc(v)}</span></div></div>`).join('');
 }
-function renderSubjects(){
-  const box=el("subjectsList");
-  if(!subjects.length){box.innerHTML="<p class='muted'>لا توجد مواد دراسية حتى الآن.</p>";return}
-  box.innerHTML=subjects.map(s=>{
-    const id=Number(s.id),archived=Number(s.is_archived)===1;
-    return `<div class="item">
-      <strong>${escapeHTML(s.name)}</strong>
-      <small>${escapeHTML(s.grade||"بدون صف محدد")}</small>
-      <small>${archived?"مؤرشفة":"نشطة"}</small>
-      <div class="row">
-        <button class="secondary" onclick="editSubject(${id})">تعديل</button>
-        ${archived?`<button onclick="archiveSubject(${id},'restore')">استعادة</button>`:`<button class="danger" onclick="archiveSubject(${id},'archive')">أرشفة</button>`}
-      </div>
-    </div>`;
-  }).join("");
-}
-function fillSubjectOptions(previousFilter=""){
-  const active=subjects.filter(s=>Number(s.is_archived)!==1);
-  const options=active.map(s=>`<option value="${Number(s.id)}">${escapeHTML(s.name)} - ${escapeHTML(s.grade||"")}</option>`).join("");
-  el("materialSubject").innerHTML='<option value="">كل المواد</option>'+options;
-  el("materialSubjectForm").innerHTML=options;
-  if(active.some(s=>String(s.id)===String(previousFilter)))el("materialSubject").value=String(previousFilter);
-}
-async function archiveSubject(id,action){
-  const archiving=action==="archive";
-  if(!confirm(archiving?"أرشفة المادة؟ ستختفي من المواد المتاحة للطلاب مع الاحتفاظ بالمشتريات القديمة.":"استعادة المادة وإظهارها للطلاب مرة أخرى؟"))return;
-  try{await request(`/api/admin/subjects/${id}/${action}`,"POST",{});await loadSubjects();message(archiving?"تمت أرشفة المادة بنجاح":"تمت استعادة المادة بنجاح")}
-  catch(e){message(e.message,"err")}
-}
-function editSubject(id){
-  const s=subjects.find(x=>Number(x.id)===Number(id));if(!s)return;
-  el("subjectId").value=s.id;el("subjectName").value=s.name;el("subjectGrade").value=s.grade||"";
-  el("subjectFormTitle").textContent="تعديل المادة الدراسية";
-  el("subjectName").scrollIntoView({behavior:"smooth",block:"center"});
-}
-function resetSubjectForm(){
-  el("subjectId").value="";el("subjectName").value="";el("subjectGrade").value="";
-  el("subjectFormTitle").textContent="إضافة مادة دراسية";
-}
-async function saveSubject(){
-  if(isSavingSubject)return;
-  const id=el("subjectId").value,name=el("subjectName").value.trim(),grade=el("subjectGrade").value.trim();
-  if(!name||!grade)return message("اكتب اسم المادة والصف الدراسي","err");
-  isSavingSubject=true;const btn=el("saveSubjectBtn");btn.disabled=true;btn.textContent="جارٍ الحفظ...";
-  try{
-    await request("/api/subjects",id?"PUT":"POST",id?{id:Number(id),name,grade}:{name,grade});
-    resetSubjectForm();await loadSubjects();message("تم حفظ المادة بنجاح");
-  }catch(e){message(e.message,"err")}
-  finally{isSavingSubject=false;btn.disabled=false;btn.textContent="حفظ المادة"}
-}
-async function deleteSubject(id){
-  if(!confirm("حذف المادة نهائيًا؟ قد يرفض الخادم الحذف إذا كانت هناك سجلات مرتبطة بها."))return;
-  try{await request("/api/subjects","DELETE",{id:Number(id)});await loadSubjects();message("تم حذف المادة")}
-  catch(e){message(e.message,"err")}
-}
-
-async function loadMaterials(){
-  try{
-    const selected=el("materialSubject").value;
-    const data=await request("/api/admin/materials");
-    let list=Array.isArray(data.materials)?data.materials:[];
-    if(selected)list=list.filter(m=>String(m.subject_id)===String(selected));
-    renderMaterials(list);
-  }catch(e){el("materialsList").innerHTML=`<p class="muted">${escapeHTML(e.message)}</p>`}
-}
-function renderMaterials(list){
-  const box=el("materialsList");
-  if(!list.length){box.innerHTML="<p class='muted'>لا يوجد محتوى في هذا الاختيار.</p>";return}
-  box.innerHTML=list.map(m=>{
-    const id=Number(m.id),archived=Number(m.is_archived)===1;
-    return `<div class="item">
-      <strong>${escapeHTML(m.title)}</strong>
-      <small>المادة: ${escapeHTML(m.subject_name||"—")}</small><br>
-      <small>النوع: ${escapeHTML(m.type)} | السعر: ${Number(m.price)||0} جنيه | ${Number(m.is_free)===1?"مجاني":"مدفوع"}</small>
-      <small style="display:block;color:${archived?"#bda7ff":"#45f0c0"}">${archived?"● الدرس مؤرشف":"● الدرس نشط"}</small>
-      <div class="row">
-        <button class="secondary" onclick="editMaterial(${id})">تعديل</button>
-        ${archived?`<button onclick="archiveMaterial(${id},'restore')">استعادة</button>`:`<button class="secondary" onclick="archiveMaterial(${id},'archive')">أرشفة</button>`}
-        <button class="danger" onclick="deleteMaterial(${id})">حذف</button>
-      </div>
-    </div>`;
-  }).join("");
-}
-async function archiveMaterial(id,action){
-  const archiving=action==="archive";
-  if(!confirm(archiving?"أرشفة هذا الدرس؟ سيختفي من المحتوى المتاح للطلاب مع الاحتفاظ بالمشتريات القديمة.":"استعادة هذا الدرس وإظهاره للطلاب مرة أخرى؟"))return;
-  try{await request(`/api/admin/materials/${Number(id)}/${action}`,"POST",{});await loadMaterials();message(archiving?"تمت أرشفة الدرس بنجاح":"تمت استعادة الدرس بنجاح")}
-  catch(e){message(e.message,"err")}
-}
-async function editMaterial(id){
-  try{
-    const data=await request("/api/admin/materials");
-    const m=(data.materials||[]).find(x=>Number(x.id)===Number(id));if(!m)return;
-    el("materialId").value=m.id;el("materialSubjectForm").value=String(m.subject_id);
-    el("materialTitle").value=m.title||"";el("materialType").value=m.type||"lesson";
-    const key=m.file_key||"";
-    el("materialExistingFileKey").value=key&&!/^https?:\/\//i.test(key)?key:"";
-    el("materialFileUrl").value=/^https?:\/\//i.test(key)?key:"";
-    el("materialFile").value="";
-    el("materialPrice").value=Number(m.price)||0;
-    el("materialFree").checked=Number(m.is_free)===1;
-    syncPriceField();
-    el("materialFormTitle").textContent="تعديل المحتوى";
-    el("materialTitle").scrollIntoView({behavior:"smooth",block:"center"});
-  }catch(e){message(e.message,"err")}
-}
-function syncPriceField(){
-  const free=el("materialFree").checked;
-  el("materialPrice").disabled=free;
-  if(free)el("materialPrice").value="0";
-}
-function resetMaterialForm(){
-  el("materialId").value="";el("materialTitle").value="";el("materialType").value="lesson";
-  el("materialFileUrl").value="";el("materialFile").value="";el("materialExistingFileKey").value="";
-  el("materialPrice").value="0";el("materialFree").checked=true;
-  el("materialFormTitle").textContent="إضافة محتوى تعليمي";syncPriceField();
-}
-async function saveMaterial(){
-  if(isSavingMaterial)return;
-  const id=el("materialId").value;
-  const subject_id=Number(el("materialSubjectForm").value);
-  const title=el("materialTitle").value.trim();
-  const type=el("materialType").value;
-  const selectedFile=el("materialFile").files[0];
-  const externalUrl=el("materialFileUrl").value.trim();
-  const existingKey=el("materialExistingFileKey").value;
-  const is_free=el("materialFree").checked;
-  const price=is_free?0:Number(el("materialPrice").value);
-
-  if(!subject_id||!title)return message("اختر المادة واكتب عنوان المحتوى","err");
-  if(!Number.isFinite(price)||price<0||price>1000000)return message("اكتب سعرًا صحيحًا بين صفر ومليون جنيه","err");
-  if(!is_free&&price<=0)return message("المحتوى المدفوع يجب أن يكون له سعر أكبر من صفر","err");
-  if(selectedFile&&(selectedFile.type!=="application/pdf"||selectedFile.size>8*1024*1024))return message("اختر ملف PDF لا يتجاوز 8 ميجابايت","err");
-  if(selectedFile&&type!=="pdf")return message("رفع ملف من الجهاز متاح لنوع PDF فقط. غيّر نوع المحتوى إلى ملف PDF.","err");
-  if(externalUrl){
-    try{const u=new URL(externalUrl);if(u.protocol!=="https:")throw new Error()}
-    catch(e){return message("اكتب رابطًا صحيحًا يبدأ بـ https://","err")}
-  }
-  if(selectedFile&&externalUrl)return message("ارفع ملف PDF أو ضع رابطًا خارجيًا، وليس الاثنين معًا","err");
-
-  isSavingMaterial=true;const btn=el("saveMaterialBtn");btn.disabled=true;btn.textContent="جارٍ الحفظ...";
-  let file_key=existingKey||externalUrl||null;
-  try{
-    if(selectedFile){
-      message("جارٍ رفع ملف PDF...");
-      const formData=new FormData();formData.append("file",selectedFile);
-      let uploadResponse;
-      try{uploadResponse=await fetch(API+"/api/admin/upload",{method:"POST",headers:{Authorization:"Bearer "+token},body:formData})}
-      catch(e){throw new Error("تعذر الاتصال أثناء رفع الملف.")}
-      const uploadData=await uploadResponse.json().catch(()=>({}));
-      if(!uploadResponse.ok||!uploadData.success||!uploadData.file_key)throw new Error(uploadData.error||"فشل رفع ملف PDF");
-      file_key=uploadData.file_key;
-    }
-    message("جارٍ حفظ المحتوى...");
-    const body={subject_id,title,type,price,is_free,file_key};
-    if(id)body.id=Number(id);
-    await request("/api/admin/materials",id?"PUT":"POST",body);
-    resetMaterialForm();await loadMaterials();message("تم حفظ المحتوى بنجاح");
-  }catch(e){message(e.message,"err")}
-  finally{isSavingMaterial=false;btn.disabled=false;btn.textContent="حفظ المحتوى"}
-}
-async function deleteMaterial(id){
-  if(!confirm("حذف المحتوى نهائيًا؟ سيتم حذف سجلات التقدم والمفضلة المرتبطة به."))return;
-  try{await request("/api/admin/materials","DELETE",{id:Number(id)});await loadMaterials();message("تم حذف المحتوى")}
-  catch(e){message(e.message,"err")}
-}
-
 async function loadStudents(){
-  const box=el("studentsList");box.innerHTML="<p class='muted'>جارٍ تحميل الطلاب...</p>";
+  const tb=$('#studentsTbody'); tb.innerHTML='<tr><td colspan="6" class="muted">جارٍ التحميل...</td></tr>';
   try{
-    const data=await request("/api/admin/students");const list=data.students||[];
-    if(!list.length){box.innerHTML="<p class='muted'>لا يوجد طلاب مسجلون حتى الآن.</p>";return}
-    box.innerHTML=list.map(s=>`<div class="item">
-      <strong>${escapeHTML(s.name)}</strong>
-      <small>رقم الهاتف: ${escapeHTML(s.phone||"غير مسجل")}</small>
-      <small>رقم الطالب: ${escapeHTML(s.id)}</small><br>
-      <small>الصف: ${escapeHTML(s.grade||"—")} | تاريخ التسجيل: ${escapeHTML(s.created_at||"—")}</small>
-      <div class="row"><button class="danger" onclick="deleteStudent(${Number(s.id)})">حذف الطالب</button></div>
-    </div>`).join("");
-  }catch(e){box.innerHTML=`<p class="muted">${escapeHTML(e.message)}</p>`}
+    let data;
+    try { data = await api('/api/admin/students'); } catch { data = await api('/api/admin/platform/students'); }
+    const rows = data.students||data.data||[];
+    state.cache.students=rows;
+    renderStudents(rows);
+  }catch(e){ tb.innerHTML=`<tr><td colspan="6">خطأ: ${esc(e.message)}</td></tr>`; }
 }
-async function deleteStudent(id){
-  if(!confirm("تأكيد حذف الطالب؟ سيحاول الخادم حذف بياناته التابعة أيضًا."))return;
-  try{await request("/api/admin/students/"+Number(id),"DELETE");await loadStudents();message("تم حذف الطالب بنجاح")}
-  catch(e){message(e.message,"err")}
+function renderStudents(rows){
+  const q=($('#studentSearch').value||'').trim().toLowerCase();
+  const filtered=rows.filter(s=>!q||JSON.stringify(s).toLowerCase().includes(q));
+  const tb=$('#studentsTbody');
+  tb.innerHTML=filtered.length?filtered.map(s=>`<tr><td>${esc(s.id)}</td><td>${esc(s.name||'-')}</td><td>${esc(s.phone||'-')}</td><td>${esc(s.grade||'-')}</td><td>${esc(s.school||'-')}</td><td><span class="small muted">عرض عبر API الحالي</span></td></tr>`).join(''):'<tr><td colspan="6" class="muted">لا توجد نتائج</td></tr>';
 }
-
-const orderStatusLabels={pending:"قيد المراجعة",approved:"مقبول",rejected:"مرفوض",completed:"مكتمل"};
+async function loadSubjects(){
+  const tb=$('#subjectsTbody'); tb.innerHTML='<tr><td colspan="4" class="muted">...</td></tr>';
+  try{ const d=await api('/api/admin/subjects'); const rows=d.subjects||d.data||[]; tb.innerHTML=rows.map(s=>`<tr><td>${esc(s.id)}</td><td>${esc(s.name||'-')}</td><td>${esc(s.grade||s.stage||'-')}</td><td><button class="ghost small" onclick="window.__delSubject(${s.id})">حذف</button></td></tr>`).join('')||'<tr><td colspan="4" class="muted">لا توجد مواد</td></tr>'; }
+  catch(e){ tb.innerHTML=`<tr><td colspan="4">خطأ: ${esc(e.message)}</td></tr>`; }
+}
+window.__delSubject = async (id)=>{ if(!confirm('حذف/أرشفة المادة؟')) return; try{ await api('/api/subjects',{method:'DELETE',body:JSON.stringify({id})}); showMsg('تمت العملية',true); loadSubjects(); }catch(e){ showMsg(e.message); } };
+async function loadMaterials(){
+  const tb=$('#materialsTbody'); tb.innerHTML='<tr><td colspan="5" class="muted">...</td></tr>';
+  try{ const d=await api('/api/admin/materials'); const rows=d.materials||d.data||[]; tb.innerHTML=rows.map(m=>`<tr><td>${esc(m.id)}</td><td>${esc(m.title||m.name||'-')}</td><td>${esc(m.subject_id||'-')}</td><td>${esc(m.price ?? (m.is_free?0:'-'))}</td><td><button class="ghost small" onclick="window.__delMaterial(${m.id})">حذف</button></td></tr>`).join('')||'<tr><td colspan="5" class="muted">لا يوجد محتوى</td></tr>'; }
+  catch(e){ tb.innerHTML=`<tr><td colspan="5">خطأ: ${esc(e.message)}</td></tr>`; }
+}
+window.__delMaterial = async (id)=>{ if(!confirm('حذف/أرشفة الدرس؟')) return; try{ await api('/api/admin/materials',{method:'DELETE',body:JSON.stringify({id})}); showMsg('تمت العملية',true); loadMaterials(); }catch(e){ showMsg(e.message); } };
 async function loadOrders(){
-  const box=el("ordersList");box.innerHTML="<p class='muted'>جارٍ تحميل الطلبات...</p>";
-  try{
-    const data=await request("/api/admin/orders");const list=(data.orders||[]).filter(o=>o.status==="pending");
-    if(!list.length){box.innerHTML="<p class='muted'>لا توجد طلبات معلقة حاليًا.</p>";return}
-    box.innerHTML=list.map(o=>`<div class="item">
-      <strong>${escapeHTML(o.material_title||"طلب محتوى")}</strong>
-      <small>الطالب: ${escapeHTML(o.student_name||"غير معروف")}</small><br>
-      <small>الهاتف: ${escapeHTML(o.phone||"—")}</small><br>
-      <small>السعر: ${Number(o.price)||0} جنيه</small><br>
-      <small>التاريخ: ${escapeHTML(o.created_at||"—")}</small><br>
-      <span class="status">الحالة: ${escapeHTML(orderStatusLabels[o.status]||o.status||"غير محددة")}</span>
-      <div class="row">
-        <button onclick="updateOrder(${Number(o.id)},'approved')">قبول</button>
-        <button class="danger" onclick="updateOrder(${Number(o.id)},'rejected')">رفض</button>
-        <button class="secondary" onclick="updateOrder(${Number(o.id)},'completed')">مكتمل</button>
-      </div>
-    </div>`).join("");
-  }catch(e){box.innerHTML=`<p class="muted">${escapeHTML(e.message)}</p>`}
+  const tb=$('#ordersTbody'); tb.innerHTML='<tr><td colspan="6" class="muted">...</td></tr>';
+  try{ const d=await api('/api/admin/orders'); let rows=d.orders||d.data||[]; const f=$('#orderFilter').value; if(f) rows=rows.filter(o=>o.status===f);
+    tb.innerHTML=rows.map(o=>`<tr><td>${esc(o.id)}</td><td>${esc(o.student_name||o.student_id||'-')}</td><td>${esc(o.material_title||o.material_id||'-')}</td><td><span class="badge ${o.status==='pending'?'warn':o.status==='rejected'?'danger':'ok'}">${esc(o.status||'-')}</span></td><td>${esc(fmtDate(o.created_at))}</td><td class="small"><button class="ghost" onclick="window.__setOrder(${o.id},'approved')">قبول</button> <button class="ghost" onclick="window.__setOrder(${o.id},'rejected')">رفض</button> <button class="ghost" onclick="window.__setOrder(${o.id},'completed')">إكمال</button></td></tr>`).join('')||'<tr><td colspan="6" class="muted">لا توجد طلبات</td></tr>'; }
+  catch(e){ tb.innerHTML=`<tr><td colspan="6">خطأ: ${esc(e.message)}</td></tr>`; }
 }
-async function updateOrder(id,status){
-  const prompts={approved:"تأكيد قبول الطلب؟",rejected:"تأكيد رفض الطلب؟",completed:"تأكيد إكمال الطلب؟"};
-  if(!confirm(prompts[status]||"تأكيد تحديث الطلب؟"))return;
-  try{await request("/api/admin/orders/"+Number(id),"PATCH",{status});await loadOrders();message("تم تحديث حالة الطلب")}
-  catch(e){message(e.message,"err")}
+window.__setOrder = async (id,status)=>{ try{ await api('/api/admin/orders',{method:'PATCH',body:JSON.stringify({id,status})}); showMsg('تم تحديث الطلب',true); loadOrders(); }catch(e){ try{ await api('/api/admin/orders/status',{method:'POST',body:JSON.stringify({id,status})}); showMsg('تم تحديث الطلب',true); loadOrders(); }catch(e2){ showMsg(e2.message||e.message); } } };
+async function loadDevices(){
+  const tb=$('#devicesTbody'); tb.innerHTML='<tr><td colspan="6" class="muted">...</td></tr>';
+  try{ const d=await api('/api/admin/device-requests'); const rows=d.requests||d.devices||d.data||[]; tb.innerHTML=rows.map(r=>`<tr><td>${esc(r.id)}</td><td>${esc(r.student_name||r.student_id||'-')}</td><td>${esc(r.device_name||r.device_label||'-')}</td><td><span class="badge ${r.status==='pending'?'warn':r.status==='approved'?'ok':'danger'}">${esc(r.status||'-')}</span></td><td>${esc(fmtDate(r.created_at))}</td><td><button class="ghost" onclick="window.__deviceAction(${r.id},'approved')">اعتماد</button> <button class="ghost" onclick="window.__deviceAction(${r.id},'rejected')">رفض</button></td></tr>`).join('')||'<tr><td colspan="6" class="muted">لا توجد طلبات</td></tr>'; }
+  catch(e){ tb.innerHTML=`<tr><td colspan="6">خطأ: ${esc(e.message)}</td></tr>`; }
+}
+window.__deviceAction = async (id,status)=>{ try{ await api('/api/admin/device-requests',{method:'PATCH',body:JSON.stringify({id,status})}); showMsg('تم التحديث',true); loadDevices(); }catch(e){ showMsg(e.message); } };
+async function loadParents(){
+  try{ const d=await api('/api/admin/platform/parents'); const rows=d.parents||[]; $('#parentsTbody').innerHTML=rows.map(p=>`<tr><td>${p.id}</td><td>${esc(p.name)}</td><td>${esc(p.username)}</td><td>${esc(p.phone||'-')}</td><td>${esc(p.approved_children||0)}</td></tr>`).join('')||'<tr><td colspan="5" class="muted">لا يوجد</td></tr>'; }catch(e){ $('#parentsTbody').innerHTML=`<tr><td colspan="5">${esc(e.message)}</td></tr>`; }
+  try{ const d=await api('/api/admin/platform/parent-links'); const rows=d.links||[]; $('#parentLinksTbody').innerHTML=rows.map(l=>`<tr><td>${l.id}</td><td>${esc(l.parent_name||l.parent_id)}</td><td>${esc(l.student_name||l.student_id)}</td><td><span class="badge ${l.status==='pending'?'warn':l.status==='approved'?'ok':'danger'}">${esc(l.status)}</span></td><td><button class="ghost" onclick="window.__linkAction(${l.id},'approved')">قبول</button> <button class="ghost" onclick="window.__linkAction(${l.id},'rejected')">رفض</button></td></tr>`).join('')||'<tr><td colspan="5" class="muted">لا يوجد</td></tr>'; }catch(e){ $('#parentLinksTbody').innerHTML=`<tr><td colspan="5">${esc(e.message)}</td></tr>`; }
+}
+window.__linkAction=async(id,status)=>{ try{ await api('/api/admin/platform/parent-links/'+id,{method:'PUT',body:JSON.stringify({status})}); showMsg('تم التحديث',true); loadParents(); }catch(e){ showMsg(e.message); } };
+
+async function loadExams(){
+  try{ const d=await api('/api/admin/platform/exams'); const rows=d.exams||[]; $('#examsTbody').innerHTML=rows.map(e=>`<tr><td>${e.id}</td><td>${esc(e.title)}</td><td><span class="badge ${e.status==='published'?'ok':'warn'}">${esc(e.status)}</span></td><td>${esc(e.questions_count||0)}</td><td>${esc(e.attempts_count||0)}</td><td><button class="ghost" onclick="window.__editExam(${e.id})">تعديل</button> <button class="ghost" onclick="window.__delExam(${e.id})">حذف</button></td></tr>`).join('')||'<tr><td colspan="6" class="muted">لا توجد اختبارات</td></tr>'; }catch(e){ $('#examsTbody').innerHTML=`<tr><td colspan="6">${esc(e.message)}</td></tr>`; }
+}
+window.__editExam=async(id)=>{ try{ const d=await api('/api/admin/platform/exams/'+id); $('#qExamId').value=id; $('#examEditorHint').textContent='تعديل الاختبار #'+id+' - '+(d.exam?.title||''); const qs=d.questions||[]; $('#questionsList').innerHTML=qs.map(q=>`<div class="item"><strong>${esc(q.question_text)}</strong><div class="small muted">${esc(q.type)} - ${esc(q.points)} درجة</div><button class="ghost small" onclick="window.__delQ(${q.id},${id})">حذف</button></div>`).join('')||'<div class="muted small">لا توجد أسئلة</div>'; }catch(e){ showMsg(e.message); } };
+window.__delExam=async(id)=>{ if(!confirm('حذف الاختبار؟'))return; try{ await api('/api/admin/platform/exams/'+id,{method:'DELETE'}); showMsg('تم الحذف',true); loadExams(); }catch(e){ showMsg(e.message); } };
+window.__delQ=async(qid,examId)=>{ if(!confirm('حذف السؤال؟'))return; try{ await api('/api/admin/platform/exam-questions/'+qid,{method:'DELETE'}); showMsg('تم الحذف',true); window.__editExam(examId); loadExams(); }catch(e){ showMsg(e.message); } };
+async function loadAds(){ try{ const d=await api('/api/admin/platform/ads'); const rows=d.ads||[]; $('#adsTbody').innerHTML=rows.map(a=>`<tr><td>${a.id}</td><td>${esc(a.title)}</td><td>${esc(a.placement)}</td><td>${a.is_active?'<span class="badge ok">نعم</span>':'<span class="badge danger">لا</span>'}</td><td>${esc(a.views||0)}</td><td>${esc(a.clicks||0)}</td><td><button class="ghost" onclick='window.__editAd(${JSON.stringify(a).replace(/'/g,"&#39;")})'>تعديل</button> <button class="ghost" onclick="window.__delAd(${a.id})">حذف</button></td></tr>`).join('')||'<tr><td colspan="7" class="muted">لا توجد إعلانات</td></tr>'; }catch(e){ $('#adsTbody').innerHTML=`<tr><td colspan="7">${esc(e.message)}</td></tr>`; } }
+window.__editAd=(a)=>{ $('#adId').value=a.id; $('#adTitle').value=a.title||''; $('#adBody').value=a.body||''; $('#adImage').value=a.image_url||''; $('#adLink').value=a.link_url||''; $('#adCta').value=a.cta_text||''; $('#adPlacement').value=a.placement||'home'; $('#adPriority').value=a.priority||0; $('#adActive').value=a.is_active? '1':'0'; };
+window.__delAd=async(id)=>{ if(!confirm('حذف الإعلان؟'))return; try{ await api('/api/admin/platform/ads/'+id,{method:'DELETE'}); showMsg('تم الحذف',true); loadAds(); }catch(e){ showMsg(e.message); } };
+async function loadNotifications(){ try{ const d=await api('/api/admin/platform/notifications'); const rows=d.notifications||[]; $('#notifTbody').innerHTML=rows.map(n=>`<tr><td>${n.id}</td><td>${esc(n.title)}</td><td>${esc(n.type)}</td><td>${esc(n.audience_type)} ${esc(n.audience_value||'')}</td><td>${esc(fmtDate(n.created_at))}</td></tr>`).join('')||'<tr><td colspan="5" class="muted">لا يوجد</td></tr>'; }catch(e){ $('#notifTbody').innerHTML=`<tr><td colspan="5">${esc(e.message)}</td></tr>`; } }
+async function loadPage(){
+  const key=$('#pageKey').value.trim()||'home';
+  try{ const d=await api('/api/admin/platform/pages/'+encodeURIComponent(key)); const content=d.draft?.content || d.published?.content || {blocks:[]}; $('#pageTitle').value=d.draft?.title||d.published?.title||key; $('#pageJson').value=JSON.stringify(content,null,2); renderPagePreview(content);
+    const vs=d.versions||[]; $('#pageVersions').innerHTML=vs.length?'<div class="small muted">النسخ السابقة</div>'+vs.map(v=>`<div class="item"><div><strong>#${v.id}</strong> ${esc(v.status)} - ${esc(fmtDate(v.created_at))}</div><button class="ghost small" onclick="window.__rollbackPage('${esc(key)}',${v.id})">استرجاع للمسودة</button></div>`).join(''):'<div class="small muted">لا توجد نسخ سابقة</div>';
+  }catch(e){ showMsg(e.message); }
+}
+window.__rollbackPage=async(key,version_id)=>{ if(!confirm('استرجاع هذه النسخة للمسودة؟'))return; try{ await api('/api/admin/platform/pages/'+encodeURIComponent(key)+'/rollback',{method:'POST',body:JSON.stringify({version_id})}); showMsg('تم الاسترجاع',true); loadPage(); }catch(e){ showMsg(e.message); } };
+function renderPagePreview(content){ const blocks=content?.blocks||[]; if(!blocks.length){ $('#pagePreview').innerHTML='<div class="muted">لا توجد كتل. أضف JSON.</div>'; return; } $('#pagePreview').innerHTML=blocks.map(b=>{ if(b.type==='hero') return `<div style="padding:18px;border-radius:14px;background:linear-gradient(120deg,rgba(76,201,255,.18),rgba(155,123,255,.18));margin-bottom:10px"><h2 style="margin:0 0 8px">${esc(b.title||'')}</h2><p class="muted">${esc(b.text||'')}</p>${b.buttonText?`<a href="${esc(b.buttonUrl||'#')}" style="display:inline-block;padding:8px 12px;border-radius:10px;background:linear-gradient(120deg,var(--primary),var(--secondary));color:#08101f;font-weight:700">${esc(b.buttonText)}</a>`:''}</div>`; if(b.type==='card') return `<div class="item"><strong>${esc(b.title||'')}</strong><div class="muted small">${esc(b.text||'')}</div></div>`; if(b.type==='announcement') return `<div class="item" style="border-color:rgba(255,204,102,.3)"><strong>${esc(b.title||'إعلان')}</strong><div>${esc(b.text||'')}</div></div>`; return `<div class="item"><strong>${esc(b.type||'block')}</strong><pre class="small" style="white-space:pre-wrap">${esc(JSON.stringify(b,null,2))}</pre></div>`; }).join(''); }
+window.applyPageTemplate=(type)=>{ const map={hero:{blocks:[{type:'hero',title:'مرحبًا بك في ZM Academy',text:'منصة تعليمية متقدمة',buttonText:'ابدأ الآن',buttonUrl:'./register.html'}]},cards:{blocks:[{type:'card',title:'محتوى منظم',text:'دروس وملفات واختبارات.'},{type:'card',title:'متابعة مستمرة',text:'تقارير ونتائج واضحة.'}]},announcement:{blocks:[{type:'announcement',title:'تنبيه',text:'رسالة مهمة للطلاب.'}]}}; const c=map[type]||{blocks:[]}; $('#pageJson').value=JSON.stringify(c,null,2); renderPagePreview(c); };
+async function loadSettings(){ try{ const d=await api('/api/admin/platform/settings'); const g=d.settings?.general||{}; $('#setName').value=g.academyName||''; $('#setDesc').value=g.description||''; $('#setPhone').value=g.supportPhone||''; $('#setWhatsapp').value=g.whatsapp||''; $('#setEmail').value=g.supportEmail||''; $('#setTz').value=g.timezone||'Africa/Cairo'; $('#setMaint').checked=!!g.maintenance; $('#setMaintMsg').value=g.maintenanceMessage||''; const t=d.settings?.theme||{}; $('#themeMode').value=t.mode||'dark'; $('#themeTemplate').value=t.template||'future'; $('#themePrimary').value=t.primary||'#35a8ff'; $('#themeSecondary').value=t.secondary||'#9b7bff'; $('#themeBg').value=t.background||'#080d1b'; $('#themeSurface').value=t.surface||'#111b34'; $('#themeRadius').value=t.radius||'18px'; previewTheme(); }catch(e){ showMsg('تعذر تحميل الإعدادات: '+e.message); } }
+function previewTheme(){ const r=document.documentElement.style; r.setProperty('--primary',$('#themePrimary').value); r.setProperty('--secondary',$('#themeSecondary').value); r.setProperty('--bg',$('#themeBg').value); r.setProperty('--surface',$('#themeSurface').value); r.setProperty('--radius',$('#themeRadius').value); $('#themePreview').innerHTML=`<div style="padding:18px;border-radius:var(--radius);background:linear-gradient(120deg,${$('#themePrimary').value}22,${$('#themeSecondary').value}22);border:1px solid var(--line)"><h3 style="margin-top:0">معاينة ZM Academy</h3><p class="muted">هذا مثال على الألوان والزوايا.</p><button>زر تجريبي</button></div>`; }
+async function loadAudit(){ try{ const d=await api('/api/admin/platform/audit?limit=100'); const rows=d.logs||[]; $('#auditTbody').innerHTML=rows.map(r=>`<tr><td>${esc(fmtDate(r.created_at))}</td><td>${esc(r.actor_label||r.actor_type||'-')}</td><td>${esc(r.action)}</td><td>${esc(r.entity_type||'-')} ${esc(r.entity_id||'')}</td><td><div class="small" style="max-width:360px;white-space:pre-wrap">${esc((r.details_json||'').slice(0,300))}</div></td></tr>`).join('')||'<tr><td colspan="5" class="muted">لا يوجد</td></tr>'; }catch(e){ $('#auditTbody').innerHTML=`<tr><td colspan="5">${esc(e.message)}</td></tr>`; } }
+async function loadSection(key){
+  if(key==='dashboard') return loadDashboard();
+  if(key==='students') return loadStudents();
+  if(key==='content'){ await loadSubjects(); return loadMaterials(); }
+  if(key==='orders') return loadOrders();
+  if(key==='devices') return loadDevices();
+  if(key==='parents') return loadParents();
+  if(key==='exams') return loadExams();
+  if(key==='ads') return loadAds();
+  if(key==='notifications') return loadNotifications();
+  if(key==='pages') return loadPage();
+  if(key==='theme'||key==='settings') return loadSettings();
+  if(key==='audit') return loadAudit();
+  if(key==='ai') return;
 }
 
-async function loadDeviceRequests(){
-  const box=el("deviceRequestsList");box.innerHTML="<p class='muted'>جارٍ تحميل طلبات الأجهزة...</p>";
-  try{
-    const data=await request("/api/admin/device-requests");const list=data.requests||[];
-    if(!list.length){box.innerHTML="<p class='muted'>لا توجد طلبات اعتماد أجهزة معلقة حاليًا.</p>";return}
-    box.innerHTML=list.map(d=>`<div class="item">
-      <strong>${escapeHTML(d.student_name||"طالب غير معروف")}</strong>
-      <small>اسم المستخدم: ${escapeHTML(d.username||"—")}</small>
-      <small>رقم الطالب: ${Number(d.student_id)||"—"}</small>
-      <small>رقم الهاتف: ${escapeHTML(d.phone||"غير مسجل")}</small><br>
-      <small>الجهاز: ${escapeHTML(d.device_name||"غير معروف")}</small><br>
-      <small>تاريخ الطلب: ${escapeHTML(d.created_at||"—")}</small>
-      <div class="row">
-        <button onclick="reviewDevice(${Number(d.id)},'approve')">موافقة</button>
-        <button class="danger" onclick="reviewDevice(${Number(d.id)},'reject')">رفض</button>
-      </div>
-    </div>`).join("");
-  }catch(e){box.innerHTML=`<p class="muted">${escapeHTML(e.message)}</p>`}
-}
-async function reviewDevice(id,decision){
-  if(!confirm(decision==="approve"?"الموافقة على هذا الجهاز؟":"رفض طلب هذا الجهاز؟"))return;
-  try{
-    await request("/api/admin/device-requests/"+Number(id)+"/"+decision,"POST",{});
-    await loadDeviceRequests();message(decision==="approve"?"تم اعتماد الجهاز بنجاح":"تم رفض طلب الجهاز");
-  }catch(e){message(e.message,"err")}
-}
+// events
+$('#loginBtn').onclick=login;
+$('#loginPass').addEventListener('keydown',e=>{if(e.key==='Enter')login();});
+$('#logoutBtn').onclick=logout;
+$('#refreshBtn').onclick=()=>loadSection(state.section).catch(e=>showMsg(e.message));
+$('#globalSearch').addEventListener('keydown',e=>{if(e.key==='Enter'){const q=e.target.value.toLowerCase(); const found=sections.find(s=>s[1].toLowerCase().includes(q)||s[0].includes(q)); if(found) setSection(found[0]);}});
+document.addEventListener('keydown',e=>{if(e.key==='/' && document.activeElement.tagName!=='INPUT' && document.activeElement.tagName!=='TEXTAREA'){e.preventDefault(); $('#globalSearch').focus();}});
+$('#studentSearch').addEventListener('input',()=>renderStudents(state.cache.students||[]));
+$('#reloadStudents').onclick=loadStudents;
+$('#addSubjectBtn').onclick=async()=>{ try{ const name=$('#subName').value.trim(), grade=$('#subGrade').value.trim(); if(!name) return showMsg('اسم المادة مطلوب'); await api('/api/subjects',{method:'POST',body:JSON.stringify({name,grade})}); $('#subName').value=''; showMsg('تمت الإضافة',true); loadSubjects(); }catch(e){ showMsg(e.message); } };
+$('#addMaterialBtn').onclick=async()=>{ try{ const body={title:$('#matTitle').value.trim(), subject_id:Number($('#matSubjectId').value||0), price:Number($('#matPrice').value||0), is_free:Number($('#matFree').value||0)}; if(!body.title||!body.subject_id) return showMsg('العنوان و subject_id مطلوبان'); await api('/api/admin/materials',{method:'POST',body:JSON.stringify(body)}); $('#matTitle').value=''; showMsg('تمت الإضافة',true); loadMaterials(); }catch(e){ showMsg(e.message); } };
+$('#reloadOrders').onclick=loadOrders; $('#orderFilter').onchange=loadOrders;
+$('#reloadDevices').onclick=loadDevices;
+$('#addExamBtn').onclick=async()=>{ try{ const body={title:$('#examTitle').value.trim(), grade:$('#examGrade').value.trim(), subject_id:$('#examSubject').value?Number($('#examSubject').value):null, status:$('#examStatus').value}; if(!body.title) return showMsg('عنوان الاختبار مطلوب'); await api('/api/admin/platform/exams',{method:'POST',body:JSON.stringify(body)}); $('#examTitle').value=''; showMsg('تم إنشاء الاختبار',true); loadExams(); }catch(e){ showMsg(e.message); } };
+$('#addQuestionBtn').onclick=async()=>{ try{ const examId=Number($('#qExamId').value||0); if(!examId) return showMsg('اختر اختبارًا أولًا'); let options=[]; let answer=null; try{ options=$('#qOptions').value.trim()?JSON.parse($('#qOptions').value):[]; }catch{ return showMsg('خيارات JSON غير صالحة'); } try{ answer=$('#qAnswer').value.trim()?JSON.parse($('#qAnswer').value):null; }catch{ answer=$('#qAnswer').value.trim(); }
+  const body={type:$('#qType').value,question_text:$('#qText').value.trim(),options,correct_answer:answer,points:Number($('#qPoints').value||1)}; if(!body.question_text) return showMsg('نص السؤال مطلوب'); await api(`/api/admin/platform/exams/${examId}/questions`,{method:'POST',body:JSON.stringify(body)}); $('#qText').value=''; showMsg('تمت إضافة السؤال',true); window.__editExam(examId); loadExams(); }catch(e){ showMsg(e.message); } };
+$('#saveAdBtn').onclick=async()=>{ try{ const id=$('#adId').value; const body={title:$('#adTitle').value.trim(), body:$('#adBody').value.trim(), image_url:$('#adImage').value.trim(), link_url:$('#adLink').value.trim(), cta_text:$('#adCta').value.trim(), placement:$('#adPlacement').value, priority:Number($('#adPriority').value||0), is_active:$('#adActive').value==='1'}; if(!body.title) return showMsg('عنوان الإعلان مطلوب'); if(id) await api('/api/admin/platform/ads/'+id,{method:'PUT',body:JSON.stringify(body)}); else await api('/api/admin/platform/ads',{method:'POST',body:JSON.stringify(body)}); showMsg('تم الحفظ',true); $('#resetAdBtn').click(); loadAds(); }catch(e){ showMsg(e.message); } };
+$('#resetAdBtn').onclick=()=>{ ['adId','adTitle','adBody','adImage','adLink','adCta'].forEach(id=>$('#'+id).value=''); $('#adPlacement').value='home'; $('#adPriority').value=0; $('#adActive').value='1'; };
+$('#sendNotifBtn').onclick=async()=>{ try{ const body={title:$('#notifTitle').value.trim(), body:$('#notifBody').value.trim(), type:$('#notifType').value, audience_type:$('#notifAudience').value, audience_value:$('#notifAudienceValue').value.trim(), is_important:$('#notifType').value==='important'}; if(!body.title||!body.body) return showMsg('العنوان والنص مطلوبان'); await api('/api/admin/platform/notifications',{method:'POST',body:JSON.stringify(body)}); showMsg('تم الإرسال/الحفظ',true); $('#notifTitle').value=''; $('#notifBody').value=''; loadNotifications(); }catch(e){ showMsg(e.message); } };
+$('#loadPageBtn').onclick=loadPage;
+$('#savePageBtn').onclick=async()=>{ try{ const key=$('#pageKey').value.trim()||'home'; let content; try{ content=JSON.parse($('#pageJson').value||'{}'); }catch{ return showMsg('JSON غير صالح'); } await api('/api/admin/platform/pages/'+encodeURIComponent(key),{method:'PUT',body:JSON.stringify({title:$('#pageTitle').value.trim()||key, content})}); renderPagePreview(content); showMsg('تم حفظ المسودة',true); loadPage(); }catch(e){ showMsg(e.message); } };
+$('#publishPageBtn').onclick=async()=>{ try{ const key=$('#pageKey').value.trim()||'home'; if(!confirm('نشر الصفحة؟')) return; await api('/api/admin/platform/pages/'+encodeURIComponent(key)+'/publish',{method:'POST'}); showMsg('تم النشر',true); loadPage(); }catch(e){ showMsg(e.message); } };
+$('#pageJson').addEventListener('input',()=>{ try{ renderPagePreview(JSON.parse($('#pageJson').value||'{}')); }catch{} });
+$('#previewThemeBtn').onclick=previewTheme;
+$('#saveThemeBtn').onclick=async()=>{ try{ const theme={mode:$('#themeMode').value,template:$('#themeTemplate').value,primary:$('#themePrimary').value,secondary:$('#themeSecondary').value,background:$('#themeBg').value,surface:$('#themeSurface').value,radius:$('#themeRadius').value}; await api('/api/admin/platform/settings',{method:'PUT',body:JSON.stringify({theme})}); showMsg('تم حفظ الثيم',true); previewTheme(); }catch(e){ showMsg(e.message); } };
+$('#saveSettingsBtn').onclick=async()=>{ try{ const general={academyName:$('#setName').value.trim(),description:$('#setDesc').value.trim(),supportPhone:$('#setPhone').value.trim(),whatsapp:$('#setWhatsapp').value.trim(),supportEmail:$('#setEmail').value.trim(),timezone:$('#setTz').value.trim()||'Africa/Cairo',maintenance:$('#setMaint').checked,maintenanceMessage:$('#setMaintMsg').value.trim()}; await api('/api/admin/platform/settings',{method:'PUT',body:JSON.stringify({general})}); showMsg('تم حفظ الإعدادات',true); }catch(e){ showMsg(e.message); } };
+$('#runAiBtn').onclick=async()=>{ const prompt=$('#aiPrompt').value.trim(); if(!prompt) return showMsg('اكتب الطلب أولًا'); $('#runAiBtn').disabled=true; $('#aiResult').textContent='جارٍ التنفيذ...'; try{ const d=await api('/api/admin/platform/ai',{method:'POST',body:JSON.stringify({prompt,mode:$('#aiMode').value})}); $('#aiResult').textContent=d.text||JSON.stringify(d,null,2); }catch(e){ $('#aiResult').textContent='خطأ: '+(e.data?.error||e.message); } finally{ $('#runAiBtn').disabled=false; } };
+$('#reloadAudit').onclick=loadAudit;
 
-async function loadPasswordResetRequests(){
-  const box=el("passwordResetRequestsList");box.innerHTML="<p class='muted'>جارٍ تحميل طلبات استعادة كلمة المرور...</p>";
-  try{
-    const data=await request("/api/admin/password-reset-requests");const list=data.requests||[];
-    if(!list.length){box.innerHTML="<p class='muted'>لا توجد طلبات استعادة كلمة مرور معلقة حاليًا.</p>";return}
-    box.innerHTML=list.map(r=>`<div class="item">
-      <strong>${escapeHTML(r.student_name||"طالب غير معروف")}</strong>
-      <small>اسم المستخدم: ${escapeHTML(r.username||"—")}</small>
-      <small>رقم الهاتف: ${escapeHTML(r.phone||"—")}</small><br>
-      <small>الصف الدراسي: ${escapeHTML(r.grade||"—")}</small><br>
-      <small>تاريخ الطلب: ${escapeHTML(r.created_at||"—")}</small>
-      <span class="status">طلب قيد المراجعة</span>
-      <div class="row">
-        <button onclick="resetStudentPassword(${Number(r.id)})">تعيين كلمة مرور جديدة</button>
-        <button class="danger" onclick="rejectPasswordReset(${Number(r.id)})">رفض الطلب</button>
-      </div>
-    </div>`).join("");
-  }catch(e){box.innerHTML=`<p class="muted">${escapeHTML(e.message)}</p>`}
-}
-async function resetStudentPassword(id){
-  const password=prompt("اكتب كلمة المرور الجديدة للطالب (8 إلى 100 حرف):");
-  if(password===null)return;
-  if(password.length<8||password.length>100)return message("كلمة المرور يجب أن تكون من 8 إلى 100 حرف","err");
-  const confirmPassword=prompt("أعد كتابة كلمة المرور الجديدة للتأكيد:");
-  if(confirmPassword===null)return;
-  if(password!==confirmPassword)return message("كلمتا المرور غير متطابقتين","err");
-  if(!confirm("تأكيد تعيين كلمة المرور؟ سيتم إنهاء جلسات الطالب القديمة."))return;
-  try{
-    await request(`/api/admin/password-reset-requests/${Number(id)}/reset`,"POST",{password});
-    await loadPasswordResetRequests();message("تم تعيين كلمة المرور الجديدة بنجاح");
-  }catch(e){message(e.message,"err")}
-}
-async function rejectPasswordReset(id){
-  if(!confirm("هل أنت متأكد من رفض طلب استعادة كلمة المرور؟"))return;
-  try{
-    await request(`/api/admin/password-reset-requests/${Number(id)}/reject`,"POST",{});
-    await loadPasswordResetRequests();message("تم رفض طلب استعادة كلمة المرور");
-  }catch(e){message(e.message,"err")}
-}
-
-el("hpThemePreset").addEventListener("change",applyAdminPreset);
-el("adminNavSearch")?.addEventListener("input",filterAdminNav);
-syncPriceField();
-checkSession();
+// boot
+boot();
+})();
 </script>
-<script src="admin-extensions.js" defer></script>
 </body>
 </html>

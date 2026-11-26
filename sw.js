@@ -5,6 +5,7 @@ const CACHE_NAME = 'zm-academy-v5';
 const CORE_FILES = [
   './',
   './index.html',
+  './parent.html',
   './manifest.webmanifest',
   './assets/icon-192.png',
   './assets/icon-512.png'

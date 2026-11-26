@@ -6,7 +6,6 @@ compatibility_date = "2026-11-20"
 ALLOWED_ORIGINS = "https://ziadmohsen2410-zm.github.io"
 
 [[d1_databases]]
-migrations_dir = "migrations"
 binding = "DB"
 database_name = "zm-academy-db"
 database_id = "8bd76dbe-9a5b-40b1-b6fb-4c44ff240bff"
