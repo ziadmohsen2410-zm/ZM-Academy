@@ -95,6 +95,10 @@ test("student exam visibility and start enforce grade, schedule, open-attempt, a
   assert.ok(routes.includes("datetime(e.ends_at)>=datetime('now')"));
   assert.ok(routes.includes("status='in_progress'"));
   assert.ok(routes.includes("الاختبار لا يحتوي على أسئلة"));
+  assert.ok(routes.includes("datetime(exam_attempts.started_at, '+' || e.duration_minutes || ' minutes')<=datetime('now')"));
+  assert.ok(routes.includes("status='expired'"));
+  assert.ok(routes.includes("e.duration_minutes"));
+  assert.ok(routes.includes("انتهى الوقت المحدد للاختبار"));
 });
 
 test("student exam results respect the exam show_results setting", () => {
