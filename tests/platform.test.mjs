@@ -84,3 +84,25 @@ test("student notifications are scoped to broadcast, matching student, or matchi
   assert.ok(route.includes("n.audience_type='grade'"));
   assert.ok(!route.includes("audience_type IN ('all','student')"));
 });
+
+test("student exam visibility and start enforce grade, schedule, open-attempt, and question checks", () => {
+  const worker = read("worker.js");
+  const start = worker.indexOf("if (method==='GET' && path==='/api/student/platform/exams')");
+  const end = worker.indexOf("if (method==='POST' && path==='/api/student/platform/ai')", start);
+  const routes = worker.slice(start, end);
+  assert.ok(routes.includes("e.grade=(SELECT s.grade FROM students s WHERE s.id=?)"));
+  assert.ok(routes.includes("datetime(e.starts_at)<=datetime('now')"));
+  assert.ok(routes.includes("datetime(e.ends_at)>=datetime('now')"));
+  assert.ok(routes.includes("status='in_progress'"));
+  assert.ok(routes.includes("الاختبار لا يحتوي على أسئلة"));
+});
+
+test("student exam results respect the exam show_results setting", () => {
+  const worker = read("worker.js");
+  const start = worker.indexOf("if (method==='POST' && /^\\/api\\/student\\/platform\\/exam-attempts");
+  const end = worker.indexOf("if (method==='POST' && path==='/api/student/platform/ai')", start);
+  const route = worker.slice(start, end);
+  assert.ok(route.includes("e.show_results"));
+  assert.ok(route.includes("score:showResults?score:null"));
+  assert.ok(route.includes("results_hidden:!showResults"));
+});
