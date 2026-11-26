@@ -141,6 +141,8 @@ test("essay attempts have an admin review and bounded manual grading workflow", 
   assert.ok(worker.includes("exam-attempts\\/\\d+\\/grade"));
   assert.ok(worker.includes("attempt.status!=='submitted'"));
   assert.ok(worker.includes("value<0 || value>max"));
+  assert.ok(worker.includes("if (!(gradeUpdate.meta?.changes||0))"));
+
   assert.ok(worker.includes("status='graded',graded_by=?"));
   assert.ok(admin.includes('id="examAttemptsList"'));
   assert.ok(admin.includes("window.__reviewAttempt=async(id)=>"));
