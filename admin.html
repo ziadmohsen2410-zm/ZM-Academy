@@ -637,7 +637,6 @@ $('#resetAdBtn').onclick=()=>{ ['adId','adTitle','adBody','adImage','adLink','ad
 $('#sendNotifBtn').onclick=async()=>{ try{ const schedule=$('#notifSchedule').value; const body={title:$('#notifTitle').value.trim(), body:$('#notifBody').value.trim(), type:$('#notifType').value, audience_type:$('#notifAudience').value, audience_value:$('#notifAudienceValue').value.trim(), scheduled_at:schedule?new Date(schedule).toISOString().slice(0,19).replace('T',' '):null, is_important:$('#notifType').value==='important'}; if(!body.title||!body.body) return showMsg('العنوان والنص مطلوبان'); await api('/api/admin/platform/notifications',{method:'POST',body:JSON.stringify(body)}); showMsg('تم الإرسال/الحفظ',true); $('#notifTitle').value=''; $('#notifBody').value=''; $('#notifSchedule').value=''; loadNotifications(); }catch(e){ showMsg(e.message); } };
 $('#sec-homepage').addEventListener('input',()=>{homepageDraftDirty=true;});
 $('#loadHomepageBtn').onclick=()=>{if(confirm('إعادة تحميل الإعدادات من الخادم؟ سيتم تجاهل التعديلات غير المحفوظة.')){homepageDraftDirty=false;loadHomepage();}};
-$('#loadHomepageBtn').onclick=loadHomepage;
 $('#saveHomepageBtn').onclick=saveHomepageDraft;
 $('#publishHomepageBtn').onclick=publishHomepage;
 $('#loadPageBtn').onclick=loadPage;
