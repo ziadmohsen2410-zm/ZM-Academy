@@ -656,6 +656,7 @@ let pdfRenderTask=null;
 let pdfDocument=null;
 let pdfOpenSequence=0;
 let dashboardLoading=null;
+let totalStudentMaterials=0;
 
 if(!token)location.replace("./login.html");
 
@@ -833,8 +834,13 @@ function renderLearningSummary(){
 
  const started=new Set(studentProgress.map(p=>Number(p.material_id))).size;
  const completed=studentProgress.filter(p=>p.completed_at).length;
+ const total=totalStudentMaterials||started||0;
+ const pct=total?Math.round((completed/total)*100):0;
  const count=document.createElement("strong");
- count.textContent="بدأت مذاكرة "+started+" مذكرة • مكتملة "+completed;
+ count.textContent="بدأت مذاكرة "+started+" مذكرة • مكتملة "+completed+" • "+pct+"%";
+ const bar=document.createElement('div'); bar.style.cssText='height:10px;background:rgba(255,255,255,.08);border-radius:999px;overflow:hidden;margin-top:10px';
+ const fill=document.createElement('div'); fill.style.cssText='height:100%;width:'+pct+'%;background:linear-gradient(90deg,#39baff,#7df0c0)';
+ bar.appendChild(fill);
 
  const latest=[...studentProgress].sort(
   (a,b)=>new Date(b.updated_at||b.updatedAt||0)-new Date(a.updated_at||a.updatedAt||0)
@@ -847,7 +853,7 @@ function renderLearningSummary(){
   ?"آخر مذكرة تابعتها: "+(latest.title||"مذكرة")+" — الصفحة "+getSavedPage(latest.material_id)
   :"لم تبدأ مذاكرة أي مذكرة بعد.";
 
- box.append(count,detail);
+ box.append(count,bar,detail);
  if(completed>0){
   const a=document.createElement('a');
   const name=encodeURIComponent((currentStudent&&currentStudent.name)||'طالب');
@@ -1249,6 +1255,7 @@ async function loadDashboard(){
    const mine=materials.filter(m=>subjectIds.includes(Number(m.subject_id)));
    const free=mine.filter(m=>Number(m.is_free)===1);
    const paid=mine.filter(m=>Number(m.is_free)!==1);
+   totalStudentMaterials=mine.length;
    const progressCount = (studentProgress||[]).length;
    const completedCount = (studentProgress||[]).filter(p=>p.completed_at).length;
    const totalMine=mine.length;
