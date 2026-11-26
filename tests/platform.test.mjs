@@ -101,6 +101,18 @@ test("student exam visibility and start enforce grade, schedule, open-attempt, a
   assert.ok(routes.includes("انتهى الوقت المحدد للاختبار"));
 });
 
+test("student exam start honors shuffle_questions without changing question IDs", () => {
+  const worker = read("worker.js");
+  const start = worker.indexOf("if (method==='POST' && /^\\/api\\/student\\/platform\\/exams\\/");
+  const end = worker.indexOf("if (method==='POST' && /^\\/api\\/student\\/platform\\/exam-attempts", start);
+  const route = worker.slice(start, end);
+  assert.ok(route.includes("Number(exam.shuffle_questions) === 1"));
+  assert.ok(route.includes("Math.random()"));
+  assert.ok(route.includes("[questions[i],questions[j]]=[questions[j],questions[i]]"));
+  assert.ok(route.includes("questions:questions.map"));
+  assert.ok(route.includes("const maxScore = questions.reduce"));
+});
+
 test("student exam results respect the exam show_results setting", () => {
   const worker = read("worker.js");
   const start = worker.indexOf("if (method==='POST' && /^\\/api\\/student\\/platform\\/exam-attempts");
