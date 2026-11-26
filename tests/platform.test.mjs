@@ -82,6 +82,12 @@ test("admin can schedule notifications with validated local-to-UTC timestamps", 
   assert.ok(worker.includes("scheduledAt?null:nowIso()"));
 });
 
+test("parent portal does not expose partial or hidden exam scores", () => {
+  const worker = read("worker.js");
+  assert.ok(worker.includes("CASE WHEN a.status='graded' AND e.show_results<>0 THEN a.score ELSE NULL END AS score"));
+  assert.ok(worker.includes("CASE WHEN a.status='graded' AND e.show_results<>0 THEN a.max_score ELSE NULL END AS max_score"));
+});
+
 test("parent portal receives parent-targeted notifications and can mark them read", () => {
   const worker = read("worker.js");
   const parent = read("parent.html");
