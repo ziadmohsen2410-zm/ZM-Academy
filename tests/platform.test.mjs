@@ -73,6 +73,14 @@ test("the platform core migration is additive and repeat-safe by declaration", (
   assert.match(sql, /CREATE\s+TABLE\s+IF\s+NOT\s+EXISTS\s+exams/i);
 });
 
+test("scheduled student notifications remain hidden until their scheduled time", () => {
+  const worker = read("worker.js");
+  const start = worker.indexOf("if (method==='GET' && path==='/api/student/platform/notifications')");
+  const end = worker.indexOf("if (method==='POST' && /^\\/api\\/student\\/platform\\/notifications",start);
+  const route = worker.slice(start,end);
+  assert.ok(route.includes("n.scheduled_at IS NULL OR datetime(n.scheduled_at)<=datetime('now')"));
+});
+
 test("student notifications are scoped to broadcast, matching student, or matching grade", () => {
   const worker = read("worker.js");
   const start = worker.indexOf("if (method==='GET' && path==='/api/student/platform/notifications')");
