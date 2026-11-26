@@ -3998,6 +3998,9 @@ if (method === "POST" && rejectPasswordMatch) {
       if (!hasPerm(admin.role,'roles')) return reply(request, env,{success:false,error:'Forbidden'},403);
       const uid = Number(path.split('/').pop());
       if (method==='PUT') {
+        const targetAdmin=await env.DB.prepare(`SELECT role FROM admin_users WHERE id=?`).bind(uid).first();
+        if(!targetAdmin) return reply(request,env,{success:false,error:'المستخدم الإداري غير موجود'},404);
+        if(targetAdmin.role==='super_admin' && admin.role!=='super_admin') return reply(request,env,{success:false,error:'لا يمكن تعديل حساب مدير أعلى إلا بواسطة مدير أعلى'},403);
         const b=await readBody(request);
         if (b.role!==undefined) { const role=clean(b.role,40); if(!ADMIN_PERMS[role]) return reply(request, env,{success:false,error:'Invalid role'},400); const target=await env.DB.prepare(`SELECT role FROM admin_users WHERE id=?`).bind(uid).first(); if(target?.role==='super_admin' && admin.role!=='super_admin') return reply(request,env,{success:false,error:'لا يمكن تعديل دور مدير أعلى إلا بواسطة مدير أعلى'},403); if(role==='super_admin' && admin.role!=='super_admin') return reply(request,env,{success:false,error:'لا يمكن منح صلاحية المدير الأعلى إلا للمدير الأعلى'},403); if(uid===admin.id && role!==admin.role) return reply(request,env,{success:false,error:'لا يمكنك تغيير دور حسابك الحالي'},403); await env.DB.prepare(`UPDATE admin_users SET role=? WHERE id=?`).bind(role,uid).run(); }
         if (b.is_active!==undefined) {
