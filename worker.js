@@ -3831,6 +3831,51 @@ if (method === "POST" && rejectPasswordMatch) {
       if (method==='DELETE') { await env.DB.prepare(`DELETE FROM exam_questions WHERE id=?`).bind(qid).run(); return reply(request, env,{success:true}); }
     }
 
+    // Exam attempt review and manual essay grading
+    if (method==='GET' && path==='/api/admin/platform/exam-attempts') {
+      if (!hasPerm(admin.role,'exams')) return reply(request, env,{success:false,error:'Forbidden'},403);
+      const examId = asInt(url.searchParams.get('exam_id'),0);
+      if (!examId) return reply(request, env,{success:false,error:'exam_id required'},400);
+      const rows = await env.DB.prepare(`SELECT a.id,a.exam_id,a.student_id,a.status,a.score,a.max_score,a.started_at,a.submitted_at,s.name AS student_name FROM exam_attempts a JOIN students s ON s.id=a.student_id WHERE a.exam_id=? ORDER BY a.id DESC LIMIT 300`).bind(examId).all();
+      return reply(request, env,{success:true,attempts:rows.results||[]});
+    }
+    if (/^\\/api\\/admin\\/platform\\/exam-attempts\\/\\d+$/.test(path)) {
+      if (!hasPerm(admin.role,'exams')) return reply(request, env,{success:false,error:'Forbidden'},403);
+      const attemptId = Number(path.split('/').pop());
+      if (method==='GET') {
+        const attempt = await env.DB.prepare(`SELECT a.*,s.name AS student_name,e.title AS exam_title FROM exam_attempts a JOIN students s ON s.id=a.student_id JOIN exams e ON e.id=a.exam_id WHERE a.id=?`).bind(attemptId).first();
+        if (!attempt) return reply(request, env,{success:false,error:'المحاولة غير موجودة'},404);
+        const questions = await env.DB.prepare(`SELECT id,question_text,points,order_index FROM exam_questions WHERE exam_id=? AND type='essay' ORDER BY order_index ASC,id ASC`).bind(attempt.exam_id).all();
+        return reply(request, env,{success:true,attempt:{...attempt,answers:safeJsonParse(attempt.answers_json,{})},essay_questions:questions.results||[]});
+      }
+    }
+    if (/^\\/api\\/admin\\/platform\\/exam-attempts\\/\\d+\\/grade$/.test(path)) {
+      if (!hasPerm(admin.role,'exams')) return reply(request, env,{success:false,error:'Forbidden'},403);
+      const attemptId = Number(path.split('/')[5]);
+      if (method==='PUT') {
+        const attempt = await env.DB.prepare(`SELECT id,exam_id,score,status FROM exam_attempts WHERE id=?`).bind(attemptId).first();
+        if (!attempt) return reply(request, env,{success:false,error:'المحاولة غير موجودة'},404);
+        if (attempt.status!=='submitted') return reply(request, env,{success:false,error:'هذه المحاولة ليست بانتظار التصحيح'},409);
+        const questions = await env.DB.prepare(`SELECT id,points FROM exam_questions WHERE exam_id=? AND type='essay'`).bind(attempt.exam_id).all();
+        const essayQuestions = questions.results||[];
+        if (!essayQuestions.length) return reply(request, env,{success:false,error:'لا توجد أسئلة مقالية للتصحيح'},400);
+        const b=await readBody(request); const scores=b?.essay_scores;
+        if (!scores || typeof scores!=='object' || Array.isArray(scores)) return reply(request, env,{success:false,error:'درجات الأسئلة المقالية مطلوبة'},400);
+        let essayScore=0; const feedback={};
+        for (const q of essayQuestions) {
+          const value=Number(scores[q.id]);
+          const max=Number(q.points||1);
+          if (!Object.prototype.hasOwnProperty.call(scores,String(q.id)) || !Number.isFinite(value) || value<0 || value>max) return reply(request, env,{success:false,error:'تأكد من إدخال درجة صحيحة لكل سؤال مقالي'},400);
+          essayScore+=value;
+          feedback[q.id]=clean(b?.feedback?.[q.id]||'',1000);
+        }
+        const total=Number(attempt.score||0)+essayScore;
+        await env.DB.prepare(`UPDATE exam_attempts SET score=?,status='graded',graded_by=?,graded_at=datetime('now'),feedback_json=? WHERE id=? AND status='submitted'`).bind(total,admin.username,JSON.stringify(feedback),attemptId).run();
+        await logAudit(env,{actor_type:'admin',actor_id:admin.id,actor_label:admin.username,action:'exam.attempt.grade',entity_type:'exam_attempt',entity_id:attemptId,details_json:{essay_score:essayScore},ip,user_agent:ua});
+        return reply(request, env,{success:true,score:total});
+      }
+    }
+
     // Analytics
     if (method==='GET' && path==='/api/admin/platform/analytics') {
       if (!hasPerm(admin.role,'analytics')) return reply(request, env, {success:false,error:'Forbidden'},403);
