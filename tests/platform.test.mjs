@@ -101,6 +101,17 @@ test("student exam visibility and start enforce grade, schedule, open-attempt, a
   assert.ok(routes.includes("انتهى الوقت المحدد للاختبار"));
 });
 
+test("students can resume an in-progress exam after reopening the page", () => {
+  const worker = read("worker.js");
+  const student = read("student.html");
+  assert.ok(worker.includes("active_attempt_id"));
+  assert.ok(worker.includes("exam-attempts\\/\\d+$"));
+  assert.ok(worker.includes("a.status='in_progress'"));
+  assert.ok(student.includes("data-active=\\""));
+  assert.ok(student.includes("استكمال الاختبار"));
+  assert.ok(student.includes("activeAttemptId?await api"));
+});
+
 test("students can refresh final exam results after manual essay grading", () => {
   const worker = read("worker.js");
   const student = read("student.html");
