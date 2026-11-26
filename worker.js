@@ -3563,6 +3563,8 @@ if (method === "POST" && rejectPasswordMatch) {
       return reply(request, env, {success:true, children: rows.results||[]});
     }
     if (method==='POST' && path==='/api/parent/link-request') {
+      const allowed=await consumeApiRateLimit(env,request,'parent-link-request',ps.parent_id,5,3600);
+      if(!allowed) return reply(request,env,{success:false,error:'تجاوزت عدد طلبات ربط الطلاب المسموح بها. حاول بعد ساعة.'},429);
       const body = await readBody(request);
       const studentUsername = clean(body?.student_username,60).toLowerCase();
       const studentPhone = clean(body?.student_phone,30).replace(/[^\d]/g,'');
