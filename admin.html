@@ -207,30 +207,21 @@ kbd{background:#0b1222;border:1px solid var(--line);padding:2px 6px;border-radiu
           <label>الوضع</label><select id="aiMode"><option value="admin_assistant">مساعد الإدارة</option><option value="builder">AI Builder</option><option value="content_studio">Content Studio</option></select>
           <label>الأمر / الطلب</label><textarea id="aiPrompt" style="min-height:160px" placeholder="اكتب طلبك هنا..."></textarea>
           <div class="row"><button id="runAiBtn">تنفيذ عبر AI</button></div>
-          <p class="muted small">يتم الاتصال عبر Worker. ضع AI_API_KEY في Secrets. لا يتم تنفيذ أكواد مولدة تلقائيًا.</p>
+          <p class="muted small">مساعد الذكاء الاصطناعي للإدارة والبناء والمحتوى. لا يتم تنفيذ أي أكواد مولدة تلقائيًا.</p>
         </div>
         <div class="card"><h3>النتيجة</h3><pre id="aiResult" style="white-space:pre-wrap;word-break:break-word;background:#091123;padding:14px;border-radius:12px;min-height:260px;margin:0"></pre></div>
       </div>
     </section>
 
     <section id="sec-settings" class="section">
-      <div class="split">
-        <div class="card"><h3>إعدادات المنصة</h3>
-          <label>اسم الأكاديمية</label><input id="setName">
-          <label>الوصف</label><textarea id="setDesc"></textarea>
-          <div class="row"><div><label>هاتف الدعم</label><input id="setPhone"></div><div><label>واتساب</label><input id="setWhatsapp"></div></div>
-          <div class="row"><div><label>البريد</label><input id="setEmail"></div><div><label>المنطقة الزمنية</label><input id="setTz" value="Africa/Cairo"></div></div>
-          <label><input type="checkbox" id="setMaint" style="width:auto;margin-left:8px"> وضع الصيانة</label>
-          <label>رسالة الصيانة</label><input id="setMaintMsg">
-          <div class="row" style="margin-top:10px"><button id="saveSettingsBtn">حفظ الإعدادات</button></div>
-        </div>
-        <div class="card"><h3>ملاحظات النشر</h3>
-          <div class="list small muted">
-            <div class="item">ضع الأسرار في Cloudflare Worker Secrets: <code>AI_API_KEY</code>، <code>GITHUB_STORAGE_TOKEN</code>، <code>ADMIN_SETUP_KEY</code>.</div>
-            <div class="item">شغّل migrations على D1 قبل الاعتماد على الميزات الجديدة.</div>
-            <div class="item">التحقق من الصلاحيات يجب أن يكون على الخادم. الواجهة فقط للعرض.</div>
-          </div>
-        </div>
+      <div class="card"><h3>إعدادات المنصة</h3>
+        <label>اسم الأكاديمية</label><input id="setName">
+        <label>الوصف</label><textarea id="setDesc"></textarea>
+        <div class="row"><div><label>هاتف الدعم</label><input id="setPhone"></div><div><label>واتساب</label><input id="setWhatsapp"></div></div>
+        <div class="row"><div><label>البريد</label><input id="setEmail"></div><div><label>المنطقة الزمنية</label><input id="setTz" value="Africa/Cairo"></div></div>
+        <label><input type="checkbox" id="setMaint" style="width:auto;margin-left:8px"> وضع الصيانة</label>
+        <label>رسالة الصيانة</label><input id="setMaintMsg">
+        <div class="row" style="margin-top:10px"><button id="saveSettingsBtn">حفظ الإعدادات</button></div>
       </div>
     </section>
 
@@ -366,8 +357,8 @@ async function loadSystemStatus(){
   const el=$('#systemStatus');
   const checks=[];
   try{ await fetch(API+'/api/health'); checks.push(['Worker/DB','متصل','ok']); }catch{ checks.push(['Worker/DB','خطأ','danger']); }
-  checks.push(['AI', 'يتطلب AI_API_KEY','warn']);
-  checks.push(['GitHub Storage', 'يتطلب GITHUB_STORAGE_TOKEN','warn']);
+  checks.push(['AI','متاح عند إعداد المفتاح','warn']);
+  checks.push(['GitHub Storage','متاح عند إعداد المفتاح','warn']);
   const s=state.cache.stats||{};
   const summary=`<div class="item small muted">إجمالي الطلبات: ${esc(s.orders??'-')} • المواد: ${esc(s.subjects??'-')} • أولياء الأمور: ${esc(s.parents??'-')} • الاختبارات: ${esc(s.exams??'-')}</div>`;
   el.innerHTML=checks.map(([k,v,c])=>`<div class="item"><div style="display:flex;justify-content:space-between;gap:10px"><span>${esc(k)}</span><span class="badge ${c}">${esc(v)}</span></div></div>`).join('')+summary;
