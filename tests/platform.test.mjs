@@ -290,6 +290,12 @@ test("homepage editor preserves unsaved edits when navigating between sections",
 
 });
 
+test("public page renderer rejects protocol-relative external links", () => {
+  const page = read("page.html");
+  assert.ok(page.includes("if(raw.startsWith('//'))return ''"));
+  assert.ok(page.includes("/^https:\\/\\//i.test(raw)"));
+});
+
 test("published page builder pages render through the public API", () => {
   const page = read("page.html");
   const admin = read("admin.html");
