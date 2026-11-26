@@ -3962,6 +3962,7 @@ if (method === "POST" && rejectPasswordMatch) {
           if (!b.is_active) {
             const target=await env.DB.prepare(`SELECT role FROM admin_users WHERE id=?`).bind(uid).first();
             if (target?.role==='super_admin') {
+              if (admin.role!=='super_admin') return reply(request,env,{success:false,error:'لا يمكن إيقاف حساب مدير أعلى إلا بواسطة مدير أعلى'},403);
               const count=await env.DB.prepare(`SELECT COUNT(*) AS c FROM admin_users WHERE role='super_admin' AND is_active=1`).first();
               if (Number(count?.c||0)<=1) return reply(request,env,{success:false,error:'يجب أن يظل هناك مدير أعلى نشط واحد على الأقل'},409);
             }
