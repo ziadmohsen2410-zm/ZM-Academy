@@ -495,7 +495,10 @@ function validStudentPhoto(bytes, contentType) {
       bytes[1] === 0xd8 &&
       bytes[2] === 0xff;
   }
-        bytes[0] === 0x89 &&
+
+  if (contentType === "image/png") {
+    return bytes.length >= 8 &&
+      bytes[0] === 0x89 &&
       bytes[1] === 0x50 &&
       bytes[2] === 0x4e &&
       bytes[3] === 0x47 &&
@@ -551,6 +554,28 @@ async function ensureArchivedMaterialsTable(env) {
     CREATE TABLE IF NOT EXISTS archived_materials (
       material_id INTEGER PRIMARY KEY,
       archived_at TEXT DEFAULT CURRENT_TIMESTAMP
+    )
+  `).run();
+}
+
+// إنشاء جدول أرشيف المواد الدراسية الرئيسية
+async function ensureArchivedSubjectsTable(env) {
+  await env.DB.prepare(`
+    CREATE TABLE IF NOT EXISTS archived_subjects (
+      subject_id INTEGER PRIMARY KEY,
+      archived_at TEXT DEFAULT CURRENT_TIMESTAMP
+    )
+  `).run();
+}
+
+// إنشاء جدول العناصر التي أخفاها الطالب من سجل مشترياته
+async function ensureStudentHiddenPurchasesTable(env) {
+  await env.DB.prepare(`
+    CREATE TABLE IF NOT EXISTS student_hidden_purchases (
+      student_id INTEGER NOT NULL,
+      order_id INTEGER NOT NULL,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      PRIMARY KEY (student_id, order_id)
     )
   `).run();
 }
@@ -745,6 +770,7 @@ async function route(request, env) {
         409
       );
     }
+
 
     const hash = await passwordHash(password);
 
@@ -952,7 +978,7 @@ if (method === "POST" && path === "/api/password-reset/request") {
         401
       );
     }
-
+    
     // إدارة إعدادات الصفحة الرئيسية
     if (
       path === "/api/admin/homepage" &&
@@ -994,7 +1020,7 @@ if (method === "POST" && path === "/api/password-reset/request") {
           success: false,
           error: "إعدادات الصفحة غير صحيحة."
         }, 400);
-              }
+      }
 
       const json = JSON.stringify(settings);
 
@@ -1041,123 +1067,123 @@ if (method === "POST" && path === "/api/password-reset/request") {
     }
 
     // عرض طلبات استعادة كلمات المرور
-    if (method === "GET" && path === "/api/admin/password-reset-requests") {
-      await ensurePasswordResetRequestsTable(env);
+if (method === "GET" && path === "/api/admin/password-reset-requests") {
+  await ensurePasswordResetRequestsTable(env);
 
-      const result = await env.DB.prepare(`
-        SELECT
-          r.id,
-          r.username,
-          r.phone,
-          r.created_at,
-          s.name AS student_name,
-          s.grade
-        FROM password_reset_requests r
-        LEFT JOIN students s ON s.id = r.student_id
-        WHERE r.status = 'pending'
-        ORDER BY r.id DESC
-      `).all();
+  const result = await env.DB.prepare(`
+    SELECT
+      r.id,
+      r.username,
+      r.phone,
+      r.created_at,
+      s.name AS student_name,
+      s.grade
+    FROM password_reset_requests r
+    LEFT JOIN students s ON s.id = r.student_id
+    WHERE r.status = 'pending'
+    ORDER BY r.id DESC
+  `).all();
 
-      return reply(request, env, {
-        success: true,
-        requests: result.results || [],
-      });
-    }
+  return reply(request, env, {
+    success: true,
+    requests: result.results || [],
+  });
+}
 
-    // تعيين كلمة مرور جديدة للطالب
-    const resetPasswordMatch = path.match(
-      /^\/api\/admin\/password-reset-requests\/(\d+)\/reset$/
-    );
+// تعيين كلمة مرور جديدة للطالب
+const resetPasswordMatch = path.match(
+  /^\/api\/admin\/password-reset-requests\/(\d+)\/reset$/
+);
 
-    if (method === "POST" && resetPasswordMatch) {
-      await ensurePasswordResetRequestsTable(env);
+if (method === "POST" && resetPasswordMatch) {
+  await ensurePasswordResetRequestsTable(env);
 
-      const requestId = Number(resetPasswordMatch[1]);
-      const body = await readBody(request);
-      const newPassword = String(body?.password || "");
+  const requestId = Number(resetPasswordMatch[1]);
+  const body = await readBody(request);
+  const newPassword = String(body?.password || "");
 
-      if (newPassword.length < 8 || newPassword.length > 100) {
-        return reply(request, env, {
-          success: false,
-          error: "كلمة المرور يجب أن تكون من 8 إلى 100 حرف.",
-        }, 400);
-      }
+  if (newPassword.length < 8 || newPassword.length > 100) {
+    return reply(request, env, {
+      success: false,
+      error: "كلمة المرور يجب أن تكون من 8 إلى 100 حرف.",
+    }, 400);
+  }
 
-      const resetRequest = await env.DB.prepare(`
-        SELECT id, student_id
-        FROM password_reset_requests
-        WHERE id = ? AND status = 'pending'
-        LIMIT 1
-      `).bind(requestId).first();
+  const resetRequest = await env.DB.prepare(`
+    SELECT id, student_id
+    FROM password_reset_requests
+    WHERE id = ? AND status = 'pending'
+    LIMIT 1
+  `).bind(requestId).first();
 
-      if (!resetRequest) {
-        return reply(request, env, {
-          success: false,
-          error: "الطلب غير موجود أو تمت مراجعته بالفعل.",
-        }, 404);
-      }
+  if (!resetRequest) {
+    return reply(request, env, {
+      success: false,
+      error: "الطلب غير موجود أو تمت مراجعته بالفعل.",
+    }, 404);
+  }
 
-      const newHash = await passwordHash(newPassword);
+  const newHash = await passwordHash(newPassword);
 
-      await env.DB.prepare(`
-        UPDATE student_accounts
-        SET password_hash = ?
-        WHERE student_id = ?
-      `).bind(newHash, resetRequest.student_id).run();
+  await env.DB.prepare(`
+    UPDATE student_accounts
+    SET password_hash = ?
+    WHERE student_id = ?
+  `).bind(newHash, resetRequest.student_id).run();
 
-      // إنهاء جلسات الطالب القديمة
-      await env.DB.prepare(`
-        DELETE FROM student_sessions
-        WHERE student_id = ?
-      `).bind(resetRequest.student_id).run();
+  // إنهاء جلسات الطالب القديمة
+  await env.DB.prepare(`
+    DELETE FROM student_sessions
+    WHERE student_id = ?
+  `).bind(resetRequest.student_id).run();
 
-      // تسجيل مراجعة الطلب
-      await env.DB.prepare(`
-        UPDATE password_reset_requests
-        SET status = 'completed',
-            reviewed_at = CURRENT_TIMESTAMP,
-            reviewed_by = ?
-        WHERE id = ? AND status = 'pending'
-      `).bind(session.admin_id, requestId).run();
+  // تسجيل مراجعة الطلب
+  await env.DB.prepare(`
+    UPDATE password_reset_requests
+    SET status = 'completed',
+        reviewed_at = CURRENT_TIMESTAMP,
+        reviewed_by = ?
+    WHERE id = ? AND status = 'pending'
+  `).bind(session.admin_id, requestId).run();
 
-      return reply(request, env, {
-        success: true,
-        message: "تم تغيير كلمة مرور الطالب وإنهاء جلساته القديمة.",
-      });
-    }
+  return reply(request, env, {
+    success: true,
+    message: "تم تغيير كلمة مرور الطالب وإنهاء جلساته القديمة.",
+  });
+}
 
-    // رفض طلب استعادة كلمة المرور
-    const rejectPasswordMatch = path.match(
-      /^\/api\/admin\/password-reset-requests\/(\d+)\/reject$/
-    );
+// رفض طلب استعادة كلمة المرور
+const rejectPasswordMatch = path.match(
+  /^\/api\/admin\/password-reset-requests\/(\d+)\/reject$/
+);
 
-    if (method === "POST" && rejectPasswordMatch) {
-      await ensurePasswordResetRequestsTable(env);
+if (method === "POST" && rejectPasswordMatch) {
+  await ensurePasswordResetRequestsTable(env);
 
-      const requestId = Number(rejectPasswordMatch[1]);
+  const requestId = Number(rejectPasswordMatch[1]);
 
-      const result = await env.DB.prepare(`
-        UPDATE password_reset_requests
-        SET status = 'rejected',
-            reviewed_at = CURRENT_TIMESTAMP,
-            reviewed_by = ?
-        WHERE id = ? AND status = 'pending'
-      `).bind(session.admin_id, requestId).run();
+  const result = await env.DB.prepare(`
+    UPDATE password_reset_requests
+    SET status = 'rejected',
+        reviewed_at = CURRENT_TIMESTAMP,
+        reviewed_by = ?
+    WHERE id = ? AND status = 'pending'
+  `).bind(session.admin_id, requestId).run();
 
-      if (!result.meta || result.meta.changes === 0) {
-        return reply(request, env, {
-          success: false,
-          error: "الطلب غير موجود أو تمت مراجعته بالفعل.",
-        }, 404);
-      }
+  if (!result.meta || result.meta.changes === 0) {
+    return reply(request, env, {
+      success: false,
+      error: "الطلب غير موجود أو تمت مراجعته بالفعل.",
+    }, 404);
+  }
 
-      return reply(request, env, {
-        success: true,
-        message: "تم رفض طلب استعادة كلمة المرور.",
-      });
-    }
+  return reply(request, env, {
+    success: true,
+    message: "تم رفض طلب استعادة كلمة المرور.",
+  });
+}
 
-    // عرض طلبات اعتماد الأجهزة المعلقة
+        // عرض طلبات اعتماد الأجهزة المعلقة
     if (method === "GET" && path === "/api/admin/device-requests") {
       const rows = await env.DB.prepare(`
         SELECT d.id, d.student_id, d.device_name, d.created_at,
@@ -1400,6 +1426,7 @@ if (method === "POST" && path === "/api/password-reset/request") {
         env.DB.prepare("DELETE FROM student_material_progress WHERE student_id = ?").bind(studentId),
         env.DB.prepare("DELETE FROM student_favorites WHERE student_id = ?").bind(studentId),
         env.DB.prepare("DELETE FROM student_activity_days WHERE student_id = ?").bind(studentId),
+        env.DB.prepare("DELETE FROM student_hidden_purchases WHERE student_id = ?").bind(studentId),
         env.DB.prepare("DELETE FROM students WHERE id = ?").bind(studentId),
       ]);
 
@@ -1478,7 +1505,8 @@ if (method === "POST" && path === "/api/password-reset/request") {
 
     // إضافة مادة دراسية
     if (
-      method === "POST" &&
+
+    method === "POST" &&
       (path === "/api/admin/subjects" || path === "/api/subjects")
     ) {
       const body = await readBody(request);
@@ -1495,7 +1523,7 @@ if (method === "POST" && path === "/api/password-reset/request") {
           },
           400
         );
-      }      }
+      }
 
       const result = await env.DB.prepare(
         "INSERT INTO subjects (name, grade) VALUES (?, ?)"
@@ -1778,8 +1806,7 @@ if (method === "POST" && path === "/api/password-reset/request") {
         message: "Material deleted.",
       });
     }
-
-    // رفع ملف PDF إلى التخزين الخاص
+        // رفع ملف PDF إلى التخزين الخاص
     if (method === "POST" && path === "/api/admin/upload") {
       try {
         const form = await request.formData();
@@ -2002,7 +2029,6 @@ if (method === "POST" && path === "/api/password-reset/request") {
           404
         );
       }
-            }
 
       const result = await env.DB.prepare(
         `INSERT INTO materials
@@ -2491,8 +2517,7 @@ if (method === "POST" && path === "/api/password-reset/request") {
       token,
       expiresInDays: SESSION_DAYS,
     });
-  }
-
+          }
     // مسارات الطالب المحمية بتسجيل الدخول
   if (path.startsWith("/api/student/")) {
     const session = await studentSession(request, env);
@@ -2912,7 +2937,7 @@ if (method === "POST" && path === "/api/password-reset/request") {
         return reply(
           request,
           env,
-                    {
+          {
             success: false,
             error: "المحتوى غير موجود.",
           },
@@ -3052,6 +3077,7 @@ if (method === "POST" && path === "/api/password-reset/request") {
 
     // طلبات الطالب ومشترياته مع تحديد العناصر المخفية
     if (method === "GET" && path === "/api/student/purchases") {
+      await ensureStudentHiddenPurchasesTable(env);
       const rows = await env.DB.prepare(
         `SELECT o.id AS order_id, o.status, o.created_at,
                 m.id AS material_id, m.title, m.type,
@@ -3082,6 +3108,7 @@ if (method === "POST" && path === "/api/password-reset/request") {
     );
 
     if (method === "DELETE" && studentPurchaseDelete) {
+      await ensureStudentHiddenPurchasesTable(env);
       const orderId = Number(studentPurchaseDelete[1]);
 
       const order = await env.DB.prepare(

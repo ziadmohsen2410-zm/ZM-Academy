@@ -69,6 +69,71 @@ small,.muted{color:var(--muted)}
 }
 @media(prefers-reduced-motion:reduce){*,*:before,*:after{scroll-behavior:auto!important;transition:none!important;animation:none!important}}
 </style>
+<style id="zm-global-design-runtime">
+:root{--zm-primary:#35a8ff;--zm-secondary:#9b70ff;--zm-bg:#080d1b;--zm-surface:#111b34;--zm-text:#f4f7ff;--zm-muted:#a5b3d0;--zm-radius:18px}
+html[data-zm-template="glass"] body{background-image:radial-gradient(circle at 10% 0%,color-mix(in srgb,var(--zm-primary) 20%,transparent),transparent 42%),radial-gradient(circle at 90% 100%,color-mix(in srgb,var(--zm-secondary) 18%,transparent),transparent 45%),linear-gradient(135deg,var(--zm-bg),var(--zm-surface))!important}
+html[data-zm-template="minimal"] body{background:var(--zm-bg)!important}
+html[data-zm-template="luxury"] body{background:radial-gradient(ellipse at top,var(--zm-surface),var(--zm-bg) 72%)!important}
+html[data-zm-template="editorial"] body{background:linear-gradient(180deg,var(--zm-bg),color-mix(in srgb,var(--zm-surface) 75%,var(--zm-bg)))!important}
+body{color:var(--zm-text)!important}
+:where(.card,.panel,.item,.section,.profile,.notice,.tile,.course-card,.step,.about,.announcement,main>section,.hero-content){border-radius:var(--zm-radius)}
+:where(h1,h2,h3,.brand,.eyebrow,.tag,.chip){--zm-heading:var(--zm-primary)}
+:where(.btn,button:not(.theme-toggle),.primary,.small-btn){background-image:linear-gradient(115deg,var(--zm-primary),var(--zm-secondary))!important;border-color:color-mix(in srgb,var(--zm-primary) 55%,transparent)!important}
+:where(a,.eyebrow,.tag,.brand-link,.theme-toggle,label){--zm-link:var(--zm-primary)}
+:where(.card,.panel,.item,.section,.profile,.notice,.tile,.course-card,.step){border-color:color-mix(in srgb,var(--zm-primary) 25%,transparent)}
+body[data-zm-mode="light"],html[data-zm-mode="light"] body{color-scheme:light!important;--zm-bg:#f4f6ff;--zm-surface:#fff;--zm-text:#202747;--zm-muted:#68708e}
+body[data-zm-mode="light"] :where(.card,.panel,.item,.section,.profile,.tile,.course-card,.step){background:var(--zm-surface)!important;color:var(--zm-text)!important}
+html[data-zm-template="glass"] :where(.card,.panel,.item,.section,.profile,.tile,.course-card){backdrop-filter:blur(16px);box-shadow:0 16px 45px color-mix(in srgb,var(--zm-primary) 12%,transparent)}
+html[data-zm-template="minimal"] :where(.card,.panel,.item,.section,.profile,.tile,.course-card){box-shadow:none!important}
+html[data-zm-template="luxury"] :where(.card,.panel,.item,.section,.profile,.tile,.course-card){box-shadow:0 18px 55px #0005,0 0 0 1px color-mix(in srgb,var(--zm-secondary) 12%,transparent)}
+
+/* Global design-token bridge: connects the central palette to each page's native tokens. */
+:root{--accent:var(--zm-primary);--accent2:var(--zm-secondary);--blue:var(--zm-primary);--purple:var(--zm-secondary);--cyan:var(--zm-primary);--violet:var(--zm-secondary);--line:color-mix(in srgb,var(--zm-primary) 28%,transparent);--border:color-mix(in srgb,var(--zm-primary) 24%,transparent);--bg:var(--zm-bg);--panel:var(--zm-surface);--panel2:color-mix(in srgb,var(--zm-surface) 82%,var(--zm-primary));--surface:var(--zm-surface);--surface2:var(--zm-surface);--surface-2:var(--zm-surface);--text:var(--zm-text);--muted:var(--zm-muted)}
+html[data-zm-mode="light"]{color-scheme:light!important}
+html[data-zm-mode="light"] body{background:var(--zm-bg)!important;color:var(--zm-text)!important}
+html[data-zm-mode="light"] :where(input,select,textarea){background:var(--zm-surface)!important;color:var(--zm-text)!important;border-color:var(--line)!important}
+:where(h1,h2,h3,.brand,.eyebrow,.tag,.chip,.brand-link,label){color:var(--zm-primary)}
+:where(.card,.panel,.item,.section,.profile,.tile,.course-card,.step){background-color:var(--zm-surface)}
+
+
+html[data-zm-template="future"] body{background:radial-gradient(ellipse at 12% 8%,color-mix(in srgb,var(--zm-secondary) 18%,transparent),transparent 36%),radial-gradient(ellipse at 88% 18%,color-mix(in srgb,var(--zm-primary) 16%,transparent),transparent 34%),var(--zm-bg)!important}
+html[data-zm-template="glass"] body{background:radial-gradient(circle at 10% 0%,color-mix(in srgb,var(--zm-primary) 20%,transparent),transparent 42%),radial-gradient(circle at 90% 100%,color-mix(in srgb,var(--zm-secondary) 18%,transparent),transparent 45%),linear-gradient(135deg,var(--zm-bg),var(--zm-surface))!important}
+html[data-zm-template="editorial"] body{font-family:Georgia,'Cairo',Tahoma,serif!important}html[data-zm-template="editorial"] h1,html[data-zm-template="editorial"] h2,html[data-zm-template="editorial"] h3{letter-spacing:.1px}
+html[data-zm-template="future"] :where(.card,.panel,.item,.section,.profile,.tile,.course-card){box-shadow:0 14px 42px color-mix(in srgb,var(--zm-primary) 9%,transparent)}
+html[data-zm-template="luxury"] :where(.btn,button:not(.theme-toggle)){letter-spacing:.2px;text-transform:none}
+html[data-zm-template="minimal"] :where(.btn,button:not(.theme-toggle)){box-shadow:none!important}
+:where(h2,h3,.eyebrow,.tag,.brand-link,label){color:var(--zm-primary)!important}
+
+
+:root{--zm-font:'Cairo',Tahoma,Arial,sans-serif}
+body{font-family:var(--zm-font)!important}
+html[data-zm-font="tajawal"] body{font-family:'Tajawal',Tahoma,Arial,sans-serif!important}
+html[data-zm-font="system"] body{font-family:system-ui,Arial,sans-serif!important}
+html[data-zm-font="georgia"] body{font-family:Georgia,serif!important}
+html[data-zm-buttons="solid"] :where(.btn,button:not(.theme-toggle),.primary,.small-btn){background:var(--zm-primary)!important;color:#fff!important}
+html[data-zm-buttons="outline"] :where(.btn,button:not(.theme-toggle),.primary,.small-btn){background:transparent!important;color:var(--zm-primary)!important;border:1px solid var(--zm-primary)!important;box-shadow:none!important}
+html[data-zm-cards="glass"] :where(.card,.panel,.item,.section,.profile,.tile,.course-card,.step){background:color-mix(in srgb,var(--zm-surface) 72%,transparent)!important;backdrop-filter:blur(16px)}
+html[data-zm-cards="outline"] :where(.card,.panel,.item,.section,.profile,.tile,.course-card,.step){background:transparent!important;border:1px solid color-mix(in srgb,var(--zm-primary) 45%,transparent)!important;box-shadow:none!important}
+html[data-zm-motion="off"] *,html[data-zm-motion="off"] *:before,html[data-zm-motion="off"] *:after{animation:none!important;transition:none!important;scroll-behavior:auto!important}
+
+</style>
+<script id="zm-global-design-loader">
+(()=>{const API='https://zm-academy-api.ziadmohsen4567.workers.dev';const safeHex=(v,d)=>/^#[0-9a-f]{6}$/i.test(String(v||''))?v:d;const text=(sel,val)=>{const n=document.querySelector(sel);if(n&&typeof val==='string'&&val.trim())n.textContent=val};const attr=(sel,name,val)=>{const n=document.querySelector(sel);if(n&&typeof val==='string'&&val.trim())n.setAttribute(name,val)};
+function apply(s){if(!s||typeof s!=='object')return;const t=s.theme||{},b=s.branding||{},root=document.documentElement;const vals={primary:safeHex(t.primary,'#35a8ff'),secondary:safeHex(t.secondary,'#9b70ff'),background:safeHex(t.background,'#080d1b'),surface:safeHex(t.surface,'#111b34'),text:safeHex(t.text,'#f4f7ff'),muted:safeHex(t.muted,'#a5b3d0')};for(const [k,v] of Object.entries(vals))root.style.setProperty('--zm-'+k,v);root.style.setProperty('--zm-radius',t.corners==='sharp'?'5px':t.corners==='round'?'28px':'18px');root.dataset.zmTemplate=['glass','minimal','luxury','editorial'].includes(t.template)?t.template:'future';root.dataset.zmFont=['tajawal','system','georgia'].includes(t.font)?t.font:'cairo';root.dataset.zmButtons=['solid','outline'].includes(t.buttons)?t.buttons:'gradient';root.dataset.zmCards=['glass','outline'].includes(t.cards)?t.cards:'solid';root.dataset.zmMotion=t.motion==='off'?'off':'on';const mode=t.mode==='light'?'light':t.mode==='system'?(matchMedia('(prefers-color-scheme: light)').matches?'light':'dark'):'dark';root.dataset.zmMode=mode;document.body.dataset.zmMode=mode;
+if(s.brandName){document.title=document.title.replace(/ZM Academy|ZM ACADEMY|Ziad Mohsen Academy/gi,s.brandName);const brandSpan=document.querySelector('.brand span');if(brandSpan&&brandSpan.firstChild&&brandSpan.firstChild.nodeType===3)brandSpan.firstChild.nodeValue=s.brandName;text('.brand-link',s.brandName.toUpperCase());text('header h1',s.brandName);}
+if(s.tagline){text('.brand small',s.tagline);text('.tagline',s.tagline);}
+const h=s.hero||{};text('.hero-copy .eyebrow',h.eyebrow);const heroTitle=document.querySelector('.hero-copy h1');if(heroTitle&&h.title){heroTitle.textContent='';heroTitle.append(document.createTextNode(h.title+' '));if(h.highlight){const span=document.createElement('span');span.textContent=h.highlight;heroTitle.append(span);}}
+text('.hero-copy>p',h.description);const links=document.querySelectorAll('.hero-actions a');if(links[0]){if(h.primaryText)links[0].textContent=h.primaryText;if(h.primaryUrl)links[0].href=h.primaryUrl;}if(links[1]){if(h.secondaryText)links[1].textContent=h.secondaryText;if(h.secondaryUrl)links[1].href=h.secondaryUrl;}
+const a=s.about||{};if(a.title)text('#about h2',a.title);if(a.description){const p=document.querySelector('#about .about-copy p');if(p)p.textContent=a.description;}
+const an=s.announcement||{};if(an.enabled&&an.text){let n=document.getElementById('zmPublishedAnnouncement');if(!n){n=document.createElement('aside');n.id='zmPublishedAnnouncement';n.style.cssText='max-width:1100px;margin:24px auto;padding:18px 22px;border:1px solid var(--zm-primary);border-radius:var(--zm-radius);background:var(--zm-surface);color:var(--zm-text);width:92%;';const target=document.querySelector('main');if(target)target.prepend(n);}n.textContent=an.text;if(an.buttonText&&an.url){const link=document.createElement('a');link.href=an.url;link.textContent=' '+an.buttonText;link.style.color='var(--zm-primary)';n.append(link);}}else document.getElementById('zmPublishedAnnouncement')?.remove();
+const sections=s.sections||{};for(const [key,id] of Object.entries({subjects:'subjects',curriculum:'curriculum',library:'library',about:'about',join:'join'})){const node=document.getElementById(id);if(node&&typeof sections[key]==='boolean')node.hidden=!sections[key];}
+if(b.logoUrl){document.querySelectorAll('.brand img,.logo-large').forEach(n=>n.src=b.logoUrl);}if(b.heroImageUrl){const hero=document.querySelector('.hero');if(hero)hero.style.backgroundImage='linear-gradient(90deg,rgba(5,8,20,.82),rgba(5,8,20,.48)),url("'+b.heroImageUrl.replace(/["\\]/g,'')+'")';}
+if(b.whatsapp){document.querySelectorAll('a[href*="wa.me/"]').forEach(n=>{try{const u=new URL(n.href);u.pathname='/'+b.whatsapp.replace(/\D/g,'');n.href=u.href;}catch(e){}})}
+const social={facebook:b.facebook,youtube:b.youtube,telegram:b.telegram};let socialBox=document.getElementById('zmSocialLinks');if(Object.values(social).some(Boolean)&&!socialBox){socialBox=document.createElement('nav');socialBox.id='zmSocialLinks';socialBox.style.cssText='display:flex;justify-content:center;gap:12px;flex-wrap:wrap;padding:18px;color:var(--zm-primary)';const footer=document.querySelector('footer')||document.body;footer.append(socialBox);}if(socialBox){socialBox.replaceChildren();for(const [k,url] of Object.entries(social)){if(url){const a=document.createElement('a');a.href=url;a.target='_blank';a.rel='noopener noreferrer';a.textContent={facebook:'Facebook',youtube:'YouTube',telegram:'Telegram'}[k];socialBox.append(a);}}}
+}
+fetch(API+'/api/homepage',{cache:'no-store'}).then(r=>r.ok?r.json():null).then(d=>{if(d&&d.success)apply(d.settings)}).catch(()=>{});
+})();
+</script>
 </head>
 <body>
 <header>
@@ -169,6 +234,34 @@ small,.muted{color:var(--muted)}
       <input id="hpAboutTitle" maxlength="160" placeholder="مساحة تعليمية تصنع فرقًا">
       <label for="hpAboutDescription">وصف الأكاديمية</label>
       <textarea id="hpAboutDescription" maxlength="1500" placeholder="اكتب تعريفًا مختصرًا بالأكاديمية ورسالتها..."></textarea>
+
+      <h3>مركز التصميم الشامل — الألوان والثيمات والقوالب</h3>
+      <p class="hint">الإعدادات التالية تُنشر على الصفحة الرئيسية وصفحات الدخول والتسجيل ولوحة الطالب والإدارة.</p>
+      <div class="editor-grid">
+        <div class="editor-field"><label for="hpThemePreset">الثيم الجاهز</label><select id="hpThemePreset"><option value="neon">Future Neon — أزرق وبنفسجي</option><option value="royal">Royal Gold — أسود وذهبي</option><option value="ocean">Ocean — أزرق سماوي</option><option value="emerald">Emerald — أخضر زمردي</option><option value="rose">Rose — وردي وبنفسجي</option><option value="light">Clean Light — فاتح</option><option value="custom">ألوان مخصصة</option></select></div>
+        <div class="editor-field"><label for="hpTemplate">قالب الموقع</label><select id="hpTemplate"><option value="future">Future — تقني متطور</option><option value="glass">Glass — زجاجي</option><option value="minimal">Minimal — بسيط</option><option value="luxury">Luxury — فاخر</option><option value="editorial">Editorial — تعليمي تحريري</option></select></div>
+        <div class="editor-field"><label for="hpColorPrimary">اللون الأساسي</label><input id="hpColorPrimary" type="color" value="#35a8ff"></div>
+        <div class="editor-field"><label for="hpColorSecondary">اللون الثانوي</label><input id="hpColorSecondary" type="color" value="#9b70ff"></div>
+        <div class="editor-field"><label for="hpColorBackground">لون الخلفية</label><input id="hpColorBackground" type="color" value="#080d1b"></div>
+        <div class="editor-field"><label for="hpColorSurface">لون البطاقات والأسطح</label><input id="hpColorSurface" type="color" value="#111b34"></div>
+        <div class="editor-field"><label for="hpColorText">لون النص</label><input id="hpColorText" type="color" value="#f4f7ff"></div>
+        <div class="editor-field"><label for="hpColorMuted">لون النص الثانوي</label><input id="hpColorMuted" type="color" value="#a5b3d0"></div>
+        <div class="editor-field"><label for="hpDefaultMode">الوضع الافتراضي</label><select id="hpDefaultMode"><option value="dark">داكن</option><option value="light">فاتح</option><option value="system">حسب الجهاز</option></select></div>
+        <div class="editor-field"><label for="hpCornerStyle">استدارة العناصر</label><select id="hpCornerStyle"><option value="soft">ناعمة</option><option value="sharp">حادة</option><option value="round">دائرية</option></select></div>
+        <div class="editor-field"><label for="hpFontFamily">خط الموقع</label><select id="hpFontFamily"><option value="cairo">Cairo</option><option value="tajawal">Tajawal</option><option value="system">خط الجهاز</option><option value="georgia">Georgia</option></select></div>
+        <div class="editor-field"><label for="hpButtonStyle">شكل الأزرار</label><select id="hpButtonStyle"><option value="gradient">متدرجة</option><option value="solid">موحدة</option><option value="outline">محددة بإطار</option></select></div>
+        <div class="editor-field"><label for="hpCardStyle">شكل البطاقات</label><select id="hpCardStyle"><option value="solid">مصمتة</option><option value="glass">زجاجية</option><option value="outline">شفافة بإطار</option></select></div>
+        <div class="editor-field"><label for="hpMotion">الحركة والمؤثرات</label><select id="hpMotion"><option value="on">مفعّلة</option><option value="off">إيقاف الحركة</option></select></div>
+      </div>
+      <h3>الشعار والصور وروابط التواصل</h3>
+      <div class="editor-grid">
+        <div class="editor-field"><label for="hpLogoUrl">رابط الشعار</label><input id="hpLogoUrl" maxlength="800" placeholder="https://..."></div>
+        <div class="editor-field"><label for="hpHeroImageUrl">رابط صورة الخلفية الرئيسية</label><input id="hpHeroImageUrl" maxlength="800" placeholder="https://..."></div>
+        <div class="editor-field"><label for="hpWhatsapp">رقم واتساب الدولي</label><input id="hpWhatsapp" maxlength="30" placeholder="201xxxxxxxxx"></div>
+        <div class="editor-field"><label for="hpFacebook">رابط فيسبوك</label><input id="hpFacebook" maxlength="800" placeholder="https://facebook.com/..."></div>
+        <div class="editor-field"><label for="hpYoutube">رابط يوتيوب</label><input id="hpYoutube" maxlength="800" placeholder="https://youtube.com/..."></div>
+        <div class="editor-field"><label for="hpTelegram">رابط تليجرام</label><input id="hpTelegram" maxlength="800" placeholder="https://t.me/..."></div>
+      </div>
 
       <h3>التحكم في ظهور الأقسام</h3>
       <div class="section-toggles">
@@ -353,6 +446,9 @@ async function logout(){
 }
 
 /* أدوات إدارة الصفحة الرئيسية */
+const ZM_THEME_PRESETS={neon:{primary:"#35a8ff",secondary:"#9b70ff",background:"#080d1b",surface:"#111b34",text:"#f4f7ff",muted:"#a5b3d0"},royal:{primary:"#d6b36a",secondary:"#f0d99d",background:"#090b12",surface:"#171b27",text:"#f7f4ed",muted:"#aaa9b4"},ocean:{primary:"#00bcd4",secondary:"#3978ff",background:"#071923",surface:"#102b3a",text:"#effcff",muted:"#a3c5d0"},emerald:{primary:"#25c58a",secondary:"#a3df67",background:"#071811",surface:"#10291f",text:"#f0fff7",muted:"#a6c9b6"},rose:{primary:"#f06aa8",secondary:"#a77bff",background:"#190d1b",surface:"#2a1730",text:"#fff2fb",muted:"#d1afc8"},light:{primary:"#5143bd",secondary:"#168db8",background:"#f4f6ff",surface:"#ffffff",text:"#202747",muted:"#68708e"}};
+function applyAdminPreset(){const p=ZM_THEME_PRESETS[el("hpThemePreset").value];if(!p)return;for(const [k,v] of Object.entries(p))el({primary:"hpColorPrimary",secondary:"hpColorSecondary",background:"hpColorBackground",surface:"hpColorSurface",text:"hpColorText",muted:"hpColorMuted"}[k]).value=v;el("hpDefaultMode").value=el("hpThemePreset").value==="light"?"light":"dark";}
+
 function homepageDefault(){
   return {
     brandName:"ZM Academy",
@@ -378,6 +474,8 @@ function homepageDefault(){
       title:"أهلًا بك في أكاديميتك",
       description:"أكاديمية تعليمية تهدف إلى تقديم تجربة تعلم واضحة ومنظمة."
     },
+    theme:{preset:"neon",template:"future",primary:"#35a8ff",secondary:"#9b70ff",background:"#080d1b",surface:"#111b34",text:"#f4f7ff",muted:"#a5b3d0",mode:"dark",corners:"soft",font:"cairo",buttons:"gradient",cards:"solid",motion:"on"},
+    branding:{logoUrl:"",heroImageUrl:"",whatsapp:"201115336341",facebook:"",youtube:"",telegram:""},
     sections:{
       subjects:true,
       curriculum:true,
@@ -420,6 +518,8 @@ function readHomepageForm(){
       title:el("hpAboutTitle").value.trim(),
       description:el("hpAboutDescription").value.trim()
     },
+    theme:{preset:el("hpThemePreset").value,template:el("hpTemplate").value,primary:el("hpColorPrimary").value,secondary:el("hpColorSecondary").value,background:el("hpColorBackground").value,surface:el("hpColorSurface").value,text:el("hpColorText").value,muted:el("hpColorMuted").value,mode:el("hpDefaultMode").value,corners:el("hpCornerStyle").value,font:el("hpFontFamily").value,buttons:el("hpButtonStyle").value,cards:el("hpCardStyle").value,motion:el("hpMotion").value},
+    branding:{logoUrl:el("hpLogoUrl").value.trim(),heroImageUrl:el("hpHeroImageUrl").value.trim(),whatsapp:el("hpWhatsapp").value.trim(),facebook:el("hpFacebook").value.trim(),youtube:el("hpYoutube").value.trim(),telegram:el("hpTelegram").value.trim()},
     sections:{
       subjects:el("hpShowSubjects").checked,
       curriculum:el("hpShowCurriculum").checked,
@@ -436,6 +536,8 @@ function fillHomepageForm(settings){
   const announcement={...d.announcement,...(s.announcement||{})};
   const about={...d.about,...(s.about||{})};
   const sections={...d.sections,...(s.sections||{})};
+  const theme={...d.theme,...(s.theme||{})};
+  const branding={...d.branding,...(s.branding||{})};
 
   setField("hpBrandName",s.brandName??d.brandName);
   setField("hpTagline",s.tagline??d.tagline);
@@ -454,6 +556,14 @@ function fillHomepageForm(settings){
   setCheck("hpAboutEnabled",about.enabled);
   setField("hpAboutTitle",about.title);
   setField("hpAboutDescription",about.description);
+  setField("hpThemePreset",theme.preset);setField("hpTemplate",theme.template);
+  setField("hpColorPrimary",theme.primary);setField("hpColorSecondary",theme.secondary);
+  setField("hpColorBackground",theme.background);setField("hpColorSurface",theme.surface);
+  setField("hpColorText",theme.text);setField("hpColorMuted",theme.muted);
+  setField("hpDefaultMode",theme.mode);setField("hpCornerStyle",theme.corners);setField("hpFontFamily",theme.font);setField("hpButtonStyle",theme.buttons);setField("hpCardStyle",theme.cards);setField("hpMotion",theme.motion);
+  setField("hpLogoUrl",branding.logoUrl);setField("hpHeroImageUrl",branding.heroImageUrl);
+  setField("hpWhatsapp",branding.whatsapp);setField("hpFacebook",branding.facebook);
+  setField("hpYoutube",branding.youtube);setField("hpTelegram",branding.telegram);
   setCheck("hpShowSubjects",sections.subjects);
   setCheck("hpShowCurriculum",sections.curriculum);
   setCheck("hpShowLibrary",sections.library);
@@ -477,6 +587,7 @@ async function loadHomepageSettings(){
 function validateHomepageSettings(settings){
   if(!settings.brandName)return "اكتب اسم العلامة التجارية.";
   if(!settings.hero.title)return "اكتب العنوان الرئيسي.";
+  for(const [label,url] of [["الشعار",settings.branding?.logoUrl],["صورة الخلفية",settings.branding?.heroImageUrl],["فيسبوك",settings.branding?.facebook],["يوتيوب",settings.branding?.youtube],["تليجرام",settings.branding?.telegram]]){if(url){try{if(new URL(url).protocol!=="https:")return "رابط "+label+" يجب أن يبدأ بـ https."}catch(e){return "رابط "+label+" غير صحيح."}}}
   for(const [label,url] of [
     ["الزر الأول",settings.hero.primaryUrl],
     ["الزر الثاني",settings.hero.secondaryUrl],
@@ -565,6 +676,8 @@ a{text-decoration:none}
 .footer{text-align:center;padding:35px 15px;color:#8295b9;border-top:1px solid #26385f;margin-top:65px}
 .preview-label{position:fixed;bottom:12px;left:12px;background:#15254a;color:#9beeff;border:1px solid #4cecff;padding:7px 12px;border-radius:20px;font-size:11px;z-index:5}
 @media(max-width:650px){.hero{min-height:470px;padding:65px 7%}.hero p{font-size:15px}.announcement{padding:20px}.about{padding:25px}.nav{padding:16px 5%}}
+:root{--p:${safe(settings.theme?.primary||"#35a8ff")};--s:${safe(settings.theme?.secondary||"#9b70ff")};--bg:${safe(settings.theme?.background||"#080d1b")};--surface:${safe(settings.theme?.surface||"#111b34")};--fg:${safe(settings.theme?.text||"#f4f7ff")};--muted:${safe(settings.theme?.muted||"#a5b3d0")}}
+body{background:var(--bg);color:var(--fg)}.nav{background:var(--surface);border-color:var(--p)}.brand,.eyebrow,.highlight,.tile span{color:var(--p)}.hero{background:radial-gradient(circle at 80% 20%,color-mix(in srgb,var(--s) 24%,transparent),transparent 36%),linear-gradient(135deg,var(--surface),var(--bg))}.button{background:linear-gradient(120deg,var(--p),var(--s))}.tile,.about{background:var(--surface);border-color:color-mix(in srgb,var(--p) 45%,transparent);border-radius:${settings.theme?.corners==="sharp"?"5px":settings.theme?.corners==="round"?"28px":"18px"}}.hero h1,.tile h3{color:var(--fg)}.hero p,.tile p,.about p{color:var(--muted)}
 </style>
 </head>
 <body>
@@ -941,6 +1054,7 @@ async function rejectPasswordReset(id){
   }catch(e){message(e.message,"err")}
 }
 
+el("hpThemePreset").addEventListener("change",applyAdminPreset);
 syncPriceField();
 checkSession();
 </script>
