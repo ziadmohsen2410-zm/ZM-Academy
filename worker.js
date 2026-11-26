@@ -4015,6 +4015,8 @@ if (method === "POST" && rejectPasswordMatch) {
       const examId = Number(path.split('/')[5]);
       const exam = await env.DB.prepare(`SELECT * FROM exams WHERE id=? AND status='published' AND (COALESCE(TRIM(grade),'')='' OR grade=(SELECT s.grade FROM students s WHERE s.id=?)) AND (starts_at IS NULL OR datetime(starts_at)<=datetime('now')) AND (ends_at IS NULL OR datetime(ends_at)>=datetime('now'))`).bind(examId, session.student_id).first();
       if (!exam) return reply(request, env, {success:false,error:'الاختبار غير متاح لهذا الطالب أو خارج موعده'},404);
+      // Close expired attempts before checking whether the student already has an open attempt.
+      await env.DB.prepare(`UPDATE exam_attempts SET status='expired', submitted_at=datetime('now') WHERE exam_id=? AND student_id=? AND status='in_progress' AND EXISTS (SELECT 1 FROM exams e WHERE e.id=exam_attempts.exam_id AND e.duration_minutes>0 AND datetime(exam_attempts.started_at, '+' || e.duration_minutes || ' minutes')<=datetime('now'))`).bind(examId, session.student_id).run();
       const activeAttempt = await env.DB.prepare(`SELECT id FROM exam_attempts WHERE exam_id=? AND student_id=? AND status='in_progress' ORDER BY id DESC LIMIT 1`).bind(examId, session.student_id).first();
       if (activeAttempt) return reply(request, env, {success:false,error:'لديك محاولة مفتوحة بالفعل. أكملها قبل بدء محاولة أخرى.'},409);
       const attempts = await env.DB.prepare(`SELECT COUNT(*) c FROM exam_attempts WHERE exam_id=? AND student_id=?`).bind(examId, session.student_id).first();
@@ -4026,8 +4028,12 @@ if (method === "POST" && rejectPasswordMatch) {
     }
     if (method==='POST' && /^\/api\/student\/platform\/exam-attempts\/\d+\/submit$/.test(path)) {
       const attemptId = Number(path.split('/')[5]);
-      const attempt = await env.DB.prepare(`SELECT a.*, e.show_results FROM exam_attempts a JOIN exams e ON e.id=a.exam_id WHERE a.id=? AND a.student_id=?`).bind(attemptId, session.student_id).first();
+      const attempt = await env.DB.prepare(`SELECT a.*, e.show_results, e.duration_minutes, CASE WHEN e.duration_minutes>0 AND datetime(a.started_at, '+' || e.duration_minutes || ' minutes')<=datetime('now') THEN 1 ELSE 0 END AS is_expired FROM exam_attempts a JOIN exams e ON e.id=a.exam_id WHERE a.id=? AND a.student_id=?`).bind(attemptId, session.student_id).first();
       if (!attempt || attempt.status!=='in_progress') return reply(request, env, {success:false,error:'Attempt not available'},400);
+      if (Number(attempt.is_expired)===1) {
+        await env.DB.prepare(`UPDATE exam_attempts SET status='expired', submitted_at=datetime('now') WHERE id=? AND student_id=? AND status='in_progress'`).bind(attemptId, session.student_id).run();
+        return reply(request, env, {success:false,error:'انتهى الوقت المحدد للاختبار. تم إغلاق المحاولة.'}, 400);
+      }
       const b = await readBody(request);
       const answers = b?.answers && typeof b.answers==='object' ? b.answers : {};
       const qs = await env.DB.prepare(`SELECT * FROM exam_questions WHERE exam_id=?`).bind(attempt.exam_id).all();
