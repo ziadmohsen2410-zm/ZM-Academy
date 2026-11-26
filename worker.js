@@ -3807,12 +3807,20 @@ if (method === "POST" && rejectPasswordMatch) {
           .bind(clean(b?.title,160),clean(b?.description,2000),b?.subject_id?Number(b.subject_id):null,clean(b?.grade,40),clean(b?.status||'draft',20),b?.duration_minutes?Number(b.duration_minutes):null,b?.attempts_allowed?Number(b.attempts_allowed):1,b?.starts_at||null,b?.ends_at||null,b?.shuffle_questions?1:0,b?.show_results===false?0:1,id).run();
         return reply(request, env, {success:true});
       }
-      if (method==='DELETE') { await env.DB.prepare(`DELETE FROM exam_questions WHERE exam_id=?`).bind(id).run(); await env.DB.prepare(`DELETE FROM exams WHERE id=?`).bind(id).run(); return reply(request, env,{success:true}); }
+      if (method==='DELETE') {
+        const attempts=await env.DB.prepare(`SELECT COUNT(*) AS c FROM exam_attempts WHERE exam_id=?`).bind(id).first();
+        if(Number(attempts?.c||0)>0) return reply(request,env,{success:false,error:'لا يمكن حذف اختبار له محاولات طلاب. غيّر حالته إلى مؤرشف بدلًا من الحذف.'},409);
+        await env.DB.prepare(`DELETE FROM exam_questions WHERE exam_id=?`).bind(id).run();
+        await env.DB.prepare(`DELETE FROM exams WHERE id=?`).bind(id).run();
+        return reply(request, env,{success:true});
+      }
     }
     if (/^\/api\/admin\/platform\/exams\/\d+\/questions$/.test(path)) {
       if (!hasPerm(admin.role,'exams')) return reply(request, env, {success:false,error:'Forbidden'},403);
       const examId = Number(path.split('/')[5]);
       if (method==='POST') {
+        const existingAttempts=await env.DB.prepare(`SELECT COUNT(*) AS c FROM exam_attempts WHERE exam_id=?`).bind(examId).first();
+        if(Number(existingAttempts?.c||0)>0) return reply(request,env,{success:false,error:'لا يمكن تعديل أسئلة اختبار بدأه الطلاب. أنشئ نسخة جديدة للاختبار.'},409);
         const b=await readBody(request);
         const validationError = validateExamQuestion(b); if (validationError) return reply(request, env,{success:false,error:validationError},400);
         const type = clean(b?.type,20);
@@ -3824,6 +3832,12 @@ if (method === "POST" && rejectPasswordMatch) {
     if (/^\/api\/admin\/platform\/exam-questions\/\d+$/.test(path)) {
       if (!hasPerm(admin.role,'exams')) return reply(request, env, {success:false,error:'Forbidden'},403);
       const qid = Number(path.split('/').pop());
+      if (method==='PUT' || method==='DELETE') {
+        const question=await env.DB.prepare(`SELECT exam_id FROM exam_questions WHERE id=?`).bind(qid).first();
+        if(!question) return reply(request,env,{success:false,error:'السؤال غير موجود'},404);
+        const existingAttempts=await env.DB.prepare(`SELECT COUNT(*) AS c FROM exam_attempts WHERE exam_id=?`).bind(question.exam_id).first();
+        if(Number(existingAttempts?.c||0)>0) return reply(request,env,{success:false,error:'لا يمكن تعديل أو حذف سؤال بعد بدء الطلاب للاختبار. أنشئ نسخة جديدة.'},409);
+      }
       if (method==='PUT') {
         const b=await readBody(request);
         const validationError = validateExamQuestion(b); if (validationError) return reply(request, env,{success:false,error:validationError},400);
