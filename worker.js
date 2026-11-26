@@ -3854,6 +3854,7 @@ if (method === "POST" && rejectPasswordMatch) {
       const prompt = clean(b?.prompt, 8000);
       const mode = clean(b?.mode||'admin_assistant', 40);
       if (!prompt) return reply(request, env, {success:false,error:'prompt required'},400);
+      if (!(await consumeApiRateLimit(env,request,'admin_ai',admin.id,20,60))) return reply(request, env,{success:false,error:'تم تجاوز الحد المؤقت لطلبات المساعد. حاول بعد دقيقة.',code:'RATE_LIMITED'},429);
       const key = env.AI_API_KEY || env.OPENAI_API_KEY || '';
       if (!key) {
         await env.DB.prepare(`INSERT INTO ai_logs(actor_type,actor_id,tool,prompt_preview,response_status) VALUES(?,?,?,?,?)`).bind('admin',admin.id,mode,prompt.slice(0,200),'not_configured').run();
@@ -4092,6 +4093,7 @@ if (method === "POST" && rejectPasswordMatch) {
     if (method==='POST' && path==='/api/student/platform/ai') {
       const b = await readBody(request); const prompt = clean(b?.prompt,4000);
       if(!prompt) return reply(request, env,{success:false,error:'prompt required'},400);
+      if (!(await consumeApiRateLimit(env,request,'student_ai',session.student_id,10,60))) return reply(request, env,{success:false,error:'تم تجاوز الحد المؤقت لطلبات المساعد. حاول بعد دقيقة.',code:'RATE_LIMITED'},429);
       const key = env.AI_API_KEY || env.OPENAI_API_KEY || '';
       if (!key) return reply(request, env, {success:false,error:'AI service not configured', code:'AI_NOT_CONFIGURED'}, 503);
       const endpoint = env.AI_API_URL || 'https://api.openai.com/v1/chat/completions';
