@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>شهادة إتمام | ZM Academy</title>
+<style>
+body{margin:0;font-family:Tahoma,Arial,sans-serif;background:#0b1220;color:#eef4ff;min-height:100vh;display:grid;place-items:center;padding:20px}
+.cert{width:min(900px,100%);background:#fff;color:#182033;border:10px solid #c9a84c;border-radius:12px;padding:40px 28px;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.35)}
+.badge{display:inline-block;padding:8px 14px;border-radius:999px;background:#f5edd3;color:#7a5b00;font-weight:700;margin-bottom:10px}
+h1{margin:10px 0 8px;font-size:42px;color:#1a2a52}
+p{font-size:20px;line-height:1.8;margin:10px 0}
+.name{font-size:34px;font-weight:800;color:#0f6cbd;margin:18px 0}
+.course{font-size:26px;font-weight:700;color:#222}
+.meta{margin-top:24px;color:#555;font-size:16px}
+.actions{margin-top:20px;display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+button,a{border:0;border-radius:10px;padding:12px 18px;font-size:16px;cursor:pointer;text-decoration:none}
+.print{background:#1a73e8;color:#fff}.back{background:#e9eef6;color:#182033}
+@media print{body{background:#fff;padding:0}.actions{display:none}.cert{box-shadow:none;width:100%;min-height:90vh}}
+@media(max-width:600px){h1{font-size:30px}.name{font-size:26px}.course{font-size:21px}p{font-size:17px}}
+</style>
+</head>
+<body>
+  <div class="cert">
+    <div class="badge">ZM Academy</div>
+    <h1>شهادة إتمام</h1>
+    <p>تشهد منصة ZM Academy بأن الطالب/ة</p>
+    <div class="name" id="studentName">اسم الطالب</div>
+    <p>قد أتم/أتمت بنجاح دراسة</p>
+    <div class="course" id="courseName">المقرر الدراسي</div>
+    <div class="meta" id="dateMeta"></div>
+    <div class="actions">
+      <button class="print" onclick="window.print()">طباعة / حفظ PDF</button>
+      <a class="back" href="./student.html">العودة للوحة الطالب</a>
+    </div>
+  </div>
+<script>
+const q=new URLSearchParams(location.search);
+document.getElementById('studentName').textContent=q.get('name')||'اسم الطالب';
+document.getElementById('courseName').textContent=q.get('course')||'مقرر دراسي';
+const d=new Date(); document.getElementById('dateMeta').textContent='تاريخ الإصدار: '+d.toLocaleDateString('ar-EG');
+</script>
+</body>
+</html>

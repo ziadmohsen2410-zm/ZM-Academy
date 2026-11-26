@@ -616,7 +616,10 @@ fetch(API+'/api/homepage',{cache:'no-store'}).then(r=>r.ok?r.json():null).then(d
 <div id="pdfViewer" class="hidden">
  <div class="viewerTop">
   <strong id="viewerTitle">عرض المذكرة</strong>
-  <button id="closePdfBtn" type="button">إغلاق</button>
+  <div style="display:flex;gap:8px;flex-wrap:wrap">
+   <button id="completePdfBtn" type="button" class="secondary">تحديد كمكتمل</button>
+   <button id="closePdfBtn" type="button">إغلاق</button>
+  </div>
  </div>
  <div id="viewerMessage" style="color:white;text-align:center;padding:10px">جارٍ تجهيز المذكرة...</div>
  <div id="viewerPages" class="viewerPages"></div>
@@ -639,6 +642,7 @@ const token=safeStorage.get("zm_student_token");
 const $=id=>document.getElementById(id);
 const message=$("message");
 const dashboard=$("dashboard");
+function showMsg(text,ok=false){ if(!message) return; message.textContent=text||''; message.style.color=ok?'#8ff0cc':'#ffb1c5'; if(text) setTimeout(()=>{ if(message.textContent===text) message.textContent=''; },3500); }
 
 let currentStudent=null;
 let studentProgress=[];
@@ -828,8 +832,9 @@ function renderLearningSummary(){
  box.replaceChildren();
 
  const started=new Set(studentProgress.map(p=>Number(p.material_id))).size;
+ const completed=studentProgress.filter(p=>p.completed_at).length;
  const count=document.createElement("strong");
- count.textContent="بدأت مذاكرة "+started+" مذكرة";
+ count.textContent="بدأت مذاكرة "+started+" مذكرة • مكتملة "+completed;
 
  const latest=[...studentProgress].sort(
   (a,b)=>new Date(b.updated_at||b.updatedAt||0)-new Date(a.updated_at||a.updatedAt||0)
@@ -843,9 +848,18 @@ function renderLearningSummary(){
   :"لم تبدأ مذاكرة أي مذكرة بعد.";
 
  box.append(count,detail);
+ if(completed>0){
+  const a=document.createElement('a');
+  const name=encodeURIComponent((currentStudent&&currentStudent.name)||'طالب');
+  a.href='./certificate.html?name='+name+'&course='+encodeURIComponent('إتمام '+completed+' درس/دروس');
+  a.target='_blank';
+  a.style.cssText='display:inline-block;margin-top:10px;color:#75c5ff;font-weight:700;text-decoration:none';
+  a.textContent='عرض شهادة إتمام قابلة للطباعة';
+  box.appendChild(a);
+ }
 }
 
-function updateProgressLocal(id,page,title){
+function updateProgressLocal(id,page,title,completed){
  let p=studentProgress.find(x=>Number(x.material_id)===Number(id));
 
  if(!p){
@@ -856,10 +870,12 @@ function updateProgressLocal(id,page,title){
  p.last_page=page;
  p.title=title||p.title;
  p.updated_at=new Date().toISOString();
+ if(completed===true) p.completed_at=p.completed_at||new Date().toISOString();
+ if(completed===false) p.completed_at=null;
  renderLearningSummary();
 }
 
-function saveMaterialProgress(id,page,title){
+function saveMaterialProgress(id,page,title,completed){
  if(!id||!Number.isInteger(page)||page<1)return;
 
  const materialId=Number(id);
@@ -868,12 +884,11 @@ function saveMaterialProgress(id,page,title){
   if(activePdfMaterialId!==materialId)return;
 
   try{
-   await api("/api/student/progress",{
-    method:"POST",
-    body:JSON.stringify({material_id:materialId,last_page:page})
-   });
-
-   updateProgressLocal(materialId,page,title);
+   const body={material_id:materialId,last_page:page};
+   if(completed===true) body.completed=true;
+   if(completed===false) body.completed=false;
+   await api("/api/student/progress",{method:"POST",body:JSON.stringify(body)});
+   updateProgressLocal(materialId,page,title,completed);
   }catch(e){
    console.warn("تعذر حفظ التقدم:",e.message);
   }
@@ -991,6 +1006,8 @@ async function openPdf(materialId,title,resumePage=1){
  activePdfMaterialId=id;
  viewer.classList.remove("hidden");
  $("viewerTitle").textContent=title||"عرض المذكرة";
+ const prog=studentProgress.find(x=>Number(x.material_id)===id);
+ $("completePdfBtn").textContent=prog?.completed_at ? 'مكتمل ✓' : 'تحديد كمكتمل';
  viewerMessage.textContent="جارٍ تحميل المذكرة...";
  pages.replaceChildren();
 
@@ -1169,6 +1186,22 @@ async function openPdf(materialId,title,resumePage=1){
 }
 
 $("closePdfBtn").addEventListener("click",stopPdfViewer);
+$("completePdfBtn").addEventListener("click",async()=>{
+ if(!activePdfMaterialId) return;
+ const id=Number(activePdfMaterialId);
+ const p=studentProgress.find(x=>Number(x.material_id)===id);
+ const page=Math.max(1,Number(p?.last_page)||1);
+ const title=$("viewerTitle").textContent||'';
+ const btn=$("completePdfBtn");
+ btn.disabled=true;
+ try{
+  await saveMaterialProgress(id,page,title,true);
+  btn.textContent='مكتمل ✓';
+  showMsg('تم تحديد الدرس كمكتمل',true);
+ }catch(e){
+  showMsg(e.message||'تعذر حفظ الإكمال');
+ }finally{ btn.disabled=false; }
+});
 
 async function loadDashboard(){
  if(!token||dashboardLoading)return dashboardLoading;
