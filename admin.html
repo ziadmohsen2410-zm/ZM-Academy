@@ -35,9 +35,36 @@ label{display:block;font-size:13px;color:#c6d6f2;margin:10px 0 6px}
 .hidden{display:none!important}
 .pill{display:inline-block;padding:2px 8px;border-radius:999px;background:rgba(76,201,255,.12);color:#aee8ff;font-size:12px}
 kbd{background:#0b1222;border:1px solid var(--line);padding:2px 6px;border-radius:6px;font-size:12px}
+/* mobile-first additions */
+.mobile-bar{display:none;position:sticky;top:0;z-index:60;background:rgba(10,15,28,.96);backdrop-filter:blur(10px);border-bottom:1px solid var(--line);padding:10px 14px;align-items:center;justify-content:space-between;gap:10px}
+.mobile-bar .menu-btn{width:44px;height:44px;padding:0;font-size:22px;line-height:1}
+.mobile-bar .mb-title{font-weight:800;font-size:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sidebar-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:70}
+.bottom-nav{display:none;position:fixed;bottom:0;left:0;right:0;z-index:60;background:rgba(10,15,28,.97);backdrop-filter:blur(10px);border-top:1px solid var(--line);padding:8px 8px calc(8px + env(safe-area-inset-bottom));gap:6px}
+.bottom-nav button{flex:1;background:transparent;color:var(--muted);border:1px solid transparent;padding:8px 4px;border-radius:12px;font-size:11px;min-height:52px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px}
+.bottom-nav button.active{color:var(--primary);background:rgba(76,201,255,.08);border-color:rgba(76,201,255,.14)}
+.bottom-nav .ico{font-size:18px;line-height:1}
 @media(max-width:1100px){.stats{grid-template-columns:repeat(2,1fr)}.split{grid-template-columns:1fr}}
-@media(max-width:860px){.app{grid-template-columns:1fr}.sidebar{position:static;height:auto;border-left:0;border-bottom:1px solid var(--line)}}
-@media(max-width:560px){.main{padding:14px}.stats{grid-template-columns:1fr}.topbar .title h2{font-size:22px}}
+@media(max-width:860px){
+  .app{grid-template-columns:1fr}
+  .mobile-bar{display:flex}
+  .sidebar{position:fixed;top:0;right:0;bottom:0;width:min(320px,86vw);height:100vh;z-index:80;transform:translateX(110%);transition:transform .2s ease;border-left:1px solid var(--line);border-bottom:0}
+  .sidebar.open{transform:translateX(0)}
+  .sidebar-overlay.open{display:block}
+  .main{padding:14px 14px 90px}
+  .topbar .actions{width:100%}.topbar .actions input{min-width:0!important;width:100%}
+  .bottom-nav{display:flex}
+  table{min-width:560px}
+  .main [style*="grid-template-columns:1fr 1fr"]{grid-template-columns:1fr!important}
+}
+@media(max-width:560px){
+  .main{padding:12px 12px 90px}.stats{grid-template-columns:1fr 1fr}.topbar .title h2{font-size:20px}
+  .card{padding:14px;border-radius:14px}
+  button,input,select,textarea{min-height:44px}
+  th,td{padding:10px 8px;font-size:13px}
+  .toolbar>*{min-width:100%}.row>*{min-width:100%}
+  .stats{grid-template-columns:1fr 1fr;gap:10px}.stat .k{font-size:22px}
+}
 </style>
 </head>
 <body>
@@ -53,7 +80,8 @@ kbd{background:#0b1222;border:1px solid var(--line);padding:2px 6px;border-radiu
 </div>
 
 <div id="appView" class="app hidden">
-  <aside class="sidebar">
+  <div class="sidebar-overlay" id="sidebarOverlay"></div>
+  <aside class="sidebar" id="sidebar">
     <div class="brand"><img src="./assets/academy-logo.jpg" alt="ZM"><div><h1>ZM Academy</h1><p id="adminIdentity">الإدارة</p></div></div>
     <div class="nav" id="nav"></div>
     <div style="margin-top:16px;padding:12px;border:1px solid var(--line);border-radius:14px" class="small muted">
@@ -62,6 +90,7 @@ kbd{background:#0b1222;border:1px solid var(--line);padding:2px 6px;border-radiu
     </div>
   </aside>
   <main class="main">
+    <div class="mobile-bar"><button class="ghost menu-btn" id="menuBtn" aria-label="القائمة">☰</button><div class="mb-title" id="mobileTitle">لوحة المعلومات</div><button class="ghost menu-btn" id="mobileRefreshBtn" aria-label="تحديث">↻</button></div>
     <div class="topbar">
       <div class="title"><h2 id="sectionTitle">لوحة المعلومات</h2><p id="sectionDesc">نظرة عامة على المنصة</p></div>
       <div class="actions">
@@ -259,6 +288,13 @@ kbd{background:#0b1222;border:1px solid var(--line);padding:2px 6px;border-radiu
     </section>
 
   </main>
+  <nav class="bottom-nav" id="bottomNav">
+    <button data-sec="dashboard" class="active"><span class="ico">🏠</span><span>الرئيسية</span></button>
+    <button data-sec="students"><span class="ico">👥</span><span>الطلاب</span></button>
+    <button data-sec="content"><span class="ico">📚</span><span>المحتوى</span></button>
+    <button data-sec="orders"><span class="ico">🧾</span><span>الطلبات</span></button>
+    <button data-sec="more"><span class="ico">☰</span><span>المزيد</span></button>
+  </nav>
 </div>
 
 <script>
@@ -289,12 +325,16 @@ async function api(path, opts={}){
   if(!res.ok || data.success===false){ const err = new Error(data.error||('HTTP '+res.status)); err.data=data; err.status=res.status; throw err; }
   return data;
 }
+function closeSidebar(){ $('#sidebar')?.classList.remove('open'); $('#sidebarOverlay')?.classList.remove('open'); }
+function openSidebar(){ $('#sidebar')?.classList.add('open'); $('#sidebarOverlay')?.classList.add('open'); }
 function setSection(key){
   state.section=key;
   $$('.section').forEach(s=>s.classList.remove('active'));
   const sec=$('#sec-'+key); if(sec) sec.classList.add('active');
   $$('#nav button').forEach(b=>b.classList.toggle('active', b.dataset.sec===key));
-  const meta=sections.find(s=>s[0]===key); if(meta){$('#sectionTitle').textContent=meta[1]; $('#sectionDesc').textContent=meta[2];}
+  const meta=sections.find(s=>s[0]===key); if(meta){$('#sectionTitle').textContent=meta[1]; $('#sectionDesc').textContent=meta[2]; $('#mobileTitle').textContent=meta[1];}
+  $$('#bottomNav button[data-sec]').forEach(b=>b.classList.toggle('active', b.dataset.sec===key));
+  closeSidebar();
   loadSection(key).catch(e=>showMsg(e.message||'خطأ'));
 }
 function buildNav(){
@@ -469,6 +509,10 @@ $('#loginBtn').onclick=login;
 $('#loginPass').addEventListener('keydown',e=>{if(e.key==='Enter')login();});
 $('#logoutBtn').onclick=logout;
 $('#refreshBtn').onclick=()=>loadSection(state.section).catch(e=>showMsg(e.message));
+$('#mobileRefreshBtn').onclick=()=>loadSection(state.section).catch(e=>showMsg(e.message));
+$('#menuBtn').onclick=()=>openSidebar();
+$('#sidebarOverlay').onclick=()=>closeSidebar();
+$('#bottomNav').addEventListener('click',(e)=>{ const b=e.target.closest('button[data-sec]'); if(!b) return; const sec=b.dataset.sec; if(sec==='more'){ openSidebar(); return; } setSection(sec); });
 $('#globalSearch').addEventListener('keydown',e=>{if(e.key==='Enter'){const q=e.target.value.toLowerCase(); const found=sections.find(s=>s[1].toLowerCase().includes(q)||s[0].includes(q)); if(found) setSection(found[0]);}});
 document.addEventListener('keydown',e=>{if(e.key==='/' && document.activeElement.tagName!=='INPUT' && document.activeElement.tagName!=='TEXTAREA'){e.preventDefault(); $('#globalSearch').focus();}});
 $('#studentSearch').addEventListener('input',()=>renderStudents(state.cache.students||[]));
