@@ -542,6 +542,40 @@ function parseHomepageJson(value) {
   }
 }
 
+function sanitizeHomepageSettings(value) {
+  const source=value&&typeof value==='object'&&!Array.isArray(value)?value:{};
+  const text=(v,max=2000)=>String(v??'').trim().slice(0,max);
+  const safeLink=(v)=>{
+    const raw=text(v,1000);
+    if(!raw||raw.startsWith('//'))return '';
+    if(/^https:\/\/[^\s]+$/i.test(raw)||raw.startsWith('/')||raw.startsWith('./')||raw.startsWith('#'))return raw;
+    return '';
+  };
+  const safeImage=(v)=>{
+    const raw=text(v,1000);
+    if(!raw||raw.startsWith('//'))return '';
+    if(/^https:\/\/[^\s]+$/i.test(raw)||/^\/assets\/[a-z0-9_./-]+$/i.test(raw)||/^\/api\/media\/\d+$/.test(raw))return raw;
+    return '';
+  };
+  const out={...source};
+  out.brandName=text(source.brandName,80);
+  out.tagline=text(source.tagline,180);
+  const theme=source.theme&&typeof source.theme==='object'?source.theme:{};
+  const color=(v,fallback)=>/^#[0-9a-f]{6}$/i.test(String(v||''))?String(v):fallback;
+  out.theme={...theme,mode:['dark','light','system'].includes(theme.mode)?theme.mode:'dark',template:['future','glass','minimal','luxury','editorial'].includes(theme.template)?theme.template:'future',primary:color(theme.primary,'#2F80FF'),secondary:color(theme.secondary,'#7B61FF'),background:color(theme.background,'#071226'),surface:color(theme.surface,'#0D1B35'),text:color(theme.text,'#FFFFFF'),muted:color(theme.muted,'#9AA9C4'),font:['cairo','tajawal','system','georgia'].includes(theme.font)?theme.font:'cairo',corners:['round','normal','sharp'].includes(theme.corners)?theme.corners:'normal',buttons:['gradient','solid','outline'].includes(theme.buttons)?theme.buttons:'gradient',cards:['solid','glass','outline'].includes(theme.cards)?theme.cards:'solid',motion:theme.motion==='off'?'off':'on'};
+  const hero=source.hero&&typeof source.hero==='object'?source.hero:{};
+  out.hero={...hero,eyebrow:text(hero.eyebrow,100),title:text(hero.title,180),highlight:text(hero.highlight,100),description:text(hero.description,1000),primaryText:text(hero.primaryText,80),primaryUrl:safeLink(hero.primaryUrl),secondaryText:text(hero.secondaryText,80),secondaryUrl:safeLink(hero.secondaryUrl)};
+  const about=source.about&&typeof source.about==='object'?source.about:{};
+  out.about={...about,title:text(about.title,120),description:text(about.description,1500)};
+  const branding=source.branding&&typeof source.branding==='object'?source.branding:{};
+  out.branding={...branding,logoUrl:safeImage(branding.logoUrl),heroImageUrl:safeImage(branding.heroImageUrl),whatsapp:text(branding.whatsapp,20).replace(/\D/g,'').slice(0,15),facebook:safeLink(branding.facebook),youtube:safeLink(branding.youtube),telegram:safeLink(branding.telegram)};
+  const announcement=source.announcement&&typeof source.announcement==='object'?source.announcement:{};
+  out.announcement={...announcement,enabled:!!announcement.enabled,text:text(announcement.text,300),buttonText:text(announcement.buttonText,80),url:safeLink(announcement.url)};
+  const sections=source.sections&&typeof source.sections==='object'?source.sections:{};
+  out.sections={...sections,subjects:sections.subjects!==false,curriculum:sections.curriculum!==false,library:sections.library!==false,about:sections.about!==false,join:sections.join!==false};
+  return out;
+}
+
 
 // إنشاء جدول أرشيف الدروس
 async function ensureArchivedMaterialsTable(env) {
@@ -723,7 +757,7 @@ async function route(request, env) {
 
       return reply(request, env, {
         success: true,
-        settings: parseHomepageJson(row?.published_json)
+        settings: sanitizeHomepageSettings(parseHomepageJson(row?.published_json))
       });
     } catch (error) {
       return reply(request, env, {
@@ -1020,8 +1054,8 @@ if (method === "POST" && path === "/api/password-reset/request") {
 
       return reply(request, env, {
         success: true,
-        draft: parseHomepageJson(row?.draft_json),
-        published: parseHomepageJson(row?.published_json),
+        draft: sanitizeHomepageSettings(parseHomepageJson(row?.draft_json)),
+        published: sanitizeHomepageSettings(parseHomepageJson(row?.published_json)),
         status: row?.status || "published",
         updated_at: row?.updated_at || null
       });
@@ -1035,7 +1069,7 @@ if (method === "POST" && path === "/api/password-reset/request") {
       await ensureHomepageSettingsTable(env);
 
       const body = await readBody(request);
-      const settings = body?.settings;
+      const settings = sanitizeHomepageSettings(body?.settings);
 
       if (
         !settings ||
