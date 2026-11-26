@@ -88,7 +88,7 @@ test("parent portal receives parent-targeted notifications and can mark them rea
   assert.ok(worker.includes("path==='/api/parent/notifications'"));
   assert.ok(worker.includes("n.audience_type IN ('all','parents')"));
   assert.ok(worker.includes("r.user_type='parent'"));
-  assert.ok(parent.includes("id=\\"parentNotifications\\""));
+  assert.ok(parent.includes('id="parentNotifications"'));
   assert.ok(parent.includes("loadParentNotifications()"));
   assert.ok(parent.includes("/api/parent/notifications/"));
 });
