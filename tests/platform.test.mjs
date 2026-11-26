@@ -165,6 +165,13 @@ test("essay attempts have an admin review and bounded manual grading workflow", 
   assert.ok(admin.includes("a.status==='submitted'"));
 });
 
+test("exam history cannot be destroyed or have questions changed after attempts begin", () => {
+  const worker = read("worker.js");
+  assert.ok(worker.includes("لا يمكن حذف اختبار له محاولات طلاب"));
+  assert.ok(worker.includes("لا يمكن تعديل أسئلة اختبار بدأه الطلاب"));
+  assert.ok(worker.includes("لا يمكن تعديل أو حذف سؤال بعد بدء الطلاب للاختبار"));
+});
+
 test("exam validation preserves the archived lifecycle state", () => {
   const worker = read("worker.js");
   const admin = read("admin.html");
