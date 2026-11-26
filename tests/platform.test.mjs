@@ -101,6 +101,20 @@ test("student exam visibility and start enforce grade, schedule, open-attempt, a
   assert.ok(routes.includes("انتهى الوقت المحدد للاختبار"));
 });
 
+test("admin exam editor exposes and saves all supported exam settings", () => {
+  const admin = read("admin.html");
+  assert.ok(admin.includes('id="examDuration"'));
+  assert.ok(admin.includes('id="examAttempts"'));
+  assert.ok(admin.includes('id="examShuffle"'));
+  assert.ok(admin.includes('id="examShowResults"'));
+  assert.ok(admin.includes('id="examStartsAt"'));
+  assert.ok(admin.includes('id="examEndsAt"'));
+  assert.ok(admin.includes("method:id?'PUT':'POST'"));
+  assert.ok(admin.includes("window.__editExam=async(id)=>"));
+  assert.ok(admin.includes("$('#examShuffle').checked=Number(e.shuffle_questions)===1"));
+  assert.ok(admin.includes("$('#examShowResults').checked=Number(e.show_results)!==0"));
+});
+
 test("student and admin AI endpoints enforce per-user rate limits", () => {
   const worker = read("worker.js");
   const student = worker.slice(worker.indexOf("if (method==='POST' && path==='/api/student/platform/ai')"));
