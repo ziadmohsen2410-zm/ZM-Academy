@@ -254,6 +254,16 @@ test("exam validation preserves the archived lifecycle state", () => {
   assert.ok(admin.includes('<option value="archived">مؤرشف</option>'));
 });
 
+test("AI Builder can apply structured homepage settings without publishing automatically", () => {
+  const worker = read("worker.js");
+  const admin = read("admin.html");
+  assert.ok(worker.includes("brandName, tagline, theme, hero, about, branding, announcement, sections"));
+  assert.ok(admin.includes('id="applyAiHomepageBtn"'));
+  assert.ok(admin.includes("const x=JSON.parse($('#aiResult').textContent)"));
+  assert.ok(admin.includes("تم تطبيق مسودة AI في النموذج"));
+  assert.ok(admin.includes("لم يتم حفظه أو نشره بعد"));
+});
+
 test("admin homepage editor is connected to the homepage draft and publish APIs", () => {
   const admin = read("admin.html");
   const worker = read("worker.js");
