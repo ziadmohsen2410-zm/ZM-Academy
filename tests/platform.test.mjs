@@ -366,6 +366,15 @@ test("admin creation form hides super-admin for lower-privilege administrators",
   assert.ok(admin.includes("$('#newAdminRole').value==='super_admin'"));
 });
 
+test("role controls are disabled for the current admin and protected super-admin rows", () => {
+  const worker = read("worker.js");
+  const admin = read("admin.html");
+  assert.ok(worker.includes("current_role:admin.role,current_admin_id:admin.id"));
+  assert.ok(admin.includes("const protectedAccount=a.role==='super_admin'&&d.current_role!=='super_admin'"));
+  assert.ok(admin.includes("const self=Number(a.id)===Number(d.current_admin_id)"));
+  assert.ok(admin.includes("${locked?'disabled':''}"));
+});
+
 test("lower-privilege admins do not receive super-admin as an assignable role", () => {
   const worker = read("worker.js");
   assert.ok(worker.includes("if(admin.role!=='super_admin') delete permissionsMap.super_admin"));
