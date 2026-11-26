@@ -3870,7 +3870,8 @@ if (method === "POST" && rejectPasswordMatch) {
           feedback[q.id]=clean(b?.feedback?.[q.id]||'',1000);
         }
         const total=Number(attempt.score||0)+essayScore;
-        await env.DB.prepare(`UPDATE exam_attempts SET score=?,status='graded',graded_by=?,graded_at=datetime('now'),feedback_json=? WHERE id=? AND status='submitted'`).bind(total,admin.username,JSON.stringify(feedback),attemptId).run();
+        const gradeUpdate=await env.DB.prepare(`UPDATE exam_attempts SET score=?,status='graded',graded_by=?,graded_at=datetime('now'),feedback_json=? WHERE id=? AND status='submitted'`).bind(total,admin.username,JSON.stringify(feedback),attemptId).run();
+        if (!(gradeUpdate.meta?.changes||0)) return reply(request,env,{success:false,error:'تم تصحيح هذه المحاولة بالفعل'},409);
         await logAudit(env,{actor_type:'admin',actor_id:admin.id,actor_label:admin.username,action:'exam.attempt.grade',entity_type:'exam_attempt',entity_id:attemptId,details_json:{essay_score:essayScore},ip,user_agent:ua});
         return reply(request, env,{success:true,score:total});
       }
