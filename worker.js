@@ -3832,13 +3832,47 @@ if (method === "POST" && rejectPasswordMatch) {
       }
     }
 
-    // Roles
+    // Roles & admin users
     if (path==='/api/admin/platform/roles') {
       if (!hasPerm(admin.role,'roles') && !hasPerm(admin.role,'settings')) return reply(request, env,{success:false,error:'Forbidden'},403);
       if (method==='GET') {
         const roles = await env.DB.prepare(`SELECT r.*, (SELECT COUNT(*) FROM role_permissions rp WHERE rp.role_id=r.id) as perm_count FROM roles r ORDER BY r.id ASC`).all();
-        const admins = await env.DB.prepare(`SELECT id,username,display_name,role,is_active,created_at,last_login_at FROM admin_users ORDER BY id DESC LIMIT 200`).all();
+        const admins = await env.DB.prepare(`SELECT id,username,display_name,email,role,is_active,created_at,last_login_at FROM admin_users ORDER BY id DESC LIMIT 200`).all();
         return reply(request, env,{success:true, roles: roles.results||[], admins: admins.results||[], permissions_map: ADMIN_PERMS});
+      }
+    }
+    if (path==='/api/admin/platform/admin-users') {
+      if (!hasPerm(admin.role,'roles')) return reply(request, env,{success:false,error:'Forbidden'},403);
+      if (method==='GET') {
+        const admins = await env.DB.prepare(`SELECT id,username,display_name,email,role,is_active,created_at,last_login_at FROM admin_users ORDER BY id DESC LIMIT 200`).all();
+        return reply(request, env,{success:true, admins: admins.results||[]});
+      }
+      if (method==='POST') {
+        const b=await readBody(request);
+        const username=clean(b?.username,60); const password=String(b?.password||''); const role=clean(b?.role||'admin',40);
+        const display_name=clean(b?.display_name,120); const email=clean(b?.email,120).toLowerCase();
+        if(!/^[A-Za-z0-9_.-]{3,60}$/.test(username) || password.length<12) return reply(request, env,{success:false,error:'اسم مستخدم/كلمة مرور غير صالحة (كلمة المرور 12+)'},400);
+        if(!ADMIN_PERMS[role]) return reply(request, env,{success:false,error:'دور غير صالح'},400);
+        const exists = await env.DB.prepare(`SELECT id FROM admin_users WHERE username=?`).bind(username).first();
+        if (exists) return reply(request, env,{success:false,error:'اسم المستخدم موجود'},409);
+        const hash = await passwordHash(password);
+        await env.DB.prepare(`INSERT INTO admin_users (username,password_hash,display_name,email,role,is_active,created_at) VALUES (?,?,?,?,?,?,datetime('now'))`).bind(username,hash,display_name,email,role,1).run();
+        await logAudit(env,{actor_type:'admin',actor_id:admin.id,actor_label:admin.username,action:'admin.create',entity_type:'admin_user',entity_id:username,details_json:{role},ip,user_agent:ua});
+        return reply(request, env,{success:true});
+      }
+    }
+    if (/^\/api\/admin\/platform\/admin-users\/\d+$/.test(path)) {
+      if (!hasPerm(admin.role,'roles')) return reply(request, env,{success:false,error:'Forbidden'},403);
+      const uid = Number(path.split('/').pop());
+      if (method==='PUT') {
+        const b=await readBody(request);
+        if (b.role!==undefined) { const role=clean(b.role,40); if(!ADMIN_PERMS[role]) return reply(request, env,{success:false,error:'Invalid role'},400); await env.DB.prepare(`UPDATE admin_users SET role=? WHERE id=?`).bind(role,uid).run(); }
+        if (b.is_active!==undefined) { await env.DB.prepare(`UPDATE admin_users SET is_active=? WHERE id=?`).bind(b.is_active?1:0,uid).run(); }
+        if (b.display_name!==undefined) { await env.DB.prepare(`UPDATE admin_users SET display_name=? WHERE id=?`).bind(clean(b.display_name,120),uid).run(); }
+        if (b.email!==undefined) { await env.DB.prepare(`UPDATE admin_users SET email=? WHERE id=?`).bind(clean(b.email,120).toLowerCase(),uid).run(); }
+        if (b.password) { const pw=String(b.password); if(pw.length<12) return reply(request, env,{success:false,error:'كلمة المرور 12+ حرف'},400); const hash=await passwordHash(pw); await env.DB.prepare(`UPDATE admin_users SET password_hash=? WHERE id=?`).bind(hash,uid).run(); }
+        await logAudit(env,{actor_type:'admin',actor_id:admin.id,actor_label:admin.username,action:'admin.update',entity_type:'admin_user',entity_id:uid,details_json:{keys:Object.keys(b||{})},ip,user_agent:ua});
+        return reply(request, env,{success:true});
       }
     }
     if (/^\/api\/admin\/platform\/admin-users\/\d+\/role$/.test(path)) {
