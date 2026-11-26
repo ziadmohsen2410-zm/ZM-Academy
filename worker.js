@@ -4088,8 +4088,9 @@ if (method === "POST" && rejectPasswordMatch) {
   if (path.startsWith('/api/student/platform/')) {
     const session = await studentSession(request, env);
     if (!session) return reply(request, env, {success:false,error:'Unauthorized'}, 401);
-    await ensurePlatformSchema(env);
-    await ensurePlatformSchema(env);
+    if (path.includes('/exam-attempts/') || (path.startsWith('/api/student/platform/exams/') && path.endsWith('/start'))) {
+      await ensureColumn(env,'exam_attempts','question_order_json','TEXT');
+    }
     if (method==='GET' && path==='/api/student/platform/notifications') {
       // Only show broadcasts and notifications explicitly addressed to this student or their grade.
       // Previously, every student could see every notification marked "student".
