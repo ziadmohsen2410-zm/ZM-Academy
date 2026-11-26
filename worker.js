@@ -4211,10 +4211,16 @@ if (method==='POST' && /^\/api\/student\/platform\/exams\/\d+\/start$/.test(path
     }
     if (method==='GET' && /^\/api\/student\/platform\/exam-attempts\/\d+\/result$/.test(path)) {
       const attemptId=Number(path.split('/')[5]);
-      const attempt=await env.DB.prepare(`SELECT a.id,a.status,a.score,a.max_score,a.feedback_json,e.show_results FROM exam_attempts a JOIN exams e ON e.id=a.exam_id WHERE a.id=? AND a.student_id=?`).bind(attemptId,session.student_id).first();
+      const attempt=await env.DB.prepare(`SELECT a.id,a.exam_id,a.status,a.score,a.max_score,a.feedback_json,e.show_results FROM exam_attempts a JOIN exams e ON e.id=a.exam_id WHERE a.id=? AND a.student_id=?`).bind(attemptId,session.student_id).first();
       if(!attempt) return reply(request, env,{success:false,error:'المحاولة غير موجودة'},404);
       const showResults=Number(attempt.show_results)!==0;
-      return reply(request,env,{success:true,status:attempt.status,score:showResults&&attempt.status==='graded'?attempt.score:null,max_score:showResults&&attempt.status==='graded'?attempt.max_score:null,feedback:showResults&&attempt.status==='graded'?safeJsonParse(attempt.feedback_json,{}):{},results_hidden:!showResults,results_pending_manual:attempt.status==='submitted'});
+      let feedback=[];
+      if(showResults&&attempt.status==='graded') {
+        const questions=await env.DB.prepare(`SELECT id,question_text FROM exam_questions WHERE exam_id=? AND type='essay' ORDER BY order_index ASC,id ASC`).bind(attempt.exam_id).all();
+        const saved=safeJsonParse(attempt.feedback_json,{});
+        feedback=(questions.results||[]).map(q=>({question_id:q.id,question_text:q.question_text,comment:saved[q.id]||''}));
+      }
+      return reply(request,env,{success:true,status:attempt.status,score:showResults&&attempt.status==='graded'?attempt.score:null,max_score:showResults&&attempt.status==='graded'?attempt.max_score:null,feedback,results_hidden:!showResults,results_pending_manual:attempt.status==='submitted'});
     }
     if (method==='POST' && path==='/api/student/platform/ai') {
       const b = await readBody(request); const prompt = clean(b?.prompt,4000);
