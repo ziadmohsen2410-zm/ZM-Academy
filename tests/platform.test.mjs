@@ -118,3 +118,11 @@ test("legacy admin APIs enforce role permissions instead of authentication alone
   assert.ok(guard.includes('path.startsWith("/api/admin/device-requests") ? "devices"'));
   assert.ok(guard.includes('path.startsWith("/api/admin/materials") ? "content"'));
 });
+
+test("admin navigation is filtered by server-provided role permissions", () => {
+  const admin = read("admin.html");
+  assert.ok(admin.includes("function canSeeSection(key)"));
+  assert.ok(admin.includes("state.admin?.permissions"));
+  assert.ok(admin.includes("visibleItems=g.items.filter(([k])=>canSeeSection(k))"));
+  assert.ok(admin.includes("if(!canSeeSection(key))"));
+});
