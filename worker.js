@@ -992,19 +992,17 @@ if (method === "POST" && path === "/api/password-reset/request") {
     (path.startsWith("/api/admin/") && !path.startsWith("/api/admin/platform/")) ||
     (path === "/api/subjects" && ["POST", "PUT", "DELETE"].includes(method))
   ) {
-    const session = await requireAdmin(request, env);
-
-    if (!session) {
-      return reply(
-        request,
-        env,
-        {
-          success: false,
-          error: "Unauthorized.",
-        },
-        401
-      );
-    }
+    const legacyPermission =
+      path === "/api/admin/me" ? "dashboard" :
+      path.startsWith("/api/admin/students") || path.startsWith("/api/admin/password-reset-requests") ? "students" :
+      path.startsWith("/api/admin/orders") ? "orders" :
+      path.startsWith("/api/admin/device-requests") ? "devices" :
+      path.startsWith("/api/admin/subjects") || path.startsWith("/api/admin/materials") || path === "/api/subjects" ? "content" :
+      path.startsWith("/api/admin/homepage") ? "page_builder" :
+      path.startsWith("/api/admin/upload") ? "media" : "settings";
+    const auth = await requireAdminRole(request, env, legacyPermission);
+    if (auth.error) return auth.error;
+    const session = auth.session;
     
     // إدارة إعدادات الصفحة الرئيسية
     if (
