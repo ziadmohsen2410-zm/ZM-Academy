@@ -3767,7 +3767,7 @@ if (method === "POST" && rejectPasswordMatch) {
         const audienceType=clean(b?.audience_type||'all',30);
         const audienceValue=clean(b?.audience_value,120);
         if(!['all','parents','student','grade'].includes(audienceType)) return reply(request,env,{success:false,error:'نوع الجمهور غير صالح'},400);
-        if(audienceType==='student'&&!/^\\d+$/.test(audienceValue)) return reply(request,env,{success:false,error:'أدخل رقم الطالب الصحيح'},400);
+        if(audienceType==='student'&&!/^\d+$/.test(audienceValue)) return reply(request,env,{success:false,error:'أدخل رقم الطالب الصحيح'},400);
         if(audienceType==='grade'&&!audienceValue) return reply(request,env,{success:false,error:'أدخل الصف المستهدف'},400);
         const scheduledAt=b?.scheduled_at?clean(b.scheduled_at,40):null;
         if(scheduledAt&&!Number.isFinite(Date.parse(scheduledAt.replace(' ','T')+'Z'))) return reply(request,env,{success:false,error:'موعد الإرسال غير صالح'},400);
