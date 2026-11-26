@@ -4022,9 +4022,18 @@ if (method === "POST" && rejectPasswordMatch) {
       const attempts = await env.DB.prepare(`SELECT COUNT(*) c FROM exam_attempts WHERE exam_id=? AND student_id=?`).bind(examId, session.student_id).first();
       if ((attempts?.c||0) >= Number(exam.attempts_allowed||1)) return reply(request, env, {success:false,error:'لا توجد محاولات متبقية'},400);
       const qs = await env.DB.prepare(`SELECT id,type,question_text,options_json,points,order_index FROM exam_questions WHERE exam_id=? ORDER BY order_index ASC, id ASC`).bind(examId).all();
-      if (!(qs.results||[]).length) return reply(request, env, {success:false,error:'الاختبار لا يحتوي على أسئلة بعد'},400);
-      const res = await env.DB.prepare(`INSERT INTO exam_attempts(exam_id,student_id,status,answers_json,max_score) VALUES(?, ?, 'in_progress','{}',?)`).bind(examId, session.student_id, (qs.results||[]).reduce((s,q)=>s+Number(q.points||1),0)).run();
-      return reply(request, env, {success:true, attempt_id: res.meta?.last_row_id, exam, questions:(qs.results||[]).map(q=>({...q, options:safeJsonParse(q.options_json,[])}))});
+      const questions = [...(qs.results||[])];
+      if (!questions.length) return reply(request, env, {success:false,error:'الاختبار لا يحتوي على أسئلة بعد'},400);
+      const maxScore = questions.reduce((sum,q)=>sum+Number(q.points||1),0);
+      // Shuffle only the presentation order for this attempt; question IDs remain stable for answer grading.
+      if (Number(exam.shuffle_questions) === 1) {
+        for (let i=questions.length-1;i>0;i--) {
+          const j=Math.floor(Math.random()*(i+1));
+          [questions[i],questions[j]]=[questions[j],questions[i]];
+        }
+      }
+      const res = await env.DB.prepare(`INSERT INTO exam_attempts(exam_id,student_id,status,answers_json,max_score) VALUES(?, ?, 'in_progress','{}',?)`).bind(examId, session.student_id, maxScore).run();
+      return reply(request, env, {success:true, attempt_id: res.meta?.last_row_id, exam, questions:questions.map(q=>({...q, options:safeJsonParse(q.options_json,[])}))});
     }
     if (method==='POST' && /^\/api\/student\/platform\/exam-attempts\/\d+\/submit$/.test(path)) {
       const attemptId = Number(path.split('/')[5]);
