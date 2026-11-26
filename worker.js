@@ -3503,6 +3503,8 @@ if (method === "POST" && rejectPasswordMatch) {
     const phone = clean(body?.phone, 30);
     const email = clean(body?.email, 120).toLowerCase();
     if (!name || !/^[a-z0-9_.-]{3,60}$/.test(username) || password.length < 8) return reply(request, env, {success:false,error:'بيانات غير صالحة'}, 400);
+    const regAllowed = await consumeApiRateLimit(env, request, "parent-register-ip", "*", 20, 3600);
+    if (!regAllowed) return reply(request, env, {success:false,error:'محاولات كثيرة. حاول لاحقًا.'}, 429);
     const exists = await env.DB.prepare(`SELECT id FROM parents WHERE username=?`).bind(username).first();
     if (exists) return reply(request, env, {success:false,error:'اسم المستخدم مستخدم'}, 409);
     const hash = await passwordHash(password);
@@ -3514,6 +3516,9 @@ if (method === "POST" && rejectPasswordMatch) {
     const body = await readBody(request);
     const username = clean(body?.username,60).toLowerCase();
     const password = String(body?.password||'');
+    const ipAllowed = await consumeApiRateLimit(env, request, "parent-login-ip", "*", 60, 900);
+    const userAllowed = await consumeApiRateLimit(env, request, "parent-login-user", username, 8, 900);
+    if (!ipAllowed || !userAllowed) return reply(request, env, {success:false,error:'محاولات كثيرة. انتظر 15 دقيقة ثم حاول مرة أخرى.'}, 429);
     const parent = await env.DB.prepare(`SELECT * FROM parents WHERE username=?`).bind(username).first();
     if (!parent || !(await verifyPassword(password, parent.password_hash))) return reply(request, env, {success:false,error:'بيانات الدخول غير صحيحة'}, 401);
     if (Number(parent.is_active)===0) return reply(request, env, {success:false,error:'الحساب موقوف'}, 403);
