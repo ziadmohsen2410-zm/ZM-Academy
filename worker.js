@@ -3359,6 +3359,15 @@ if (method === "POST" && rejectPasswordMatch) {
     if (starts !== null && ends !== null && ends <= starts) return 'يجب أن يكون موعد النهاية بعد موعد البداية';
     return null;
   };
+  const normalizeStudentPreferences = (value) => {
+    const raw=value&&typeof value==='object'&&!Array.isArray(value)?value:{};
+    const prefs={};
+    if(['dark','light'].includes(raw.mode)) prefs.mode=raw.mode;
+    if(typeof raw.primary==='string' && /^#[0-9a-fA-F]{6}$/.test(raw.primary)) prefs.primary=raw.primary;
+    if(typeof raw.secondary==='string' && /^#[0-9a-fA-F]{6}$/.test(raw.secondary)) prefs.secondary=raw.secondary;
+    if(['normal','large','xlarge'].includes(raw.fontSize)) prefs.fontSize=raw.fontSize;
+    return prefs;
+  };
   const validateExamQuestion = (b) => {
     const type = clean(b?.type, 20);
     const question = clean(b?.question_text, 4000);
@@ -3604,14 +3613,14 @@ if (method === "POST" && rejectPasswordMatch) {
     if (!session) return reply(request, env, {success:false,error:'Unauthorized'}, 401);
     await ensurePlatformSchema(env);
     const row = await env.DB.prepare(`SELECT preferences_json FROM student_preferences WHERE student_id=?`).bind(session.student_id).first();
-    return reply(request, env, {success:true, preferences: safeJsonParse(row?.preferences_json, {})});
+    return reply(request, env, {success:true, preferences: normalizeStudentPreferences(safeJsonParse(row?.preferences_json, {}))});
   }
   if (method === 'PUT' && path === '/api/student/preferences') {
     const session = await studentSession(request, env);
     if (!session) return reply(request, env, {success:false,error:'Unauthorized'}, 401);
     await ensurePlatformSchema(env);
     const body = await readBody(request);
-    const prefs = body?.preferences && typeof body.preferences === 'object' ? body.preferences : {};
+    const prefs = normalizeStudentPreferences(body?.preferences);
     await env.DB.prepare(`INSERT INTO student_preferences(student_id,preferences_json,updated_at) VALUES(?,?,datetime('now')) ON CONFLICT(student_id) DO UPDATE SET preferences_json=excluded.preferences_json, updated_at=datetime('now')`).bind(session.student_id, JSON.stringify(prefs)).run();
     return reply(request, env, {success:true});
   }
