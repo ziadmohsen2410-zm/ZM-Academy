@@ -4181,7 +4181,8 @@ if (method==='POST' && /^\/api\/student\/platform\/exams\/\d+\/start$/.test(path
         }
       }
       const res = await env.DB.prepare(`INSERT INTO exam_attempts(exam_id,student_id,status,answers_json,max_score,question_order_json) VALUES(?, ?, 'in_progress','{}',?,?)`).bind(examId, session.student_id, maxScore, JSON.stringify(questions.map(q=>q.id))).run();
-      return reply(request, env, {success:true, attempt_id: res.meta?.last_row_id, exam, questions:questions.map(q=>({...q, options:safeJsonParse(q.options_json,[])}))});
+      const started=await env.DB.prepare(`SELECT started_at FROM exam_attempts WHERE id=? AND student_id=?`).bind(res.meta?.last_row_id,session.student_id).first();
+      return reply(request, env, {success:true, attempt_id: res.meta?.last_row_id, started_at:started?.started_at||null, exam, questions:questions.map(q=>({...q, options:safeJsonParse(q.options_json,[])}))});
     }
     if (method==='POST' && /^\/api\/student\/platform\/exam-attempts\/\d+\/submit$/.test(path)) {
       const attemptId = Number(path.split('/')[5]);
