@@ -321,7 +321,8 @@ test("homepage settings sanitize links, colors, and visitor-facing text", () => 
   assert.ok(worker.includes("if(!raw||raw.startsWith('//'))return ''"));
   assert.ok(worker.includes("primaryUrl:safeLink(hero.primaryUrl)"));
   assert.ok(worker.includes("facebook:safeLink(branding.facebook)"));
-  assert.ok(worker.includes("https:\\/\\/[a-z0-9.-]+(?::\\d+)?"));
+  assert.ok(worker.includes("const url=new URL(raw)"));
+  assert.ok(worker.includes("forbidden.some(ch=>raw.includes(ch))"));
 
   assert.ok(worker.includes("settings: sanitizeHomepageSettings(parseHomepageJson(row?.published_json))"));
   assert.ok(worker.includes("const settings = sanitizeHomepageSettings(body?.settings)"));
