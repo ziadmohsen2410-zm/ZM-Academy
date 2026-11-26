@@ -113,6 +113,15 @@ test("student notifications are scoped to broadcast, matching student, or matchi
   assert.ok(!route.includes("audience_type IN ('all','student')"));
 });
 
+test("student preferences accept only supported themes, colors, and font sizes", () => {
+  const worker = read("worker.js");
+  assert.ok(worker.includes("const normalizeStudentPreferences = (value) =>"));
+  assert.ok(worker.includes("/^#[0-9a-fA-F]{6}$/"));
+  assert.ok(worker.includes("['dark','light'].includes(raw.mode)"));
+  assert.ok(worker.includes("['normal','large','xlarge'].includes(raw.fontSize)"));
+  assert.ok(worker.includes("normalizeStudentPreferences(body?.preferences)"));
+});
+
 test("student exam visibility and start enforce grade, schedule, open-attempt, and question checks", () => {
   const worker = read("worker.js");
   const start = worker.indexOf("if (method==='GET' && path==='/api/student/platform/exams')");
