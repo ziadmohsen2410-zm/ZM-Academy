@@ -127,6 +127,15 @@ test("exam answers are autosaved and restored when a student resumes", () => {
   assert.ok(student.includes("const saved=d.answers||{}"));
 });
 
+test("student exam timer is based on the server-recorded attempt start time", () => {
+  const worker = read("worker.js");
+  const student = read("student.html");
+  assert.ok(worker.includes("started_at:started?.started_at||null"));
+  assert.ok(student.includes("data-exam-timer"));
+  assert.ok(student.includes("startedMs+duration*60000-Date.now()"));
+  assert.ok(student.includes("setInterval(updateTimer,1000)"));
+});
+
 test("student exam UI disables new attempts when the allowed count is exhausted", () => {
   const student = read("student.html");
   assert.ok(student.includes("Number(e.my_attempts||0)>=Number(e.attempts_allowed||1)?'disabled':''"));
