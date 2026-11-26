@@ -3744,8 +3744,10 @@ if (method === "POST" && rejectPasswordMatch) {
       if (method==='POST') {
         const b=await readBody(request); const title=clean(b?.title,150); const bodyText=clean(b?.body,4000);
         if(!title||!bodyText) return reply(request, env,{success:false,error:'title/body required'},400);
+        const scheduledAt=b?.scheduled_at?clean(b.scheduled_at,40):null;
+        if(scheduledAt&&!Number.isFinite(Date.parse(scheduledAt.replace(' ','T')+'Z'))) return reply(request,env,{success:false,error:'موعد الإرسال غير صالح'},400);
         await env.DB.prepare(`INSERT INTO notifications(title,body,type,audience_type,audience_value,scheduled_at,sent_at,created_by,is_important) VALUES(?,?,?,?,?,?,?,?,?)`)
-          .bind(title,bodyText,clean(b?.type||'general',30),clean(b?.audience_type||'all',30),clean(b?.audience_value,120),b?.scheduled_at||null,b?.scheduled_at?null:nowIso(),admin.username,b?.is_important?1:0).run();
+          .bind(title,bodyText,clean(b?.type||'general',30),clean(b?.audience_type||'all',30),clean(b?.audience_value,120),scheduledAt,scheduledAt?null:nowIso(),admin.username,b?.is_important?1:0).run();
         await logAudit(env,{actor_type:'admin',actor_id:admin.id,actor_label:admin.username,action:'notification.create',entity_type:'notification',ip,user_agent:ua});
         return reply(request, env, {success:true});
       }
