@@ -353,6 +353,12 @@ test("parent-to-student link requests are rate limited per parent", () => {
   assert.ok(worker.includes("تجاوزت عدد طلبات ربط الطلاب المسموح بها"));
 });
 
+test("lower-privilege admins do not receive super-admin as an assignable role", () => {
+  const worker = read("worker.js");
+  assert.ok(worker.includes("if(admin.role!=='super_admin') delete permissionsMap.super_admin"));
+  assert.ok(worker.includes("permissions_map: permissionsMap"));
+});
+
 test("admin role management protects super-admin privilege and account continuity", () => {
   const worker = read("worker.js");
   assert.ok(worker.includes("role==='super_admin' && admin.role!=='super_admin'"));
