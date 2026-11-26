@@ -1,5 +1,5 @@
 'use strict';
-const CACHE_NAME = 'zm-academy-v15';
+const CACHE_NAME = 'zm-academy-v16';
 self.addEventListener('install', e => { self.skipWaiting(); });
 self.addEventListener('activate', e => {
   e.waitUntil((async () => {
