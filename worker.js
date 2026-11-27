@@ -276,11 +276,20 @@ async function requireAdmin(request, env) {
   return await adminSession(request, env);
 }
 
+async function hasDatabaseColumn(env, table, column) {
+  const allowed = new Set(["admin_users", "students"]);
+  if (!allowed.has(table) || !/^[a-z_]+$/.test(column)) return false;
+  const result = await env.DB.prepare(`PRAGMA table_info("${table}")`).all();
+  return (result.results || []).some((item) => item.name === column);
+}
+
 async function studentSession(request, env) {
   const token = bearer(request);
   if (!token) return null;
 
   const tokenHash = await sha256(token);
+  const hasActiveColumn = await hasDatabaseColumn(env, "students", "is_active");
+  const activeFilter = hasActiveColumn ? "AND COALESCE(s.is_active, 1) <> 0" : "";
 
   const row = await env.DB.prepare(
     `SELECT ss.id, ss.student_id, s.name, s.phone
@@ -291,7 +300,8 @@ async function studentSession(request, env) {
       AND d.device_token_hash = ss.device_token_hash
       AND d.status = 'approved'
      WHERE ss.token_hash = ?
-       AND ss.expires_at > datetime('now')`
+       AND ss.expires_at > datetime('now')
+       ${activeFilter}`
   )
     .bind(tokenHash)
     .first();
@@ -926,8 +936,11 @@ async function route(request, env) {
       }, 429);
     }
 
+    const hasAdminActiveColumn = await hasDatabaseColumn(env, "admin_users", "is_active");
     const admin = await env.DB.prepare(
-      "SELECT id, username, password_hash FROM admin_users WHERE username = ?"
+      hasAdminActiveColumn
+        ? "SELECT id, username, password_hash, is_active FROM admin_users WHERE username = ?"
+        : "SELECT id, username, password_hash FROM admin_users WHERE username = ?"
     )
       .bind(username)
       .first();
@@ -942,6 +955,18 @@ async function route(request, env) {
         },
         401
       );
+    }
+
+    if (hasAdminActiveColumn && Number(admin.is_active) === 0) {
+      return reply(request, env, {
+        success: false,
+        error: "هذا الحساب الإداري موقوف. تواصل مع المدير الأعلى.",
+      }, 403);
+    }
+
+    if (await hasDatabaseColumn(env, "admin_users", "last_login_at")) {
+      await env.DB.prepare("UPDATE admin_users SET last_login_at = datetime('now') WHERE id = ?")
+        .bind(admin.id).run();
     }
 
     const token = randomToken();
@@ -2338,6 +2363,16 @@ if (method === "POST" && rejectPasswordMatch) {
       );
     }
 
+    const registrationIpAllowed = await consumeApiRateLimit(env, request, "student-register-ip", "*", 15, 3600);
+    const registrationPhoneAllowed = await consumeApiRateLimit(env, request, "student-register-phone", phone, 3, 3600);
+    const registrationUsernameAllowed = await consumeApiRateLimit(env, request, "student-register-username", username, 5, 3600);
+    if (!registrationIpAllowed || !registrationPhoneAllowed || !registrationUsernameAllowed) {
+      return reply(request, env, {
+        success: false,
+        error: "تم تجاوز عدد محاولات إنشاء الحساب. حاول مرة أخرى لاحقًا.",
+      }, 429);
+    }
+
     const existingPhone = await env.DB.prepare(
       "SELECT id FROM students WHERE phone = ?"
     )
@@ -2545,6 +2580,17 @@ if (method === "POST" && rejectPasswordMatch) {
         },
         401
       );
+    }
+
+    if (await hasDatabaseColumn(env, "students", "is_active")) {
+      const studentStatus = await env.DB.prepare("SELECT is_active FROM students WHERE id = ?")
+        .bind(account.student_id).first();
+      if (!studentStatus || Number(studentStatus.is_active) === 0) {
+        return reply(request, env, {
+          success: false,
+          error: "هذا الحساب موقوف حاليًا. تواصل مع الإدارة.",
+        }, 403);
+      }
     }
 
     const deviceTokenHash = await sha256(deviceToken);
