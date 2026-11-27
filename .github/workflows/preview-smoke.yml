@@ -77,17 +77,20 @@ jobs:
           wrangler d1 execute zm-academy-preview-db --remote --config wrangler.preview.toml --file=tests/preview-smoke-reset.sql
 
           printf '%s' "$SETUP_KEY" | wrangler secret put ADMIN_SETUP_KEY --config wrangler.preview.toml
+          sleep 5
 
           HEALTH_STATUS="$(curl --silent --show-error --retry 12 --retry-delay 5 --retry-all-errors "$API/api/health" -o /tmp/zm-health.json -w '%{http_code}')"
           echo "Preview health HTTP status: $HEALTH_STATUS"
           cat /tmp/zm-health.json
           python3 -c "import json,sys; d=json.load(open('/tmp/zm-health.json')); assert sys.argv[1] == '200' and d.get('success') is True and d.get('database') == 'connected', d" "$HEALTH_STATUS"
 
-          curl --fail --silent --show-error -X POST "$API/api/admin/setup" \
+          SETUP_STATUS="$(curl --silent --show-error -X POST "$API/api/admin/setup" \
             -H "Content-Type: application/json" \
             --data "{\"setupKey\":\"$SETUP_KEY\",\"username\":\"preview_smoke_admin\",\"password\":\"$ADMIN_PASSWORD\"}" \
-            -o /tmp/zm-setup.json
-          python3 -c "import json; d=json.load(open('/tmp/zm-setup.json')); assert d.get('success') is True, d"
+            -o /tmp/zm-setup.json -w '%{http_code}')"
+          echo "Preview admin setup HTTP status: $SETUP_STATUS"
+          cat /tmp/zm-setup.json
+          python3 -c "import json,sys; d=json.load(open('/tmp/zm-setup.json')); assert sys.argv[1] == '201' and d.get('success') is True, d" "$SETUP_STATUS"
 
           curl --fail --silent --show-error -X POST "$API/api/admin/login" \
             -H "Content-Type: application/json" \
