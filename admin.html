@@ -345,6 +345,9 @@ const esc = (s='')=>String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">"
 const fmtDate = (v)=>v?new Date(v).toLocaleString('ar-EG'):'-';
 const tokenKey='zm_admin_token';
 const readAdminToken=()=>{try{return localStorage.getItem(tokenKey)||sessionStorage.getItem(tokenKey)||'';}catch{return '';}};
+const readAdminCookie=()=>{try{const item=document.cookie.split('; ').find(x=>x.startsWith(tokenKey+'='));return item?decodeURIComponent(item.slice(tokenKey.length+1)):'';}catch{return '';}};
+const saveAdminCookie=(token)=>{try{document.cookie=tokenKey+'='+encodeURIComponent(token)+'; Max-Age=604800; Path=/ZM-Academy/; SameSite=Lax; Secure';}catch{}};
+const clearAdminCookie=()=>{try{document.cookie=tokenKey+'=; Max-Age=0; Path=/ZM-Academy/; SameSite=Lax; Secure';}catch{}};
 const openAdminTokenDB=()=>new Promise((resolve,reject)=>{
   if(!('indexedDB' in window)) return reject(new Error('IndexedDB unavailable'));
   const request=indexedDB.open('zm_admin_auth',1);
@@ -356,6 +359,7 @@ const readSavedAdminTokens=async()=>{
   const candidates=[];
   try{const t=localStorage.getItem(tokenKey);if(t)candidates.push(t);}catch{}
   try{const t=sessionStorage.getItem(tokenKey);if(t)candidates.push(t);}catch{}
+  const cookieToken=readAdminCookie();if(cookieToken)candidates.push(cookieToken);
   try{
     const db=await openAdminTokenDB();
     const t=await new Promise((resolve,reject)=>{
@@ -371,11 +375,13 @@ const readSavedAdminTokens=async()=>{
   return [...new Set(candidates.filter(Boolean))];
 };
 const saveAdminToken=async(token)=>{
+  saveAdminCookie(token);
   try{localStorage.setItem(tokenKey,token);}catch{}
   try{sessionStorage.setItem(tokenKey,token);}catch{}
   try{const db=await openAdminTokenDB();await new Promise((resolve,reject)=>{const tx=db.transaction('tokens','readwrite');tx.objectStore('tokens').put(token,tokenKey);tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);});db.close();}catch{}
 };
 const clearAdminToken=()=>{
+  clearAdminCookie();
   try{localStorage.removeItem(tokenKey);}catch{}
   try{sessionStorage.removeItem(tokenKey);}catch{}
   try{openAdminTokenDB().then(db=>{const tx=db.transaction('tokens','readwrite');tx.objectStore('tokens').delete(tokenKey);tx.oncomplete=()=>db.close();tx.onerror=()=>db.close();}).catch(()=>{});}catch{}
