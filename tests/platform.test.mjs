@@ -567,6 +567,7 @@ test("content managers can use the protected upload endpoint without media permi
 
 test("material creation form uploads supported files and stores the returned file key", () => {
   const admin = read("admin.html");
+  const worker = read("worker.js");
   assert.ok(admin.includes('id="matFile"'));
   assert.ok(admin.includes("new FormData()"));
   assert.ok(admin.includes("fd.append('file',file,file.name)"));
