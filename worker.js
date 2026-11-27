@@ -2777,7 +2777,7 @@ if (method === "POST" && rejectPasswordMatch) {
     });
           }
     // مسارات الطالب المحمية بتسجيل الدخول
-  if (path.startsWith("/api/student/")) {
+  if (path.startsWith("/api/student/") && !path.startsWith("/api/student/platform/")) {
     const session = await studentSession(request, env);
 
     if (!session) {
