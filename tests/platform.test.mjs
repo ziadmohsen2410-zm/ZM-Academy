@@ -629,3 +629,24 @@ test("student and admin default visual identity is black and gold with white and
   assert.ok(student.includes("#D4AF62"));
   assert.ok(admin.includes("t.primary||'#D4AF62'"));
 });
+
+
+test("admin order filter can see every order status, not only pending", () => {
+  const worker = read("worker.js");
+  const admin = read("admin.html");
+  const start = worker.indexOf('if (method === "GET" && path === "/api/admin/orders")');
+  const end = worker.indexOf("// تحديث حالة الطلب", start);
+  const route = worker.slice(start, end);
+  assert.ok(route.includes("FROM orders o"));
+  assert.ok(route.includes("ORDER BY o.id DESC"));
+  assert.ok(!route.includes("WHERE o.status = 'pending'"));
+  for (const status of ["pending", "approved", "rejected", "completed"]) {
+    assert.ok(admin.includes('value="' + status + '"'));
+  }
+});
+
+test("all primary pages reference the refreshed shared black-gold stylesheet", () => {
+  for (const page of ["index.html","admin.html","login.html","register.html","student.html","parent.html"]) {
+    assert.ok(read(page).includes("zm-future-theme.css?v=4"), "Stale theme cache key in " + page);
+  }
+});
