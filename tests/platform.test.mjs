@@ -623,7 +623,7 @@ test("login and registration pages show WhatsApp first and configured Facebook s
     const page = read(file);
     assert.ok(page.includes('id="zmContactLinks"'));
     assert.ok(page.includes("['whatsapp',whatsappDigits?'https://wa.me/'+whatsappDigits:'']"));
-    assert.ok(page.includes("['facebook',b.facebook||'']"));
+    assert.ok(page.includes("['facebook',b.facebook||'https://www.facebook.com/share/1Q2dQN9a3z/']"));
   }
 });
 
