@@ -661,18 +661,20 @@ test("student and admin default visual identity is black and gold with white and
 });
 
 
-test("admin order filter can see every order status, not only pending", () => {
+test("admin order queue only shows pending requests; approval preserves entitlement and rejection deletes request", () => {
   const worker = read("worker.js");
   const admin = read("admin.html");
   const start = worker.indexOf('if (method === "GET" && path === "/api/admin/orders")');
   const end = worker.indexOf("// تحديث حالة الطلب", start);
   const route = worker.slice(start, end);
-  assert.ok(route.includes("FROM orders o"));
-  assert.ok(route.includes("ORDER BY o.id DESC"));
-  assert.ok(!route.includes("WHERE o.status = 'pending'"));
-  for (const status of ["pending", "approved", "rejected", "completed"]) {
-    assert.ok(admin.includes('value="' + status + '"'));
-  }
+  assert.ok(route.includes("WHERE o.status = 'pending'"));
+  const statusStart = worker.indexOf('if (method === "PATCH" && orderStatus)');
+  const statusEnd = worker.indexOf("// قائمة الطلاب بالتفاصيل الصحيحة", statusStart);
+  const statusRoute = worker.slice(statusStart, statusEnd);
+  assert.ok(statusRoute.includes("DELETE FROM orders WHERE id = ? AND status = 'pending'"));
+  assert.ok(statusRoute.includes("UPDATE orders SET status = ? WHERE id = ? AND status = 'pending'"));
+  assert.ok(admin.includes("بعد الموافقة أو الرفض تختفي من القائمة"));
+  assert.ok(!admin.includes('id="orderFilter"'));
 });
 
 test("all primary pages reference the refreshed shared black-gold stylesheet", () => {
@@ -706,9 +708,9 @@ test("admin material list exposes archive, restore, and separately confirmed per
   assert.ok(admin.includes("materialsTbody').addEventListener('click'"));
   assert.ok(admin.includes("method:'DELETE'"));
   assert.ok(worker.includes('if (method === "DELETE" && path === "/api/admin/materials")'));
-  assert.ok(worker.includes('SELECT COUNT(*) AS total FROM orders WHERE material_id = ?'));
-  assert.ok(worker.includes('MATERIAL_HAS_ORDERS'));
-  assert.ok(!worker.includes('DELETE FROM orders WHERE material_id = ?'));
+  assert.ok(worker.includes('queueDelete("orders", "material_id")'));
+  assert.ok(worker.includes('DELETE FROM student_hidden_purchases WHERE order_id IN (SELECT id FROM orders WHERE material_id = ?)'));
+  assert.ok(!worker.includes('MATERIAL_HAS_ORDERS'));
   assert.ok(worker.includes('DELETE FROM materials WHERE id = ?'));
   assert.ok(worker.includes('DELETE FROM archived_materials WHERE material_id = ?'));
   assert.ok(worker.includes('const tableNames = new Set((tableResult.results || []).map((item) => String(item.name || "")))'));
