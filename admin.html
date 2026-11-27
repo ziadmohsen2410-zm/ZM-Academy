@@ -352,9 +352,23 @@ const openAdminTokenDB=()=>new Promise((resolve,reject)=>{
   request.onsuccess=()=>resolve(request.result);
   request.onerror=()=>reject(request.error||new Error('IndexedDB open failed'));
 });
-const readSavedAdminToken=async()=>{
-  const token=readAdminToken(); if(token)return token;
-  try{const db=await openAdminTokenDB();return await new Promise((resolve,reject)=>{const tx=db.transaction('tokens','readonly');const req=tx.objectStore('tokens').get(tokenKey);req.onsuccess=()=>resolve(req.result||'');req.onerror=()=>reject(req.error);tx.oncomplete=()=>db.close();});}catch{return '';}
+const readSavedAdminTokens=async()=>{
+  const candidates=[];
+  try{const t=localStorage.getItem(tokenKey);if(t)candidates.push(t);}catch{}
+  try{const t=sessionStorage.getItem(tokenKey);if(t)candidates.push(t);}catch{}
+  try{
+    const db=await openAdminTokenDB();
+    const t=await new Promise((resolve,reject)=>{
+      const tx=db.transaction('tokens','readonly');
+      const req=tx.objectStore('tokens').get(tokenKey);
+      req.onsuccess=()=>resolve(req.result||'');
+      req.onerror=()=>reject(req.error);
+      tx.oncomplete=()=>db.close();
+      tx.onerror=()=>{db.close();reject(tx.error);};
+    });
+    if(t)candidates.push(t);
+  }catch{}
+  return [...new Set(candidates.filter(Boolean))];
 };
 const saveAdminToken=async(token)=>{
   try{localStorage.setItem(tokenKey,token);}catch{}
@@ -366,7 +380,7 @@ const clearAdminToken=()=>{
   try{sessionStorage.removeItem(tokenKey);}catch{}
   try{openAdminTokenDB().then(db=>{const tx=db.transaction('tokens','readwrite');tx.objectStore('tokens').delete(tokenKey);tx.oncomplete=()=>db.close();tx.onerror=()=>db.close();}).catch(()=>{});}catch{}
 };
-const state={token:readAdminToken(), admin:null, section:'dashboard', cache:{}};
+const state={token:'', admin:null, section:'dashboard', cache:{}};
 const sectionGroups=[
   {label:'الرئيسية', items:[['dashboard','لوحة المعلومات','نظرة عامة سريعة']]},
   {label:'الإدارة', items:[['students','الطلاب','إدارة الطلاب'],['parents','أولياء الأمور','حسابات وربط'],['orders','الطلبات','مراجعة الطلبات'],['devices','الأجهزة','طلبات الأجهزة']]},
@@ -433,17 +447,38 @@ async function logout(){
   $('#appView').classList.add('hidden'); $('#loginView').classList.remove('hidden');
 }
 async function boot(){
-  if(!state.token) state.token=await readSavedAdminToken();
-  if(state.token) await saveAdminToken(state.token);
-  if(!state.token){ $('#appView').classList.add('hidden'); $('#loginView').classList.remove('hidden'); return; }
-  try{
-    const me=await api('/api/admin/platform/me');state.admin=me.admin||me;
-    $('#adminIdentity').textContent=(state.admin.display_name||state.admin.username||'الإدارة')+(state.admin.role?` (${state.admin.role})`:'');
-    $('#loginView').classList.add('hidden');$('#appView').classList.remove('hidden');buildNav();checkHealth();applyAdminTheme({mode:localStorage.getItem('zm_admin_theme_mode')||'dark'});setSection(state.section);
-  }catch(e){
-    if(e.status===401||e.status===403){state.token='';clearAdminToken();$('#appView').classList.add('hidden');$('#loginView').classList.remove('hidden');showLoginMsg('انتهت صلاحية الجلسة أو تم إيقاف الحساب. سجل الدخول مرة أخرى.');}
-    else{$('#appView').classList.add('hidden');$('#loginView').classList.remove('hidden');showLoginMsg('تعذر التحقق من جلسة الإدارة بسبب خطأ اتصال أو خادم: '+(e.message||'حاول مجددًا')+' — لم يتم حذف بيانات الدخول.');}
+  const candidates=await readSavedAdminTokens();
+  if(!candidates.length){
+    state.token='';
+    $('#appView').classList.add('hidden');
+    $('#loginView').classList.remove('hidden');
+    return;
   }
+  let lastAuthError=null;
+  for(const candidate of candidates){
+    state.token=candidate;
+    try{
+      const me=await api('/api/admin/platform/me');
+      state.admin=me.admin||me;
+      await saveAdminToken(candidate);
+      $('#adminIdentity').textContent=(state.admin.display_name||state.admin.username||'الإدارة')+(state.admin.role?' ('+state.admin.role+')':'');
+      $('#loginView').classList.add('hidden');
+      $('#appView').classList.remove('hidden');
+      buildNav();checkHealth();applyAdminTheme({mode:localStorage.getItem('zm_admin_theme_mode')||'dark'});setSection(state.section);
+      return;
+    }catch(e){
+      if(e.status===401||e.status===403){lastAuthError=e;continue;}
+      $('#appView').classList.add('hidden');
+      $('#loginView').classList.remove('hidden');
+      showLoginMsg('تعذر الاتصال للتحقق من جلسة الإدارة. بيانات الدخول محفوظة؛ حاول مرة أخرى. '+(e.message||''));
+      return;
+    }
+  }
+  state.token='';
+  clearAdminToken();
+  $('#appView').classList.add('hidden');
+  $('#loginView').classList.remove('hidden');
+  showLoginMsg(lastAuthError&&lastAuthError.status===403?'حساب الإدارة غير نشط أو تم إيقافه. تواصل مع مسؤول النظام.':'تعذر التحقق من الجلسة المحفوظة. سجل الدخول مرة أخرى.');
 }
 async function checkHealth(){
   try{
