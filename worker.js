@@ -1918,20 +1918,23 @@ if (method === "POST" && rejectPasswordMatch) {
       // records that reference its purchase orders. Delete descendants first.
       let deletionPlan = new Map();
       try {
-        const tableResult = await env.DB.prepare(
-          "SELECT name FROM sqlite_master WHERE type = 'table' AND name NOT LIKE 'sqlite_%'"
-        ).all();
-        const tableNames = new Set((tableResult.results || []).map((item) => String(item.name || "")));
+        deletionStage = "read-table-catalog";
+        const tableResult = await env.DB.prepare("PRAGMA table_list").all();
+        const tableNames = new Set(
+          (tableResult.results || [])
+            .filter((item) => item.type === "table" && !String(item.name || "").startsWith("sqlite_"))
+            .map((item) => String(item.name || ""))
+        );
         const primaryKeys = new Map();
         const edgesByParent = new Map();
 
         const foreignKeysByTable = new Map();
         for (const tableName of tableNames) {
           if (!/^[A-Za-z_][A-Za-z0-9_]*$/.test(tableName)) continue;
-          const [columns, foreignKeys] = await Promise.all([
-            env.DB.prepare(`PRAGMA table_info("${tableName}")`).all(),
-            env.DB.prepare(`PRAGMA foreign_key_list("${tableName}")`).all(),
-          ]);
+          deletionStage = `read-table-info:${tableName}`;
+          const columns = await env.DB.prepare(`PRAGMA table_info("${tableName}")`).all();
+          deletionStage = `read-foreign-keys:${tableName}`;
+          const foreignKeys = await env.DB.prepare(`PRAGMA foreign_key_list("${tableName}")`).all();
           const primaryKey = (columns.results || []).find((column) => Number(column.pk) > 0);
           if (primaryKey) primaryKeys.set(tableName, String(primaryKey.name));
           foreignKeysByTable.set(tableName, foreignKeys.results || []);
@@ -1993,6 +1996,7 @@ if (method === "POST" && rejectPasswordMatch) {
         // D1 enforces foreign keys by default. Defer the checks for this
         // single atomic batch so cyclic/indirect references can be removed
         // together; constraints are still enforced when the batch commits.
+        deletionStage = "atomic-dependent-row-delete-batch";
         const results = await env.DB.batch([
           env.DB.prepare("PRAGMA defer_foreign_keys = ON"),
           ...orderedDeletes,
@@ -2005,6 +2009,7 @@ if (method === "POST" && rejectPasswordMatch) {
       } catch (error) {
         console.error("MATERIAL_PERMANENT_DELETE_ERROR:", {
           materialId: id,
+          stage: deletionStage,
           dependentTables: [...(deletionPlan?.keys?.() || [])],
           message: error?.message || String(error),
         });
@@ -2012,6 +2017,7 @@ if (method === "POST" && rejectPasswordMatch) {
           success: false,
           error: "تعذر حذف المحتوى بسبب ارتباط ببيانات أخرى. لم يتم تأكيد الحذف.",
           code: "MATERIAL_DELETE_CONSTRAINT",
+          diagnostic_stage: deletionStage,
           diagnostic: String(error?.message || error || "Unknown database error").slice(0, 500),
         }, 409);
       }
