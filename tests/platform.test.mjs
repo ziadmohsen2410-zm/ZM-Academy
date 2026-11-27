@@ -605,3 +605,27 @@ test("student support uses valid contact links without nested interactive button
   assert.ok(page.includes('id="zmContactLinks"'));
   assert.ok(!page.includes('<a href="https://wa.me/201115336341" target="_blank" rel="noopener">\\n            <button'));
 });
+
+
+test("materials schema migration verifies existing columns and does not swallow a failed ALTER", () => {
+  const worker = read("worker.js");
+  const start = worker.indexOf("async function ensureColumn(env, table, column, ddl)");
+  const end = worker.indexOf("async function ensurePlatformSchema", start);
+  const migration = worker.slice(start, end);
+  assert.ok(migration.includes("PRAGMA table_info"));
+  assert.ok(migration.includes("SCHEMA_COLUMN_MIGRATION_ERROR"));
+  assert.ok(migration.includes("throw new Error"));
+  assert.ok(!migration.includes("catch (_) {}"));
+});
+
+test("student and admin default visual identity is black and gold with white and gold light mode", () => {
+  const css = read("assets/zm-future-theme.css");
+  const student = read("student.html");
+  const admin = read("admin.html");
+  assert.ok(css.includes("--zm-bg:#070707"));
+  assert.ok(css.includes("--zm-primary:#D4AF62"));
+  assert.ok(css.includes("--zm-bg:#FFFFFF"));
+  assert.ok(css.includes("--zm-text:#27231B"));
+  assert.ok(student.includes("#D4AF62"));
+  assert.ok(admin.includes("t.primary||'#D4AF62'"));
+});
