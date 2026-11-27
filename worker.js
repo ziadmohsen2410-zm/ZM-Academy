@@ -1841,6 +1841,7 @@ if (method === "POST" && rejectPasswordMatch) {
         const primaryKeys = new Map();
         const edgesByParent = new Map();
 
+        const foreignKeysByTable = new Map();
         for (const tableName of tableNames) {
           if (!/^[A-Za-z_][A-Za-z0-9_]*$/.test(tableName)) continue;
           const [columns, foreignKeys] = await Promise.all([
@@ -1849,7 +1850,10 @@ if (method === "POST" && rejectPasswordMatch) {
           ]);
           const primaryKey = (columns.results || []).find((column) => Number(column.pk) > 0);
           if (primaryKey) primaryKeys.set(tableName, String(primaryKey.name));
-          for (const fk of (foreignKeys.results || [])) {
+          foreignKeysByTable.set(tableName, foreignKeys.results || []);
+        }
+        for (const [tableName, foreignKeys] of foreignKeysByTable) {
+          for (const fk of foreignKeys) {
             const parent = String(fk.table || "");
             const childColumn = String(fk.from || "");
             const parentColumn = String(fk.to || primaryKeys.get(parent) || "");
