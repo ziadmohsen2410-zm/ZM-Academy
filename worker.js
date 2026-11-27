@@ -1822,22 +1822,62 @@ if (method === "POST" && rejectPasswordMatch) {
       await ensureArchivedMaterialsTable(env);
       await ensureStudentHiddenPurchasesTable(env);
 
-      // Permanent deletion removes purchase/order history tied to this material.
-      const deletion = await env.DB.batch([
-        env.DB.prepare("DELETE FROM student_hidden_purchases WHERE order_id IN (SELECT id FROM orders WHERE material_id = ?)").bind(id),
-        env.DB.prepare("DELETE FROM orders WHERE material_id = ?").bind(id),
-        env.DB.prepare("DELETE FROM student_material_progress WHERE material_id = ?").bind(id),
-        env.DB.prepare("DELETE FROM student_favorites WHERE material_id = ?").bind(id),
-        env.DB.prepare("DELETE FROM archived_materials WHERE material_id = ?").bind(id),
-        env.DB.prepare("DELETE FROM materials WHERE id = ?").bind(id),
-      ]);
-      const result = deletion[deletion.length - 1];
-
-      if (!(result?.meta?.changes || 0)) {
+      // Keep purchase history intact: a material with orders must be archived,
+      // not permanently deleted. This avoids breaking financial/student records.
+      const linkedOrders = await env.DB.prepare(
+        "SELECT COUNT(*) AS total FROM orders WHERE material_id = ?"
+      ).bind(id).first();
+      if (Number(linkedOrders?.total || 0) > 0) {
         return reply(request, env, {
           success: false,
-          error: "Material not found.",
-        }, 404);
+          error: "لا يمكن حذف هذا الدرس نهائيًا لأنه مرتبط بطلبات شراء. أرشفه بدلًا من ذلك للحفاظ على سجل الطلاب والطلبات.",
+          code: "MATERIAL_HAS_ORDERS",
+        }, 409);
+      }
+
+      try {
+        // Discover any other tables that declare a foreign key to materials.
+        // Remove only rows belonging to this material before deleting its row.
+        const tables = await env.DB.prepare(
+          "SELECT name FROM sqlite_master WHERE type = 'table' AND name NOT LIKE 'sqlite_%'"
+        ).all();
+        const dependentDeletes = [];
+        for (const item of (tables.results || [])) {
+          const tableName = String(item.name || "");
+          if (!/^[A-Za-z_][A-Za-z0-9_]*$/.test(tableName) || tableName === "materials") continue;
+          const foreignKeys = await env.DB.prepare(
+            `PRAGMA foreign_key_list("${tableName}")`
+          ).all();
+          for (const fk of (foreignKeys.results || [])) {
+            if (String(fk.table).toLowerCase() !== "materials") continue;
+            const column = String(fk.from || "");
+            if (!/^[A-Za-z_][A-Za-z0-9_]*$/.test(column)) continue;
+            dependentDeletes.push(
+              env.DB.prepare(`DELETE FROM "${tableName}" WHERE "${column}" = ?`).bind(id)
+            );
+          }
+        }
+        // These tables intentionally have no declared FK in older databases.
+        dependentDeletes.push(
+          env.DB.prepare("DELETE FROM student_material_progress WHERE material_id = ?").bind(id),
+          env.DB.prepare("DELETE FROM student_favorites WHERE material_id = ?").bind(id),
+          env.DB.prepare("DELETE FROM archived_materials WHERE material_id = ?").bind(id)
+        );
+        if (dependentDeletes.length) await env.DB.batch(dependentDeletes);
+        const result = await env.DB.prepare("DELETE FROM materials WHERE id = ?").bind(id).run();
+        if (!(result?.meta?.changes || 0)) {
+          return reply(request, env, { success: false, error: "Material not found." }, 404);
+        }
+      } catch (error) {
+        console.error("MATERIAL_PERMANENT_DELETE_ERROR:", {
+          materialId: id,
+          message: error?.message || String(error),
+        });
+        return reply(request, env, {
+          success: false,
+          error: "تعذر حذف الدرس بسبب ارتباط ببيانات أخرى. تم الحفاظ على البيانات كما هي؛ يمكنك أرشفته بدلًا من الحذف.",
+          code: "MATERIAL_DELETE_CONSTRAINT",
+        }, 409);
       }
 
       if (existing.file_key) {
@@ -1845,6 +1885,12 @@ if (method === "POST" && rejectPasswordMatch) {
           await deleteFromGitHub(env, existing.file_key);
         } catch (error) {
           console.error("GITHUB_DELETE_ERROR:", error?.message || error);
+          // The database row is already gone. Report storage cleanup separately.
+          return reply(request, env, {
+            success: true,
+            message: "تم حذف سجل الدرس، لكن تعذر حذف الملف من التخزين.",
+            storage_cleanup_pending: true,
+          });
         }
       }
 
