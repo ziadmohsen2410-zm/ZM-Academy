@@ -1707,7 +1707,8 @@ if (method === "POST" && rejectPasswordMatch) {
     if (method === "GET" && path === "/api/admin/materials") {
       // Older D1 databases may predate file uploads and therefore lack materials.file_key.
       // Add the nullable column before selecting it so the admin content list remains readable.
-      await ensureColumn(env, "materials", "file_key", "TEXT");
+      const materialsTableReady = await ensureColumn(env, "materials", "file_key", "TEXT");
+      if (!materialsTableReady) throw new Error("The materials table is missing from the connected D1 database.");
       await ensureArchivedMaterialsTable(env);
 
       const rows = await env.DB.prepare(`
@@ -3438,7 +3439,29 @@ if (method === "POST" && rejectPasswordMatch) {
     return perms.includes('*') || perms.includes(perm) || perms.includes(perm.split('.')[0]);
   };
   async function ensureColumn(env, table, column, ddl) {
-    try { await env.DB.prepare(`ALTER TABLE ${table} ADD COLUMN ${column} ${ddl}`).run(); } catch (_) {}
+    // Verify live D1 schema before altering it. Swallowing every ALTER error
+    // allowed later SELECT statements to fail with an opaque internal 500.
+    const allowedTables = new Set(['admin_users','students','orders','materials','subjects','exam_attempts','student_material_progress']);
+    if (!allowedTables.has(table) || !/^[a-z_]+$/.test(column)) throw new Error('Unsupported schema migration target.');
+    const inspect = async () => {
+      const result = await env.DB.prepare(`PRAGMA table_info(${table})`).all();
+      return result.results || [];
+    };
+    let columns = await inspect();
+    if (!columns.length) return false;
+    if (columns.some(item => item.name === column)) return true;
+    try {
+      await env.DB.prepare(`ALTER TABLE ${table} ADD COLUMN ${column} ${ddl}`).run();
+    } catch (error) {
+      columns = await inspect();
+      if (!columns.some(item => item.name === column)) {
+        console.error('SCHEMA_COLUMN_MIGRATION_ERROR:', {table,column,message:error?.message||String(error)});
+        throw new Error(`Database schema is missing ${table}.${column}; migration failed.`);
+      }
+    }
+    columns = await inspect();
+    if (!columns.some(item => item.name === column)) throw new Error(`Database schema verification failed for ${table}.${column}.`);
+    return true;
   }
   async function ensurePlatformSchema(env) {
     // core extensions on existing tables
