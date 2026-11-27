@@ -828,3 +828,14 @@ test("admin can edit existing learning materials and save updates", () => {
   assert.ok(admin.includes("$('#addMaterialBtn').textContent='حفظ التعديلات'"));
   assert.ok(worker.includes('if (method === "PUT" && path === "/api/admin/materials")'));
 });
+
+
+test("admin can edit subjects and save changes", () => {
+  const admin = read("admin.html");
+  const worker = read("worker.js");
+  assert.ok(admin.includes('id="subEditId"'));
+  assert.ok(admin.includes('data-subject-action="edit"'));
+  assert.ok(admin.includes("$('#cancelSubjectEditBtn').onclick=resetSubjectEditor"));
+  assert.ok(admin.includes("method:editId?'PUT':'POST'"));
+  assert.ok(worker.includes('if (method === "PUT" && path === "/api/subjects")'));
+});
