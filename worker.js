@@ -3462,7 +3462,14 @@ if (method === "POST" && rejectPasswordMatch) {
       return result.results || [];
     };
     let columns = await inspect();
-    if (!columns.length) return false;
+    if (!columns.length) {
+      // Core tables must exist before extending them. Optional tables such as
+      // exam_attempts may be created later in this same schema bootstrap.
+      if (['admin_users','students','orders','materials','subjects'].includes(table)) {
+        throw new Error(`Required database table is missing: ${table}. Check the base D1 schema before serving requests.`);
+      }
+      return false;
+    }
     if (columns.some(item => item.name === column)) return true;
     try {
       await env.DB.prepare(`ALTER TABLE ${table} ADD COLUMN ${column} ${ddl}`).run();
@@ -3518,7 +3525,14 @@ if (method === "POST" && rejectPasswordMatch) {
       `CREATE TABLE IF NOT EXISTS ai_logs (id INTEGER PRIMARY KEY AUTOINCREMENT, actor_type TEXT NOT NULL, actor_id INTEGER, tool TEXT NOT NULL, prompt_preview TEXT, response_status TEXT, tokens_estimate INTEGER, created_at TEXT NOT NULL DEFAULT (datetime('now')))`,
       `CREATE TABLE IF NOT EXISTS backup_runs (id INTEGER PRIMARY KEY AUTOINCREMENT, type TEXT NOT NULL, status TEXT NOT NULL, details_json TEXT, created_by TEXT, created_at TEXT NOT NULL DEFAULT (datetime('now')))`
     ];
-    for (const sql of stmts) { try { await env.DB.prepare(sql).run(); } catch(e) { console.error('schema', e.message); } }
+    for (let i = 0; i < stmts.length; i++) {
+      try {
+        await env.DB.prepare(stmts[i]).run();
+      } catch (error) {
+        console.error('PLATFORM_SCHEMA_TABLE_ERROR:', { statement: i + 1, message: error?.message || String(error) });
+        throw new Error(`Platform database setup failed while creating schema table group item ${i + 1}.`);
+      }
+    }
     const idx = [
       `CREATE INDEX IF NOT EXISTS idx_audit_logs_created_at ON audit_logs(created_at DESC)`,
       `CREATE INDEX IF NOT EXISTS idx_page_versions_key ON page_versions(page_key, created_at DESC)`,
@@ -3528,8 +3542,20 @@ if (method === "POST" && rejectPasswordMatch) {
       `CREATE INDEX IF NOT EXISTS idx_exam_attempts_exam_student ON exam_attempts(exam_id, student_id)`,
       `CREATE INDEX IF NOT EXISTS idx_notifications_created ON notifications(created_at DESC)`
     ];
-    for (const sql of idx) { try { await env.DB.prepare(sql).run(); } catch(_) {} }
-    try { await env.DB.prepare(`INSERT OR IGNORE INTO roles (id,name,label,description,is_system) VALUES (1,'super_admin','Super Admin','Full access',1),(2,'admin','Admin','Administrative access',1),(3,'content_manager','Content Manager','Manage content',1),(4,'teacher','Teacher','Manage exams/content',1),(5,'support','Support','Support and requests',1)`).run(); } catch(_) {}
+    for (let i = 0; i < idx.length; i++) {
+      try {
+        await env.DB.prepare(idx[i]).run();
+      } catch (error) {
+        console.error('PLATFORM_SCHEMA_INDEX_ERROR:', { statement: i + 1, message: error?.message || String(error) });
+        throw new Error(`Platform database setup failed while creating schema index ${i + 1}.`);
+      }
+    }
+    try {
+      await env.DB.prepare(`INSERT OR IGNORE INTO roles (id,name,label,description,is_system) VALUES (1,'super_admin','Super Admin','Full access',1),(2,'admin','Admin','Administrative access',1),(3,'content_manager','Content Manager','Manage content',1),(4,'teacher','Teacher','Manage exams/content',1),(5,'support','Support','Support and requests',1)`).run();
+    } catch (error) {
+      console.error('PLATFORM_SCHEMA_ROLE_SEED_ERROR:', error?.message || String(error));
+      throw new Error('Platform database setup failed while initializing default roles.');
+    }
   }
   async function logAudit(env, entry) {
     try {
