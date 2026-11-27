@@ -6,8 +6,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#071226">
 <link rel="manifest" href="./manifest.webmanifest">
-<link rel="icon" type="image/png" sizes="192x192" href="./assets/icon-192.png">
-<link rel="apple-touch-icon" href="./assets/icon-192.png">
+<link rel="icon" type="image/jpeg" href="./assets/academy-logo.jpg">
+<link rel="apple-touch-icon" href="./assets/academy-logo.jpg">
 <title>لوحة الطالب | ZM Academy</title>
 
 <style>
@@ -547,7 +547,7 @@ Promise.all([fetch(API+'/api/homepage',{cache:'no-store'}).then(r=>r.ok?r.json()
 <header>
  <div class="nav">
   <div class="brand">
-   <img src="https://raw.githubusercontent.com/ziadmohsen2410-zm/ZM-Academy/main/Picsart_26-11-24_10-49-15-125.png" alt="ZM">
+   <img src="./assets/academy-logo.jpg" alt="ZM">
    <span>ZM Academy</span>
   </div>
   <div class="header-actions">
@@ -563,7 +563,7 @@ Promise.all([fetch(API+'/api/homepage',{cache:'no-store'}).then(r=>r.ok?r.json()
  <section id="dashboard" class="hidden">
   <div class="zm-shell">
     <aside class="zm-sidebar" aria-label="القائمة الجانبية">
-      <div class="zm-side-brand"><img src="https://raw.githubusercontent.com/ziadmohsen2410-zm/ZM-Academy/main/Picsart_26-11-24_10-49-15-125.png" alt="ZM"><div><b>ZM Academy</b><small>منصة التعلم</small></div></div>
+      <div class="zm-side-brand"><img src="./assets/academy-logo.jpg" alt="ZM"><div><b>ZM Academy</b><small>منصة التعلم</small></div></div>
       <nav class="zm-side-nav">
         <a href="#welcomeCard" class="active">🏠 الرئيسية</a>
         <a href="#subjectsSection">📚 المواد</a>
@@ -1170,7 +1170,7 @@ async function openPdf(materialId,title,resumePage=1){
    watermark.className="pdfWatermark";
 
    const logo=document.createElement("img");
-   logo.src="https://raw.githubusercontent.com/ziadmohsen2410-zm/ZM-Academy/main/Picsart_26-11-24_10-49-15-125.png";
+   logo.src="./assets/academy-logo.jpg";
    logo.alt="ZM Academy";
 
    watermark.appendChild(logo);

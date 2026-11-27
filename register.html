@@ -9,6 +9,8 @@
 <meta property="og:type" content="website">
 <link rel="canonical" href="https://ziadmohsen2410-zm.github.io/ZM-Academy/register.html">
 <meta name="theme-color" content="#071226">
+<link rel="icon" type="image/jpeg" href="./assets/academy-logo.jpg">
+<link rel="apple-touch-icon" href="./assets/academy-logo.jpg">
 <title>تسجيل طالب | ZM Academy</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&display=swap');
@@ -100,8 +102,8 @@ fetch(API+'/api/homepage',{cache:'no-store'}).then(r=>r.ok?r.json():null).then(d
 </head>
 <body>
 <main class="panel">
- <div class="topbar"><a class="brand-link" href="./index.html">ZM ACADEMY</a><button class="theme-toggle" id="themeToggle" type="button"><span class="theme-icon">☀</span><span class="theme-label">الوضع الفاتح</span></button></div>
- <div class="brand">أكاديمية أ. زياد محسن<small>ZIAD MOHSEN ACADEMY</small></div>
+ <div class="topbar"><a class="brand-link" href="./index.html" style="display:inline-flex;align-items:center;gap:9px"><img src="./assets/academy-logo.jpg" alt="ZM Academy" style="width:42px;height:42px;object-fit:contain;border-radius:10px">ZM ACADEMY</a><button class="theme-toggle" id="themeToggle" type="button"><span class="theme-icon">☀</span><span class="theme-label">الوضع الفاتح</span></button></div>
+ <div class="brand" style="display:flex;align-items:center;justify-content:center;gap:12px"><img src="./assets/academy-logo.jpg" alt="ZM Academy" style="width:76px;height:76px;object-fit:contain;border-radius:14px"> <span>ZM Academy<small>ZIAD MOHSEN ACADEMY</small></span></div>
  <div style="display:flex;justify-content:space-between;gap:8px;align-items:center"><h1 data-i18n="title">تسجيل طالب جديد</h1><button type="button" id="langToggle" class="secondary" style="width:auto;padding:8px 12px;min-height:40px">EN</button></div>
  <p class="sub" data-i18n="sub">أدخل بياناتك بدقة لإنشاء حسابك ومتابعة المواد والطلبات التعليمية.</p>
  <form id="registerForm" novalidate>
