@@ -51,6 +51,17 @@ test("admin content forms send every field required by the Worker", () => {
   assert.match(admin, /if\(!name\|\|!grade\)/, "Subject creation must validate grade");
 });
 
+test("admin materials listing safely adds the file_key column on older D1 databases", () => {
+  const worker = read("worker.js");
+  const start = worker.indexOf('if (method === "GET" && path === "/api/admin/materials")');
+  const end = worker.indexOf("// أرشفة درس أو استعادته", start);
+  assert.notEqual(start, -1, "Admin materials listing route must exist");
+  const route = worker.slice(start, end);
+  assert.ok(route.includes('ensureColumn(env, "materials", "file_key", "TEXT")'));
+  assert.ok(route.indexOf('ensureColumn(env, "materials", "file_key", "TEXT")') < route.indexOf("SELECT m.id"));
+  assert.ok(route.includes("await ensureArchivedMaterialsTable(env)"));
+});
+
 test("admin can archive and restore subjects and materials without deleting records", () => {
   const admin = read("admin.html");
   const worker = read("worker.js");
