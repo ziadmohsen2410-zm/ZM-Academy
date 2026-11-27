@@ -713,6 +713,8 @@ test("admin material list exposes archive, restore, and separately confirmed per
   assert.ok(worker.includes('addDelete("orders", 1, \'"material_id" = ?\')'));
   assert.ok(worker.includes('"order_id" IN (SELECT "id" FROM "orders" WHERE "material_id" = ?)'));
   assert.ok(worker.includes("const results = await env.DB.batch(["));
+  assert.ok(worker.includes('env.DB.prepare("PRAGMA defer_foreign_keys = ON")'));
+  assert.ok(worker.includes("dependentTables: [...(deletionPlan?.keys?.() || [])]"));
   assert.ok(worker.includes("const finalResult = results[results.length - 1]"));
   assert.ok(worker.includes("GitHub file deletion failed: HTTP"));
   assert.ok(!worker.includes('MATERIAL_HAS_ORDERS'));
