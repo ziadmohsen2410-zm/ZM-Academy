@@ -10,6 +10,7 @@ DELETE FROM preview_material_notes WHERE material_id = 990001;
 DELETE FROM student_material_progress WHERE material_id = 990001;
 DELETE FROM student_favorites WHERE material_id = 990001;
 DELETE FROM archived_materials WHERE material_id = 990001;
+DELETE FROM archived_subjects WHERE subject_id = 990001;
 DELETE FROM orders WHERE material_id = 990001;
 DELETE FROM materials WHERE id = 990001;
 DELETE FROM student_subjects WHERE student_id = 990001 OR subject_id = 990001;
