@@ -129,7 +129,8 @@ body[data-theme='light']{background:var(--bg)!important;color:var(--text)!import
     <section id="sec-content" class="section">
       <div class="grid" style="grid-template-columns:1fr 1fr;gap:14px">
         <div class="card"><h3>المواد الدراسية</h3>
-          <div class="row"><input id="subName" placeholder="اسم المادة"><input id="subGrade" placeholder="الصف/المرحلة"><button id="addSubjectBtn">إضافة</button></div>
+          <input id="subEditId" type="hidden" value="">
+          <div class="row"><input id="subName" placeholder="اسم المادة"><input id="subGrade" placeholder="الصف/المرحلة"><button id="addSubjectBtn" type="button">إضافة</button><button id="cancelSubjectEditBtn" type="button" class="ghost" hidden>إلغاء التعديل</button></div>
           <div class="table-wrap" style="margin-top:12px"><table><thead><tr><th>ID</th><th>الاسم</th><th>الصف</th><th>إجراءات</th></tr></thead><tbody id="subjectsTbody"></tbody></table></div>
         </div>
         <div class="card"><h3>الدروس/المحتوى</h3>
@@ -615,7 +616,7 @@ async function loadSubjects(){
       select.innerHTML='<option value="">اختر المادة</option>'+active.map(s=>`<option value="${Number(s.id)}">${esc(s.name)} — ${esc(s.grade||'')}</option>`).join('');
       if(active.some(s=>String(s.id)===selected)) select.value=selected;
     }
-    tb.innerHTML=rows.map(s=>`<tr><td>${esc(s.id)}</td><td>${esc(s.name||'-')}</td><td>${esc(s.grade||s.stage||'-')}</td><td>${Number(s.is_archived)===1?'<span class="badge warn">مؤرشفة</span>':'<span class="badge ok">نشطة</span>'} <button class="ghost small" onclick="window.__toggleSubjectArchive(${Number(s.id)},${Number(s.is_archived)===1?'restore':'archive'})">${Number(s.is_archived)===1?'استعادة':'أرشفة'}</button></td></tr>`).join('')||'<tr><td colspan="4" class="muted">لا توجد مواد</td></tr>';
+    tb.innerHTML=rows.map(s=>`<tr><td>${esc(s.id)}</td><td>${esc(s.name||'-')}</td><td>${esc(s.grade||s.stage||'-')}</td><td>${Number(s.is_archived)===1?'<span class="badge warn">مؤرشفة</span>':'<span class="badge ok">نشطة</span>'} <button type="button" class="ghost small" data-subject-action="edit" data-subject-id="${Number(s.id)}" data-subject-name="${esc(s.name||'')}" data-subject-grade="${esc(s.grade||s.stage||'')}">تعديل</button> <button class="ghost small" onclick="window.__toggleSubjectArchive(${Number(s.id)},${Number(s.is_archived)===1?'restore':'archive'})">${Number(s.is_archived)===1?'استعادة':'أرشفة'}</button></td></tr>`).join('')||'<tr><td colspan="4" class="muted">لا توجد مواد</td></tr>';
   }catch(e){ tb.innerHTML=`<tr><td colspan="4">خطأ: ${esc(e.message)}</td></tr>`; }
 }
 window.__toggleSubjectArchive=async(id,action)=>{
@@ -814,7 +815,10 @@ $('#globalSearch').addEventListener('keydown',e=>{if(e.key==='Enter'){const q=e.
 document.addEventListener('keydown',e=>{if(e.key==='/' && document.activeElement.tagName!=='INPUT' && document.activeElement.tagName!=='TEXTAREA'){e.preventDefault(); $('#globalSearch').focus();}});
 $('#studentSearch').addEventListener('input',()=>renderStudents(state.cache.students||[]));
 $('#reloadStudents').onclick=loadStudents;
-$('#addSubjectBtn').onclick=async()=>{ const btn=$('#addSubjectBtn'); try{ const name=$('#subName').value.trim(), grade=$('#subGrade').value.trim(); if(!name||!grade) return showMsg('اكتب اسم المادة والصف/المرحلة'); btn.disabled=true; const result=await api('/api/subjects',{method:'POST',body:JSON.stringify({name,grade})}); $('#subName').value=''; $('#subGrade').value=''; showMsg('تمت إضافة المادة بنجاح (رقم '+result.id+')',true); await loadSubjects(); }catch(e){ showMsg(e.message); }finally{btn.disabled=false;} };
+const resetSubjectEditor=()=>{$('#subEditId').value='';$('#subName').value='';$('#subGrade').value='';$('#addSubjectBtn').textContent='إضافة';$('#cancelSubjectEditBtn').hidden=true;};
+$('#cancelSubjectEditBtn').onclick=resetSubjectEditor;
+$('#subjectsTbody').addEventListener('click',event=>{const button=event.target.closest('button[data-subject-action="edit"]');if(!button)return;$('#subEditId').value=button.dataset.subjectId;$('#subName').value=button.dataset.subjectName||'';$('#subGrade').value=button.dataset.subjectGrade||'';$('#addSubjectBtn').textContent='حفظ تعديل المادة';$('#cancelSubjectEditBtn').hidden=false;$('#subName').focus();showMsg('تم تحميل بيانات المادة للتعديل. اضغط حفظ تعديل المادة.',true);});
+$('#addSubjectBtn').onclick=async()=>{ const btn=$('#addSubjectBtn'); const editId=Number($('#subEditId').value||0); try{ const name=$('#subName').value.trim(), grade=$('#subGrade').value.trim(); if(!name||!grade) return showMsg('اكتب اسم المادة والصف/المرحلة'); btn.disabled=true; const result=await api('/api/subjects',{method:editId?'PUT':'POST',body:JSON.stringify({...{name,grade},...(editId?{id:editId}:{})})}); resetSubjectEditor(); showMsg(editId?'تم تعديل المادة بنجاح':'تمت إضافة المادة بنجاح (رقم '+result.id+')',true); await loadSubjects(); }catch(e){ showMsg(e.message); }finally{btn.disabled=false;btn.textContent=$('#subEditId').value?'حفظ تعديل المادة':'إضافة';} };
 const materialFileMime=(file)=>{const ext=(file.name.split('.').pop()||'').toLowerCase();const byExt={pdf:'application/pdf',jpg:'image/jpeg',jpeg:'image/jpeg',png:'image/png',webp:'image/webp'};return ['application/pdf','image/jpeg','image/png','image/webp'].includes(file.type)?file.type:(byExt[ext]||'');};
 $('#matFile').addEventListener('change',()=>{const file=$('#matFile').files?.[0];$('#matFileName').textContent=file?file.name+' — '+(file.size/1024/1024).toFixed(2)+' MB':'لم يتم اختيار ملف';});
 const resetMaterialEditor=()=>{$('#matEditId').value='';$('#matTitle').value='';$('#matPrice').value='';$('#matFile').value='';$('#matFileName').textContent='لم يتم اختيار ملف';$('#addMaterialBtn').textContent='إضافة المحتوى';$('#cancelMaterialEditBtn').hidden=true;};
