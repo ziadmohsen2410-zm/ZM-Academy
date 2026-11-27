@@ -4,7 +4,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="theme-color" content="#071226">
+<meta name="theme-color" content="#070707">
 <link rel="manifest" href="./manifest.webmanifest">
 <link rel="icon" type="image/jpeg" href="./assets/academy-logo.jpg">
 <link rel="apple-touch-icon" href="./assets/academy-logo.jpg">
@@ -16,14 +16,14 @@
 *{box-sizing:border-box}
 :root{
  color-scheme:dark;
- --bg:#071226;
- --surface:#0D1B35;
+ --bg:#070707;
+ --surface:#121212;
  --surface2:#13284a;
  --surface3:#162d52;
  --text:#FFFFFF;
  --muted:#9AA9C4;
- --blue:#2F80FF;
- --purple:#7B61FF;
+ --blue:#D4AF62;
+ --purple:#A9823D;
  --cyan:#50dfd0;
  --border:#1B3157;
  --shadow:0 12px 35px rgba(0,0,0,.2);
@@ -58,7 +58,7 @@ button{
  padding:10px 16px;
  color:#fff;
  font-weight:800;
- background:linear-gradient(120deg,#2F80FF,#7B61FF);
+ background:linear-gradient(120deg,#D4AF62,#A9823D);
  box-shadow:0 5px 14px rgba(65,120,220,.16);
  transition:none;
 }
@@ -100,7 +100,7 @@ header{
  border:1px solid var(--border);
 }
 .brand span{
- background:linear-gradient(90deg,#2F80FF,#7B61FF);
+ background:linear-gradient(90deg,#D4AF62,#A9823D);
  background-clip:text;
  -webkit-background-clip:text;
  color:transparent;
@@ -145,7 +145,7 @@ main{
  margin-bottom:20px;
  border-radius:23px;
  border:1px solid rgba(47,128,255,.3);
- background:linear-gradient(115deg,#1a5fcc,#2F80FF 55%,#7B61FF);
+ background:linear-gradient(115deg,#1a5fcc,#D4AF62 55%,#A9823D);
  color:#fff;
  box-shadow:0 12px 30px rgba(47,128,255,.18);
 }
@@ -191,7 +191,7 @@ main{
  flex:none;
  border-radius:50%;
  padding:3px;
- background:linear-gradient(140deg,#2F80FF,#a58aff,#fff);
+ background:linear-gradient(140deg,#D4AF62,#a58aff,#fff);
 }
 .avatar-wrap img{
  width:100%;
@@ -354,7 +354,7 @@ footer{
  z-index:1000;
  overflow:auto;
  padding:12px;
- background:#071226;
+ background:#070707;
  scroll-behavior:auto;
 }
 .viewerTop{
@@ -445,7 +445,7 @@ footer{
 }
 </style>
 <style id="zm-global-design-runtime">
-:root{--zm-primary:#2F80FF;--zm-secondary:#7B61FF;--zm-bg:#071226;--zm-surface:#0D1B35;--zm-text:#f4f7ff;--zm-muted:#a5b3d0;--zm-radius:18px}
+:root{--zm-primary:#D4AF62;--zm-secondary:#A9823D;--zm-bg:#070707;--zm-surface:#121212;--zm-text:#f4f7ff;--zm-muted:#a5b3d0;--zm-radius:18px}
 html[data-zm-template="glass"] body{background-image:radial-gradient(circle at 10% 0%,color-mix(in srgb,var(--zm-primary) 20%,transparent),transparent 42%),radial-gradient(circle at 90% 100%,color-mix(in srgb,var(--zm-secondary) 18%,transparent),transparent 45%),linear-gradient(135deg,var(--zm-bg),var(--zm-surface))!important}
 html[data-zm-template="minimal"] body{background:var(--zm-bg)!important}
 html[data-zm-template="luxury"] body{background:radial-gradient(ellipse at top,var(--zm-surface),var(--zm-bg) 72%)!important}
@@ -494,7 +494,7 @@ html[data-zm-motion="off"] *,html[data-zm-motion="off"] *:before,html[data-zm-mo
 </style>
 <script id="zm-global-design-loader">
 (()=>{const API='https://zm-academy-api.ziadmohsen4567.workers.dev';const safeHex=(v,d)=>/^#[0-9a-f]{6}$/i.test(String(v||''))?v:d;const text=(sel,val)=>{const n=document.querySelector(sel);if(n&&typeof val==='string'&&val.trim())n.textContent=val};const attr=(sel,name,val)=>{const n=document.querySelector(sel);if(n&&typeof val==='string'&&val.trim())n.setAttribute(name,val)};
-function apply(s){if(!s||typeof s!=='object')return;const t=s.theme||{},b=s.branding||{},root=document.documentElement;const vals={primary:safeHex(t.primary,'#2F80FF'),secondary:safeHex(t.secondary,'#7B61FF'),background:safeHex(t.background,'#071226'),surface:safeHex(t.surface,'#0D1B35'),text:safeHex(t.text,'#FFFFFF'),muted:safeHex(t.muted,'#9AA9C4')};for(const [k,v] of Object.entries(vals))root.style.setProperty('--zm-'+k,v);root.style.setProperty('--zm-radius',t.corners==='sharp'?'5px':t.corners==='round'?'28px':'18px');root.dataset.zmTemplate=['glass','minimal','luxury','editorial'].includes(t.template)?t.template:'future';root.dataset.zmFont=['tajawal','system','georgia'].includes(t.font)?t.font:'cairo';root.dataset.zmButtons=['solid','outline'].includes(t.buttons)?t.buttons:'gradient';root.dataset.zmCards=['glass','outline'].includes(t.cards)?t.cards:'solid';root.dataset.zmMotion=t.motion==='off'?'off':'on';const mode=t.mode==='light'?'light':t.mode==='system'?(matchMedia('(prefers-color-scheme: light)').matches?'light':'dark'):'dark';root.dataset.zmMode=mode;document.body.dataset.zmMode=mode;
+function apply(s){if(!s||typeof s!=='object')return;const t=s.theme||{},b=s.branding||{},root=document.documentElement;const vals={primary:safeHex(t.primary,'#D4AF62'),secondary:safeHex(t.secondary,'#A9823D'),background:safeHex(t.background,'#070707'),surface:safeHex(t.surface,'#121212'),text:safeHex(t.text,'#FFFFFF'),muted:safeHex(t.muted,'#9AA9C4')};for(const [k,v] of Object.entries(vals))root.style.setProperty('--zm-'+k,v);root.style.setProperty('--zm-radius',t.corners==='sharp'?'5px':t.corners==='round'?'28px':'18px');root.dataset.zmTemplate=['glass','minimal','luxury','editorial'].includes(t.template)?t.template:'future';root.dataset.zmFont=['tajawal','system','georgia'].includes(t.font)?t.font:'cairo';root.dataset.zmButtons=['solid','outline'].includes(t.buttons)?t.buttons:'gradient';root.dataset.zmCards=['glass','outline'].includes(t.cards)?t.cards:'solid';root.dataset.zmMotion=t.motion==='off'?'off':'on';const mode=t.mode==='light'?'light':t.mode==='system'?(matchMedia('(prefers-color-scheme: light)').matches?'light':'dark'):'dark';root.dataset.zmMode=mode;document.body.dataset.zmMode=mode;
 if(s.brandName){document.title=document.title.replace(/ZM Academy|ZM ACADEMY|Ziad Mohsen Academy/gi,s.brandName);const brandSpan=document.querySelector('.brand span');if(brandSpan&&brandSpan.firstChild&&brandSpan.firstChild.nodeType===3)brandSpan.firstChild.nodeValue=s.brandName;text('.brand-link',s.brandName.toUpperCase());text('header h1',s.brandName);}
 if(s.tagline){text('.brand small',s.tagline);text('.tagline',s.tagline);}
 const h=s.hero||{};text('.hero-copy .eyebrow',h.eyebrow);const heroTitle=document.querySelector('.hero-copy h1');if(heroTitle&&h.title){heroTitle.textContent='';heroTitle.append(document.createTextNode(h.title+' '));if(h.highlight){const span=document.createElement('span');span.textContent=h.highlight;heroTitle.append(span);}}
@@ -538,7 +538,7 @@ Promise.all([fetch(API+'/api/homepage',{cache:'no-store'}).then(r=>r.ok?r.json()
 .zm-stat b{display:block;font-size:28px;line-height:1.2;margin-bottom:8px}
 .zm-ic{width:30px;height:30px;border-radius:10px;display:grid;place-items:center;background:rgba(47,128,255,.12);color:var(--blue)}
 .zm-bar{height:8px;background:rgba(255,255,255,.08);border-radius:999px;overflow:hidden}
-.zm-bar>div{height:100%;background:linear-gradient(90deg,#2F80FF,#7B61FF);border-radius:999px}
+.zm-bar>div{height:100%;background:linear-gradient(90deg,#D4AF62,#A9823D);border-radius:999px}
 .zm-bottom-nav{display:none;position:fixed;bottom:0;left:0;right:0;background:rgba(13,27,53,.96);backdrop-filter:blur(12px);border-top:1px solid var(--border);padding:8px 10px calc(8px + env(safe-area-inset-bottom));z-index:80;justify-content:space-around}
 .zm-bottom-nav a{display:flex;flex-direction:column;align-items:center;gap:2px;color:var(--muted);font-size:11px;padding:6px 10px;border-radius:12px;min-width:64px}
 .zm-bottom-nav a span{font-size:18px;line-height:1}
@@ -603,7 +603,7 @@ Promise.all([fetch(API+'/api/homepage',{cache:'no-store'}).then(r=>r.ok?r.json()
             <b>حسابك الشخصي</b>
             <div class="muted">صورتك وبياناتك التعليمية</div>
             <div class="profile-actions">
-              <label for="photoInput" class="small-btn" style="cursor:pointer;background:linear-gradient(110deg,#2F80FF,#7B61FF);border-radius:10px;padding:7px 11px;color:white">تغيير الصورة</label>
+              <label for="photoInput" class="small-btn" style="cursor:pointer;background:linear-gradient(110deg,#D4AF62,#A9823D);border-radius:10px;padding:7px 11px;color:white">تغيير الصورة</label>
               <input id="photoInput" type="file" accept="image/png,image/jpeg,image/webp">
             </div>
           </div>
@@ -923,7 +923,7 @@ function renderLearningSummary(){
  const count=document.createElement("strong");
  count.textContent="بدأت مذاكرة "+started+" مذكرة • مكتملة "+completed+" • "+pct+"%";
  const bar=document.createElement('div'); bar.style.cssText='height:10px;background:rgba(255,255,255,.08);border-radius:999px;overflow:hidden;margin-top:10px';
- const fill=document.createElement('div'); fill.style.cssText='height:100%;width:'+pct+'%;background:linear-gradient(90deg,#2F80FF,#7df0c0)';
+ const fill=document.createElement('div'); fill.style.cssText='height:100%;width:'+pct+'%;background:linear-gradient(90deg,#D4AF62,#F0D99B)';
  bar.appendChild(fill);
 
  const latest=[...studentProgress].sort(
@@ -1362,7 +1362,7 @@ async function loadDashboard(){
     const title=document.createElement('strong'); title.textContent=s.name||'مادة';
     const meta=document.createElement('div'); meta.className='muted'; meta.style.margin='6px 0'; meta.textContent='التقدم: '+done+' / '+total+' ('+pct+'%)';
     const bar=document.createElement('div'); bar.style.cssText='height:8px;background:rgba(255,255,255,.08);border-radius:999px;overflow:hidden';
-    const fill=document.createElement('div'); fill.style.cssText='height:100%;width:'+pct+'%;background:linear-gradient(90deg,#2F80FF,#7df0c0)';
+    const fill=document.createElement('div'); fill.style.cssText='height:100%;width:'+pct+'%;background:linear-gradient(90deg,#D4AF62,#F0D99B)';
     bar.appendChild(fill);
     div.append(title,meta,bar);
    });
@@ -1632,13 +1632,13 @@ loadDashboard();
 </script>
 
 <style>
-#zmPlatBtn{position:fixed;bottom:18px;left:18px;z-index:9999;border:0;border-radius:999px;padding:12px 16px;background:linear-gradient(120deg,#2F80FF,#7B61FF);color:#08101f;font-weight:800;box-shadow:0 10px 30px rgba(0,0,0,.28);cursor:pointer}
+#zmPlatBtn{position:fixed;bottom:18px;left:18px;z-index:9999;border:0;border-radius:999px;padding:12px 16px;background:linear-gradient(120deg,#D4AF62,#A9823D);color:#08101f;font-weight:800;box-shadow:0 10px 30px rgba(0,0,0,.28);cursor:pointer}
 #zmPlat{position:fixed;inset:auto 12px 72px 12px;max-width:980px;margin:0 auto;background:#111b34;border:1px solid rgba(135,166,230,.25);border-radius:18px;box-shadow:0 20px 60px rgba(0,0,0,.35);z-index:9999;display:none;max-height:75vh;overflow:auto}
 #zmPlat.open{display:block}
 #zmPlat .hd{display:flex;justify-content:space-between;gap:10px;align-items:center;padding:14px 16px;border-bottom:1px solid rgba(255,255,255,.08);position:sticky;top:0;background:#111b34}
 #zmPlat .tabs{display:flex;gap:8px;flex-wrap:wrap;padding:12px 16px;border-bottom:1px solid rgba(255,255,255,.06)}
 #zmPlat .tabs button{background:#182440;color:#eef4ff;border:1px solid rgba(135,166,230,.2);border-radius:10px;padding:8px 12px;cursor:pointer}
-#zmPlat .tabs button.active{background:linear-gradient(120deg,#2F80FF,#7B61FF);color:#08101f}
+#zmPlat .tabs button.active{background:linear-gradient(120deg,#D4AF62,#A9823D);color:#08101f}
 #zmPlat .bd{padding:16px}#zmPlat .item{padding:12px;border:1px solid rgba(135,166,230,.18);border-radius:12px;background:#172440;margin-bottom:10px}
 #zmPlat input,#zmPlat textarea,#zmPlat select{width:100%;padding:10px;border-radius:10px;border:1px solid rgba(135,166,230,.2);background:#0c1428;color:#f4f7ff;margin:6px 0 10px}
 #zmPlat .row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
@@ -1656,7 +1656,7 @@ async function render(){const b=$('#zmPlatBody'); b.innerHTML='<div class="muted
  if(tab==='notif'){ const d=await api('/api/student/platform/notifications'); const rows=d.notifications||[]; b.innerHTML=rows.length?rows.map(n=>`<div class="item"><div style="display:flex;justify-content:space-between;gap:10px"><strong>${esc(n.title)}</strong>${n.is_read?'<span class="muted">مقروء</span>':`<button data-read="${n.id}">تحديد كمقروء</button>`}</div><div class="muted">${esc(n.type)} - ${esc(n.created_at||'')}</div><div>${esc(n.body)}</div></div>`).join(''):'<div class="muted">لا توجد إشعارات.</div>'; b.querySelectorAll('[data-read]').forEach(btn=>btn.onclick=async()=>{await api(`/api/student/platform/notifications/${btn.dataset.read}/read`,{method:'POST'}); render();}); }
  if(tab==='exams'){ const d=await api('/api/student/platform/exams'); const rows=d.exams||[]; b.innerHTML=rows.length?rows.map(e=>`<div class="item"><strong>${esc(e.title)}</strong><div class="muted">${esc(e.description||'')}</div><div class="muted">المدة: ${esc(e.duration_minutes||'-')} دقيقة | المحاولات: ${esc(e.my_attempts||0)}/${esc(e.attempts_allowed||1)}</div><button data-start="${e.id}" data-active="${e.active_attempt_id||''}" ${!e.active_attempt_id&&Number(e.my_attempts||0)>=Number(e.attempts_allowed||1)?'disabled':''}>${e.active_attempt_id?'استكمال الاختبار':Number(e.my_attempts||0)>=Number(e.attempts_allowed||1)?'انتهت المحاولات':'بدء الاختبار'}</button>${e.last_attempt_id&&['submitted','graded'].includes(e.last_attempt_status)?` <button class="ghost" data-result="${e.last_attempt_id}" data-exam="${e.id}">عرض النتيجة</button>`:''}<div id="examBox-${e.id}"></div></div>`).join(''):'<div class="muted">لا توجد اختبارات منشورة.</div>'; b.querySelectorAll('[data-start]').forEach(btn=>btn.onclick=()=>startExam(btn.dataset.start,btn.dataset.active)); b.querySelectorAll('[data-result]').forEach(btn=>btn.onclick=()=>refreshExamResult(btn.dataset.result,document.getElementById('examBox-'+btn.dataset.exam))); }
  if(tab==='ai'){ b.innerHTML=`<div class="item"><div class="muted">مساعد تعليمي للطلاب. لا يشارك بياناتك مع طلاب آخرين.</div><textarea id="zmAiPrompt" rows="5" placeholder="اسأل عن درس، اطلب ملخصًا، أو اطلب أسئلة تدريبية..."></textarea><button id="zmAiRun">إرسال</button><pre id="zmAiOut" style="white-space:pre-wrap;background:#0c1428;padding:12px;border-radius:10px;margin-top:10px"></pre></div>`; $('#zmAiRun').onclick=async()=>{ const prompt=$('#zmAiPrompt').value.trim(); if(!prompt) return; $('#zmAiOut').textContent='جارٍ التفكير...'; try{ const d=await api('/api/student/platform/ai',{method:'POST',body:JSON.stringify({prompt})}); $('#zmAiOut').textContent=d.text||JSON.stringify(d,null,2); }catch(e){ $('#zmAiOut').textContent=e.message; } }; }
- if(tab==='prefs'){ let prefs={}; try{ const d=await api('/api/student/preferences'); prefs=d.preferences||{}; }catch{} b.innerHTML=`<div class="item"><div class="row"><div><label>الوضع</label><select id="pMode"><option value="dark">داكن</option><option value="light">فاتح</option></select></div><div><label>حجم الخط</label><select id="pFont"><option value="normal">عادي</option><option value="large">كبير</option><option value="xlarge">كبير جدًا</option></select></div></div><div class="row"><div><label>اللون الأساسي</label><input id="pPrimary" type="color" value="${esc(prefs.primary||'#2F80FF')}"></div><div><label>اللون الثانوي</label><input id="pSecondary" type="color" value="${esc(prefs.secondary||'#7B61FF')}"></div></div><button id="pSave">حفظ التخصيص</button> <button id="pReset" style="background:#182440;color:#fff;border:1px solid rgba(135,166,230,.2)">استعادة الافتراضي</button><div class="muted" style="margin-top:10px">التخصيص خاص بحسابك فقط.</div></div>`; $('#pMode').value=prefs.mode||'dark'; $('#pFont').value=prefs.fontSize||'normal'; $('#pSave').onclick=async()=>{ const np={mode:$('#pMode').value,fontSize:$('#pFont').value,primary:$('#pPrimary').value,secondary:$('#pSecondary').value}; await api('/api/student/preferences',{method:'PUT',body:JSON.stringify({preferences:np})}); applyPrefs(np); alert('تم الحفظ'); }; $('#pReset').onclick=async()=>{ await api('/api/student/preferences',{method:'PUT',body:JSON.stringify({preferences:{}})}); localStorage.removeItem('zm_student_prefs_cache'); location.reload(); }; }
+ if(tab==='prefs'){ let prefs={}; try{ const d=await api('/api/student/preferences'); prefs=d.preferences||{}; }catch{} b.innerHTML=`<div class="item"><div class="row"><div><label>الوضع</label><select id="pMode"><option value="dark">داكن</option><option value="light">فاتح</option></select></div><div><label>حجم الخط</label><select id="pFont"><option value="normal">عادي</option><option value="large">كبير</option><option value="xlarge">كبير جدًا</option></select></div></div><div class="row"><div><label>اللون الأساسي</label><input id="pPrimary" type="color" value="${esc(prefs.primary||'#D4AF62')}"></div><div><label>اللون الثانوي</label><input id="pSecondary" type="color" value="${esc(prefs.secondary||'#A9823D')}"></div></div><button id="pSave">حفظ التخصيص</button> <button id="pReset" style="background:#182440;color:#fff;border:1px solid rgba(135,166,230,.2)">استعادة الافتراضي</button><div class="muted" style="margin-top:10px">التخصيص خاص بحسابك فقط.</div></div>`; $('#pMode').value=prefs.mode||'dark'; $('#pFont').value=prefs.fontSize||'normal'; $('#pSave').onclick=async()=>{ const np={mode:$('#pMode').value,fontSize:$('#pFont').value,primary:$('#pPrimary').value,secondary:$('#pSecondary').value}; await api('/api/student/preferences',{method:'PUT',body:JSON.stringify({preferences:np})}); applyPrefs(np); alert('تم الحفظ'); }; $('#pReset').onclick=async()=>{ await api('/api/student/preferences',{method:'PUT',body:JSON.stringify({preferences:{}})}); localStorage.removeItem('zm_student_prefs_cache'); location.reload(); }; }
 }catch(e){ b.innerHTML=`<div class="muted">خطأ: ${esc(e.message)}</div>`; }
 }
 async function refreshExamResult(attemptId,box){ try{const result=await api(`/api/student/platform/exam-attempts/${attemptId}/result`);if(result.results_pending_manual){box.innerHTML='الاختبار بانتظار التصحيح.';return;}if(result.results_hidden){box.innerHTML='تم التصحيح، والنتيجة مخفية حسب إعدادات الاختبار.';return;}if(result.score==null){box.innerHTML='لم يتم اعتماد النتيجة بعد.';return;}const notes=(result.feedback||[]).filter(x=>x.comment).map(x=>'<div class="item"><strong>'+esc(x.question_text)+'</strong><p>'+esc(x.comment)+'</p></div>').join('');box.innerHTML='<div class="item">النتيجة النهائية: '+esc(result.score)+' / '+esc(result.max_score)+'</div>'+notes;}catch(err){box.innerHTML=esc(err.message);} }
