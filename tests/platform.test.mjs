@@ -706,7 +706,9 @@ test("admin material list exposes archive, restore, and separately confirmed per
   assert.ok(admin.includes("materialsTbody').addEventListener('click'"));
   assert.ok(admin.includes("method:'DELETE'"));
   assert.ok(worker.includes('if (method === "DELETE" && path === "/api/admin/materials")'));
-  assert.ok(worker.includes('DELETE FROM orders WHERE material_id = ?'));
+  assert.ok(worker.includes('SELECT COUNT(*) AS total FROM orders WHERE material_id = ?'));
+  assert.ok(worker.includes('MATERIAL_HAS_ORDERS'));
+  assert.ok(!worker.includes('DELETE FROM orders WHERE material_id = ?'));
   assert.ok(worker.includes('DELETE FROM materials WHERE id = ?'));
   assert.ok(worker.includes('DELETE FROM archived_materials WHERE material_id = ?'));
 });
