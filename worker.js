@@ -1039,10 +1039,15 @@ if (method === "POST" && path === "/api/password-reset/request") {
       path.startsWith("/api/admin/device-requests") ? "devices" :
       path.startsWith("/api/admin/subjects") || path.startsWith("/api/admin/materials") || path === "/api/subjects" ? "content" :
       path.startsWith("/api/admin/homepage") ? "page_builder" :
-      path.startsWith("/api/admin/upload") ? "media" : "settings";
+      path.startsWith("/api/admin/upload") ? null : "settings";
     const auth = await requireAdminRole(request, env, legacyPermission);
     if (auth.error) return auth.error;
     const session = auth.session;
+    if (path.startsWith("/api/admin/upload") &&
+        !hasPerm(auth.admin.role, "media") &&
+        !hasPerm(auth.admin.role, "content")) {
+      return reply(request, env, { success: false, error: "Forbidden" }, 403);
+    }
     
     // إدارة إعدادات الصفحة الرئيسية
     if (
@@ -4101,13 +4106,32 @@ if (method === "POST" && rejectPasswordMatch) {
     // Backup export (JSON)
     if (method==='GET' && path==='/api/admin/platform/backup/export') {
       if (!hasPerm(admin.role,'backups')) return reply(request, env,{success:false,error:'Forbidden'},403);
-      const tables=['platform_settings','roles','role_permissions','page_drafts','page_published','page_versions','student_preferences','parents','parent_student_links','notifications','ads','exams','exam_questions','exam_attempts','audit_logs','ai_logs'];
-      const out={exported_at: nowIso(), tables:{}};
+      const tables=[
+        'students','subjects','materials','orders',
+        'student_preferences','student_material_progress','student_favorites',
+        'student_activity_days','student_hidden_purchases','student_photos',
+        'archived_subjects','archived_materials',
+        'platform_settings','roles','role_permissions','page_drafts',
+        'page_published','page_versions','parents','parent_student_links',
+        'notifications','notification_reads','ads','ad_events','exams',
+        'exam_questions','exam_attempts','audit_logs','ai_logs'
+      ];
+      const out={version:2,exported_at:nowIso(),tables:{},warnings:[]};
+      const sensitiveColumn=/password|token|secret|credential|api[_-]?key/i;
       for (const t of tables) {
-        try { const r=await env.DB.prepare(`SELECT * FROM ${t} ORDER BY 1 DESC LIMIT 1000`).all(); out.tables[t]=r.results||[]; } catch(e){ out.tables[t]={error:e.message}; }
+        try {
+          const r=await env.DB.prepare(`SELECT * FROM ${t} ORDER BY 1 DESC LIMIT 5000`).all();
+          out.tables[t]=(r.results||[]).map(row=>Object.fromEntries(
+            Object.entries(row).filter(([key])=>!sensitiveColumn.test(key))
+          ));
+        } catch {
+          out.tables[t]=[];
+          out.warnings.push(`Table unavailable in this installation: ${t}`);
+        }
       }
-      await env.DB.prepare(`INSERT INTO backup_runs(type,status,details_json,created_by) VALUES('export','success',?,?)`).bind(JSON.stringify({tables:Object.keys(out.tables)}), admin.username).run();
-      return reply(request, env,{success:true, backup: out});
+      await env.DB.prepare(`INSERT INTO backup_runs(type,status,details_json,created_by) VALUES('export','success',?,?)`)
+        .bind(JSON.stringify({version:out.version,tables:Object.keys(out.tables),warnings:out.warnings.length}),admin.username).run();
+      return reply(request, env,{success:true,backup:out});
     }
 
     // Analytics CSV
@@ -4349,7 +4373,15 @@ export default {
     try {
       return await route(request, env);
     } catch (error) {
-      console.error("Worker Error:", error);
+      const url = new URL(request.url);
+      const requestId = crypto.randomUUID();
+      console.error("Worker Error:", {
+        requestId,
+        method: request.method,
+        path: url.pathname,
+        message: error?.message || String(error),
+        stack: error?.stack || null
+      });
 
       return reply(
         request,
@@ -4357,6 +4389,7 @@ export default {
         {
           success: false,
           error: "Internal server error.",
+          request_id: requestId
         },
         500
       );
