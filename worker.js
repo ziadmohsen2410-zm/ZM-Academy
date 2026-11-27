@@ -1921,8 +1921,9 @@ if (method === "POST" && rejectPasswordMatch) {
         });
         return reply(request, env, {
           success: false,
-          error: "تعذر حذف المحتوى بسبب ارتباط ببيانات أخرى. لم يتم تأكيد الحذف؛ راجع سجل الخادم.",
+          error: "تعذر حذف المحتوى بسبب ارتباط ببيانات أخرى. لم يتم تأكيد الحذف.",
           code: "MATERIAL_DELETE_CONSTRAINT",
+          diagnostic: String(error?.message || error || "Unknown database error").slice(0, 500),
         }, 409);
       }
 
