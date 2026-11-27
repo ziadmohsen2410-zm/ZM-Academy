@@ -816,3 +816,15 @@ test("student and parent authenticated activity extends their sessions", () => {
   assert.ok(student.includes("UPDATE student_sessions SET expires_at = datetime('now', ?)"));
   assert.ok(parent.includes("UPDATE parent_sessions SET expires_at=datetime('now', ?)"));
 });
+
+
+test("admin can edit existing learning materials and save updates", () => {
+  const admin = read("admin.html");
+  const worker = read("worker.js");
+  assert.ok(admin.includes('id="matEditId"'));
+  assert.ok(admin.includes('data-material-action="edit"'));
+  assert.ok(admin.includes("$('#cancelMaterialEditBtn').onclick=resetMaterialEditor"));
+  assert.ok(admin.includes("method:editingId?'PUT':'POST'"));
+  assert.ok(admin.includes("$('#addMaterialBtn').textContent='حفظ التعديلات'"));
+  assert.ok(worker.includes('if (method === "PUT" && path === "/api/admin/materials")'));
+});
