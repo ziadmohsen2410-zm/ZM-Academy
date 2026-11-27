@@ -1923,7 +1923,10 @@ if (method === "POST" && rejectPasswordMatch) {
         const tableResult = await env.DB.prepare("PRAGMA table_list").all();
         const tableNames = new Set(
           (tableResult.results || [])
-            .filter((item) => item.type === "table" && !String(item.name || "").startsWith("sqlite_"))
+            .filter((item) => {
+              const name = String(item.name || "").toLowerCase();
+              return item.type === "table" && !name.startsWith("sqlite_") && !name.startsWith("_cf_");
+            })
             .map((item) => String(item.name || ""))
         );
         const primaryKeys = new Map();
