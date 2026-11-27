@@ -727,7 +727,10 @@ test("admin material list exposes archive, restore, and separately confirmed per
   assert.ok(!worker.includes('MATERIAL_HAS_ORDERS'));
   assert.ok(worker.includes('DELETE FROM materials WHERE id = ?'));
   assert.ok(worker.includes('DELETE FROM archived_materials WHERE material_id = ?'));
-  assert.ok(worker.includes('const tableNames = new Set((tableResult.results || []).map((item) => String(item.name || "")))'));
+  assert.ok(worker.includes('env.DB.prepare("PRAGMA table_list").all()'));
+  assert.ok(worker.includes('item.type === "table" && !String(item.name || "").startsWith("sqlite_")'));
+  assert.ok(worker.includes('let deletionStage = "read-table-catalog"'));
+  assert.ok(worker.includes('diagnostic_stage: deletionStage'));
   assert.ok(worker.includes("const foreignKeysByTable = new Map()"));
 });
 
