@@ -368,11 +368,11 @@ function canSeeSection(key){
 function setSection(key){
   if(!canSeeSection(key)) return showMsg('ليس لديك صلاحية لفتح هذا القسم');
   state.section=key;
-  $$$('.section').forEach(s=>s.classList.remove('active'));
+  $('.section').forEach(s=>s.classList.remove('active'));
   const sec=$('#sec-'+key); if(sec) sec.classList.add('active');
-  $$$('#nav button').forEach(b=>b.classList.toggle('active', b.dataset.sec===key));
+  $('#nav button').forEach(b=>b.classList.toggle('active', b.dataset.sec===key));
   const meta=sections.find(s=>s[0]===key); if(meta){$('#sectionTitle').textContent=meta[1]; $('#sectionDesc').textContent=meta[2]; $('#mobileTitle').textContent=meta[1];}
-  $$$('#bottomNav button[data-sec]').forEach(b=>b.classList.toggle('active', b.dataset.sec===key));
+  $('#bottomNav button[data-sec]').forEach(b=>b.classList.toggle('active', b.dataset.sec===key));
   closeSidebar();
   loadSection(key).catch(e=>showMsg(e.message||'خطأ'));
 }
