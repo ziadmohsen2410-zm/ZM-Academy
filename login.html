@@ -103,7 +103,7 @@ for(const [k,url] of social){if(!url)continue;const a=document.createElement('a'
 fetch(API+'/api/homepage',{cache:'no-store'}).then(r=>r.ok?r.json():null).then(d=>{if(d&&d.success)apply(d.settings)}).catch(()=>{});
 })();
 </script>
-<link rel="stylesheet" href="./assets/zm-future-theme.css?v=3">
+<link rel="stylesheet" href="./assets/zm-future-theme.css?v=4">
 <style id="zm-login-social-layout">
 body{flex-direction:column!important;gap:0!important}
 #zmSocialLinks{width:min(100%,460px);margin:16px auto 0!important;display:flex!important;justify-content:center!important;align-items:center;gap:10px;flex-wrap:wrap}
