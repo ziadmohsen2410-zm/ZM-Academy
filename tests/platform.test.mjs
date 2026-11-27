@@ -846,3 +846,18 @@ test("admin can edit subjects and save changes", () => {
   assert.ok(admin.includes("method:editId?'PUT':'POST'"));
   assert.ok(worker.includes('if (method === "PUT" && path === "/api/subjects")'));
 });
+
+
+test("isolated Preview smoke test is bound only to the Preview D1 database", () => {
+  const config = read("wrangler.preview.toml");
+  const workflow = read(".github/workflows/preview-smoke.yml");
+  const fixture = read("migrations/003_preview_legacy_core.sql");
+  assert.ok(config.includes('database_name = "zm-academy-preview-db"'));
+  assert.ok(config.includes('database_id = "c52275bf-3929-4b44-b535-8926b3439a87"'));
+  assert.ok(!config.includes("8bd76dbe-9a5b-40b1-b6fb-4c44ff240bff"));
+  assert.ok(workflow.includes("wrangler d1 migrations apply zm-academy-preview-db"));
+  assert.ok(workflow.includes("wrangler secret put ADMIN_SETUP_KEY"));
+  assert.ok(workflow.includes("/api/admin/materials"));
+  assert.ok(workflow.includes("PREVIEW_DELETE_SMOKE_PASS"));
+  assert.ok(fixture.includes("preview_material_notes"));
+});
