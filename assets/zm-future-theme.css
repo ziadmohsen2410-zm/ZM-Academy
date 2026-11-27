@@ -256,3 +256,202 @@ body[data-theme="light"] button:not(.ghost):not(.secondary):not(.outline):not(.t
 body.light button:not(.ghost):not(.secondary):not(.outline):not(.theme-toggle):not(.icon-btn):not(.reset-toggle):not(.reset-cancel):not(.danger):not(.delete):not(.nav-link){
   color:#FFFFFF!important;-webkit-text-fill-color:#FFFFFF;
 }
+
+
+/* ZM Academy — Platinum Luxury visual identity (global override) */
+:root{
+  --zm-primary:#B8C5D5;
+  --zm-secondary:#C6A96B;
+  --zm-bg:#111318;
+  --zm-surface:#20242C;
+  --zm-text:#F5F3EF;
+  --zm-muted:#AEB5C0;
+  --zm-radius:18px;
+  --accent:#C6A96B;
+  --accent2:#B8C5D5;
+  --line:rgba(184,197,213,.20);
+  --bg:#111318;
+  --bg2:#171B22;
+  --panel:#20242C;
+  --panel-2:#292E37;
+  --surface:#20242C;
+  --surface2:#292E37;
+  --surface3:#303640;
+  --text:#F5F3EF;
+  --muted:#AEB5C0;
+  --primary:#C6A96B;
+  --secondary:#9DA9B8;
+  --blue:#B8C5D5;
+  --purple:#C6A96B;
+  --p:#C6A96B;
+  --q:#9DA9B8;
+  --t:#F5F3EF;
+  --s:#20242C;
+  --s2:#292E37;
+  --gold:#C6A96B;
+  --zm-button-start:#343A44;
+  --zm-button-end:#20242C;
+  --zm-button-text:#F5F3EF;
+  --zm-outline-text:#D7C49D;
+  --zm-focus:rgba(198,169,107,.28);
+  color-scheme:dark;
+}
+html,body{background-color:#111318}
+body{
+  color:#F5F3EF;
+  background-image:
+    radial-gradient(ellipse at 8% 0%,rgba(198,169,107,.075),transparent 36%),
+    radial-gradient(ellipse at 94% 100%,rgba(184,197,213,.055),transparent 38%),
+    linear-gradient(145deg,#111318,#151920 58%,#111318);
+}
+:where(h1,h2,h3,h4,.brand,.brand-link,.eyebrow,.tag,label){color:#D6C39C}
+:where(.card,.panel,.item,.section,.profile,.notice,.tile,.course-card,.step,.auth-card){
+  border-color:rgba(184,197,213,.19);
+}
+:where(.card,.panel,.section,.course-card,.tile,.auth-card,.item){
+  background:linear-gradient(145deg,rgba(37,42,51,.97),rgba(28,32,39,.98));
+  box-shadow:0 18px 44px rgba(0,0,0,.24),inset 0 1px 0 rgba(255,255,255,.025);
+}
+:where(input,select,textarea){
+  border-color:rgba(184,197,213,.24);
+  background:#171B22;
+  color:#F5F3EF;
+}
+:where(input,select,textarea):focus{
+  border-color:#C6A96B!important;
+  box-shadow:0 0 0 3px rgba(198,169,107,.15)!important;
+}
+:where(button,.btn,.primary,.small-btn){
+  background:linear-gradient(120deg,#3A414C,#242932)!important;
+  background-image:linear-gradient(120deg,#3A414C,#242932)!important;
+  color:#F5F3EF!important;
+  -webkit-text-fill-color:#F5F3EF;
+  border:1px solid rgba(198,169,107,.52)!important;
+  box-shadow:0 8px 22px rgba(0,0,0,.20),inset 0 1px 0 rgba(255,255,255,.07);
+}
+:where(button,.btn,.primary,.small-btn):hover{filter:brightness(1.13)}
+:where(a){color:#D6C39C}
+:where(.muted,.sub,.hint,.description,.help-text,small){color:#AEB5C0}
+:where(.theme-toggle,.secondary,.ghost,.outline,.reset-toggle,.reset-cancel,.icon-btn){
+  background:#292E37!important;
+  color:#D7C49D!important;
+  -webkit-text-fill-color:#D7C49D;
+  border:1px solid rgba(184,197,213,.24)!important;
+  box-shadow:none!important;
+}
+:where(.danger,.delete,.error,.err){color:#F08A91}
+:where(.success,.ok){color:#78C7A6}
+:where(.warning,.warn){color:#E2C27B}
+:where(button,a,input,select,textarea):focus-visible{
+  outline:3px solid rgba(198,169,107,.27)!important;
+  outline-offset:2px;
+}
+
+/* Light mode — warm pearl, platinum and restrained champagne gold */
+html[data-zm-mode="light"],body[data-zm-mode="light"],body[data-theme="light"],body.light{
+  --zm-bg:#F5F3EF;
+  --zm-surface:#FFFFFF;
+  --zm-text:#252A32;
+  --zm-muted:#69717C;
+  --line:#DEDAD1;
+  --bg:#F5F3EF;
+  --bg2:#EEECE6;
+  --panel:#FFFFFF;
+  --panel-2:#F0EEE8;
+  --surface:#FFFFFF;
+  --surface2:#F0EEE8;
+  --surface3:#E9E6DE;
+  --text:#252A32;
+  --muted:#69717C;
+  --primary:#A98B55;
+  --secondary:#7D8997;
+  --blue:#7D8997;
+  --purple:#A98B55;
+  --accent:#A98B55;
+  --accent2:#7D8997;
+  --p:#A98B55;
+  --q:#7D8997;
+  --t:#252A32;
+  --s:#FFFFFF;
+  --s2:#F0EEE8;
+  --gold:#A98B55;
+  --zm-primary:#7D8997;
+  --zm-secondary:#A98B55;
+  --zm-button-start:#343A44;
+  --zm-button-end:#20242C;
+  --zm-button-text:#FFFFFF;
+  --zm-outline-text:#80683D;
+  --zm-focus:rgba(169,139,85,.24);
+  color-scheme:light;
+  background:#F5F3EF!important;
+  color:#252A32!important;
+}
+html[data-zm-mode="light"] body,
+body[data-zm-mode="light"],body[data-theme="light"],body.light{
+  background:
+    radial-gradient(ellipse at 8% 0%,rgba(198,169,107,.08),transparent 38%),
+    linear-gradient(145deg,#F8F7F3,#F0EEE8)!important;
+  color:#252A32!important;
+}
+html[data-zm-mode="light"] :where(h1,h2,h3,h4,label,.brand,.brand-link,.eyebrow,.tag),
+body[data-zm-mode="light"] :where(h1,h2,h3,h4,label,.brand,.brand-link,.eyebrow,.tag),
+body[data-theme="light"] :where(h1,h2,h3,h4,label,.brand,.brand-link,.eyebrow,.tag),
+body.light :where(h1,h2,h3,h4,label,.brand,.brand-link,.eyebrow,.tag){color:#80683D!important}
+html[data-zm-mode="light"] :where(.card,.panel,.section,.tile,.course-card,.auth-card,.item,.notice,.profile),
+body[data-zm-mode="light"] :where(.card,.panel,.section,.tile,.course-card,.auth-card,.item,.notice,.profile),
+body[data-theme="light"] :where(.card,.panel,.section,.tile,.course-card,.auth-card,.item,.notice,.profile),
+body.light :where(.card,.panel,.section,.tile,.course-card,.auth-card,.item,.notice,.profile){
+  background:rgba(255,255,255,.96)!important;
+  color:#252A32!important;
+  border-color:#DEDAD1!important;
+  box-shadow:0 12px 32px rgba(48,45,38,.07)!important;
+}
+html[data-zm-mode="light"] :where(p,td,th,.item strong,.card h2,.card h3,.topbar h2),
+body[data-zm-mode="light"] :where(p,td,th,.item strong,.card h2,.card h3,.topbar h2),
+body[data-theme="light"] :where(p,td,th,.item strong,.card h2,.card h3,.topbar h2),
+body.light :where(p,td,th,.item strong,.card h2,.card h3,.topbar h2){color:#303640}
+html[data-zm-mode="light"] :where(.muted,.sub,.hint,.description,.help-text,small),
+body[data-zm-mode="light"] :where(.muted,.sub,.hint,.description,.help-text,small),
+body[data-theme="light"] :where(.muted,.sub,.hint,.description,.help-text,small),
+body.light :where(.muted,.sub,.hint,.description,.help-text,small){color:#69717C!important}
+html[data-zm-mode="light"] :where(input,select,textarea),
+body[data-zm-mode="light"] :where(input,select,textarea),
+body[data-theme="light"] :where(input,select,textarea),
+body.light :where(input,select,textarea){
+  background:#FFFFFF!important;color:#252A32!important;border-color:#D8D3C9!important;
+}
+html[data-zm-mode="light"] :where(input,select,textarea)::placeholder,
+body[data-zm-mode="light"] :where(input,select,textarea)::placeholder,
+body[data-theme="light"] :where(input,select,textarea)::placeholder,
+body.light :where(input,select,textarea)::placeholder{color:#858B93!important}
+html[data-zm-mode="light"] :where(button,.btn,.primary,.small-btn),
+body[data-zm-mode="light"] :where(button,.btn,.primary,.small-btn),
+body[data-theme="light"] :where(button,.btn,.primary,.small-btn),
+body.light :where(button,.btn,.primary,.small-btn){
+  background:linear-gradient(120deg,#3A414C,#20242C)!important;
+  color:#FFFFFF!important;-webkit-text-fill-color:#FFFFFF;
+  border-color:rgba(169,139,85,.65)!important;
+}
+html[data-zm-mode="light"] :where(.theme-toggle,.secondary,.ghost,.outline,.reset-toggle,.reset-cancel,.icon-btn),
+body[data-zm-mode="light"] :where(.theme-toggle,.secondary,.ghost,.outline,.reset-toggle,.reset-cancel,.icon-btn),
+body[data-theme="light"] :where(.theme-toggle,.secondary,.ghost,.outline,.reset-toggle,.reset-cancel,.icon-btn),
+body.light :where(.theme-toggle,.secondary,.ghost,.outline,.reset-toggle,.reset-cancel,.icon-btn){
+  background:#F0EEE8!important;color:#705A35!important;-webkit-text-fill-color:#705A35;
+  border-color:#D8D0C1!important;
+}
+html[data-zm-mode="light"] a,body[data-zm-mode="light"] a,body[data-theme="light"] a,body.light a{color:#80683D}
+html[data-zm-mode="light"] :where(header,.topbar,.sidebar,.mobile-bar,.bottom-nav),
+body[data-theme="light"] :where(header,.topbar,.sidebar,.mobile-bar,.bottom-nav),
+body.light :where(header,.topbar,.sidebar,.mobile-bar,.bottom-nav){
+  background:rgba(255,255,255,.92)!important;border-color:#DEDAD1!important;
+}
+html[data-zm-mode="light"] body:has(.zm-shell),
+body[data-zm-mode="light"]:has(.zm-shell),body.light:has(.zm-shell){
+  --bg:#F5F3EF!important;--surface:#FFFFFF!important;--surface2:#F0EEE8!important;
+  --surface3:#E9E6DE!important;--text:#252A32!important;--muted:#69717C!important;
+  --border:#DEDAD1!important;--line:#DEDAD1!important;
+  background:#F5F3EF!important;color:#252A32!important;
+}
+@media(max-width:640px){
+  :where(.card,.panel,.auth-card){border-radius:16px}
+}
