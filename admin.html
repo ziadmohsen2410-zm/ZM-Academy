@@ -344,7 +344,10 @@ const $$ = (s)=>Array.from(document.querySelectorAll(s));
 const esc = (s='')=>String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c]));
 const fmtDate = (v)=>v?new Date(v).toLocaleString('ar-EG'):'-';
 const tokenKey='zm_admin_token';
-const state={token:localStorage.getItem(tokenKey)||'', admin:null, section:'dashboard', cache:{}};
+const readAdminToken=()=>{try{return localStorage.getItem(tokenKey)||sessionStorage.getItem(tokenKey)||'';}catch{return '';}};
+const saveAdminToken=(token)=>{try{localStorage.setItem(tokenKey,token);}catch{}try{sessionStorage.setItem(tokenKey,token);}catch{}};
+const clearAdminToken=()=>{try{localStorage.removeItem(tokenKey);}catch{}try{sessionStorage.removeItem(tokenKey);}catch{}};
+const state={token:readAdminToken(), admin:null, section:'dashboard', cache:{}};
 const sectionGroups=[
   {label:'الرئيسية', items:[['dashboard','لوحة المعلومات','نظرة عامة سريعة']]},
   {label:'الإدارة', items:[['students','الطلاب','إدارة الطلاب'],['parents','أولياء الأمور','حسابات وربط'],['orders','الطلبات','مراجعة الطلبات'],['devices','الأجهزة','طلبات الأجهزة']]},
@@ -400,14 +403,14 @@ async function login(){
   $('#loginBtn').disabled=true;
   try{
     const data = await api('/api/admin/login',{method:'POST',body:JSON.stringify({username,password})});
-    state.token=data.token; localStorage.setItem(tokenKey,state.token);
+    state.token=data.token; saveAdminToken(state.token);
     await boot();
   }catch(e){ showLoginMsg(e.message||'فشل تسجيل الدخول'); }
   finally{$('#loginBtn').disabled=false;}
 }
 async function logout(){
   try{ await api('/api/admin/logout',{method:'POST'}); }catch{}
-  state.token=''; state.admin=null; localStorage.removeItem(tokenKey);
+  state.token=''; state.admin=null; clearAdminToken();
   $('#appView').classList.add('hidden'); $('#loginView').classList.remove('hidden');
 }
 async function boot(){
@@ -417,7 +420,7 @@ async function boot(){
     $('#adminIdentity').textContent=(state.admin.display_name||state.admin.username||'الإدارة')+(state.admin.role?` (${state.admin.role})`:'');
     $('#loginView').classList.add('hidden');$('#appView').classList.remove('hidden');buildNav();checkHealth();applyAdminTheme({mode:localStorage.getItem('zm_admin_theme_mode')||'dark'});setSection(state.section);
   }catch(e){
-    if(e.status===401||e.status===403){state.token='';localStorage.removeItem(tokenKey);$('#appView').classList.add('hidden');$('#loginView').classList.remove('hidden');showLoginMsg('انتهت صلاحية الجلسة أو تم إيقاف الحساب. سجل الدخول مرة أخرى.');}
+    if(e.status===401||e.status===403){state.token='';clearAdminToken();$('#appView').classList.add('hidden');$('#loginView').classList.remove('hidden');showLoginMsg('انتهت صلاحية الجلسة أو تم إيقاف الحساب. سجل الدخول مرة أخرى.');}
     else{$('#appView').classList.add('hidden');$('#loginView').classList.remove('hidden');showLoginMsg('تعذر التحقق من جلسة الإدارة بسبب خطأ اتصال أو خادم: '+(e.message||'حاول مجددًا')+' — لم يتم حذف بيانات الدخول.');}
   }
 }
