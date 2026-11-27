@@ -786,3 +786,27 @@ test("admin refresh keeps the authenticated workspace visible during temporary A
   assert.ok(admin.includes("window.addEventListener('online'"));
   assert.ok(admin.includes("localStorage.removeItem(adminProfileCacheKey)"));
 });
+
+
+test("parent portal keeps its session on temporary network errors and only clears on unauthorized", () => {
+  const parent = read("parent.html");
+  assert.ok(parent.includes("if(e.status===401)"));
+  assert.ok(parent.includes("readParentProfile()"));
+  assert.ok(parent.includes("لم يتم تسجيل خروجك"));
+  assert.ok(parent.includes("localStorage.removeItem('zm_parent_token')"));
+});
+
+test("student login does not erase a newly created session after a temporary verification failure", () => {
+  const login = read("login.html");
+  assert.ok(login.includes("if(token&&error.status===401)"));
+  assert.ok(login.includes("تم إنشاء جلسة الدخول وحفظها"));
+  assert.ok(!login.includes("if(token){try{localStorage.removeItem('zm_student_token')"));
+});
+
+test("student and parent authenticated activity extends their sessions", () => {
+  const worker = read("worker.js");
+  const student = worker.slice(worker.indexOf("async function studentSession"), worker.indexOf("async function purgeExpiredSessions"));
+  const parent = worker.slice(worker.indexOf("async function parentSession"), worker.indexOf("function settingDefault"));
+  assert.ok(student.includes("UPDATE student_sessions SET expires_at = datetime('now', ?)"));
+  assert.ok(parent.includes("UPDATE parent_sessions SET expires_at=datetime('now', ?)"));
+});
