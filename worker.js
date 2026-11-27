@@ -3037,8 +3037,9 @@ if (method === "POST" && rejectPasswordMatch) {
 
       if (
         !fileKey ||
-        !fileKey.startsWith("materials/") ||
-        fileKey.includes("..")
+        !/^(materials|media)\//.test(fileKey) ||
+        fileKey.includes("..") ||
+        fileKey.includes("\\")
       ) {
         return reply(
           request,
@@ -3086,12 +3087,25 @@ if (method === "POST" && rejectPasswordMatch) {
         );
       }
 
+      const extension = fileKey.toLowerCase().split(".").pop();
+      const contentTypes = {
+        pdf: "application/pdf",
+        jpg: "image/jpeg",
+        jpeg: "image/jpeg",
+        png: "image/png",
+        webp: "image/webp",
+      };
+      const servedType = contentTypes[extension];
+      if (!servedType) {
+        return reply(request, env, {success:false,error:"صيغة الملف المرتبط غير مدعومة."}, 415);
+      }
+      const servedName = extension === "jpeg" ? "jpg" : extension;
       return new Response(githubResponse.body, {
         status: 200,
         headers: {
           ...corsHeaders(request, env),
-          "Content-Type": "application/pdf",
-          "Content-Disposition": 'inline; filename="zm-academy-material.pdf"',
+          "Content-Type": servedType,
+          "Content-Disposition": `inline; filename="zm-academy-material.${servedName}"`,
           "Cache-Control": "private, no-store, no-cache, must-revalidate",
           Pragma: "no-cache",
           "X-Content-Type-Options": "nosniff",
