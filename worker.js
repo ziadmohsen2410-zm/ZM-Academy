@@ -1705,6 +1705,9 @@ if (method === "POST" && rejectPasswordMatch) {
 
     // عرض جميع المحتويات للإدارة بما فيها المؤرشفة
     if (method === "GET" && path === "/api/admin/materials") {
+      // Older D1 databases may predate file uploads and therefore lack materials.file_key.
+      // Add the nullable column before selecting it so the admin content list remains readable.
+      await ensureColumn(env, "materials", "file_key", "TEXT");
       await ensureArchivedMaterialsTable(env);
 
       const rows = await env.DB.prepare(`
