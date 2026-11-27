@@ -262,7 +262,14 @@ async function adminSession(request, env) {
     .bind(tokenHash)
     .first();
 
-  return row ? { ...row, tokenHash } : null;
+  if (!row) return null;
+
+  // Sliding session: keep an actively used admin session alive for seven days.
+  await env.DB.prepare(
+    "UPDATE admin_sessions SET expires_at = datetime('now', ?) WHERE id = ?"
+  ).bind(`+${SESSION_DAYS} days`, row.id).run();
+
+  return { ...row, tokenHash };
 }
 
 async function requireAdmin(request, env) {
