@@ -1906,7 +1906,11 @@ if (method === "POST" && rejectPasswordMatch) {
 
         // Keep the final row deletion in the same D1 batch so a constraint
         // failure rolls back the dependent cleanup instead of leaving partial data.
+        // D1 enforces foreign keys by default. Defer the checks for this
+        // single atomic batch so cyclic/indirect references can be removed
+        // together; constraints are still enforced when the batch commits.
         const results = await env.DB.batch([
+          env.DB.prepare("PRAGMA defer_foreign_keys = ON"),
           ...orderedDeletes,
           env.DB.prepare("DELETE FROM materials WHERE id = ?").bind(id),
         ]);
@@ -1917,6 +1921,7 @@ if (method === "POST" && rejectPasswordMatch) {
       } catch (error) {
         console.error("MATERIAL_PERMANENT_DELETE_ERROR:", {
           materialId: id,
+          dependentTables: [...(deletionPlan?.keys?.() || [])],
           message: error?.message || String(error),
         });
         return reply(request, env, {
