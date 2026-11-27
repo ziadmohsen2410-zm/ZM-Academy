@@ -235,6 +235,7 @@ CREATE TABLE IF NOT EXISTS exam_attempts (
   max_score REAL,
   status TEXT NOT NULL DEFAULT 'in_progress', -- in_progress|submitted|graded
   answers_json TEXT,
+  question_order_json TEXT,
   feedback_json TEXT,
   graded_by TEXT,
   graded_at TEXT,

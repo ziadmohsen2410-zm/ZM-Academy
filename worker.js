@@ -542,6 +542,45 @@ function parseHomepageJson(value) {
   }
 }
 
+function sanitizeHomepageSettings(value) {
+  const source=value&&typeof value==='object'&&!Array.isArray(value)?value:{};
+  const text=(v,max=2000)=>String(v??'').trim().slice(0,max);
+  const safeLink=(v)=>{
+    const raw=text(v,1000);
+    if(!raw||raw.startsWith('//'))return '';
+    if(/^https:\/\/[^\s]+$/i.test(raw)||raw.startsWith('/')||raw.startsWith('./')||raw.startsWith('#'))return raw;
+    return '';
+  };
+  const safeImage=(v)=>{
+    const raw=text(v,1000);
+    if(!raw||raw.startsWith('//'))return '';
+    if(/^\/assets\/[a-z0-9_./-]+$/i.test(raw)||/^\/api\/media\/\d+$/.test(raw))return raw;
+    try {
+      const url=new URL(raw);
+      const forbidden=['"',"'",'(',')',';','\\','<','>'];
+      if(url.protocol==='https:'&&url.hostname&&!url.username&&!url.password&&!forbidden.some(ch=>raw.includes(ch)))return url.href;
+    } catch {}
+    return '';
+  };
+  const out={...source};
+  out.brandName=text(source.brandName,80);
+  out.tagline=text(source.tagline,180);
+  const theme=source.theme&&typeof source.theme==='object'?source.theme:{};
+  const color=(v,fallback)=>/^#[0-9a-f]{6}$/i.test(String(v||''))?String(v):fallback;
+  out.theme={...theme,mode:['dark','light','system'].includes(theme.mode)?theme.mode:'dark',template:['future','glass','minimal','luxury','editorial'].includes(theme.template)?theme.template:'future',primary:color(theme.primary,'#2F80FF'),secondary:color(theme.secondary,'#7B61FF'),background:color(theme.background,'#071226'),surface:color(theme.surface,'#0D1B35'),text:color(theme.text,'#FFFFFF'),muted:color(theme.muted,'#9AA9C4'),font:['cairo','tajawal','system','georgia'].includes(theme.font)?theme.font:'cairo',corners:['round','normal','sharp'].includes(theme.corners)?theme.corners:'normal',buttons:['gradient','solid','outline'].includes(theme.buttons)?theme.buttons:'gradient',cards:['solid','glass','outline'].includes(theme.cards)?theme.cards:'solid',motion:theme.motion==='off'?'off':'on'};
+  const hero=source.hero&&typeof source.hero==='object'?source.hero:{};
+  out.hero={...hero,eyebrow:text(hero.eyebrow,100),title:text(hero.title,180),highlight:text(hero.highlight,100),description:text(hero.description,1000),primaryText:text(hero.primaryText,80),primaryUrl:safeLink(hero.primaryUrl),secondaryText:text(hero.secondaryText,80),secondaryUrl:safeLink(hero.secondaryUrl)};
+  const about=source.about&&typeof source.about==='object'?source.about:{};
+  out.about={...about,title:text(about.title,120),description:text(about.description,1500)};
+  const branding=source.branding&&typeof source.branding==='object'?source.branding:{};
+  out.branding={...branding,logoUrl:safeImage(branding.logoUrl),heroImageUrl:safeImage(branding.heroImageUrl),whatsapp:text(branding.whatsapp,20).replace(/\D/g,'').slice(0,15),facebook:safeLink(branding.facebook),youtube:safeLink(branding.youtube),telegram:safeLink(branding.telegram)};
+  const announcement=source.announcement&&typeof source.announcement==='object'?source.announcement:{};
+  out.announcement={...announcement,enabled:!!announcement.enabled,text:text(announcement.text,300),buttonText:text(announcement.buttonText,80),url:safeLink(announcement.url)};
+  const sections=source.sections&&typeof source.sections==='object'?source.sections:{};
+  out.sections={...sections,subjects:sections.subjects!==false,curriculum:sections.curriculum!==false,library:sections.library!==false,about:sections.about!==false,join:sections.join!==false};
+  return out;
+}
+
 
 // إنشاء جدول أرشيف الدروس
 async function ensureArchivedMaterialsTable(env) {
@@ -723,7 +762,7 @@ async function route(request, env) {
 
       return reply(request, env, {
         success: true,
-        settings: parseHomepageJson(row?.published_json)
+        settings: sanitizeHomepageSettings(parseHomepageJson(row?.published_json))
       });
     } catch (error) {
       return reply(request, env, {
@@ -992,19 +1031,18 @@ if (method === "POST" && path === "/api/password-reset/request") {
     (path.startsWith("/api/admin/") && !path.startsWith("/api/admin/platform/")) ||
     (path === "/api/subjects" && ["POST", "PUT", "DELETE"].includes(method))
   ) {
-    const session = await requireAdmin(request, env);
-
-    if (!session) {
-      return reply(
-        request,
-        env,
-        {
-          success: false,
-          error: "Unauthorized.",
-        },
-        401
-      );
-    }
+    const legacyPermission =
+      path === "/api/admin/me" ? "dashboard" :
+      path === "/api/admin/students" && method === "GET" ? "students.view" :
+      path.startsWith("/api/admin/students") || path.startsWith("/api/admin/password-reset-requests") ? "students" :
+      path.startsWith("/api/admin/orders") ? "orders" :
+      path.startsWith("/api/admin/device-requests") ? "devices" :
+      path.startsWith("/api/admin/subjects") || path.startsWith("/api/admin/materials") || path === "/api/subjects" ? "content" :
+      path.startsWith("/api/admin/homepage") ? "page_builder" :
+      path.startsWith("/api/admin/upload") ? "media" : "settings";
+    const auth = await requireAdminRole(request, env, legacyPermission);
+    if (auth.error) return auth.error;
+    const session = auth.session;
     
     // إدارة إعدادات الصفحة الرئيسية
     if (
@@ -1021,8 +1059,8 @@ if (method === "POST" && path === "/api/password-reset/request") {
 
       return reply(request, env, {
         success: true,
-        draft: parseHomepageJson(row?.draft_json),
-        published: parseHomepageJson(row?.published_json),
+        draft: sanitizeHomepageSettings(parseHomepageJson(row?.draft_json)),
+        published: sanitizeHomepageSettings(parseHomepageJson(row?.published_json)),
         status: row?.status || "published",
         updated_at: row?.updated_at || null
       });
@@ -1036,7 +1074,7 @@ if (method === "POST" && path === "/api/password-reset/request") {
       await ensureHomepageSettingsTable(env);
 
       const body = await readBody(request);
-      const settings = body?.settings;
+      const settings = sanitizeHomepageSettings(body?.settings);
 
       if (
         !settings ||
@@ -3346,6 +3384,39 @@ if (method === "POST" && rejectPasswordMatch) {
   const nowIso = () => new Date().toISOString();
   const safeJsonParse = (v, fallback) => { try { return JSON.parse(v); } catch { return fallback; } };
   const asInt = (v, d=0) => { const n = Number(v); return Number.isFinite(n) ? Math.trunc(n) : d; };
+  const validateExamInput = (b) => {
+    const duration = b?.duration_minutes === '' || b?.duration_minutes == null ? null : Number(b.duration_minutes);
+    const attempts = b?.attempts_allowed === '' || b?.attempts_allowed == null ? 1 : Number(b.attempts_allowed);
+    const status = clean(b?.status || 'draft', 20);
+    if (duration !== null && (!Number.isInteger(duration) || duration < 1 || duration > 600)) return 'مدة الاختبار يجب أن تكون من 1 إلى 600 دقيقة';
+    if (!Number.isInteger(attempts) || attempts < 1 || attempts > 20) return 'عدد المحاولات يجب أن يكون من 1 إلى 20';
+    if (!['draft','published','closed','archived'].includes(status)) return 'حالة الاختبار غير صالحة';
+    const starts = b?.starts_at ? Date.parse(b.starts_at) : null;
+    const ends = b?.ends_at ? Date.parse(b.ends_at) : null;
+    if (b?.starts_at && !Number.isFinite(starts)) return 'تاريخ بداية الاختبار غير صالح';
+    if (b?.ends_at && !Number.isFinite(ends)) return 'تاريخ نهاية الاختبار غير صالح';
+    if (starts !== null && ends !== null && ends <= starts) return 'يجب أن يكون موعد النهاية بعد موعد البداية';
+    return null;
+  };
+  const normalizeStudentPreferences = (value) => {
+    const raw=value&&typeof value==='object'&&!Array.isArray(value)?value:{};
+    const prefs={};
+    if(['dark','light'].includes(raw.mode)) prefs.mode=raw.mode;
+    if(typeof raw.primary==='string' && /^#[0-9a-fA-F]{6}$/.test(raw.primary)) prefs.primary=raw.primary;
+    if(typeof raw.secondary==='string' && /^#[0-9a-fA-F]{6}$/.test(raw.secondary)) prefs.secondary=raw.secondary;
+    if(['normal','large','xlarge'].includes(raw.fontSize)) prefs.fontSize=raw.fontSize;
+    return prefs;
+  };
+  const validateExamQuestion = (b) => {
+    const type = clean(b?.type, 20);
+    const question = clean(b?.question_text, 4000);
+    const points = b?.points == null || b?.points === '' ? 1 : Number(b.points);
+    if (!['mcq','true_false','essay'].includes(type)) return 'نوع السؤال غير صالح';
+    if (!question) return 'نص السؤال مطلوب';
+    if (!Number.isFinite(points) || points <= 0 || points > 1000) return 'درجة السؤال يجب أن تكون أكبر من صفر وحتى 1000';
+    if (type === 'mcq' && (!Array.isArray(b?.options) || b.options.length < 2)) return 'سؤال الاختيار من متعدد يحتاج إلى اختيارين على الأقل';
+    return null;
+  };
   const isAdminRole = (role) => ['super_admin','admin','content_manager','teacher','support'].includes(role);
   const ADMIN_PERMS = {
     super_admin: ['*'],
@@ -3377,6 +3448,7 @@ if (method === "POST" && rejectPasswordMatch) {
     await ensureColumn(env, 'orders', 'reviewed_by', 'TEXT');
     await ensureColumn(env, 'materials', 'is_archived', 'INTEGER NOT NULL DEFAULT 0');
     await ensureColumn(env, 'subjects', 'is_archived', 'INTEGER NOT NULL DEFAULT 0');
+    await ensureColumn(env, 'exam_attempts', 'question_order_json', 'TEXT');
 
     const stmts = [
       `CREATE TABLE IF NOT EXISTS platform_settings (key TEXT PRIMARY KEY, value_json TEXT NOT NULL DEFAULT '{}', updated_at TEXT NOT NULL DEFAULT (datetime('now')), updated_by TEXT)`,
@@ -3397,7 +3469,7 @@ if (method === "POST" && rejectPasswordMatch) {
       `CREATE TABLE IF NOT EXISTS ad_events (id INTEGER PRIMARY KEY AUTOINCREMENT, ad_id INTEGER NOT NULL, event_type TEXT NOT NULL, user_type TEXT, user_id INTEGER, created_at TEXT NOT NULL DEFAULT (datetime('now')))`,
       `CREATE TABLE IF NOT EXISTS exams (id INTEGER PRIMARY KEY AUTOINCREMENT, title TEXT NOT NULL, description TEXT, subject_id INTEGER, grade TEXT, status TEXT NOT NULL DEFAULT 'draft', duration_minutes INTEGER, attempts_allowed INTEGER DEFAULT 1, starts_at TEXT, ends_at TEXT, shuffle_questions INTEGER NOT NULL DEFAULT 0, show_results INTEGER NOT NULL DEFAULT 1, created_by TEXT, created_at TEXT NOT NULL DEFAULT (datetime('now')), updated_at TEXT NOT NULL DEFAULT (datetime('now')))`,
       `CREATE TABLE IF NOT EXISTS exam_questions (id INTEGER PRIMARY KEY AUTOINCREMENT, exam_id INTEGER NOT NULL, type TEXT NOT NULL, question_text TEXT NOT NULL, options_json TEXT, correct_answer_json TEXT, points REAL NOT NULL DEFAULT 1, order_index INTEGER NOT NULL DEFAULT 0, explanation TEXT)`,
-      `CREATE TABLE IF NOT EXISTS exam_attempts (id INTEGER PRIMARY KEY AUTOINCREMENT, exam_id INTEGER NOT NULL, student_id INTEGER NOT NULL, started_at TEXT NOT NULL DEFAULT (datetime('now')), submitted_at TEXT, score REAL, max_score REAL, status TEXT NOT NULL DEFAULT 'in_progress', answers_json TEXT, feedback_json TEXT, graded_by TEXT, graded_at TEXT)`,
+      `CREATE TABLE IF NOT EXISTS exam_attempts (id INTEGER PRIMARY KEY AUTOINCREMENT, exam_id INTEGER NOT NULL, student_id INTEGER NOT NULL, started_at TEXT NOT NULL DEFAULT (datetime('now')), submitted_at TEXT, score REAL, max_score REAL, status TEXT NOT NULL DEFAULT 'in_progress', answers_json TEXT, question_order_json TEXT, feedback_json TEXT, graded_by TEXT, graded_at TEXT)`,
       `CREATE TABLE IF NOT EXISTS ai_logs (id INTEGER PRIMARY KEY AUTOINCREMENT, actor_type TEXT NOT NULL, actor_id INTEGER, tool TEXT NOT NULL, prompt_preview TEXT, response_status TEXT, tokens_estimate INTEGER, created_at TEXT NOT NULL DEFAULT (datetime('now')))`,
       `CREATE TABLE IF NOT EXISTS backup_runs (id INTEGER PRIMARY KEY AUTOINCREMENT, type TEXT NOT NULL, status TEXT NOT NULL, details_json TEXT, created_by TEXT, created_at TEXT NOT NULL DEFAULT (datetime('now')))`
     ];
@@ -3538,7 +3610,20 @@ if (method === "POST" && rejectPasswordMatch) {
       const rows = await env.DB.prepare(`SELECT l.id as link_id,l.status,l.requested_at,l.reviewed_at,s.id,s.name,s.grade,s.school FROM parent_student_links l JOIN students s ON s.id=l.student_id WHERE l.parent_id=? ORDER BY l.id DESC`).bind(ps.parent_id).all();
       return reply(request, env, {success:true, children: rows.results||[]});
     }
+    if (method==='GET' && path==='/api/parent/notifications') {
+      const rows=await env.DB.prepare(`SELECT n.*,CASE WHEN r.id IS NULL THEN 0 ELSE 1 END AS is_read FROM notifications n LEFT JOIN notification_reads r ON r.notification_id=n.id AND r.user_type='parent' AND r.user_id=? WHERE n.audience_type='parents' AND (n.scheduled_at IS NULL OR datetime(n.scheduled_at)<=datetime('now')) ORDER BY n.id DESC LIMIT 100`).bind(ps.parent_id).all();
+      return reply(request,env,{success:true,notifications:rows.results||[]});
+    }
+    if (method==='POST' && /^\/api\/parent\/notifications\/\d+\/read$/.test(path)) {
+      const nid=Number(path.split('/')[4]);
+      const notification=await env.DB.prepare(`SELECT id FROM notifications WHERE id=? AND audience_type='parents' AND (scheduled_at IS NULL OR datetime(scheduled_at)<=datetime('now'))`).bind(nid).first();
+      if(!notification) return reply(request,env,{success:false,error:'الإشعار غير موجود'},404);
+      await env.DB.prepare(`INSERT OR IGNORE INTO notification_reads(notification_id,user_type,user_id) VALUES(?, 'parent', ?)`).bind(nid,ps.parent_id).run();
+      return reply(request,env,{success:true});
+    }
     if (method==='POST' && path==='/api/parent/link-request') {
+      const allowed=await consumeApiRateLimit(env,request,'parent-link-request',ps.parent_id,5,3600);
+      if(!allowed) return reply(request,env,{success:false,error:'تجاوزت عدد طلبات ربط الطلاب المسموح بها. حاول بعد ساعة.'},429);
       const body = await readBody(request);
       const studentUsername = clean(body?.student_username,60).toLowerCase();
       const studentPhone = clean(body?.student_phone,30).replace(/[^\d]/g,'');
@@ -3555,7 +3640,7 @@ if (method === "POST" && rejectPasswordMatch) {
       const student = await env.DB.prepare(`SELECT id,name,phone,grade,school,governorate FROM students WHERE id=?`).bind(studentId).first();
       const subjects = await env.DB.prepare(`SELECT s.id,s.name FROM student_subjects ss JOIN subjects s ON s.id=ss.subject_id WHERE ss.student_id=?`).bind(studentId).all();
       const orders = await env.DB.prepare(`SELECT o.id,o.status,o.created_at,m.title as material_title FROM orders o LEFT JOIN materials m ON m.id=o.material_id WHERE o.student_id=? ORDER BY o.id DESC LIMIT 50`).bind(studentId).all();
-      const attempts = await env.DB.prepare(`SELECT a.id,a.exam_id,a.score,a.max_score,a.status,a.submitted_at,e.title as exam_title FROM exam_attempts a JOIN exams e ON e.id=a.exam_id WHERE a.student_id=? ORDER BY a.id DESC LIMIT 50`).bind(studentId).all();
+      const attempts = await env.DB.prepare(`SELECT a.id,a.exam_id,CASE WHEN a.status='graded' AND e.show_results<>0 THEN a.score ELSE NULL END AS score,CASE WHEN a.status='graded' AND e.show_results<>0 THEN a.max_score ELSE NULL END AS max_score,a.status,a.submitted_at,e.title as exam_title FROM exam_attempts a JOIN exams e ON e.id=a.exam_id WHERE a.student_id=? ORDER BY a.id DESC LIMIT 50`).bind(studentId).all();
       return reply(request, env, {success:true, student, subjects:subjects.results||[], orders:orders.results||[], attempts:attempts.results||[]});
     }
     return reply(request, env, {success:false,error:'Not found'}, 404);
@@ -3567,14 +3652,14 @@ if (method === "POST" && rejectPasswordMatch) {
     if (!session) return reply(request, env, {success:false,error:'Unauthorized'}, 401);
     await ensurePlatformSchema(env);
     const row = await env.DB.prepare(`SELECT preferences_json FROM student_preferences WHERE student_id=?`).bind(session.student_id).first();
-    return reply(request, env, {success:true, preferences: safeJsonParse(row?.preferences_json, {})});
+    return reply(request, env, {success:true, preferences: normalizeStudentPreferences(safeJsonParse(row?.preferences_json, {}))});
   }
   if (method === 'PUT' && path === '/api/student/preferences') {
     const session = await studentSession(request, env);
     if (!session) return reply(request, env, {success:false,error:'Unauthorized'}, 401);
     await ensurePlatformSchema(env);
     const body = await readBody(request);
-    const prefs = body?.preferences && typeof body.preferences === 'object' ? body.preferences : {};
+    const prefs = normalizeStudentPreferences(body?.preferences);
     await env.DB.prepare(`INSERT INTO student_preferences(student_id,preferences_json,updated_at) VALUES(?,?,datetime('now')) ON CONFLICT(student_id) DO UPDATE SET preferences_json=excluded.preferences_json, updated_at=datetime('now')`).bind(session.student_id, JSON.stringify(prefs)).run();
     return reply(request, env, {success:true});
   }
@@ -3651,7 +3736,7 @@ if (method === "POST" && rejectPasswordMatch) {
       const parts = path.split('/').filter(Boolean); // api admin platform pages <key> [action]
       const key = clean(decodeURIComponent(parts[4]||''), 80);
       const action = parts[5] || '';
-      if (!key) return reply(request, env, {success:false,error:'Missing key'},400);
+      if (!/^[a-z0-9][a-z0-9_-]{0,79}$/i.test(key)) return reply(request, env, {success:false,error:'مفتاح الصفحة يجب أن يبدأ بحرف أو رقم ويحتوي على حروف أو أرقام أو شرطة فقط.'},400);
       if (method==='GET' && !action) {
         const draft = await env.DB.prepare(`SELECT * FROM page_drafts WHERE page_key=?`).bind(key).first();
         const pub = await env.DB.prepare(`SELECT * FROM page_published WHERE page_key=?`).bind(key).first();
@@ -3718,8 +3803,15 @@ if (method === "POST" && rejectPasswordMatch) {
       if (method==='POST') {
         const b=await readBody(request); const title=clean(b?.title,150); const bodyText=clean(b?.body,4000);
         if(!title||!bodyText) return reply(request, env,{success:false,error:'title/body required'},400);
+        const audienceType=clean(b?.audience_type||'all',30);
+        const audienceValue=clean(b?.audience_value,120);
+        if(!['all','parents','student','grade'].includes(audienceType)) return reply(request,env,{success:false,error:'نوع الجمهور غير صالح'},400);
+        if(audienceType==='student'&&!/^\d+$/.test(audienceValue)) return reply(request,env,{success:false,error:'أدخل رقم الطالب الصحيح'},400);
+        if(audienceType==='grade'&&!audienceValue) return reply(request,env,{success:false,error:'أدخل الصف المستهدف'},400);
+        const scheduledAt=b?.scheduled_at?clean(b.scheduled_at,40):null;
+        if(scheduledAt&&!Number.isFinite(Date.parse(scheduledAt.replace(' ','T')+'Z'))) return reply(request,env,{success:false,error:'موعد الإرسال غير صالح'},400);
         await env.DB.prepare(`INSERT INTO notifications(title,body,type,audience_type,audience_value,scheduled_at,sent_at,created_by,is_important) VALUES(?,?,?,?,?,?,?,?,?)`)
-          .bind(title,bodyText,clean(b?.type||'general',30),clean(b?.audience_type||'all',30),clean(b?.audience_value,120),b?.scheduled_at||null,b?.scheduled_at?null:nowIso(),admin.username,b?.is_important?1:0).run();
+          .bind(title,bodyText,clean(b?.type||'general',30),audienceType,audienceValue||null,scheduledAt,scheduledAt?null:nowIso(),admin.username,b?.is_important?1:0).run();
         await logAudit(env,{actor_type:'admin',actor_id:admin.id,actor_label:admin.username,action:'notification.create',entity_type:'notification',ip,user_agent:ua});
         return reply(request, env, {success:true});
       }
@@ -3758,6 +3850,7 @@ if (method === "POST" && rejectPasswordMatch) {
       if (method==='GET') { const rows = await env.DB.prepare(`SELECT e.*, (SELECT COUNT(*) FROM exam_questions q WHERE q.exam_id=e.id) as questions_count, (SELECT COUNT(*) FROM exam_attempts a WHERE a.exam_id=e.id) as attempts_count FROM exams e ORDER BY e.id DESC LIMIT 200`).all(); return reply(request, env,{success:true, exams: rows.results||[]}); }
       if (method==='POST') {
         const b=await readBody(request); const title=clean(b?.title,160); if(!title) return reply(request, env,{success:false,error:'title required'},400);
+        const validationError = validateExamInput(b); if (validationError) return reply(request, env,{success:false,error:validationError},400);
         const res = await env.DB.prepare(`INSERT INTO exams(title,description,subject_id,grade,status,duration_minutes,attempts_allowed,starts_at,ends_at,shuffle_questions,show_results,created_by) VALUES(?,?,?,?,?,?,?,?,?,?,?,?)`)
           .bind(title,clean(b?.description,2000),b?.subject_id?Number(b.subject_id):null,clean(b?.grade,40),clean(b?.status||'draft',20),b?.duration_minutes?Number(b.duration_minutes):null,b?.attempts_allowed?Number(b.attempts_allowed):1,b?.starts_at||null,b?.ends_at||null,b?.shuffle_questions?1:0,b?.show_results===false?0:1,admin.username).run();
         await logAudit(env,{actor_type:'admin',actor_id:admin.id,actor_label:admin.username,action:'exam.create',entity_type:'exam',entity_id:res.meta?.last_row_id,ip,user_agent:ua});
@@ -3768,24 +3861,40 @@ if (method === "POST" && rejectPasswordMatch) {
       if (!hasPerm(admin.role,'exams')) return reply(request, env, {success:false,error:'Forbidden'},403);
       const id = Number(path.split('/').pop());
       if (method==='GET') {
-        const exam = await env.DB.prepare(`SELECT * FROM exams WHERE id=?`).bind(id).first();
+        const exam = await env.DB.prepare(`SELECT e.*,(SELECT COUNT(*) FROM exam_attempts a WHERE a.exam_id=e.id) AS attempts_count FROM exams e WHERE e.id=?`).bind(id).first();
         const qs = await env.DB.prepare(`SELECT * FROM exam_questions WHERE exam_id=? ORDER BY order_index ASC, id ASC`).bind(id).all();
         return reply(request, env, {success:true, exam, questions: (qs.results||[]).map(q=>({...q, options:safeJsonParse(q.options_json,[]), correct_answer:safeJsonParse(q.correct_answer_json,null)}))});
       }
       if (method==='PUT') {
         const b=await readBody(request);
+        if (!clean(b?.title,160)) return reply(request, env,{success:false,error:'عنوان الاختبار مطلوب'},400);
+        const validationError = validateExamInput(b); if (validationError) return reply(request, env,{success:false,error:validationError},400);
+        const existingAttempts=await env.DB.prepare(`SELECT COUNT(*) AS c FROM exam_attempts WHERE exam_id=?`).bind(id).first();
+        if(Number(existingAttempts?.c||0)>0) {
+          await env.DB.prepare(`UPDATE exams SET title=?,description=?,status=?,updated_at=datetime('now') WHERE id=?`).bind(clean(b?.title,160),clean(b?.description,2000),clean(b?.status||'draft',20),id).run();
+          return reply(request,env,{success:true,settings_locked:true,message:'تم تحديث بيانات الاختبار. إعدادات التقييم والأسئلة ثابتة بعد بدء الطلاب.'});
+        }
         await env.DB.prepare(`UPDATE exams SET title=?,description=?,subject_id=?,grade=?,status=?,duration_minutes=?,attempts_allowed=?,starts_at=?,ends_at=?,shuffle_questions=?,show_results=?,updated_at=datetime('now') WHERE id=?`)
           .bind(clean(b?.title,160),clean(b?.description,2000),b?.subject_id?Number(b.subject_id):null,clean(b?.grade,40),clean(b?.status||'draft',20),b?.duration_minutes?Number(b.duration_minutes):null,b?.attempts_allowed?Number(b.attempts_allowed):1,b?.starts_at||null,b?.ends_at||null,b?.shuffle_questions?1:0,b?.show_results===false?0:1,id).run();
         return reply(request, env, {success:true});
       }
-      if (method==='DELETE') { await env.DB.prepare(`DELETE FROM exam_questions WHERE exam_id=?`).bind(id).run(); await env.DB.prepare(`DELETE FROM exams WHERE id=?`).bind(id).run(); return reply(request, env,{success:true}); }
+      if (method==='DELETE') {
+        const attempts=await env.DB.prepare(`SELECT COUNT(*) AS c FROM exam_attempts WHERE exam_id=?`).bind(id).first();
+        if(Number(attempts?.c||0)>0) return reply(request,env,{success:false,error:'لا يمكن حذف اختبار له محاولات طلاب. غيّر حالته إلى مؤرشف بدلًا من الحذف.'},409);
+        await env.DB.prepare(`DELETE FROM exam_questions WHERE exam_id=?`).bind(id).run();
+        await env.DB.prepare(`DELETE FROM exams WHERE id=?`).bind(id).run();
+        return reply(request, env,{success:true});
+      }
     }
     if (/^\/api\/admin\/platform\/exams\/\d+\/questions$/.test(path)) {
       if (!hasPerm(admin.role,'exams')) return reply(request, env, {success:false,error:'Forbidden'},403);
       const examId = Number(path.split('/')[5]);
       if (method==='POST') {
+        const existingAttempts=await env.DB.prepare(`SELECT COUNT(*) AS c FROM exam_attempts WHERE exam_id=?`).bind(examId).first();
+        if(Number(existingAttempts?.c||0)>0) return reply(request,env,{success:false,error:'لا يمكن تعديل أسئلة اختبار بدأه الطلاب. أنشئ نسخة جديدة للاختبار.'},409);
         const b=await readBody(request);
-        const type = clean(b?.type,20); if(!['mcq','true_false','essay'].includes(type)) return reply(request, env,{success:false,error:'bad type'},400);
+        const validationError = validateExamQuestion(b); if (validationError) return reply(request, env,{success:false,error:validationError},400);
+        const type = clean(b?.type,20);
         await env.DB.prepare(`INSERT INTO exam_questions(exam_id,type,question_text,options_json,correct_answer_json,points,order_index,explanation) VALUES(?,?,?,?,?,?,?,?)`)
           .bind(examId,type,clean(b?.question_text,4000),JSON.stringify(b?.options||[]),JSON.stringify(b?.correct_answer??null),Number(b?.points||1),asInt(b?.order_index,0),clean(b?.explanation,2000)).run();
         return reply(request, env, {success:true});
@@ -3794,13 +3903,66 @@ if (method === "POST" && rejectPasswordMatch) {
     if (/^\/api\/admin\/platform\/exam-questions\/\d+$/.test(path)) {
       if (!hasPerm(admin.role,'exams')) return reply(request, env, {success:false,error:'Forbidden'},403);
       const qid = Number(path.split('/').pop());
+      if (method==='PUT' || method==='DELETE') {
+        const question=await env.DB.prepare(`SELECT exam_id FROM exam_questions WHERE id=?`).bind(qid).first();
+        if(!question) return reply(request,env,{success:false,error:'السؤال غير موجود'},404);
+        const existingAttempts=await env.DB.prepare(`SELECT COUNT(*) AS c FROM exam_attempts WHERE exam_id=?`).bind(question.exam_id).first();
+        if(Number(existingAttempts?.c||0)>0) return reply(request,env,{success:false,error:'لا يمكن تعديل أو حذف سؤال بعد بدء الطلاب للاختبار. أنشئ نسخة جديدة.'},409);
+      }
       if (method==='PUT') {
         const b=await readBody(request);
+        const validationError = validateExamQuestion(b); if (validationError) return reply(request, env,{success:false,error:validationError},400);
         await env.DB.prepare(`UPDATE exam_questions SET type=?,question_text=?,options_json=?,correct_answer_json=?,points=?,order_index=?,explanation=? WHERE id=?`)
           .bind(clean(b?.type,20),clean(b?.question_text,4000),JSON.stringify(b?.options||[]),JSON.stringify(b?.correct_answer??null),Number(b?.points||1),asInt(b?.order_index,0),clean(b?.explanation,2000),qid).run();
         return reply(request, env, {success:true});
       }
       if (method==='DELETE') { await env.DB.prepare(`DELETE FROM exam_questions WHERE id=?`).bind(qid).run(); return reply(request, env,{success:true}); }
+    }
+
+    // Exam attempt review and manual essay grading
+    if (method==='GET' && path==='/api/admin/platform/exam-attempts') {
+      if (!hasPerm(admin.role,'exams')) return reply(request, env,{success:false,error:'Forbidden'},403);
+      const examId = asInt(url.searchParams.get('exam_id'),0);
+      if (!examId) return reply(request, env,{success:false,error:'exam_id required'},400);
+      const rows = await env.DB.prepare(`SELECT a.id,a.exam_id,a.student_id,a.status,a.score,a.max_score,a.started_at,a.submitted_at,s.name AS student_name FROM exam_attempts a JOIN students s ON s.id=a.student_id WHERE a.exam_id=? ORDER BY a.id DESC LIMIT 300`).bind(examId).all();
+      return reply(request, env,{success:true,attempts:rows.results||[]});
+    }
+    if (/^\/api\/admin\/platform\/exam-attempts\/\d+$/.test(path)) {
+      if (!hasPerm(admin.role,'exams')) return reply(request, env,{success:false,error:'Forbidden'},403);
+      const attemptId = Number(path.split('/').pop());
+      if (method==='GET') {
+        const attempt = await env.DB.prepare(`SELECT a.*,s.name AS student_name,e.title AS exam_title FROM exam_attempts a JOIN students s ON s.id=a.student_id JOIN exams e ON e.id=a.exam_id WHERE a.id=?`).bind(attemptId).first();
+        if (!attempt) return reply(request, env,{success:false,error:'المحاولة غير موجودة'},404);
+        const questions = await env.DB.prepare(`SELECT id,question_text,points,order_index FROM exam_questions WHERE exam_id=? AND type='essay' ORDER BY order_index ASC,id ASC`).bind(attempt.exam_id).all();
+        return reply(request, env,{success:true,attempt:{...attempt,answers:safeJsonParse(attempt.answers_json,{})},essay_questions:questions.results||[]});
+      }
+    }
+    if (/^\/api\/admin\/platform\/exam-attempts\/\d+\/grade$/.test(path)) {
+      if (!hasPerm(admin.role,'exams')) return reply(request, env,{success:false,error:'Forbidden'},403);
+      const attemptId = Number(path.split('/')[5]);
+      if (method==='PUT') {
+        const attempt = await env.DB.prepare(`SELECT id,exam_id,score,status FROM exam_attempts WHERE id=?`).bind(attemptId).first();
+        if (!attempt) return reply(request, env,{success:false,error:'المحاولة غير موجودة'},404);
+        if (attempt.status!=='submitted') return reply(request, env,{success:false,error:'هذه المحاولة ليست بانتظار التصحيح'},409);
+        const questions = await env.DB.prepare(`SELECT id,points FROM exam_questions WHERE exam_id=? AND type='essay'`).bind(attempt.exam_id).all();
+        const essayQuestions = questions.results||[];
+        if (!essayQuestions.length) return reply(request, env,{success:false,error:'لا توجد أسئلة مقالية للتصحيح'},400);
+        const b=await readBody(request); const scores=b?.essay_scores;
+        if (!scores || typeof scores!=='object' || Array.isArray(scores)) return reply(request, env,{success:false,error:'درجات الأسئلة المقالية مطلوبة'},400);
+        let essayScore=0; const feedback={};
+        for (const q of essayQuestions) {
+          const value=Number(scores[q.id]);
+          const max=Number(q.points||1);
+          if (!Object.prototype.hasOwnProperty.call(scores,String(q.id)) || !Number.isFinite(value) || value<0 || value>max) return reply(request, env,{success:false,error:'تأكد من إدخال درجة صحيحة لكل سؤال مقالي'},400);
+          essayScore+=value;
+          feedback[q.id]=clean(b?.feedback?.[q.id]||'',1000);
+        }
+        const total=Number(attempt.score||0)+essayScore;
+        const gradeUpdate=await env.DB.prepare(`UPDATE exam_attempts SET score=?,status='graded',graded_by=?,graded_at=datetime('now'),feedback_json=? WHERE id=? AND status='submitted'`).bind(total,admin.username,JSON.stringify(feedback),attemptId).run();
+        if (!(gradeUpdate.meta?.changes||0)) return reply(request,env,{success:false,error:'تم تصحيح هذه المحاولة بالفعل'},409);
+        await logAudit(env,{actor_type:'admin',actor_id:admin.id,actor_label:admin.username,action:'exam.attempt.grade',entity_type:'exam_attempt',entity_id:attemptId,details_json:{essay_score:essayScore},ip,user_agent:ua});
+        return reply(request, env,{success:true,score:total});
+      }
     }
 
     // Analytics
@@ -3826,6 +3988,7 @@ if (method === "POST" && rejectPasswordMatch) {
       const prompt = clean(b?.prompt, 8000);
       const mode = clean(b?.mode||'admin_assistant', 40);
       if (!prompt) return reply(request, env, {success:false,error:'prompt required'},400);
+      if (!(await consumeApiRateLimit(env,request,'admin_ai',admin.id,20,60))) return reply(request, env,{success:false,error:'تم تجاوز الحد المؤقت لطلبات المساعد. حاول بعد دقيقة.',code:'RATE_LIMITED'},429);
       const key = env.AI_API_KEY || env.OPENAI_API_KEY || '';
       if (!key) {
         await env.DB.prepare(`INSERT INTO ai_logs(actor_type,actor_id,tool,prompt_preview,response_status) VALUES(?,?,?,?,?)`).bind('admin',admin.id,mode,prompt.slice(0,200),'not_configured').run();
@@ -3833,7 +3996,7 @@ if (method === "POST" && rejectPasswordMatch) {
       }
       const endpoint = env.AI_API_URL || 'https://api.openai.com/v1/chat/completions';
       const model = env.AI_MODEL || 'gpt-4o-mini';
-      const sys = mode==='content_studio' ? 'أنت مساعد محتوى تعليمي. أنشئ مسودات واضحة قابلة للمراجعة قبل النشر.' : mode==='builder' ? 'أنت مساعد بناء واجهات. أعد JSON آمنًا فقط يصف مكونات الواجهة، بدون JavaScript تنفيذي.' : 'أنت مساعد إدارة لمنصة ZM Academy. اقترح خطوات واضحة ولا تنفذ عمليات مدمرة بدون تأكيد.';
+      const sys = mode==='content_studio' ? 'أنت مساعد محتوى تعليمي. أنشئ مسودات واضحة قابلة للمراجعة قبل النشر.' : mode==='builder' ? 'أنت مصمم واجهات لمنصة ZM Academy. أعد كائن JSON صالحًا فقط، دون Markdown أو HTML أو CSS أو JavaScript. استخدم المفاتيح الاختيارية: brandName, tagline, theme, hero, about, branding, announcement, sections. داخل theme استخدم mode dark/light/system وحقول الألوان بصيغة HEX من 6 خانات وtemplate future/glass/minimal/luxury/editorial وfont cairo/tajawal/system/georgia وbuttons gradient/solid/outline وcards solid/glass/outline وmotion on/off وcorners normal/round/sharp. داخل hero استخدم eyebrow,title,highlight,description,primaryText,primaryUrl,secondaryText,secondaryUrl. داخل about استخدم title,description. داخل branding استخدم logoUrl,heroImageUrl,whatsapp,facebook,youtube,telegram. داخل announcement استخدم enabled,text,buttonText,url. داخل sections استخدم قيمًا منطقية للحقول subjects,curriculum,library,about,join. لا تضف مفاتيح غير لازمة ولا تنشئ روابط وهمية.' : 'أنت مساعد إدارة لمنصة ZM Academy. اقترح خطوات واضحة ولا تنفذ عمليات مدمرة بدون تأكيد.';
       try {
         const resp = await fetch(endpoint, {method:'POST', headers:{'Content-Type':'application/json','Authorization':`Bearer ${key}`}, body: JSON.stringify({model, messages:[{role:'system',content:sys},{role:'user',content:prompt}], temperature:0.4})});
         const data = await resp.json();
@@ -3851,7 +4014,9 @@ if (method === "POST" && rejectPasswordMatch) {
       if (method==='GET') {
         const roles = await env.DB.prepare(`SELECT r.*, (SELECT COUNT(*) FROM role_permissions rp WHERE rp.role_id=r.id) as perm_count FROM roles r ORDER BY r.id ASC`).all();
         const admins = await env.DB.prepare(`SELECT id,username,display_name,email,role,is_active,created_at,last_login_at FROM admin_users ORDER BY id DESC LIMIT 200`).all();
-        return reply(request, env,{success:true, roles: roles.results||[], admins: admins.results||[], permissions_map: ADMIN_PERMS});
+        const permissionsMap={...ADMIN_PERMS};
+        if(admin.role!=='super_admin') delete permissionsMap.super_admin;
+        return reply(request, env,{success:true, roles: roles.results||[], admins: admins.results||[], permissions_map: permissionsMap,current_role:admin.role,current_admin_id:admin.id});
       }
     }
     if (path==='/api/admin/platform/admin-users') {
@@ -3866,6 +4031,7 @@ if (method === "POST" && rejectPasswordMatch) {
         const display_name=clean(b?.display_name,120); const email=clean(b?.email,120).toLowerCase();
         if(!/^[A-Za-z0-9_.-]{3,60}$/.test(username) || password.length<12) return reply(request, env,{success:false,error:'اسم مستخدم/كلمة مرور غير صالحة (كلمة المرور 12+)'},400);
         if(!ADMIN_PERMS[role]) return reply(request, env,{success:false,error:'دور غير صالح'},400);
+        if(role==='super_admin' && admin.role!=='super_admin') return reply(request,env,{success:false,error:'لا يمكن منح صلاحية المدير الأعلى إلا للمدير الأعلى'},403);
         const exists = await env.DB.prepare(`SELECT id FROM admin_users WHERE username=?`).bind(username).first();
         if (exists) return reply(request, env,{success:false,error:'اسم المستخدم موجود'},409);
         const hash = await passwordHash(password);
@@ -3878,9 +4044,23 @@ if (method === "POST" && rejectPasswordMatch) {
       if (!hasPerm(admin.role,'roles')) return reply(request, env,{success:false,error:'Forbidden'},403);
       const uid = Number(path.split('/').pop());
       if (method==='PUT') {
+        const targetAdmin=await env.DB.prepare(`SELECT role FROM admin_users WHERE id=?`).bind(uid).first();
+        if(!targetAdmin) return reply(request,env,{success:false,error:'المستخدم الإداري غير موجود'},404);
+        if(targetAdmin.role==='super_admin' && admin.role!=='super_admin') return reply(request,env,{success:false,error:'لا يمكن تعديل حساب مدير أعلى إلا بواسطة مدير أعلى'},403);
         const b=await readBody(request);
-        if (b.role!==undefined) { const role=clean(b.role,40); if(!ADMIN_PERMS[role]) return reply(request, env,{success:false,error:'Invalid role'},400); await env.DB.prepare(`UPDATE admin_users SET role=? WHERE id=?`).bind(role,uid).run(); }
-        if (b.is_active!==undefined) { await env.DB.prepare(`UPDATE admin_users SET is_active=? WHERE id=?`).bind(b.is_active?1:0,uid).run(); }
+        if (b.role!==undefined) { const role=clean(b.role,40); if(!ADMIN_PERMS[role]) return reply(request, env,{success:false,error:'Invalid role'},400); const target=await env.DB.prepare(`SELECT role FROM admin_users WHERE id=?`).bind(uid).first(); if(target?.role==='super_admin' && admin.role!=='super_admin') return reply(request,env,{success:false,error:'لا يمكن تعديل دور مدير أعلى إلا بواسطة مدير أعلى'},403); if(role==='super_admin' && admin.role!=='super_admin') return reply(request,env,{success:false,error:'لا يمكن منح صلاحية المدير الأعلى إلا للمدير الأعلى'},403); if(uid===admin.id && role!==admin.role) return reply(request,env,{success:false,error:'لا يمكنك تغيير دور حسابك الحالي'},403); await env.DB.prepare(`UPDATE admin_users SET role=? WHERE id=?`).bind(role,uid).run(); }
+        if (b.is_active!==undefined) {
+          if (!b.is_active && uid===admin.id) return reply(request,env,{success:false,error:'لا يمكنك إيقاف حسابك الحالي'},403);
+          if (!b.is_active) {
+            const target=await env.DB.prepare(`SELECT role FROM admin_users WHERE id=?`).bind(uid).first();
+            if (target?.role==='super_admin') {
+              if (admin.role!=='super_admin') return reply(request,env,{success:false,error:'لا يمكن إيقاف حساب مدير أعلى إلا بواسطة مدير أعلى'},403);
+              const count=await env.DB.prepare(`SELECT COUNT(*) AS c FROM admin_users WHERE role='super_admin' AND is_active=1`).first();
+              if (Number(count?.c||0)<=1) return reply(request,env,{success:false,error:'يجب أن يظل هناك مدير أعلى نشط واحد على الأقل'},409);
+            }
+          }
+          await env.DB.prepare(`UPDATE admin_users SET is_active=? WHERE id=?`).bind(b.is_active?1:0,uid).run();
+        }
         if (b.display_name!==undefined) { await env.DB.prepare(`UPDATE admin_users SET display_name=? WHERE id=?`).bind(clean(b.display_name,120),uid).run(); }
         if (b.email!==undefined) { await env.DB.prepare(`UPDATE admin_users SET email=? WHERE id=?`).bind(clean(b.email,120).toLowerCase(),uid).run(); }
         if (b.password) { const pw=String(b.password); if(pw.length<12) return reply(request, env,{success:false,error:'كلمة المرور 12+ حرف'},400); const hash=await passwordHash(pw); await env.DB.prepare(`UPDATE admin_users SET password_hash=? WHERE id=?`).bind(hash,uid).run(); }
@@ -3894,6 +4074,10 @@ if (method === "POST" && rejectPasswordMatch) {
       if (method==='PUT') {
         const b=await readBody(request); const role=clean(b?.role,40);
         if(!ADMIN_PERMS[role]) return reply(request, env,{success:false,error:'Invalid role'},400);
+        const target=await env.DB.prepare(`SELECT role FROM admin_users WHERE id=?`).bind(uid).first();
+        if(target?.role==='super_admin' && admin.role!=='super_admin') return reply(request,env,{success:false,error:'لا يمكن تعديل دور مدير أعلى إلا بواسطة مدير أعلى'},403);
+        if(role==='super_admin' && admin.role!=='super_admin') return reply(request,env,{success:false,error:'لا يمكن منح صلاحية المدير الأعلى إلا للمدير الأعلى'},403);
+        if(uid===admin.id && role!==admin.role) return reply(request,env,{success:false,error:'لا يمكنك تغيير دور حسابك الحالي'},403);
         await env.DB.prepare(`UPDATE admin_users SET role=? WHERE id=?`).bind(role,uid).run();
         await logAudit(env,{actor_type:'admin',actor_id:admin.id,actor_label:admin.username,action:'admin.role.update',entity_type:'admin_user',entity_id:uid,details_json:{role},ip,user_agent:ua});
         return reply(request, env,{success:true});
@@ -3980,9 +4164,31 @@ if (method === "POST" && rejectPasswordMatch) {
   if (path.startsWith('/api/student/platform/')) {
     const session = await studentSession(request, env);
     if (!session) return reply(request, env, {success:false,error:'Unauthorized'}, 401);
-    await ensurePlatformSchema(env);
+    const studentPathParts=path.split('/');
+    const isExamResumeRoute=studentPathParts.length===6&&studentPathParts[4]==='exam-attempts'&&/^\\d+$/.test(studentPathParts[5]);
+    const isExamStartRoute=studentPathParts.length===7&&studentPathParts[4]==='exams'&&studentPathParts[6]==='start'&&/^\\d+$/.test(studentPathParts[5]);
+    if (isExamResumeRoute||isExamStartRoute) await ensureColumn(env,'exam_attempts','question_order_json','TEXT');
     if (method==='GET' && path==='/api/student/platform/notifications') {
-      const rows = await env.DB.prepare(`SELECT n.*, CASE WHEN r.id IS NULL THEN 0 ELSE 1 END as is_read FROM notifications n LEFT JOIN notification_reads r ON r.notification_id=n.id AND r.user_type='student' AND r.user_id=? WHERE n.audience_type IN ('all','student') ORDER BY n.id DESC LIMIT 100`).bind(session.student_id).all();
+      // Only show broadcasts and notifications explicitly addressed to this student or their grade.
+      // Previously, every student could see every notification marked "student".
+      const rows = await env.DB.prepare(`
+        SELECT n.*,
+               CASE WHEN r.id IS NULL THEN 0 ELSE 1 END AS is_read
+        FROM notifications n
+        LEFT JOIN notification_reads r
+          ON r.notification_id=n.id
+         AND r.user_type='student'
+         AND r.user_id=?
+        WHERE (n.audience_type='all'
+           OR (n.audience_type='student' AND n.audience_value=CAST(? AS TEXT))
+           OR (n.audience_type='grade' AND EXISTS (
+                SELECT 1 FROM students s
+                WHERE s.id=? AND s.grade=n.audience_value
+           )))
+          AND (n.scheduled_at IS NULL OR datetime(n.scheduled_at)<=datetime('now'))
+        ORDER BY n.id DESC
+        LIMIT 100
+      `).bind(session.student_id, session.student_id, session.student_id).all();
       return reply(request, env, {success:true, notifications: rows.results||[]});
     }
     if (method==='POST' && /^\/api\/student\/platform\/notifications\/\d+\/read$/.test(path)) {
@@ -3991,23 +4197,80 @@ if (method === "POST" && rejectPasswordMatch) {
       return reply(request, env, {success:true});
     }
     if (method==='GET' && path==='/api/student/platform/exams') {
-      const rows = await env.DB.prepare(`SELECT e.id,e.title,e.description,e.subject_id,e.grade,e.duration_minutes,e.attempts_allowed,e.starts_at,e.ends_at,e.show_results,(SELECT COUNT(*) FROM exam_attempts a WHERE a.exam_id=e.id AND a.student_id=?) as my_attempts FROM exams e WHERE e.status='published' ORDER BY e.id DESC LIMIT 100`).bind(session.student_id).all();
+      const rows = await env.DB.prepare(`SELECT e.id,e.title,e.description,e.subject_id,e.grade,e.duration_minutes,e.attempts_allowed,e.starts_at,e.ends_at,e.show_results,(SELECT COUNT(*) FROM exam_attempts a WHERE a.exam_id=e.id AND a.student_id=?) as my_attempts,(SELECT a.id FROM exam_attempts a WHERE a.exam_id=e.id AND a.student_id=? AND a.status='in_progress' ORDER BY a.id DESC LIMIT 1) as active_attempt_id,(SELECT a.id FROM exam_attempts a WHERE a.exam_id=e.id AND a.student_id=? ORDER BY a.id DESC LIMIT 1) as last_attempt_id,(SELECT a.status FROM exam_attempts a WHERE a.exam_id=e.id AND a.student_id=? ORDER BY a.id DESC LIMIT 1) as last_attempt_status FROM exams e WHERE e.status='published' AND (COALESCE(TRIM(e.grade),'')='' OR e.grade=(SELECT s.grade FROM students s WHERE s.id=?)) AND (e.starts_at IS NULL OR datetime(e.starts_at)<=datetime('now')) AND (e.ends_at IS NULL OR datetime(e.ends_at)>=datetime('now')) ORDER BY e.id DESC LIMIT 100`).bind(session.student_id, session.student_id, session.student_id, session.student_id, session.student_id).all();
       return reply(request, env, {success:true, exams: rows.results||[]});
     }
-    if (method==='POST' && /^\/api\/student\/platform\/exams\/\d+\/start$/.test(path)) {
+            if (method==='PUT' && /^\/api\/student\/platform\/exam-attempts\/\d+\/answers$/.test(path)) {
+      const attemptId=Number(path.split('/')[5]);
+      const attempt=await env.DB.prepare(`SELECT a.id,a.exam_id,CASE WHEN e.duration_minutes>0 AND datetime(a.started_at,'+' || e.duration_minutes || ' minutes')<=datetime('now') THEN 1 ELSE 0 END AS is_expired FROM exam_attempts a JOIN exams e ON e.id=a.exam_id WHERE a.id=? AND a.student_id=? AND a.status='in_progress'`).bind(attemptId,session.student_id).first();
+      if(!attempt) return reply(request,env,{success:false,error:'المحاولة غير متاحة'},404);
+      if (!(await consumeApiRateLimit(env,request,'exam-autosave',attemptId,120,60))) return reply(request,env,{success:false,error:'طلبات حفظ كثيرة جدًا. انتظر دقيقة ثم حاول مرة أخرى.'},429);
+      if(Number(attempt.is_expired)===1) {
+        await env.DB.prepare(`UPDATE exam_attempts SET status='expired',submitted_at=datetime('now') WHERE id=? AND student_id=? AND status='in_progress'`).bind(attemptId,session.student_id).run();
+        return reply(request,env,{success:false,error:'انتهى وقت الاختبار'},410);
+      }
+      const body=await readBody(request); const incoming=body?.answers;
+      if(!incoming || typeof incoming!=='object' || Array.isArray(incoming)) return reply(request,env,{success:false,error:'الإجابات غير صالحة'},400);
+      const questionRows=await env.DB.prepare(`SELECT id FROM exam_questions WHERE exam_id=?`).bind(attempt.exam_id).all();
+      const allowed=new Set((questionRows.results||[]).map(q=>String(q.id)));
+      const answers={};
+      for(const [key,value] of Object.entries(incoming)) {
+        if(!allowed.has(String(key))) continue;
+        if(typeof value==='string') answers[key]=value.slice(0,5000);
+        else if(typeof value==='boolean' || typeof value==='number') answers[key]=value;
+        else if(value && typeof value==='object') answers[key]=value;
+      }
+      if(JSON.stringify(answers).length>30000) return reply(request,env,{success:false,error:'حجم الإجابات أكبر من المسموح'},413);
+      await env.DB.prepare(`UPDATE exam_attempts SET answers_json=? WHERE id=? AND student_id=? AND status='in_progress'`).bind(JSON.stringify(answers),attemptId,session.student_id).run();
+      return reply(request,env,{success:true,saved:true});
+    }
+if (method==='GET' && /^\/api\/student\/platform\/exam-attempts\/\d+$/.test(path)) {
+      const attemptId=Number(path.split('/').pop());
+      const attempt=await env.DB.prepare(`SELECT a.id AS attempt_id,a.exam_id,a.started_at,a.status,a.answers_json,a.question_order_json,e.title,e.description,e.duration_minutes,e.attempts_allowed,e.shuffle_questions,e.show_results,CASE WHEN e.duration_minutes>0 AND datetime(a.started_at,'+' || e.duration_minutes || ' minutes')<=datetime('now') THEN 1 ELSE 0 END AS is_expired FROM exam_attempts a JOIN exams e ON e.id=a.exam_id WHERE a.id=? AND a.student_id=? AND a.status='in_progress'`).bind(attemptId,session.student_id).first();
+      if(!attempt) return reply(request,env,{success:false,error:'المحاولة المفتوحة غير موجودة'},404);
+      if(Number(attempt.is_expired)===1) {
+        await env.DB.prepare(`UPDATE exam_attempts SET status='expired',submitted_at=datetime('now') WHERE id=? AND student_id=? AND status='in_progress'`).bind(attemptId,session.student_id).run();
+        return reply(request,env,{success:false,error:'انتهى وقت الاختبار. لا يمكن استكمال هذه المحاولة.'},410);
+      }
+      const qs=await env.DB.prepare(`SELECT id,type,question_text,options_json,points,order_index FROM exam_questions WHERE exam_id=? ORDER BY order_index ASC,id ASC`).bind(attempt.exam_id).all();
+      const questionRows=qs.results||[]; const byId=new Map(questionRows.map(q=>[Number(q.id),q]));
+      const savedOrder=safeJsonParse(attempt.question_order_json,[]);
+      const orderedQuestions=Array.isArray(savedOrder)&&savedOrder.length?[...savedOrder.map(id=>byId.get(Number(id))).filter(Boolean),...questionRows.filter(q=>!savedOrder.includes(q.id))]:questionRows;
+      return reply(request,env,{success:true,attempt_id:attempt.attempt_id,exam:attempt,answers:safeJsonParse(attempt.answers_json,{}),questions:orderedQuestions.map(q=>({...q,options:safeJsonParse(q.options_json,[])}))});
+    }
+if (method==='POST' && /^\/api\/student\/platform\/exams\/\d+\/start$/.test(path)) {
       const examId = Number(path.split('/')[5]);
-      const exam = await env.DB.prepare(`SELECT * FROM exams WHERE id=? AND status='published'`).bind(examId).first();
-      if (!exam) return reply(request, env, {success:false,error:'Exam not found'},404);
+      const exam = await env.DB.prepare(`SELECT * FROM exams WHERE id=? AND status='published' AND (COALESCE(TRIM(grade),'')='' OR grade=(SELECT s.grade FROM students s WHERE s.id=?)) AND (starts_at IS NULL OR datetime(starts_at)<=datetime('now')) AND (ends_at IS NULL OR datetime(ends_at)>=datetime('now'))`).bind(examId, session.student_id).first();
+      if (!exam) return reply(request, env, {success:false,error:'الاختبار غير متاح لهذا الطالب أو خارج موعده'},404);
+      // Close expired attempts before checking whether the student already has an open attempt.
+      await env.DB.prepare(`UPDATE exam_attempts SET status='expired', submitted_at=datetime('now') WHERE exam_id=? AND student_id=? AND status='in_progress' AND EXISTS (SELECT 1 FROM exams e WHERE e.id=exam_attempts.exam_id AND e.duration_minutes>0 AND datetime(exam_attempts.started_at, '+' || e.duration_minutes || ' minutes')<=datetime('now'))`).bind(examId, session.student_id).run();
+      const activeAttempt = await env.DB.prepare(`SELECT id FROM exam_attempts WHERE exam_id=? AND student_id=? AND status='in_progress' ORDER BY id DESC LIMIT 1`).bind(examId, session.student_id).first();
+      if (activeAttempt) return reply(request, env, {success:false,error:'لديك محاولة مفتوحة بالفعل. أكملها قبل بدء محاولة أخرى.'},409);
       const attempts = await env.DB.prepare(`SELECT COUNT(*) c FROM exam_attempts WHERE exam_id=? AND student_id=?`).bind(examId, session.student_id).first();
-      if ((attempts?.c||0) >= Number(exam.attempts_allowed||1)) return reply(request, env, {success:false,error:'No attempts left'},400);
+      if ((attempts?.c||0) >= Number(exam.attempts_allowed||1)) return reply(request, env, {success:false,error:'لا توجد محاولات متبقية'},400);
       const qs = await env.DB.prepare(`SELECT id,type,question_text,options_json,points,order_index FROM exam_questions WHERE exam_id=? ORDER BY order_index ASC, id ASC`).bind(examId).all();
-      const res = await env.DB.prepare(`INSERT INTO exam_attempts(exam_id,student_id,status,answers_json,max_score) VALUES(?, ?, 'in_progress','{}',?)`).bind(examId, session.student_id, (qs.results||[]).reduce((s,q)=>s+Number(q.points||1),0)).run();
-      return reply(request, env, {success:true, attempt_id: res.meta?.last_row_id, exam, questions:(qs.results||[]).map(q=>({...q, options:safeJsonParse(q.options_json,[])}))});
+      const questions = [...(qs.results||[])];
+      if (!questions.length) return reply(request, env, {success:false,error:'الاختبار لا يحتوي على أسئلة بعد'},400);
+      const maxScore = questions.reduce((sum,q)=>sum+Number(q.points||1),0);
+      // Shuffle only the presentation order for this attempt; question IDs remain stable for answer grading.
+      if (Number(exam.shuffle_questions) === 1) {
+        for (let i=questions.length-1;i>0;i--) {
+          const j=Math.floor(Math.random()*(i+1));
+          [questions[i],questions[j]]=[questions[j],questions[i]];
+        }
+      }
+      const res = await env.DB.prepare(`INSERT INTO exam_attempts(exam_id,student_id,status,answers_json,max_score,question_order_json) VALUES(?, ?, 'in_progress','{}',?,?)`).bind(examId, session.student_id, maxScore, JSON.stringify(questions.map(q=>q.id))).run();
+      const started=await env.DB.prepare(`SELECT started_at FROM exam_attempts WHERE id=? AND student_id=?`).bind(res.meta?.last_row_id,session.student_id).first();
+      return reply(request, env, {success:true, attempt_id: res.meta?.last_row_id, started_at:started?.started_at||null, exam, questions:questions.map(q=>({...q, options:safeJsonParse(q.options_json,[])}))});
     }
     if (method==='POST' && /^\/api\/student\/platform\/exam-attempts\/\d+\/submit$/.test(path)) {
       const attemptId = Number(path.split('/')[5]);
-      const attempt = await env.DB.prepare(`SELECT * FROM exam_attempts WHERE id=? AND student_id=?`).bind(attemptId, session.student_id).first();
+      const attempt = await env.DB.prepare(`SELECT a.*, e.show_results, e.duration_minutes, CASE WHEN e.duration_minutes>0 AND datetime(a.started_at, '+' || e.duration_minutes || ' minutes')<=datetime('now') THEN 1 ELSE 0 END AS is_expired FROM exam_attempts a JOIN exams e ON e.id=a.exam_id WHERE a.id=? AND a.student_id=?`).bind(attemptId, session.student_id).first();
       if (!attempt || attempt.status!=='in_progress') return reply(request, env, {success:false,error:'Attempt not available'},400);
+      if (Number(attempt.is_expired)===1) {
+        await env.DB.prepare(`UPDATE exam_attempts SET status='expired', submitted_at=datetime('now') WHERE id=? AND student_id=? AND status='in_progress'`).bind(attemptId, session.student_id).run();
+        return reply(request, env, {success:false,error:'انتهى الوقت المحدد للاختبار. تم إغلاق المحاولة.'}, 400);
+      }
       const b = await readBody(request);
       const answers = b?.answers && typeof b.answers==='object' ? b.answers : {};
       const qs = await env.DB.prepare(`SELECT * FROM exam_questions WHERE exam_id=?`).bind(attempt.exam_id).all();
@@ -4022,11 +4285,26 @@ if (method === "POST" && rejectPasswordMatch) {
       const status = needsManual ? 'submitted' : 'graded';
       await env.DB.prepare(`UPDATE exam_attempts SET submitted_at=datetime('now'), answers_json=?, score=?, max_score=?, status=?, graded_at=CASE WHEN ?='graded' THEN datetime('now') ELSE NULL END WHERE id=?`)
         .bind(JSON.stringify(answers), score, max, status, status, attemptId).run();
-      return reply(request, env, {success:true, score, max_score:max, status});
+      const showResults = Number(attempt.show_results) !== 0;
+      return reply(request, env, {success:true, score:showResults&&!needsManual?score:null, max_score:showResults?max:null, status, results_hidden:!showResults, results_pending_manual:needsManual});
+    }
+    if (method==='GET' && /^\/api\/student\/platform\/exam-attempts\/\d+\/result$/.test(path)) {
+      const attemptId=Number(path.split('/')[5]);
+      const attempt=await env.DB.prepare(`SELECT a.id,a.exam_id,a.status,a.score,a.max_score,a.feedback_json,e.show_results FROM exam_attempts a JOIN exams e ON e.id=a.exam_id WHERE a.id=? AND a.student_id=?`).bind(attemptId,session.student_id).first();
+      if(!attempt) return reply(request, env,{success:false,error:'المحاولة غير موجودة'},404);
+      const showResults=Number(attempt.show_results)!==0;
+      let feedback=[];
+      if(showResults&&attempt.status==='graded') {
+        const questions=await env.DB.prepare(`SELECT id,question_text FROM exam_questions WHERE exam_id=? AND type='essay' ORDER BY order_index ASC,id ASC`).bind(attempt.exam_id).all();
+        const saved=safeJsonParse(attempt.feedback_json,{});
+        feedback=(questions.results||[]).map(q=>({question_id:q.id,question_text:q.question_text,comment:saved[q.id]||''}));
+      }
+      return reply(request,env,{success:true,status:attempt.status,score:showResults&&attempt.status==='graded'?attempt.score:null,max_score:showResults&&attempt.status==='graded'?attempt.max_score:null,feedback,results_hidden:!showResults,results_pending_manual:attempt.status==='submitted'});
     }
     if (method==='POST' && path==='/api/student/platform/ai') {
       const b = await readBody(request); const prompt = clean(b?.prompt,4000);
       if(!prompt) return reply(request, env,{success:false,error:'prompt required'},400);
+      if (!(await consumeApiRateLimit(env,request,'student_ai',session.student_id,10,60))) return reply(request, env,{success:false,error:'تم تجاوز الحد المؤقت لطلبات المساعد. حاول بعد دقيقة.',code:'RATE_LIMITED'},429);
       const key = env.AI_API_KEY || env.OPENAI_API_KEY || '';
       if (!key) return reply(request, env, {success:false,error:'AI service not configured', code:'AI_NOT_CONFIGURED'}, 503);
       const endpoint = env.AI_API_URL || 'https://api.openai.com/v1/chat/completions';
