@@ -1,0 +1,119 @@
+name: ZM Academy isolated Preview D1 smoke test
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "worker.js"
+      - "migrations/**"
+      - "wrangler.preview.toml"
+      - "tests/preview-smoke-*.sql"
+      - ".github/workflows/preview-smoke.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: zm-academy-preview-d1-smoke
+  cancel-in-progress: true
+
+jobs:
+  preview-smoke:
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Validate project
+        run: npm run check:all
+
+      - name: Install Wrangler
+        run: npm install --global wrangler@4
+
+      - name: Validate Cloudflare credentials
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          test -n "$CLOUDFLARE_API_TOKEN" || { echo "Missing CLOUDFLARE_API_TOKEN"; exit 1; }
+          test -n "$CLOUDFLARE_ACCOUNT_ID" || { echo "Missing CLOUDFLARE_ACCOUNT_ID"; exit 1; }
+
+      - name: Apply migrations to isolated Preview D1 only
+        run: wrangler d1 migrations apply zm-academy-preview-db --remote --config wrangler.preview.toml
+
+      - name: Deploy isolated Preview Worker
+        run: wrangler deploy --config wrangler.preview.toml
+
+      - name: Exercise admin setup, login, and recursive material deletion
+        shell: bash
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          set -euo pipefail
+          API="https://zm-academy-api-preview.ziadmohsen4567.workers.dev"
+          SETUP_KEY="$(python3 -c 'import secrets; print(secrets.token_urlsafe(36))')"
+          ADMIN_PASSWORD="$(python3 -c 'import secrets; print(secrets.token_urlsafe(36))')"
+          echo "::add-mask::$SETUP_KEY"
+          echo "::add-mask::$ADMIN_PASSWORD"
+
+          # Reset only the dedicated Preview D1 database.
+          wrangler d1 execute zm-academy-preview-db --remote --config wrangler.preview.toml --file=tests/preview-smoke-reset.sql
+
+          printf '%s' "$SETUP_KEY" | wrangler secret put ADMIN_SETUP_KEY --config wrangler.preview.toml
+
+          curl --fail --silent --show-error --retry 12 --retry-delay 5 --retry-all-errors "$API/api/health" -o /tmp/zm-health.json
+          python3 -c "import json; d=json.load(open('/tmp/zm-health.json')); assert d.get('success') is True and d.get('database') == 'connected', d"
+
+          curl --fail --silent --show-error -X POST "$API/api/admin/setup" \
+            -H "Content-Type: application/json" \
+            --data "{\"setupKey\":\"$SETUP_KEY\",\"username\":\"preview_smoke_admin\",\"password\":\"$ADMIN_PASSWORD\"}" \
+            -o /tmp/zm-setup.json
+          python3 -c "import json; d=json.load(open('/tmp/zm-setup.json')); assert d.get('success') is True, d"
+
+          curl --fail --silent --show-error -X POST "$API/api/admin/login" \
+            -H "Content-Type: application/json" \
+            --data "{\"username\":\"preview_smoke_admin\",\"password\":\"$ADMIN_PASSWORD\"}" \
+            -o /tmp/zm-login.json
+          ADMIN_TOKEN="$(python3 -c "import json; print(json.load(open('/tmp/zm-login.json'))['token'])")"
+          test -n "$ADMIN_TOKEN"
+          echo "::add-mask::$ADMIN_TOKEN"
+
+          wrangler d1 execute zm-academy-preview-db --remote --config wrangler.preview.toml --file=tests/preview-smoke-seed.sql
+
+          curl --fail --silent --show-error -X DELETE "$API/api/admin/materials" \
+            -H "Authorization: Bearer $ADMIN_TOKEN" \
+            -H "Content-Type: application/json" \
+            --data '{"id":990001}' \
+            -o /tmp/zm-delete.json
+          python3 -c "import json; d=json.load(open('/tmp/zm-delete.json')); assert d.get('success') is True, d"
+
+          wrangler d1 execute zm-academy-preview-db --remote --config wrangler.preview.toml \
+            --command="SELECT CASE WHEN
+              (SELECT COUNT(*) FROM materials WHERE id=990001)=0 AND
+              (SELECT COUNT(*) FROM orders WHERE id=990001)=0 AND
+              (SELECT COUNT(*) FROM student_hidden_purchases WHERE order_id=990001)=0 AND
+              (SELECT COUNT(*) FROM student_material_progress WHERE material_id=990001)=0 AND
+              (SELECT COUNT(*) FROM student_favorites WHERE material_id=990001)=0 AND
+              (SELECT COUNT(*) FROM archived_materials WHERE material_id=990001)=0 AND
+              (SELECT COUNT(*) FROM preview_material_notes WHERE material_id=990001)=0
+              THEN 'PREVIEW_DELETE_SMOKE_PASS' ELSE 'PREVIEW_DELETE_SMOKE_FAIL' END AS result;" \
+            | tee /tmp/zm-delete-verify.txt
+          grep -q "PREVIEW_DELETE_SMOKE_PASS" /tmp/zm-delete-verify.txt
+
+      - name: Clean up isolated Preview fixtures
+        if: always()
+        run: wrangler d1 execute zm-academy-preview-db --remote --config wrangler.preview.toml --file=tests/preview-smoke-reset.sql
