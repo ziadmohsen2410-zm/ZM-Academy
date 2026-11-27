@@ -1351,7 +1351,6 @@ if (method === "POST" && rejectPasswordMatch) {
         FROM orders o
         JOIN students s ON s.id = o.student_id
         JOIN materials m ON m.id = o.material_id
-        WHERE o.status = 'pending'
         ORDER BY o.id DESC
         LIMIT 500
       `).all();
