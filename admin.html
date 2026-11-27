@@ -498,7 +498,7 @@ async function loadMaterials(){
   const tb=$('#materialsTbody'); tb.innerHTML='<tr><td colspan="5" class="muted">جارٍ التحميل...</td></tr>';
   try{
     const d=await api('/api/admin/materials'); const rows=d.materials||d.data||[];
-    tb.innerHTML=rows.map(m=>`<tr><td>${esc(m.id)}</td><td>${esc(m.title||m.name||'-')}</td><td>${esc(m.subject_name||m.subject_id||'-')}</td><td>${esc(m.price ?? (m.is_free?0:'-'))}</td><td>${Number(m.is_archived)===1?'<span class="badge warn">مؤرشف</span>':'<span class="badge ok">نشط</span>'} <button class="ghost small" onclick="window.__toggleMaterialArchive(${Number(m.id)},${Number(m.is_archived)===1?'restore':'archive'})">${Number(m.is_archived)===1?'استعادة':'أرشفة'}</button></td></tr>`).join('')||'<tr><td colspan="5" class="muted">لا يوجد محتوى</td></tr>';
+    tb.innerHTML=rows.map(m=>`<tr><td>${esc(m.id)}</td><td>${esc(m.title||m.name||'-')}</td><td>${esc(m.subject_name||m.subject_id||'-')}</td><td>${esc(m.price ?? (m.is_free?0:'-'))}</td><td>${Number(m.is_archived)===1?'<span class="badge warn">مؤرشف</span>':'<span class="badge ok">نشط</span>'} <button class="ghost small" onclick="window.__toggleMaterialArchive(${Number(m.id)},${Number(m.is_archived)===1?'restore':'archive'})">${Number(m.is_archived)===1?'استعادة':'أرشفة'}</button> <button class="danger small" onclick="window.__deleteMaterial(${Number(m.id)},'${esc(m.title||m.name||'المادة')}')">حذف نهائي</button></td></tr>`).join('')||'<tr><td colspan="5" class="muted">لا يوجد محتوى</td></tr>';
   }catch(e){ tb.innerHTML=`<tr><td colspan="5">خطأ: ${esc(e.message)}</td></tr>`; }
 }
 window.__toggleMaterialArchive=async(id,action)=>{
@@ -506,6 +506,16 @@ window.__toggleMaterialArchive=async(id,action)=>{
   if(!confirm(label)) return;
   try{ await api(`/api/admin/materials/${id}/${action}`,{method:'POST'}); showMsg(action==='archive'?'تمت أرشفة الدرس':'تمت استعادة الدرس',true); await loadMaterials(); }
   catch(e){ showMsg(e.message); }
+};
+window.__deleteMaterial=async(id,title)=>{
+  if(!confirm(`تحذير: سيتم حذف "${title}" نهائيًا مع ملفها وسجلات الطلبات المرتبطة بها. لا يمكن التراجع. هل تريد المتابعة؟`)) return;
+  const confirmation=prompt('لتأكيد الحذف النهائي اكتب: حذف');
+  if(confirmation!=='حذف') return;
+  try{
+    await api('/api/admin/materials',{method:'DELETE',body:JSON.stringify({id})});
+    showMsg('تم حذف المادة نهائيًا',true);
+    await loadMaterials();
+  }catch(e){ showMsg(e.message); }
 };
 async function loadOrders(){
   const tb=$('#ordersTbody'); tb.innerHTML='<tr><td colspan="6" class="muted">...</td></tr>';

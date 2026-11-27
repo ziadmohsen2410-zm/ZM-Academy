@@ -695,3 +695,16 @@ test("student content viewer serves attached images as images and keeps PDF deli
   assert.ok(student.includes("pdfjsLib.getDocument"));
   assert.ok(student.includes("URL.revokeObjectURL(activeImageObjectUrl)"));
 });
+
+
+test("admin material list exposes archive, restore, and separately confirmed permanent deletion", () => {
+  const admin = read("admin.html");
+  const worker = read("worker.js");
+  assert.ok(admin.includes("حذف نهائي"));
+  assert.ok(admin.includes("لتأكيد الحذف النهائي اكتب: حذف"));
+  assert.ok(admin.includes("method:'DELETE'"));
+  assert.ok(worker.includes('if (method === "DELETE" && path === "/api/admin/materials")'));
+  assert.ok(worker.includes('DELETE FROM orders WHERE material_id = ?'));
+  assert.ok(worker.includes('DELETE FROM materials WHERE id = ?'));
+  assert.ok(worker.includes('DELETE FROM archived_materials WHERE material_id = ?'));
+});

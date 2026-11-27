@@ -1818,28 +1818,14 @@ if (method === "POST" && rejectPasswordMatch) {
         );
       }
 
-      const linkedOrders = await env.DB.prepare(
-        "SELECT COUNT(*) AS n FROM orders WHERE material_id = ?"
-      )
-        .bind(id)
-        .first();
-
-      if ((linkedOrders?.n || 0) > 0) {
-        await ensureArchivedMaterialsTable(env);
-        await env.DB.prepare(
-          "INSERT OR IGNORE INTO archived_materials (material_id) VALUES (?)"
-        ).bind(id).run();
-        return reply(request, env, {
-          success: true,
-          archived: true,
-          message: "الدرس مرتبط بطلبات أو مشتريات؛ تم إخفاؤه وأرشفته مع الاحتفاظ بسجلات الطلاب والطلبات. يمكنك استعادته لاحقًا.",
-        });
-      }
-
       await ensureStudentLearningTables(env);
       await ensureArchivedMaterialsTable(env);
+      await ensureStudentHiddenPurchasesTable(env);
 
+      // Permanent deletion removes purchase/order history tied to this material.
       const deletion = await env.DB.batch([
+        env.DB.prepare("DELETE FROM student_hidden_purchases WHERE order_id IN (SELECT id FROM orders WHERE material_id = ?)").bind(id),
+        env.DB.prepare("DELETE FROM orders WHERE material_id = ?").bind(id),
         env.DB.prepare("DELETE FROM student_material_progress WHERE material_id = ?").bind(id),
         env.DB.prepare("DELETE FROM student_favorites WHERE material_id = ?").bind(id),
         env.DB.prepare("DELETE FROM archived_materials WHERE material_id = ?").bind(id),
@@ -1848,15 +1834,10 @@ if (method === "POST" && rejectPasswordMatch) {
       const result = deletion[deletion.length - 1];
 
       if (!(result?.meta?.changes || 0)) {
-        return reply(
-          request,
-          env,
-          {
-            success: false,
-            error: "Material not found.",
-          },
-          404
-        );
+        return reply(request, env, {
+          success: false,
+          error: "Material not found.",
+        }, 404);
       }
 
       if (existing.file_key) {
