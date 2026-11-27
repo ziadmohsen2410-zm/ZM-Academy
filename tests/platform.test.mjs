@@ -865,4 +865,5 @@ test("isolated Preview smoke test is bound only to the Preview D1 database", () 
   assert.ok(workflow.includes("/api/parent/children"));
   assert.ok(fixture.includes("preview_material_notes"));
   assert.ok(fixture.includes("CREATE TABLE IF NOT EXISTS student_accounts"));
+  assert.ok(read("migrations/004_preview_student_accounts.sql").includes("CREATE TABLE IF NOT EXISTS student_accounts"));
 });
