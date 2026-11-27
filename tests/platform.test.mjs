@@ -671,8 +671,11 @@ test("admin order queue only shows pending requests; approval preserves entitlem
   const statusStart = worker.indexOf('if (method === "PATCH" && orderStatus)');
   const statusEnd = worker.indexOf("// قائمة الطلاب بالتفاصيل الصحيحة", statusStart);
   const statusRoute = worker.slice(statusStart, statusEnd);
-  assert.ok(statusRoute.includes("DELETE FROM orders WHERE id = ? AND status = 'pending'"));
+  assert.ok(statusRoute.includes("UPDATE orders SET status = 'rejected' WHERE id = ? AND status = 'pending'"));
   assert.ok(statusRoute.includes("UPDATE orders SET status = ? WHERE id = ? AND status = 'pending'"));
+  assert.ok(!statusRoute.includes("DELETE FROM orders WHERE id = ? AND status = 'pending'"));
+  const createOrder = worker.slice(worker.indexOf('const duplicate = await env.DB.prepare('), worker.indexOf('// مسارات الطالب المحمية', worker.indexOf('const duplicate = await env.DB.prepare(')));
+  assert.ok(createOrder.includes("status IN ('pending', 'approved', 'completed')"));
   assert.ok(admin.includes("بعد الموافقة أو الرفض تختفي من القائمة"));
   assert.ok(!admin.includes('id="orderFilter"'));
 });
