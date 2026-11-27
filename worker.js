@@ -1917,6 +1917,7 @@ if (method === "POST" && rejectPasswordMatch) {
       // Permanently remove the material and every dependent row, including
       // records that reference its purchase orders. Delete descendants first.
       let deletionPlan = new Map();
+      let deletionStage = "read-table-catalog";
       try {
         deletionStage = "read-table-catalog";
         const tableResult = await env.DB.prepare("PRAGMA table_list").all();
