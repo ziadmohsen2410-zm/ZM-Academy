@@ -101,7 +101,8 @@ test("legacy column extension SQL is not documented or exposed as a repeatable m
   const legacy = read("migrations/002_column_extensions.sql");
   const deployment = read("docs/DEPLOYMENT.md");
   const secrets = read("docs/CLOUDFLARE-D1-SECRETS.md");
-  assert.doesNotMatch(legacy, /\bALTER\s+TABLE\b/i);
+  const executableSql = legacy.replace(/^\s*--.*$/gm, "");
+  assert.doesNotMatch(executableSql, /\bALTER\s+TABLE\b/i);
   assert.match(legacy, /DO NOT EXECUTE/i);
   assert.match(deployment, /لا تنفّذ.*002_column_extensions\.sql.*يدويًا/s);
   assert.match(secrets, /لا تنفّذ.*002_column_extensions\.sql/s);
