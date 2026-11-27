@@ -155,6 +155,9 @@ jobs:
             -H "Authorization: Bearer $ADMIN_TOKEN" \
             -H "Content-Type: application/json" \
             --data '{"status":"approved"}' -o /tmp/zm-order-approved.json
+          curl --fail --silent --show-error "$API/api/student/purchases" \
+            -H "Authorization: Bearer $STUDENT_TOKEN" -o /tmp/zm-student-purchases-approved.json
+          python3 -c "import json; d=json.load(open('/tmp/zm-student-purchases-approved.json')); rows=[x for x in d.get('purchases',[]) if int(x.get('order_id',0))==int('$ORDER_ID')]; assert rows and rows[0].get('status')=='approved', d"
 
           # Register a parent, request a student link, and approve it from the admin portal.
           curl --fail --silent --show-error -X POST "$API/api/parent/register" \
@@ -187,7 +190,7 @@ jobs:
           python3 -c "import json; d=json.load(open('/tmp/zm-parent-children.json')); assert any(x.get('status')=='approved' for x in d.get('children',[])), d"
           curl --fail --silent --show-error "$API/api/parent/children/$STUDENT_ID/overview" \
             -H "Authorization: Bearer $PARENT_TOKEN" -o /tmp/zm-parent-overview.json
-          python3 -c "import json; d=json.load(open('/tmp/zm-parent-overview.json')); assert d.get('success') is True and d.get('student',{}).get('id') == int('$STUDENT_ID'), d"
+          python3 -c "import json; d=json.load(open('/tmp/zm-parent-overview.json')); assert d.get('success') is True and d.get('student',{}).get('id') == int('$STUDENT_ID') and any(x.get('status')=='approved' for x in d.get('orders',[])), d"
 
           # AI must fail safely and explicitly when no provider key is configured.
           AI_STATUS="$(curl --silent --show-error -X POST "$API/api/student/platform/ai" \
