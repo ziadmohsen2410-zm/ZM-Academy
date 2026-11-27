@@ -306,7 +306,11 @@ async function studentSession(request, env) {
     .bind(tokenHash)
     .first();
 
-  return row ? { ...row, tokenHash } : null;
+  if (!row) return null;
+  // Sliding session: an active student session stays valid for seven days after each authenticated request.
+  await env.DB.prepare("UPDATE student_sessions SET expires_at = datetime('now', ?) WHERE id = ?")
+    .bind(`+${SESSION_DAYS} days`, row.id).run();
+  return { ...row, tokenHash };
 }
 
 async function purgeExpiredSessions(env) {
@@ -3765,6 +3769,9 @@ if (method === "POST" && rejectPasswordMatch) {
       return null;
     }
     if (Number(row.is_active) === 0) return null;
+    // Sliding session: extend an active parent session after successful authentication.
+    await env.DB.prepare("UPDATE parent_sessions SET expires_at=datetime('now', ?) WHERE id=?")
+      .bind(`+${SESSION_DAYS} days`, row.session_id).run();
     return row;
   }
   function settingDefault(key) {
