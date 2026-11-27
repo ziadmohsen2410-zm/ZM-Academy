@@ -345,8 +345,27 @@ const esc = (s='')=>String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">"
 const fmtDate = (v)=>v?new Date(v).toLocaleString('ar-EG'):'-';
 const tokenKey='zm_admin_token';
 const readAdminToken=()=>{try{return localStorage.getItem(tokenKey)||sessionStorage.getItem(tokenKey)||'';}catch{return '';}};
-const saveAdminToken=(token)=>{try{localStorage.setItem(tokenKey,token);}catch{}try{sessionStorage.setItem(tokenKey,token);}catch{}};
-const clearAdminToken=()=>{try{localStorage.removeItem(tokenKey);}catch{}try{sessionStorage.removeItem(tokenKey);}catch{}};
+const openAdminTokenDB=()=>new Promise((resolve,reject)=>{
+  if(!('indexedDB' in window)) return reject(new Error('IndexedDB unavailable'));
+  const request=indexedDB.open('zm_admin_auth',1);
+  request.onupgradeneeded=()=>{if(!request.result.objectStoreNames.contains('tokens'))request.result.createObjectStore('tokens');};
+  request.onsuccess=()=>resolve(request.result);
+  request.onerror=()=>reject(request.error||new Error('IndexedDB open failed'));
+});
+const readSavedAdminToken=async()=>{
+  const token=readAdminToken(); if(token)return token;
+  try{const db=await openAdminTokenDB();return await new Promise((resolve,reject)=>{const tx=db.transaction('tokens','readonly');const req=tx.objectStore('tokens').get(tokenKey);req.onsuccess=()=>resolve(req.result||'');req.onerror=()=>reject(req.error);tx.oncomplete=()=>db.close();});}catch{return '';}
+};
+const saveAdminToken=async(token)=>{
+  try{localStorage.setItem(tokenKey,token);}catch{}
+  try{sessionStorage.setItem(tokenKey,token);}catch{}
+  try{const db=await openAdminTokenDB();await new Promise((resolve,reject)=>{const tx=db.transaction('tokens','readwrite');tx.objectStore('tokens').put(token,tokenKey);tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);});db.close();}catch{}
+};
+const clearAdminToken=()=>{
+  try{localStorage.removeItem(tokenKey);}catch{}
+  try{sessionStorage.removeItem(tokenKey);}catch{}
+  try{openAdminTokenDB().then(db=>{const tx=db.transaction('tokens','readwrite');tx.objectStore('tokens').delete(tokenKey);tx.oncomplete=()=>db.close();tx.onerror=()=>db.close();}).catch(()=>{});}catch{}
+};
 const state={token:readAdminToken(), admin:null, section:'dashboard', cache:{}};
 const sectionGroups=[
   {label:'الرئيسية', items:[['dashboard','لوحة المعلومات','نظرة عامة سريعة']]},
@@ -403,7 +422,7 @@ async function login(){
   $('#loginBtn').disabled=true;
   try{
     const data = await api('/api/admin/login',{method:'POST',body:JSON.stringify({username,password})});
-    state.token=data.token; saveAdminToken(state.token);
+    state.token=data.token; await saveAdminToken(state.token);
     await boot();
   }catch(e){ showLoginMsg(e.message||'فشل تسجيل الدخول'); }
   finally{$('#loginBtn').disabled=false;}
@@ -414,7 +433,8 @@ async function logout(){
   $('#appView').classList.add('hidden'); $('#loginView').classList.remove('hidden');
 }
 async function boot(){
-  if(!state.token){ $('#loginView').classList.remove('hidden'); return; }
+  if(!state.token) state.token=await readSavedAdminToken();
+  if(!state.token){ $('#appView').classList.add('hidden'); $('#loginView').classList.remove('hidden'); return; }
   try{
     const me=await api('/api/admin/platform/me');state.admin=me.admin||me;
     $('#adminIdentity').textContent=(state.admin.display_name||state.admin.username||'الإدارة')+(state.admin.role?` (${state.admin.role})`:'');
