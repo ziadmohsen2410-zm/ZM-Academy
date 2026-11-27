@@ -859,5 +859,10 @@ test("isolated Preview smoke test is bound only to the Preview D1 database", () 
   assert.ok(workflow.includes("wrangler secret put ADMIN_SETUP_KEY"));
   assert.ok(workflow.includes("/api/admin/materials"));
   assert.ok(workflow.includes("PREVIEW_DELETE_SMOKE_PASS"));
+  assert.ok(workflow.includes("/api/students/register"));
+  assert.ok(workflow.includes("/api/admin/device-requests"));
+  assert.ok(workflow.includes("/api/parent/link-request"));
+  assert.ok(workflow.includes("/api/parent/children"));
   assert.ok(fixture.includes("preview_material_notes"));
+  assert.ok(fixture.includes("CREATE TABLE IF NOT EXISTS student_accounts"));
 });
