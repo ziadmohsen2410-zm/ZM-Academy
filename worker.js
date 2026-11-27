@@ -58,6 +58,19 @@ function clean(value, max = 200) {
   return typeof value === "string" ? value.trim().slice(0, max) : "";
 }
 
+const isAdminRole = (role) => ['super_admin','admin','content_manager','teacher','support'].includes(role);
+const ADMIN_PERMS = {
+  super_admin: ['*'],
+  admin: ['dashboard','settings','students','content','orders','devices','parents','exams','ads','notifications','analytics','page_builder','theme','ai','backups','roles','audit','media'],
+  content_manager: ['dashboard','content','media','page_builder','theme','ads','notifications','exams'],
+  teacher: ['dashboard','content','exams','analytics','notifications','students.view'],
+  support: ['dashboard','students','orders','devices','parents','notifications','audit.view']
+};
+const hasPerm = (role, perm) => {
+  const perms = ADMIN_PERMS[role] || [];
+  return perms.includes('*') || perms.includes(perm) || perms.includes(perm.split('.')[0]);
+};
+
 async function ensureApiRateLimitTable(env) {
   await env.DB.prepare(`
     CREATE TABLE IF NOT EXISTS api_rate_limits (
@@ -3438,18 +3451,6 @@ if (method === "POST" && rejectPasswordMatch) {
     if (!Number.isFinite(points) || points <= 0 || points > 1000) return 'درجة السؤال يجب أن تكون أكبر من صفر وحتى 1000';
     if (type === 'mcq' && (!Array.isArray(b?.options) || b.options.length < 2)) return 'سؤال الاختيار من متعدد يحتاج إلى اختيارين على الأقل';
     return null;
-  };
-  const isAdminRole = (role) => ['super_admin','admin','content_manager','teacher','support'].includes(role);
-  const ADMIN_PERMS = {
-    super_admin: ['*'],
-    admin: ['dashboard','settings','students','content','orders','devices','parents','exams','ads','notifications','analytics','page_builder','theme','ai','backups','roles','audit','media'],
-    content_manager: ['dashboard','content','media','page_builder','theme','ads','notifications','exams'],
-    teacher: ['dashboard','content','exams','analytics','notifications','students.view'],
-    support: ['dashboard','students','orders','devices','parents','notifications','audit.view']
-  };
-  const hasPerm = (role, perm) => {
-    const perms = ADMIN_PERMS[role] || [];
-    return perms.includes('*') || perms.includes(perm) || perms.includes(perm.split('.')[0]);
   };
   async function ensureColumn(env, table, column, ddl) {
     // Verify live D1 schema before altering it. Swallowing every ALTER error

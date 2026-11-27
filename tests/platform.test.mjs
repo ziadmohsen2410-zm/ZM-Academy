@@ -33,6 +33,15 @@ test("worker exposes the platform routes used by the admin and student areas", (
   ]) assert.ok(worker.includes(route), "Worker route missing: " + route);
 });
 
+test("admin permission helpers initialize before route handlers can invoke the role guard", () => {
+  const worker = read("worker.js");
+  const permissions = worker.indexOf("const hasPerm =");
+  const route = worker.indexOf("async function route(");
+  assert.notEqual(permissions, -1, "Permission helper must exist");
+  assert.notEqual(route, -1, "Worker route must exist");
+  assert.ok(permissions < route, "Permission helpers must initialize before the first request enters route()");
+});
+
 test("student area includes notifications, exams, and AI integration", () => {
   const student = read("student.html");
   for (const route of [
