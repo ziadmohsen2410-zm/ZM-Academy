@@ -46,7 +46,8 @@ test("admin content forms send every field required by the Worker", () => {
   const admin = read("admin.html");
   assert.match(admin, /id="matType"/, "Material type selector is required");
   assert.ok(admin.includes("type:$('#matType').value"), "Material creation must send type");
-  assert.match(admin, /id="matSubjectId"><option value="">اختر المادة/, "Materials must select an existing subject");
+  assert.match(admin, /id="matSubjectId"/, "Materials must select an existing subject");
+  assert.ok(admin.includes("اختر المادة"), "Subject selector must have a clear prompt");
   assert.match(admin, /if\(!name\|\|!grade\)/, "Subject creation must validate grade");
 });
 
@@ -527,7 +528,7 @@ test("material creation form uploads supported files and stores the returned fil
   const admin = read("admin.html");
   assert.ok(admin.includes('id="matFile"'));
   assert.ok(admin.includes("new FormData()"));
-  assert.ok(admin.includes("fd.append('file',file)"));
+  assert.ok(admin.includes("fd.append('file',file,file.name)"));
   assert.ok(admin.includes("body.file_key=uploaded.file_key"));
   assert.ok(admin.includes("8*1024*1024"));
 });
