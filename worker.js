@@ -1433,9 +1433,10 @@ if (method === "POST" && rejectPasswordMatch) {
       const orderId = Number(orderStatus[1]);
       let result;
       if (status === "rejected") {
-        // A rejected request is removed completely; the student may submit again.
+        // Keep the rejection visible to the student, but remove it from the admin pending queue.
+        // The order-creation guard excludes rejected rows, so the student may submit again.
         result = await env.DB.prepare(
-          "DELETE FROM orders WHERE id = ? AND status = 'pending'"
+          "UPDATE orders SET status = 'rejected' WHERE id = ? AND status = 'pending'"
         ).bind(orderId).run();
       } else {
         // Approved orders remain as purchase entitlements so the student keeps access
