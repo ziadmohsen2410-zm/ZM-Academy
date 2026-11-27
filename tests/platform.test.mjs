@@ -605,3 +605,63 @@ test("student support uses valid contact links without nested interactive button
   assert.ok(page.includes('id="zmContactLinks"'));
   assert.ok(!page.includes('<a href="https://wa.me/201115336341" target="_blank" rel="noopener">\\n            <button'));
 });
+
+
+test("materials schema migration verifies existing columns and does not swallow a failed ALTER", () => {
+  const worker = read("worker.js");
+  const start = worker.indexOf("async function ensureColumn(env, table, column, ddl)");
+  const end = worker.indexOf("async function ensurePlatformSchema", start);
+  const migration = worker.slice(start, end);
+  assert.ok(migration.includes("PRAGMA table_info"));
+  assert.ok(migration.includes("SCHEMA_COLUMN_MIGRATION_ERROR"));
+  assert.ok(migration.includes("throw new Error"));
+  assert.ok(!migration.includes("catch (_) {}"));
+});
+
+test("student and admin default visual identity is black and gold with white and gold light mode", () => {
+  const css = read("assets/zm-future-theme.css");
+  const student = read("student.html");
+  const admin = read("admin.html");
+  assert.ok(css.includes("--zm-bg:#070707"));
+  assert.ok(css.includes("--zm-primary:#D4AF62"));
+  assert.ok(css.includes("--zm-bg:#FFFFFF"));
+  assert.ok(css.includes("--zm-text:#27231B"));
+  assert.ok(student.includes("#D4AF62"));
+  assert.ok(admin.includes("t.primary||'#D4AF62'"));
+});
+
+
+test("admin order filter can see every order status, not only pending", () => {
+  const worker = read("worker.js");
+  const admin = read("admin.html");
+  const start = worker.indexOf('if (method === "GET" && path === "/api/admin/orders")');
+  const end = worker.indexOf("// تحديث حالة الطلب", start);
+  const route = worker.slice(start, end);
+  assert.ok(route.includes("FROM orders o"));
+  assert.ok(route.includes("ORDER BY o.id DESC"));
+  assert.ok(!route.includes("WHERE o.status = 'pending'"));
+  for (const status of ["pending", "approved", "rejected", "completed"]) {
+    assert.ok(admin.includes('value="' + status + '"'));
+  }
+});
+
+test("all primary pages reference the refreshed shared black-gold stylesheet", () => {
+  for (const page of ["index.html","admin.html","login.html","register.html","student.html","parent.html"]) {
+    assert.ok(read(page).includes("zm-future-theme.css?v=4"), "Stale theme cache key in " + page);
+  }
+});
+
+
+test("student content viewer serves attached images as images and keeps PDF delivery", () => {
+  const worker = read("worker.js");
+  const student = read("student.html");
+  assert.ok(worker.includes("const contentTypes ="));
+  assert.ok(worker.includes('jpg: "image/jpeg"'));
+  assert.ok(worker.includes('png: "image/png"'));
+  assert.ok(worker.includes('webp: "image/webp"'));
+  assert.ok(worker.includes('/^(materials|media)\\//.test(fileKey)'));
+  assert.ok(student.includes('responseType.startsWith("image/")'));
+  assert.ok(student.includes("URL.createObjectURL(imageBlob)"));
+  assert.ok(student.includes("pdfjsLib.getDocument"));
+  assert.ok(student.includes("URL.revokeObjectURL(activeImageObjectUrl)"));
+});

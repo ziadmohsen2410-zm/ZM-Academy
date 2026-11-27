@@ -567,7 +567,7 @@ function sanitizeHomepageSettings(value) {
   out.tagline=text(source.tagline,180);
   const theme=source.theme&&typeof source.theme==='object'?source.theme:{};
   const color=(v,fallback)=>/^#[0-9a-f]{6}$/i.test(String(v||''))?String(v):fallback;
-  out.theme={...theme,mode:['dark','light','system'].includes(theme.mode)?theme.mode:'dark',template:['future','glass','minimal','luxury','editorial'].includes(theme.template)?theme.template:'future',primary:color(theme.primary,'#2F80FF'),secondary:color(theme.secondary,'#7B61FF'),background:color(theme.background,'#071226'),surface:color(theme.surface,'#0D1B35'),text:color(theme.text,'#FFFFFF'),muted:color(theme.muted,'#9AA9C4'),font:['cairo','tajawal','system','georgia'].includes(theme.font)?theme.font:'cairo',corners:['round','normal','sharp'].includes(theme.corners)?theme.corners:'normal',buttons:['gradient','solid','outline'].includes(theme.buttons)?theme.buttons:'gradient',cards:['solid','glass','outline'].includes(theme.cards)?theme.cards:'solid',motion:theme.motion==='off'?'off':'on'};
+  out.theme={...theme,mode:['dark','light','system'].includes(theme.mode)?theme.mode:'dark',template:['future','glass','minimal','luxury','editorial'].includes(theme.template)?theme.template:'future',primary:color(theme.primary,'#D4AF62'),secondary:color(theme.secondary,'#A9823D'),background:color(theme.background,'#070707'),surface:color(theme.surface,'#121212'),text:color(theme.text,'#FFFFFF'),muted:color(theme.muted,'#9AA9C4'),font:['cairo','tajawal','system','georgia'].includes(theme.font)?theme.font:'cairo',corners:['round','normal','sharp'].includes(theme.corners)?theme.corners:'normal',buttons:['gradient','solid','outline'].includes(theme.buttons)?theme.buttons:'gradient',cards:['solid','glass','outline'].includes(theme.cards)?theme.cards:'solid',motion:theme.motion==='off'?'off':'on'};
   const hero=source.hero&&typeof source.hero==='object'?source.hero:{};
   out.hero={...hero,eyebrow:text(hero.eyebrow,100),title:text(hero.title,180),highlight:text(hero.highlight,100),description:text(hero.description,1000),primaryText:text(hero.primaryText,80),primaryUrl:safeLink(hero.primaryUrl),secondaryText:text(hero.secondaryText,80),secondaryUrl:safeLink(hero.secondaryUrl)};
   const about=source.about&&typeof source.about==='object'?source.about:{};
@@ -1351,7 +1351,6 @@ if (method === "POST" && rejectPasswordMatch) {
         FROM orders o
         JOIN students s ON s.id = o.student_id
         JOIN materials m ON m.id = o.material_id
-        WHERE o.status = 'pending'
         ORDER BY o.id DESC
         LIMIT 500
       `).all();
@@ -1707,7 +1706,8 @@ if (method === "POST" && rejectPasswordMatch) {
     if (method === "GET" && path === "/api/admin/materials") {
       // Older D1 databases may predate file uploads and therefore lack materials.file_key.
       // Add the nullable column before selecting it so the admin content list remains readable.
-      await ensureColumn(env, "materials", "file_key", "TEXT");
+      const materialsTableReady = await ensureColumn(env, "materials", "file_key", "TEXT");
+      if (!materialsTableReady) throw new Error("The materials table is missing from the connected D1 database.");
       await ensureArchivedMaterialsTable(env);
 
       const rows = await env.DB.prepare(`
@@ -3037,8 +3037,9 @@ if (method === "POST" && rejectPasswordMatch) {
 
       if (
         !fileKey ||
-        !fileKey.startsWith("materials/") ||
-        fileKey.includes("..")
+        !/^(materials|media)\//.test(fileKey) ||
+        fileKey.includes("..") ||
+        fileKey.includes("\\")
       ) {
         return reply(
           request,
@@ -3086,12 +3087,25 @@ if (method === "POST" && rejectPasswordMatch) {
         );
       }
 
+      const extension = fileKey.toLowerCase().split(".").pop();
+      const contentTypes = {
+        pdf: "application/pdf",
+        jpg: "image/jpeg",
+        jpeg: "image/jpeg",
+        png: "image/png",
+        webp: "image/webp",
+      };
+      const servedType = contentTypes[extension];
+      if (!servedType) {
+        return reply(request, env, {success:false,error:"صيغة الملف المرتبط غير مدعومة."}, 415);
+      }
+      const servedName = extension === "jpeg" ? "jpg" : extension;
       return new Response(githubResponse.body, {
         status: 200,
         headers: {
           ...corsHeaders(request, env),
-          "Content-Type": "application/pdf",
-          "Content-Disposition": 'inline; filename="zm-academy-material.pdf"',
+          "Content-Type": servedType,
+          "Content-Disposition": `inline; filename="zm-academy-material.${servedName}"`,
           "Cache-Control": "private, no-store, no-cache, must-revalidate",
           Pragma: "no-cache",
           "X-Content-Type-Options": "nosniff",
@@ -3438,7 +3452,29 @@ if (method === "POST" && rejectPasswordMatch) {
     return perms.includes('*') || perms.includes(perm) || perms.includes(perm.split('.')[0]);
   };
   async function ensureColumn(env, table, column, ddl) {
-    try { await env.DB.prepare(`ALTER TABLE ${table} ADD COLUMN ${column} ${ddl}`).run(); } catch (_) {}
+    // Verify live D1 schema before altering it. Swallowing every ALTER error
+    // allowed later SELECT statements to fail with an opaque internal 500.
+    const allowedTables = new Set(['admin_users','students','orders','materials','subjects','exam_attempts','student_material_progress']);
+    if (!allowedTables.has(table) || !/^[a-z_]+$/.test(column)) throw new Error('Unsupported schema migration target.');
+    const inspect = async () => {
+      const result = await env.DB.prepare(`PRAGMA table_info(${table})`).all();
+      return result.results || [];
+    };
+    let columns = await inspect();
+    if (!columns.length) return false;
+    if (columns.some(item => item.name === column)) return true;
+    try {
+      await env.DB.prepare(`ALTER TABLE ${table} ADD COLUMN ${column} ${ddl}`).run();
+    } catch (error) {
+      columns = await inspect();
+      if (!columns.some(item => item.name === column)) {
+        console.error('SCHEMA_COLUMN_MIGRATION_ERROR:', {table,column,message:error?.message||String(error)});
+        throw new Error(`Database schema is missing ${table}.${column}; migration failed.`);
+      }
+    }
+    columns = await inspect();
+    if (!columns.some(item => item.name === column)) throw new Error(`Database schema verification failed for ${table}.${column}.`);
+    return true;
   }
   async function ensurePlatformSchema(env) {
     // core extensions on existing tables
@@ -3528,7 +3564,7 @@ if (method === "POST" && rejectPasswordMatch) {
   function settingDefault(key) {
     const defaults = {
       general: { academyName:'ZM Academy', tagline:'التعلم بذكاء، والتفكير بلا حدود', logo:'', favicon:'', description:'', supportEmail:'', supportPhone:'', whatsapp:'', facebook:'', youtube:'', telegram:'', language:'ar', timezone:'Africa/Cairo', maintenance:false, maintenanceMessage:'الموقع في وضع الصيانة', registrationEnabled:true },
-      theme: { mode:'dark', primary:'#2F80FF', secondary:'#7B61FF', background:'#071226', surface:'#0D1B35', text:'#FFFFFF', muted:'#9AA9C4', radius:'18px', font:'Cairo', template:'future', motion:true },
+      theme: { mode:'dark', primary:'#D4AF62', secondary:'#A9823D', background:'#070707', surface:'#121212', text:'#FFFFFF', muted:'#9AA9C4', radius:'18px', font:'Cairo', template:'future', motion:true },
     };
     return defaults[key] || {};
   }
