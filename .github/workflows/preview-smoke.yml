@@ -75,7 +75,7 @@ jobs:
           echo "::add-mask::$ADMIN_PASSWORD"
 
           # Reset only the dedicated Preview D1 database.
-          wrangler d1 execute zm-academy-preview-db --remote --config wrangler.preview.toml --file=tests/preview-smoke-reset.sql
+          timeout 60s wrangler d1 execute zm-academy-preview-db --remote --config wrangler.preview.toml --file=tests/preview-smoke-reset.sql
 
           printf '%s' "$SETUP_KEY" | wrangler secret put ADMIN_SETUP_KEY --config wrangler.preview.toml
           sleep 5
@@ -101,7 +101,7 @@ jobs:
           test -n "$ADMIN_TOKEN"
           echo "::add-mask::$ADMIN_TOKEN"
 
-          wrangler d1 execute zm-academy-preview-db --remote --config wrangler.preview.toml --file=tests/preview-smoke-seed.sql
+          timeout 60s wrangler d1 execute zm-academy-preview-db --remote --config wrangler.preview.toml --file=tests/preview-smoke-seed.sql
 
           # Register a student and verify the first device is held for approval.
           STUDENT_PASSWORD="$(python3 -c 'import secrets; print(secrets.token_urlsafe(24))')"
@@ -144,7 +144,7 @@ jobs:
           curl --max-time 30 --fail --silent --show-error "$API/api/materials" \
             -H "Authorization: Bearer $STUDENT_TOKEN" -o /tmp/zm-student-materials.json
           cat /tmp/zm-student-materials.json
-          wrangler d1 execute zm-academy-preview-db --remote --config wrangler.preview.toml \
+          timeout 60s wrangler d1 execute zm-academy-preview-db --remote --config wrangler.preview.toml \
             --command="SELECT ss.student_id,ss.subject_id,s.grade,m.id,m.subject_id,(SELECT COUNT(*) FROM archived_subjects WHERE subject_id=ss.subject_id) AS subject_archived,(SELECT COUNT(*) FROM archived_materials WHERE material_id=m.id) AS material_archived FROM student_subjects ss JOIN subjects s ON s.id=ss.subject_id LEFT JOIN materials m ON m.subject_id=ss.subject_id WHERE ss.student_id=$STUDENT_ID;"
           python3 -c "import json; d=json.load(open('/tmp/zm-student-materials.json')); assert any(int(x['id'])==990001 for x in d.get('materials',[])), d"
           echo "Student registration, device approval, login, and material visibility passed."
@@ -199,7 +199,7 @@ jobs:
           echo "Parent registration, link approval, and child overview passed."
 
           # Archive the material only after the student and parent flows have verified access.
-          wrangler d1 execute zm-academy-preview-db --remote --config wrangler.preview.toml \
+          timeout 60s wrangler d1 execute zm-academy-preview-db --remote --config wrangler.preview.toml \
             --command="INSERT OR REPLACE INTO archived_materials (material_id) VALUES (990001);"
 
           # AI must fail safely and explicitly when no provider key is configured.
@@ -225,7 +225,7 @@ jobs:
           cat /tmp/zm-delete.json
           python3 -c "import json,sys; d=json.load(open('/tmp/zm-delete.json')); assert sys.argv[1] == '200' and d.get('success') is True, d" "$DELETE_STATUS"
 
-          wrangler d1 execute zm-academy-preview-db --remote --config wrangler.preview.toml \
+          timeout 60s wrangler d1 execute zm-academy-preview-db --remote --config wrangler.preview.toml \
             --command="SELECT CASE WHEN
               (SELECT COUNT(*) FROM materials WHERE id=990001)=0 AND
               (SELECT COUNT(*) FROM orders WHERE material_id=990001)=0 AND
