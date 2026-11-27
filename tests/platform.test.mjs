@@ -701,7 +701,9 @@ test("admin material list exposes archive, restore, and separately confirmed per
   const admin = read("admin.html");
   const worker = read("worker.js");
   assert.ok(admin.includes("حذف نهائي"));
-  assert.ok(admin.includes("لتأكيد الحذف النهائي اكتب: حذف"));
+  assert.ok(admin.includes("تأكيد الحذف النهائي:"));
+  assert.ok(admin.includes("data-material-action"));
+  assert.ok(admin.includes("materialsTbody').addEventListener('click'"));
   assert.ok(admin.includes("method:'DELETE'"));
   assert.ok(worker.includes('if (method === "DELETE" && path === "/api/admin/materials")'));
   assert.ok(worker.includes('DELETE FROM orders WHERE material_id = ?'));

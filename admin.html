@@ -498,24 +498,39 @@ async function loadMaterials(){
   const tb=$('#materialsTbody'); tb.innerHTML='<tr><td colspan="5" class="muted">جارٍ التحميل...</td></tr>';
   try{
     const d=await api('/api/admin/materials'); const rows=d.materials||d.data||[];
-    tb.innerHTML=rows.map(m=>`<tr><td>${esc(m.id)}</td><td>${esc(m.title||m.name||'-')}</td><td>${esc(m.subject_name||m.subject_id||'-')}</td><td>${esc(m.price ?? (m.is_free?0:'-'))}</td><td>${Number(m.is_archived)===1?'<span class="badge warn">مؤرشف</span>':'<span class="badge ok">نشط</span>'} <button class="ghost small" onclick="window.__toggleMaterialArchive(${Number(m.id)},${Number(m.is_archived)===1?'restore':'archive'})">${Number(m.is_archived)===1?'استعادة':'أرشفة'}</button> <button class="danger small" onclick="window.__deleteMaterial(${Number(m.id)},'${esc(m.title||m.name||'المادة')}')">حذف نهائي</button></td></tr>`).join('')||'<tr><td colspan="5" class="muted">لا يوجد محتوى</td></tr>';
+    tb.innerHTML=rows.map(m=>`<tr><td>${esc(m.id)}</td><td>${esc(m.title||m.name||'-')}</td><td>${esc(m.subject_name||m.subject_id||'-')}</td><td>${esc(m.price ?? (m.is_free?0:'-'))}</td><td>${Number(m.is_archived)===1?'<span class="badge warn">مؤرشف</span>':'<span class="badge ok">نشط</span>'} <button type="button" class="ghost small" data-material-action="${Number(m.is_archived)===1?'restore':'archive'}" data-material-id="${Number(m.id)}">${Number(m.is_archived)===1?'استعادة':'أرشفة'}</button> <button type="button" class="danger small" data-material-action="delete" data-material-id="${Number(m.id)}" data-material-title="${esc(m.title||m.name||'المادة')}">حذف نهائي</button></td></tr>`).join('')||'<tr><td colspan="5" class="muted">لا يوجد محتوى</td></tr>';
   }catch(e){ tb.innerHTML=`<tr><td colspan="5">خطأ: ${esc(e.message)}</td></tr>`; }
 }
 window.__toggleMaterialArchive=async(id,action)=>{
-  const label=action==='archive'?'أرشفة الدرس وإخفاؤه عن الطلاب؟':'استعادة الدرس وإظهاره للطلاب؟';
-  if(!confirm(label)) return;
-  try{ await api(`/api/admin/materials/${id}/${action}`,{method:'POST'}); showMsg(action==='archive'?'تمت أرشفة الدرس':'تمت استعادة الدرس',true); await loadMaterials(); }
-  catch(e){ showMsg(e.message); }
+  try{
+    await api(`/api/admin/materials/${id}/${action}`,{method:'POST'});
+    showMsg(action==='archive'?'تمت أرشفة الدرس':'تمت استعادة الدرس',true);
+    await loadMaterials();
+  }catch(e){ showMsg('تعذر تنفيذ العملية: '+e.message); }
 };
+$('#materialsTbody').addEventListener('click',async(event)=>{
+  const button=event.target.closest('button[data-material-action]');
+  if(!button||button.disabled) return;
+  const id=Number(button.dataset.materialId);
+  const action=button.dataset.materialAction;
+  if(!Number.isInteger(id)||id<1) return showMsg('معرّف المحتوى غير صالح');
+  button.disabled=true;
+  const original=button.textContent;
+  button.textContent=action==='delete'?'جارٍ الحذف...':action==='restore'?'جارٍ الاستعادة...':'جارٍ الأرشفة...';
+  try{
+    if(action==='delete') await window.__deleteMaterial(id,button.dataset.materialTitle||'المادة');
+    else if(action==='archive'||action==='restore') await window.__toggleMaterialArchive(id,action);
+  }finally{
+    if(button.isConnected){button.disabled=false;button.textContent=original;}
+  }
+});
 window.__deleteMaterial=async(id,title)=>{
-  if(!confirm(`تحذير: سيتم حذف "${title}" نهائيًا مع ملفها وسجلات الطلبات المرتبطة بها. لا يمكن التراجع. هل تريد المتابعة؟`)) return;
-  const confirmation=prompt('لتأكيد الحذف النهائي اكتب: حذف');
-  if(confirmation!=='حذف') return;
+  if(!confirm(`تأكيد الحذف النهائي: سيتم حذف "${title}" نهائيًا مع ملفها وسجلات الطلبات المرتبطة بها. لا يمكن التراجع. هل تريد المتابعة؟`)) return;
   try{
     await api('/api/admin/materials',{method:'DELETE',body:JSON.stringify({id})});
     showMsg('تم حذف المادة نهائيًا',true);
     await loadMaterials();
-  }catch(e){ showMsg(e.message); }
+  }catch(e){ showMsg('تعذر الحذف: '+e.message); }
 };
 async function loadOrders(){
   const tb=$('#ordersTbody'); tb.innerHTML='<tr><td colspan="6" class="muted">...</td></tr>';
