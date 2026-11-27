@@ -105,11 +105,6 @@ body.light:has(.zm-shell){
 html[data-zm-mode="light"] body:has(.zm-shell) header,
 body[data-zm-mode="light"]:has(.zm-shell) header,
 body.light:has(.zm-shell) header,
-html[data-zm-mode="light"] body:has(.zm-shell") footer{
-  background:rgba(255,255,255,.96)!important;
-  color:#1C2945!important;
-  border-color:#D8E3F3!important;
-}
 html[data-zm-mode="light"] body:has(.zm-shell) .zm-sidebar,
 body[data-zm-mode="light"]:has(.zm-shell) .zm-sidebar,
 body.light:has(.zm-shell) .zm-sidebar{
