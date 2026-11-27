@@ -567,7 +567,7 @@ function sanitizeHomepageSettings(value) {
   out.tagline=text(source.tagline,180);
   const theme=source.theme&&typeof source.theme==='object'?source.theme:{};
   const color=(v,fallback)=>/^#[0-9a-f]{6}$/i.test(String(v||''))?String(v):fallback;
-  out.theme={...theme,mode:['dark','light','system'].includes(theme.mode)?theme.mode:'dark',template:['future','glass','minimal','luxury','editorial'].includes(theme.template)?theme.template:'future',primary:color(theme.primary,'#2F80FF'),secondary:color(theme.secondary,'#7B61FF'),background:color(theme.background,'#071226'),surface:color(theme.surface,'#0D1B35'),text:color(theme.text,'#FFFFFF'),muted:color(theme.muted,'#9AA9C4'),font:['cairo','tajawal','system','georgia'].includes(theme.font)?theme.font:'cairo',corners:['round','normal','sharp'].includes(theme.corners)?theme.corners:'normal',buttons:['gradient','solid','outline'].includes(theme.buttons)?theme.buttons:'gradient',cards:['solid','glass','outline'].includes(theme.cards)?theme.cards:'solid',motion:theme.motion==='off'?'off':'on'};
+  out.theme={...theme,mode:['dark','light','system'].includes(theme.mode)?theme.mode:'dark',template:['future','glass','minimal','luxury','editorial'].includes(theme.template)?theme.template:'future',primary:color(theme.primary,'#D4AF62'),secondary:color(theme.secondary,'#A9823D'),background:color(theme.background,'#070707'),surface:color(theme.surface,'#121212'),text:color(theme.text,'#FFFFFF'),muted:color(theme.muted,'#9AA9C4'),font:['cairo','tajawal','system','georgia'].includes(theme.font)?theme.font:'cairo',corners:['round','normal','sharp'].includes(theme.corners)?theme.corners:'normal',buttons:['gradient','solid','outline'].includes(theme.buttons)?theme.buttons:'gradient',cards:['solid','glass','outline'].includes(theme.cards)?theme.cards:'solid',motion:theme.motion==='off'?'off':'on'};
   const hero=source.hero&&typeof source.hero==='object'?source.hero:{};
   out.hero={...hero,eyebrow:text(hero.eyebrow,100),title:text(hero.title,180),highlight:text(hero.highlight,100),description:text(hero.description,1000),primaryText:text(hero.primaryText,80),primaryUrl:safeLink(hero.primaryUrl),secondaryText:text(hero.secondaryText,80),secondaryUrl:safeLink(hero.secondaryUrl)};
   const about=source.about&&typeof source.about==='object'?source.about:{};
@@ -3564,7 +3564,7 @@ if (method === "POST" && rejectPasswordMatch) {
   function settingDefault(key) {
     const defaults = {
       general: { academyName:'ZM Academy', tagline:'التعلم بذكاء، والتفكير بلا حدود', logo:'', favicon:'', description:'', supportEmail:'', supportPhone:'', whatsapp:'', facebook:'', youtube:'', telegram:'', language:'ar', timezone:'Africa/Cairo', maintenance:false, maintenanceMessage:'الموقع في وضع الصيانة', registrationEnabled:true },
-      theme: { mode:'dark', primary:'#2F80FF', secondary:'#7B61FF', background:'#071226', surface:'#0D1B35', text:'#FFFFFF', muted:'#9AA9C4', radius:'18px', font:'Cairo', template:'future', motion:true },
+      theme: { mode:'dark', primary:'#D4AF62', secondary:'#A9823D', background:'#070707', surface:'#121212', text:'#FFFFFF', muted:'#9AA9C4', radius:'18px', font:'Cairo', template:'future', motion:true },
     };
     return defaults[key] || {};
   }
