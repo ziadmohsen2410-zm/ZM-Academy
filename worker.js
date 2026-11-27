@@ -1886,22 +1886,22 @@ if (method === "POST" && rejectPasswordMatch) {
           );
         }
 
-        const contentType = file.type;
         const bytes = new Uint8Array(await file.arrayBuffer());
-
-        const isPDF = contentType === "application/pdf" && bytes.length >= 5 &&
-          new TextDecoder().decode(bytes.slice(0, 5)) === "%PDF-";
-        const isImage = ["image/jpeg", "image/png", "image/webp"].includes(contentType) &&
-          bytes.length >= 12;
-        if (!isPDF && !isImage) {
+        const signature = new TextDecoder().decode(bytes.slice(0, 12));
+        const isPDF = bytes.length >= 5 && signature.startsWith("%PDF-");
+        const isJpeg = bytes.length >= 3 && bytes[0]===0xff && bytes[1]===0xd8 && bytes[2]===0xff;
+        const isPng = bytes.length >= 8 && bytes[0]===0x89 && signature.slice(1,4)==="PNG";
+        const isWebp = bytes.length >= 12 && signature.slice(0,4)==="RIFF" && signature.slice(8,12)==="WEBP";
+        const contentType = isPDF ? "application/pdf" : isJpeg ? "image/jpeg" : isPng ? "image/png" : isWebp ? "image/webp" : "";
+        if (!contentType) {
           return reply(request, env, {
             success: false,
-            error: "الملف غير مدعوم. ارفع PDF أو صورة JPG أو PNG أو WEBP صحيحة.",
+            error: "الملف غير مدعوم أو تالف. ارفع PDF أو صورة JPG أو PNG أو WEBP صحيحة.",
           }, 400);
         }
 
         const fileKey = await uploadToGitHub(env, bytes, file.name, contentType);
-        const mediaUrl = isImage
+        const mediaUrl = contentType.startsWith("image/")
           ? `${new URL(request.url).origin}/api/media/${encodeURIComponent(fileKey)}`
           : null;
 
