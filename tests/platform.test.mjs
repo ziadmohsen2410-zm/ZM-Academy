@@ -719,5 +719,5 @@ test("admin material list exposes archive, restore, and separately confirmed per
   assert.ok(worker.includes('DELETE FROM materials WHERE id = ?'));
   assert.ok(worker.includes('DELETE FROM archived_materials WHERE material_id = ?'));
   assert.ok(worker.includes('const tableNames = new Set((tableResult.results || []).map((item) => String(item.name || "")))'));
-  assert.ok(worker.includes('if (!tableNames.has(tableName)) return;'));
+  assert.ok(worker.includes("const foreignKeysByTable = new Map()"));
 });
