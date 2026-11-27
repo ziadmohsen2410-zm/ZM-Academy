@@ -3676,6 +3676,20 @@ if (method === "POST" && rejectPasswordMatch) {
       return reply(request, env, {success:true, admin:{id:admin.id, username:admin.username, display_name:admin.display_name, role:admin.role, permissions: ADMIN_PERMS[admin.role]||[]}});
     }
 
+    // Student directory (platform API alias for the legacy admin route).
+    if (method==='GET' && path==='/api/admin/platform/students') {
+      if (!hasPerm(admin.role,'students') && !hasPerm(admin.role,'students.view')) {
+        return reply(request, env, {success:false,error:'Forbidden'},403);
+      }
+      const rows = await env.DB.prepare(`
+        SELECT id, name, phone, parent_phone, grade, school, governorate, created_at
+        FROM students
+        ORDER BY id DESC
+        LIMIT 500
+      `).all();
+      return reply(request, env, {success:true, students:rows.results||[]});
+    }
+
     // Settings
     if (path==='/api/admin/platform/settings') {
       if (!hasPerm(admin.role,'settings')) return reply(request, env, {success:false,error:'Forbidden'},403);
