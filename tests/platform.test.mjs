@@ -567,11 +567,15 @@ test("content managers can use the protected upload endpoint without media permi
 
 test("material creation form uploads supported files and stores the returned file key", () => {
   const admin = read("admin.html");
+  const worker = read("worker.js");
   assert.ok(admin.includes('id="matFile"'));
   assert.ok(admin.includes("new FormData()"));
   assert.ok(admin.includes("fd.append('file',file,file.name)"));
   assert.ok(admin.includes("body.file_key=uploaded.file_key"));
-  assert.ok(admin.includes("8*1024*1024"));
+  assert.ok(admin.includes("25*1024*1024"));
+  assert.ok(admin.includes("الحد الأقصى 25 ميجابايت."));
+  assert.ok(worker.includes("const MAX_FILE_SIZE = 25 * 1024 * 1024;"));
+  assert.ok(worker.includes("Maximum file size is 25 MB."));
 });
 
 test("backup export includes core academy data and filters credentials", () => {

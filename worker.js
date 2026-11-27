@@ -1,6 +1,6 @@
 const SESSION_DAYS = 7;
 const PBKDF2_ITERATIONS = 100000;
-const MAX_FILE_SIZE = 8 * 1024 * 1024;
+const MAX_FILE_SIZE = 25 * 1024 * 1024;
 const MAX_PRICE = 1000000;
 const GITHUB_REPO = "ziadmohsen2410-zm/ZM-Academy-Storage";
 const GITHUB_API = "https://api.github.com/repos/" + GITHUB_REPO + "/contents";
@@ -359,7 +359,7 @@ async function uploadToGitHub(env, fileBytes, fileName, contentType) {
   }
 
   if (fileBytes.length > MAX_FILE_SIZE) {
-    throw new Error("File size must not exceed 8 MB.");
+    throw new Error("File size must not exceed 25 MB.");
   }
 
   const safeName =
@@ -2059,7 +2059,7 @@ if (method === "POST" && rejectPasswordMatch) {
             env,
             {
               success: false,
-              error: "Maximum file size is 8 MB.",
+              error: "Maximum file size is 25 MB.",
             },
             400
           );
