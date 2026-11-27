@@ -416,8 +416,14 @@ async function boot(){
   }
 }
 async function checkHealth(){
-  try{ await fetch(API+'/api/health'); $('#healthBadge').textContent='متصل'; $('#healthBadge').className='badge ok'; }
-  catch{ $('#healthBadge').textContent='خطأ'; $('#healthBadge').className='badge danger'; }
+  try{
+    const response=await fetch(API+'/api/health',{cache:'no-store'});
+    const data=await response.json().catch(()=>null);
+    if(!response.ok||data?.success!==true||data?.database!=='connected') throw new Error('Health check failed');
+    $('#healthBadge').textContent='متصل'; $('#healthBadge').className='badge ok';
+  }catch{
+    $('#healthBadge').textContent='خطأ'; $('#healthBadge').className='badge danger';
+  }
 }
 function statCard(label,val){return `<div class="card stat"><div class="l">${esc(label)}</div><div class="k">${esc(val)}</div></div>`;}
 async function loadDashboard(){
@@ -449,9 +455,8 @@ async function loadSystemStatus(){
 async function loadStudents(){
   const tb=$('#studentsTbody'); tb.innerHTML='<tr><td colspan="6" class="muted">جارٍ التحميل...</td></tr>';
   try{
-    let data;
-    try { data = await api('/api/admin/students'); } catch { data = await api('/api/admin/platform/students'); }
-    const rows = data.students||data.data||[];
+    const data = await api('/api/admin/platform/students');
+    const rows = data.students||[];
     state.cache.students=rows;
     renderStudents(rows);
   }catch(e){ tb.innerHTML=`<tr><td colspan="6">خطأ: ${esc(e.message)}</td></tr>`; }
