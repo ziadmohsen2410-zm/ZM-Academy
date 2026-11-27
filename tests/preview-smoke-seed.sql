@@ -5,5 +5,4 @@ INSERT OR REPLACE INTO orders (id, student_id, material_id, status) VALUES (9900
 INSERT OR REPLACE INTO student_hidden_purchases (student_id, order_id) VALUES (990001, 990001);
 INSERT OR REPLACE INTO student_material_progress (student_id, material_id, last_page) VALUES (990001, 990001, 3);
 INSERT OR REPLACE INTO student_favorites (student_id, material_id) VALUES (990001, 990001);
-INSERT OR REPLACE INTO archived_materials (material_id) VALUES (990001);
 INSERT OR REPLACE INTO preview_material_notes (material_id, note) VALUES (990001, 'recursive dependency fixture');
