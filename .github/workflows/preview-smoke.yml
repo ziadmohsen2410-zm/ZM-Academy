@@ -102,6 +102,106 @@ jobs:
 
           wrangler d1 execute zm-academy-preview-db --remote --config wrangler.preview.toml --file=tests/preview-smoke-seed.sql
 
+          # Register a student and verify the first device is held for approval.
+          STUDENT_PASSWORD="$(python3 -c 'import secrets; print(secrets.token_urlsafe(24))')"
+          PARENT_PASSWORD="$(python3 -c 'import secrets; print(secrets.token_urlsafe(24))')"
+          echo "::add-mask::$STUDENT_PASSWORD"
+          echo "::add-mask::$PARENT_PASSWORD"
+
+          REG_STATUS="$(curl --silent --show-error -X POST "$API/api/students/register" \
+            -H "Content-Type: application/json" \
+            --data "{\"name\":\"Preview smoke student journey\",\"phone\":\"01000000002\",\"parent_phone\":\"01000000003\",\"grade\":\"Preview\",\"school\":\"Preview school\",\"governorate\":\"Preview\",\"username\":\"preview_student\",\"password\":\"$STUDENT_PASSWORD\",\"subjects\":[990001]}" \
+            -o /tmp/zm-student-register.json -w '%{http_code}')"
+          python3 -c "import json,sys; d=json.load(open('/tmp/zm-student-register.json')); assert sys.argv[1] == '201' and d.get('success') is True, d" "$REG_STATUS"
+          STUDENT_ID="$(python3 -c "import json; print(json.load(open('/tmp/zm-student-register.json'))['student_id'])")"
+
+          DEVICE_TOKEN="preview-device-token-00000000000000000000000000000000"
+          DEVICE_STATUS="$(curl --silent --show-error -X POST "$API/api/students/login" \
+            -H "Content-Type: application/json" \
+            --data "{\"username\":\"preview_student\",\"password\":\"$STUDENT_PASSWORD\",\"deviceToken\":\"$DEVICE_TOKEN\",\"deviceName\":\"Preview CI Device\"}" \
+            -o /tmp/zm-device-pending.json -w '%{http_code}')"
+          python3 -c "import json,sys; d=json.load(open('/tmp/zm-device-pending.json')); assert sys.argv[1] == '403' and d.get('code') == 'DEVICE_APPROVAL_REQUIRED', d" "$DEVICE_STATUS"
+
+          curl --fail --silent --show-error "$API/api/admin/device-requests" \
+            -H "Authorization: Bearer $ADMIN_TOKEN" -o /tmp/zm-device-requests.json
+          DEVICE_ID="$(python3 -c "import json,sys; rows=json.load(open('/tmp/zm-device-requests.json')).get('requests',[]); match=[x for x in rows if int(x.get('student_id',0))==int(sys.argv[1])]; assert match, rows; print(match[0]['id'])" "$STUDENT_ID")"
+          curl --fail --silent --show-error -X POST "$API/api/admin/device-requests/$DEVICE_ID/approve" \
+            -H "Authorization: Bearer $ADMIN_TOKEN" -o /tmp/zm-device-approved.json
+
+          curl --fail --silent --show-error -X POST "$API/api/students/login" \
+            -H "Content-Type: application/json" \
+            --data "{\"username\":\"preview_student\",\"password\":\"$STUDENT_PASSWORD\",\"deviceToken\":\"$DEVICE_TOKEN\",\"deviceName\":\"Preview CI Device\"}" \
+            -o /tmp/zm-student-login.json
+          STUDENT_TOKEN="$(python3 -c "import json; print(json.load(open('/tmp/zm-student-login.json'))['token'])")"
+          test -n "$STUDENT_TOKEN"
+          echo "::add-mask::$STUDENT_TOKEN"
+
+          curl --fail --silent --show-error "$API/api/student/me" \
+            -H "Authorization: Bearer $STUDENT_TOKEN" -o /tmp/zm-student-me.json
+          python3 -c "import json,sys; d=json.load(open('/tmp/zm-student-me.json')); assert d.get('success') is True and d.get('student',{}).get('id') == int(sys.argv[1]), d" "$STUDENT_ID"
+
+          curl --fail --silent --show-error "$API/api/materials" \
+            -H "Authorization: Bearer $STUDENT_TOKEN" -o /tmp/zm-student-materials.json
+          python3 -c "import json; d=json.load(open('/tmp/zm-student-materials.json')); assert any(int(x['id'])==990001 for x in d.get('materials',[])), d"
+
+          curl --fail --silent --show-error -X POST "$API/api/orders" \
+            -H "Authorization: Bearer $STUDENT_TOKEN" \
+            -H "Content-Type: application/json" \
+            --data '{"material_id":990001}' -o /tmp/zm-order-create.json
+          curl --fail --silent --show-error "$API/api/student/purchases" \
+            -H "Authorization: Bearer $STUDENT_TOKEN" -o /tmp/zm-student-purchases.json
+          ORDER_ID="$(python3 -c "import json; d=json.load(open('/tmp/zm-student-purchases.json')); rows=[x for x in d.get('purchases',[]) if int(x.get('material_id',0))==990001]; assert rows, d; print(rows[0]['order_id'])")"
+          curl --fail --silent --show-error -X PATCH "$API/api/admin/orders/$ORDER_ID" \
+            -H "Authorization: Bearer $ADMIN_TOKEN" \
+            -H "Content-Type: application/json" \
+            --data '{"status":"approved"}' -o /tmp/zm-order-approved.json
+
+          # Register a parent, request a student link, and approve it from the admin portal.
+          curl --fail --silent --show-error -X POST "$API/api/parent/register" \
+            -H "Content-Type: application/json" \
+            --data "{\"name\":\"Preview smoke parent\",\"username\":\"preview_parent\",\"password\":\"$PARENT_PASSWORD\",\"phone\":\"01000000003\",\"email\":\"preview-parent@example.invalid\"}" \
+            -o /tmp/zm-parent-register.json
+          curl --fail --silent --show-error -X POST "$API/api/parent/login" \
+            -H "Content-Type: application/json" \
+            --data "{\"username\":\"preview_parent\",\"password\":\"$PARENT_PASSWORD\"}" \
+            -o /tmp/zm-parent-login.json
+          PARENT_TOKEN="$(python3 -c "import json; print(json.load(open('/tmp/zm-parent-login.json'))['token'])")"
+          test -n "$PARENT_TOKEN"
+          echo "::add-mask::$PARENT_TOKEN"
+
+          curl --fail --silent --show-error -X POST "$API/api/parent/link-request" \
+            -H "Authorization: Bearer $PARENT_TOKEN" \
+            -H "Content-Type: application/json" \
+            --data '{"student_username":"preview_student","student_phone":"01000000002"}' \
+            -o /tmp/zm-parent-link-request.json
+          curl --fail --silent --show-error "$API/api/admin/platform/parent-links" \
+            -H "Authorization: Bearer $ADMIN_TOKEN" -o /tmp/zm-parent-links.json
+          LINK_ID="$(python3 -c "import json,sys; rows=json.load(open('/tmp/zm-parent-links.json')).get('links',[]); match=[x for x in rows if int(x.get('student_id',0))==int(sys.argv[1]) and x.get('parent_username')=='preview_parent']; assert match, rows; print(match[0]['id'])" "$STUDENT_ID")"
+          curl --fail --silent --show-error -X PUT "$API/api/admin/platform/parent-links/$LINK_ID" \
+            -H "Authorization: Bearer $ADMIN_TOKEN" \
+            -H "Content-Type: application/json" \
+            --data '{"status":"approved","note":"Preview end-to-end test"}' \
+            -o /tmp/zm-parent-link-approved.json
+          curl --fail --silent --show-error "$API/api/parent/children" \
+            -H "Authorization: Bearer $PARENT_TOKEN" -o /tmp/zm-parent-children.json
+          python3 -c "import json; d=json.load(open('/tmp/zm-parent-children.json')); assert any(x.get('status')=='approved' for x in d.get('children',[])), d"
+          curl --fail --silent --show-error "$API/api/parent/children/$STUDENT_ID/overview" \
+            -H "Authorization: Bearer $PARENT_TOKEN" -o /tmp/zm-parent-overview.json
+          python3 -c "import json; d=json.load(open('/tmp/zm-parent-overview.json')); assert d.get('success') is True and d.get('student',{}).get('id') == int('$STUDENT_ID'), d"
+
+          # AI must fail safely and explicitly when no provider key is configured.
+          AI_STATUS="$(curl --silent --show-error -X POST "$API/api/student/platform/ai" \
+            -H "Authorization: Bearer $STUDENT_TOKEN" \
+            -H "Content-Type: application/json" \
+            --data '{"prompt":"اشرح مفهوم الفرضية في المنطق باختصار"}' \
+            -o /tmp/zm-ai-unconfigured.json -w '%{http_code}')"
+          python3 -c "import json,sys; d=json.load(open('/tmp/zm-ai-unconfigured.json')); assert sys.argv[1]=='503' and d.get('code')=='AI_NOT_CONFIGURED', d" "$AI_STATUS"
+
+          curl --fail --silent --show-error -X POST "$API/api/parent/logout" \
+            -H "Authorization: Bearer $PARENT_TOKEN" -o /tmp/zm-parent-logout.json
+          curl --fail --silent --show-error -X POST "$API/api/student/logout" \
+            -H "Authorization: Bearer $STUDENT_TOKEN" -o /tmp/zm-student-logout.json
+
           DELETE_STATUS="$(curl --silent --show-error -X DELETE "$API/api/admin/materials" \
             -H "Authorization: Bearer $ADMIN_TOKEN" \
             -H "Content-Type: application/json" \
@@ -114,8 +214,8 @@ jobs:
           wrangler d1 execute zm-academy-preview-db --remote --config wrangler.preview.toml \
             --command="SELECT CASE WHEN
               (SELECT COUNT(*) FROM materials WHERE id=990001)=0 AND
-              (SELECT COUNT(*) FROM orders WHERE id=990001)=0 AND
-              (SELECT COUNT(*) FROM student_hidden_purchases WHERE order_id=990001)=0 AND
+              (SELECT COUNT(*) FROM orders WHERE material_id=990001)=0 AND
+              (SELECT COUNT(*) FROM student_hidden_purchases WHERE student_id IN (990001, ${STUDENT_ID}))=0 AND
               (SELECT COUNT(*) FROM student_material_progress WHERE material_id=990001)=0 AND
               (SELECT COUNT(*) FROM student_favorites WHERE material_id=990001)=0 AND
               (SELECT COUNT(*) FROM archived_materials WHERE material_id=990001)=0 AND
