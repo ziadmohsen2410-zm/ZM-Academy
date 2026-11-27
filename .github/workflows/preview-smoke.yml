@@ -97,12 +97,14 @@ jobs:
 
           wrangler d1 execute zm-academy-preview-db --remote --config wrangler.preview.toml --file=tests/preview-smoke-seed.sql
 
-          curl --fail --silent --show-error -X DELETE "$API/api/admin/materials" \
+          DELETE_STATUS="$(curl --silent --show-error -X DELETE "$API/api/admin/materials" \
             -H "Authorization: Bearer $ADMIN_TOKEN" \
             -H "Content-Type: application/json" \
             --data '{"id":990001}' \
-            -o /tmp/zm-delete.json
-          python3 -c "import json; d=json.load(open('/tmp/zm-delete.json')); assert d.get('success') is True, d"
+            -o /tmp/zm-delete.json -w '%{http_code}')"
+          echo "Material deletion HTTP status: $DELETE_STATUS"
+          cat /tmp/zm-delete.json
+          python3 -c "import json,sys; d=json.load(open('/tmp/zm-delete.json')); assert sys.argv[1] == '200' and d.get('success') is True, d" "$DELETE_STATUS"
 
           wrangler d1 execute zm-academy-preview-db --remote --config wrangler.preview.toml \
             --command="SELECT CASE WHEN
