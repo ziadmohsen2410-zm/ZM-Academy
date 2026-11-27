@@ -434,6 +434,7 @@ async function logout(){
 }
 async function boot(){
   if(!state.token) state.token=await readSavedAdminToken();
+  if(state.token) await saveAdminToken(state.token);
   if(!state.token){ $('#appView').classList.add('hidden'); $('#loginView').classList.remove('hidden'); return; }
   try{
     const me=await api('/api/admin/platform/me');state.admin=me.admin||me;
