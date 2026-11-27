@@ -1364,6 +1364,7 @@ if (method === "POST" && rejectPasswordMatch) {
         FROM orders o
         JOIN students s ON s.id = o.student_id
         JOIN materials m ON m.id = o.material_id
+        WHERE o.status = 'pending'
         ORDER BY o.id DESC
         LIMIT 500
       `).all();
@@ -1393,11 +1394,20 @@ if (method === "POST" && rejectPasswordMatch) {
         );
       }
 
-      const result = await env.DB.prepare(
-        "UPDATE orders SET status = ? WHERE id = ?"
-      )
-        .bind(status, Number(orderStatus[1]))
-        .run();
+      const orderId = Number(orderStatus[1]);
+      let result;
+      if (status === "rejected") {
+        // A rejected request is removed completely; the student may submit again.
+        result = await env.DB.prepare(
+          "DELETE FROM orders WHERE id = ? AND status = 'pending'"
+        ).bind(orderId).run();
+      } else {
+        // Approved orders remain as purchase entitlements so the student keeps access
+        // and duplicate-request checks continue to block another purchase.
+        result = await env.DB.prepare(
+          "UPDATE orders SET status = ? WHERE id = ? AND status = 'pending'"
+        ).bind(status, orderId).run();
+      }
 
       if (!(result.meta?.changes || 0)) {
         return reply(
@@ -1414,6 +1424,7 @@ if (method === "POST" && rejectPasswordMatch) {
       return reply(request, env, {
         success: true,
         changed: result.meta?.changes || 0,
+        action: status === "rejected" ? "deleted" : "approved",
       });
     }
 
@@ -1818,23 +1829,11 @@ if (method === "POST" && rejectPasswordMatch) {
         );
       }
 
-      // Do not create auxiliary tables during deletion. Older databases may not
-      // have every learning/archive table, and creating them here can turn a
-      // simple delete into a 500 before the guarded deletion logic runs.
-      const linkedOrders = await env.DB.prepare(
-        "SELECT COUNT(*) AS total FROM orders WHERE material_id = ?"
-      ).bind(id).first();
-      if (Number(linkedOrders?.total || 0) > 0) {
-        return reply(request, env, {
-          success: false,
-          error: "لا يمكن حذف هذا الدرس نهائيًا لأنه مرتبط بطلبات شراء. أرشفه بدلًا من ذلك للحفاظ على سجل الطلاب والطلبات.",
-          code: "MATERIAL_HAS_ORDERS",
-        }, 409);
-      }
-
+      // Permanent deletion intentionally removes this material's purchase requests
+      // and dependent records. The confirmation is handled by the admin UI.
       try {
-        // Inspect only tables that already exist. Delete dependent rows for this
-        // material, but never touch orders or unrelated student records.
+        // Inspect only tables that already exist. Remove rows linked to this
+        // material, including purchase requests and their student-side hidden markers.
         const tableResult = await env.DB.prepare(
           "SELECT name FROM sqlite_master WHERE type = 'table' AND name NOT LIKE 'sqlite_%'"
         ).all();
@@ -1866,10 +1865,20 @@ if (method === "POST" && rejectPasswordMatch) {
           }
         }
 
+        // Remove hidden-purchase markers before deleting their related orders.
+        if (tableNames.has("student_hidden_purchases")) {
+          dependentDeletes.unshift(
+            env.DB.prepare(
+              "DELETE FROM student_hidden_purchases WHERE order_id IN (SELECT id FROM orders WHERE material_id = ?)"
+            ).bind(id)
+          );
+        }
+
         // Legacy tables without declared foreign keys.
         queueDelete("student_material_progress", "material_id");
         queueDelete("student_favorites", "material_id");
         queueDelete("archived_materials", "material_id");
+        queueDelete("orders", "material_id");
 
         if (dependentDeletes.length) await env.DB.batch(dependentDeletes);
         const result = await env.DB.prepare("DELETE FROM materials WHERE id = ?").bind(id).run();
