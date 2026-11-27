@@ -1833,6 +1833,7 @@ if (method === "POST" && rejectPasswordMatch) {
 
       // Permanently remove the material and every dependent row, including
       // records that reference its purchase orders. Delete descendants first.
+      let deletionPlan = new Map();
       try {
         const tableResult = await env.DB.prepare(
           "SELECT name FROM sqlite_master WHERE type = 'table' AND name NOT LIKE 'sqlite_%'"
@@ -1866,7 +1867,7 @@ if (method === "POST" && rejectPasswordMatch) {
           }
         }
 
-        const deletionPlan = new Map();
+        deletionPlan = new Map();
         const addDelete = (tableName, depth, condition) => {
           if (!tableNames.has(tableName) ||
               !/^[A-Za-z_][A-Za-z0-9_]*$/.test(tableName)) return;
