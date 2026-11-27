@@ -119,6 +119,10 @@ body[data-theme='light']{background:var(--bg)!important;color:var(--text)!import
       <div class="card"><h3>إدارة الطلاب</h3>
         <div class="toolbar"><input id="studentSearch" placeholder="بحث بالاسم/الهاتف/المعرف"><button class="ghost" id="reloadStudents">تحميل</button></div>
         <div class="table-wrap"><table><thead><tr><th>ID</th><th>الاسم</th><th>الهاتف</th><th>الصف</th><th>المدرسة</th><th>إجراءات</th></tr></thead><tbody id="studentsTbody"></tbody></table></div>
+        <div id="studentDetails" class="card hidden" style="margin-top:14px">
+          <div class="row" style="justify-content:space-between;align-items:center"><h3>ملف الطالب</h3><button type="button" class="ghost" onclick="document.getElementById('studentDetails').classList.add('hidden')">إغلاق</button></div>
+          <div id="studentDetailsBody" class="muted">اختر طالبًا لعرض بياناته.</div>
+        </div>
       </div>
     </section>
 
@@ -551,8 +555,37 @@ function renderStudents(rows){
   const q=($('#studentSearch').value||'').trim().toLowerCase();
   const filtered=rows.filter(s=>!q||JSON.stringify(s).toLowerCase().includes(q));
   const tb=$('#studentsTbody');
-  tb.innerHTML=filtered.length?filtered.map(s=>`<tr><td>${esc(s.id)}</td><td>${esc(s.name||'-')}</td><td>${esc(s.phone||'-')}</td><td>${esc(s.grade||'-')}</td><td>${esc(s.school||'-')}</td><td><span class="small muted">عرض عبر API الحالي</span></td></tr>`).join(''):'<tr><td colspan="6" class="muted">لا توجد نتائج</td></tr>';
+  tb.innerHTML=filtered.length?filtered.map(s=>{
+    const active=Number(s.is_active)!==0;
+    return `<tr><td>${esc(s.id)}</td><td>${esc(s.name||'-')}</td><td>${esc(s.phone||'-')}</td><td>${esc(s.grade||'-')}</td><td>${esc(s.school||'-')}</td><td><span class="badge ${active?'ok':'danger'}">${active?'نشط':'موقوف'}</span> <button type="button" class="ghost small" onclick="window.__viewStudent(${Number(s.id)})">تفاصيل</button> <button type="button" class="ghost small" onclick="window.__toggleStudentStatus(${Number(s.id)},${active?'false':'true'})">${active?'إيقاف':'تفعيل'}</button></td></tr>`;
+  }).join(''):'<tr><td colspan="6" class="muted">لا توجد نتائج</td></tr>';
 }
+window.__viewStudent=async(id)=>{
+  const panel=$('#studentDetails'), body=$('#studentDetailsBody');
+  panel.classList.remove('hidden'); body.textContent='جارٍ تحميل ملف الطالب...';
+  try{
+    const d=await api('/api/admin/students/'+id), s=d.student||{};
+    const rows=(items,empty,render)=>items?.length?items.map(render).join(''):`<div class="muted">${empty}</div>`;
+    body.innerHTML=`
+      <div class="grid stats">
+        <div class="item"><strong>${esc(s.name||'-')}</strong><div class="muted">الطالب #${esc(s.id)}</div></div>
+        <div class="item"><strong>${esc(s.phone||'-')}</strong><div class="muted">هاتف الطالب</div></div>
+        <div class="item"><strong>${esc(s.parent_phone||'-')}</strong><div class="muted">هاتف ولي الأمر</div></div>
+        <div class="item"><strong>${esc(s.grade||'-')}</strong><div class="muted">${esc(s.school||'-')} — ${esc(s.governorate||'-')}</div></div>
+      </div>
+      <h4>المواد المسجل بها</h4>${rows(d.subjects,'لا توجد مواد مسجلة',x=>`<div class="item">${esc(x.name)} — ${esc(x.grade||'')}</div>`)}
+      <h4>الطلبات والمشتريات</h4>${rows(d.orders,'لا توجد طلبات',x=>`<div class="item">#${esc(x.id)} — ${esc(x.material_title||'محتوى محذوف')} — ${esc(x.status)} — ${esc(x.price??'-')} جنيه</div>`)}
+      <h4>الأجهزة</h4>${rows(d.devices,'لا توجد أجهزة مسجلة',x=>`<div class="item">${esc(x.device_name||'جهاز')} — ${esc(x.status)} — ${esc(fmtDate(x.created_at))}</div>`)}
+      <h4>التقدم الدراسي</h4>${rows(d.progress,'لا يوجد تقدم مسجل',x=>`<div class="item">${esc(x.material_title||'محتوى')} — آخر صفحة: ${esc(x.last_page||1)} — ${x.completed_at?'مكتمل':'قيد المتابعة'}</div>`)}
+    `;
+  }catch(e){body.textContent='تعذر تحميل ملف الطالب: '+e.message;}
+};
+window.__toggleStudentStatus=async(id,active)=>{
+  const enabled=active===true||active==='true';
+  if(!confirm(enabled?'تفعيل حساب الطالب والسماح له بالدخول؟':'إيقاف حساب الطالب وإنهاء جلساته الحالية؟'))return;
+  try{await api('/api/admin/students/'+id,{method:'PATCH',body:JSON.stringify({is_active:enabled})});showMsg(enabled?'تم تفعيل حساب الطالب':'تم إيقاف حساب الطالب',true);await loadStudents();if(!enabled&&$('#studentDetails').classList.contains('hidden')===false)window.__viewStudent(id);}
+  catch(e){showMsg(e.message);}
+};
 async function loadSubjects(){
   const tb=$('#subjectsTbody'); tb.innerHTML='<tr><td colspan="4" class="muted">جارٍ التحميل...</td></tr>';
   try{
