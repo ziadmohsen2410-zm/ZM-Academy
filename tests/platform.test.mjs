@@ -137,7 +137,7 @@ test("student preferences accept only supported themes, colors, and font sizes",
 
 test("students can delete rejected purchases and hide completed purchases without deleting records", () => {
   const worker = read("worker.js");
-  assert.ok(worker.includes("if (order.status === 'rejected')"));
+  assert.ok(worker.includes('if (order.status === "rejected")'));
   assert.ok(worker.includes("DELETE FROM orders"));
   assert.ok(worker.includes("if (order.status === 'approved' || order.status === 'completed')"));
   assert.ok(worker.includes("INSERT OR IGNORE INTO student_hidden_purchases"));
