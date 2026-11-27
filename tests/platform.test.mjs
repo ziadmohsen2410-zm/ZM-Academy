@@ -801,7 +801,7 @@ test("parent portal keeps its session on temporary network errors and only clear
 
 test("student login does not erase a newly created session after a temporary verification failure", () => {
   const login = read("login.html");
-  assert.ok(login.includes("if(token&&error.status===401)"));
+  assert.ok(login.includes("if(tokenSaved&&token&&error.status===401)"));
   assert.ok(login.includes("تم إنشاء جلسة الدخول وحفظها"));
   assert.ok(login.includes("location.replace('./student.html')"));
   assert.ok(login.includes("tokenSaved=true"));
