@@ -1235,26 +1235,31 @@ if (method === "POST" && resetPasswordMatch) {
 
   const newHash = await passwordHash(newPassword);
 
-  await env.DB.prepare(`
-    UPDATE student_accounts
-    SET password_hash = ?
-    WHERE student_id = ?
-  `).bind(newHash, resetRequest.student_id).run();
-
-  // إنهاء جلسات الطالب القديمة
-  await env.DB.prepare(`
-    DELETE FROM student_sessions
-    WHERE student_id = ?
-  `).bind(resetRequest.student_id).run();
-
-  // تسجيل مراجعة الطلب
-  await env.DB.prepare(`
-    UPDATE password_reset_requests
-    SET status = 'completed',
-        reviewed_at = CURRENT_TIMESTAMP,
-        reviewed_by = ?
-    WHERE id = ? AND status = 'pending'
-  `).bind(session.admin_id, requestId).run();
+  // Change the password, revoke old sessions, and close the request atomically.
+  const resetResults = await env.DB.batch([
+    env.DB.prepare(`
+      UPDATE student_accounts
+      SET password_hash = ?
+      WHERE student_id = ?
+    `).bind(newHash, resetRequest.student_id),
+    env.DB.prepare(`
+      DELETE FROM student_sessions
+      WHERE student_id = ?
+    `).bind(resetRequest.student_id),
+    env.DB.prepare(`
+      UPDATE password_reset_requests
+      SET status = 'completed',
+          reviewed_at = CURRENT_TIMESTAMP,
+          reviewed_by = ?
+      WHERE id = ? AND status = 'pending'
+    `).bind(session.admin_id, requestId)
+  ]);
+  if (!(resetResults[2]?.meta?.changes || 0)) {
+    return reply(request, env, {
+      success: false,
+      error: "تمت مراجعة الطلب بالفعل. حدّث القائمة وحاول مرة أخرى.",
+    }, 409);
+  }
 
   return reply(request, env, {
     success: true,
@@ -4274,7 +4279,15 @@ if (method === "POST" && rejectPasswordMatch) {
         }
         if (b.display_name!==undefined) { await env.DB.prepare(`UPDATE admin_users SET display_name=? WHERE id=?`).bind(clean(b.display_name,120),uid).run(); }
         if (b.email!==undefined) { await env.DB.prepare(`UPDATE admin_users SET email=? WHERE id=?`).bind(clean(b.email,120).toLowerCase(),uid).run(); }
-        if (b.password) { const pw=String(b.password); if(pw.length<12) return reply(request, env,{success:false,error:'كلمة المرور 12+ حرف'},400); const hash=await passwordHash(pw); await env.DB.prepare(`UPDATE admin_users SET password_hash=? WHERE id=?`).bind(hash,uid).run(); }
+        if (b.password) {
+          const pw=String(b.password);
+          if(pw.length<12) return reply(request, env,{success:false,error:'كلمة المرور 12+ حرف'},400);
+          const hash=await passwordHash(pw);
+          await env.DB.batch([
+            env.DB.prepare(`UPDATE admin_users SET password_hash=? WHERE id=?`).bind(hash,uid),
+            env.DB.prepare(`DELETE FROM admin_sessions WHERE admin_id=?`).bind(uid)
+          ]);
+        }
         await logAudit(env,{actor_type:'admin',actor_id:admin.id,actor_label:admin.username,action:'admin.update',entity_type:'admin_user',entity_id:uid,details_json:{keys:Object.keys(b||{})},ip,user_agent:ua});
         return reply(request, env,{success:true});
       }
