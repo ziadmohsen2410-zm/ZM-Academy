@@ -94,7 +94,7 @@ if(b.logoUrl){document.querySelectorAll('.brand img,.logo-large').forEach(n=>n.s
 if(b.whatsapp){document.querySelectorAll('a[href*="wa.me/"]').forEach(n=>{try{const u=new URL(n.href);u.pathname='/'+b.whatsapp.replace(/\D/g,'');n.href=u.href;}catch(e){}})}
 const contactBox=document.getElementById('zmContactLinks')||document.getElementById('zmSocialLinks');
 const whatsappDigits=String(b.whatsapp||'201115336341').replace(/\D/g,'');
-const social=[['whatsapp',whatsappDigits?'https://wa.me/'+whatsappDigits:''],['facebook',b.facebook||'']];
+const social=[['whatsapp',whatsappDigits?'https://wa.me/'+whatsappDigits:''],['facebook',b.facebook||'https://www.facebook.com/share/1Q2dQN9a3z/']];
 let socialBox=contactBox;
 if(!socialBox){socialBox=document.createElement('nav');socialBox.id='zmContactLinks';socialBox.setAttribute('aria-label','التواصل مع الأكاديمية');socialBox.style.cssText='display:flex;justify-content:center;gap:10px;flex-wrap:wrap;padding:14px 0;';const target=document.querySelector('.cta .container')||document.querySelector('.auth-links')?.parentElement||document.querySelector('#supportSection')||document.querySelector('.card')||document.body;target.append(socialBox);}
 socialBox.replaceChildren();
