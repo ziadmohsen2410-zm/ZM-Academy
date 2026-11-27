@@ -94,7 +94,7 @@ const sections=s.sections||{};for(const [key,id] of Object.entries({subjects:'su
 if(b.logoUrl){document.querySelectorAll('.brand img,.logo-large').forEach(n=>n.src=b.logoUrl);}if(b.heroImageUrl){const hero=document.querySelector('.hero');if(hero)hero.style.backgroundImage='linear-gradient(90deg,rgba(5,8,20,.82),rgba(5,8,20,.48)),url("'+b.heroImageUrl.replace(/["\\]/g,'')+'")';}
 if(b.whatsapp){document.querySelectorAll('a[href*="wa.me/"]').forEach(n=>{try{const u=new URL(n.href);u.pathname='/'+b.whatsapp.replace(/\D/g,'');n.href=u.href;}catch(e){}})}
 const contactBox=document.getElementById('zmContactLinks')||document.getElementById('zmSocialLinks');
-const whatsappDigits=String(b.whatsapp||'201115336341').replace(/\\D/g,'');
+const whatsappDigits=String(b.whatsapp||'201115336341').replace(/\D/g,'');
 const social=[['whatsapp',whatsappDigits?'https://wa.me/'+whatsappDigits:''],['facebook',b.facebook||'']];
 let socialBox=contactBox;
 if(!socialBox){socialBox=document.createElement('nav');socialBox.id='zmContactLinks';socialBox.setAttribute('aria-label','التواصل مع الأكاديمية');socialBox.style.cssText='display:flex;justify-content:center;gap:10px;flex-wrap:wrap;padding:14px 0;';const target=document.querySelector('.cta .container')||document.querySelector('.auth-links')?.parentElement||document.querySelector('#supportSection')||document.querySelector('.card')||document.body;target.append(socialBox);}
