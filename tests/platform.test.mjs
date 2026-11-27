@@ -723,3 +723,41 @@ test("admin material list exposes archive, restore, and separately confirmed per
   assert.ok(worker.includes('const tableNames = new Set((tableResult.results || []).map((item) => String(item.name || "")))'));
   assert.ok(worker.includes("const foreignKeysByTable = new Map()"));
 });
+
+
+test("disabled admin accounts cannot sign in and admin password changes revoke all sessions", () => {
+  const worker = read("worker.js");
+  const login = worker.slice(worker.indexOf('if (method === "POST" && path === "/api/admin/login")'), worker.indexOf("// طلب استعادة كلمة مرور الطالب"));
+  assert.ok(login.includes('hasDatabaseColumn(env, "admin_users", "is_active")'));
+  assert.ok(login.includes("Number(admin.is_active) === 0"));
+  assert.ok(login.includes("last_login_at"));
+  assert.ok(worker.includes("DELETE FROM admin_sessions WHERE admin_id=?"));
+});
+
+test("disabled students cannot create or keep authenticated sessions", () => {
+  const worker = read("worker.js");
+  const session = worker.slice(worker.indexOf("async function studentSession"), worker.indexOf("async function purgeExpiredSessions"));
+  assert.ok(session.includes('hasDatabaseColumn(env, "students", "is_active")'));
+  assert.ok(session.includes("COALESCE(s.is_active, 1) <> 0"));
+  const login = worker.slice(worker.indexOf('if (method === "POST" && path === "/api/students/login")'), worker.indexOf('// مسارات الطالب المحمية'));
+  assert.ok(login.includes("هذا الحساب موقوف حاليًا"));
+});
+
+test("student registration is rate limited by IP, phone, and username", () => {
+  const worker = read("worker.js");
+  const registration = worker.slice(worker.indexOf('if (method === "POST" && path === "/api/students/register")'), worker.indexOf('// تسجيل دخول الطالب'));
+  assert.ok(registration.includes('"student-register-ip"'));
+  assert.ok(registration.includes('"student-register-phone"'));
+  assert.ok(registration.includes('"student-register-username"'));
+});
+
+test("student password reset updates credentials, revokes sessions, and closes the request atomically", () => {
+  const worker = read("worker.js");
+  const start = worker.indexOf("if (method === \"POST\" && resetPasswordMatch)");
+  const end = worker.indexOf("// رفض طلب استعادة كلمة المرور", start);
+  const route = worker.slice(start, end);
+  assert.ok(route.includes("const resetResults = await env.DB.batch(["));
+  assert.ok(route.includes("DELETE FROM student_sessions"));
+  assert.ok(route.includes("status = 'completed'"));
+  assert.ok(route.includes("resetResults[2]?.meta?.changes"));
+});
