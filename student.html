@@ -715,6 +715,7 @@ let studentProgress=[];
 let studentFavorites=[];
 let ownedMaterialIds=[];
 let activePdfMaterialId=null;
+let activeImageObjectUrl=null;
 let pdfProgressObserver=null;
 let pdfRenderObserver=null;
 let progressQueue=Promise.resolve();
@@ -1061,6 +1062,7 @@ function stopPdfViewer(){
  }
 
  activePdfMaterialId=null;
+ if(activeImageObjectUrl){URL.revokeObjectURL(activeImageObjectUrl);activeImageObjectUrl=null;}
  $("pdfViewer").classList.add("hidden");
  $("viewerPages").replaceChildren();
  $("viewerMessage").textContent="جارٍ تجهيز المذكرة...";
@@ -1093,6 +1095,7 @@ async function openPdf(materialId,title,resumePage=1){
   pdfDocument=null;
  }
 
+ if(activeImageObjectUrl){URL.revokeObjectURL(activeImageObjectUrl);activeImageObjectUrl=null;}
  activePdfMaterialId=id;
  viewer.classList.remove("hidden");
  $("viewerTitle").textContent=title||"عرض المذكرة";
@@ -1123,6 +1126,21 @@ async function openPdf(materialId,title,resumePage=1){
    throw Error(d.error||"تعذر فتح المذكرة.");
   }
 
+  const responseType=(response.headers.get("Content-Type")||"").split(";")[0].toLowerCase();
+  if(responseType.startsWith("image/")){
+   const imageBlob=await response.blob();
+   if(sequence!==pdfOpenSequence)return;
+   activeImageObjectUrl=URL.createObjectURL(imageBlob);
+   const image=document.createElement("img");
+   image.src=activeImageObjectUrl;
+   image.alt=title||"صورة تعليمية";
+   image.loading="eager";
+   image.style.cssText="display:block;max-width:100%;max-height:78vh;height:auto;object-fit:contain;margin:12px auto;border-radius:14px";
+   pages.appendChild(image);
+   viewerMessage.textContent="تم فتح الصورة التعليمية.";
+   return;
+  }
+  if(responseType!=="application/pdf")throw Error("نوع الملف المرتبط غير مدعوم للعرض.");
   const buffer=await response.arrayBuffer();
   if(sequence!==pdfOpenSequence)return;
 
