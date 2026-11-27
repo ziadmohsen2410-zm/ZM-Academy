@@ -385,38 +385,33 @@ async function uploadToGitHub(env, fileBytes, fileName, contentType) {
 }
 
 async function deleteFromGitHub(env, fileKey) {
-  if (!env.GITHUB_STORAGE_TOKEN) return;
-  if (
-    !fileKey ||
-    !/^(materials|media)\//.test(fileKey) ||
-    fileKey.includes("..")
-  ) {
-    return;
+  if (!fileKey || !/^(materials|media)\//.test(fileKey) || fileKey.includes("..")) {
+    return { deleted: false, skipped: true };
+  }
+  if (!env.GITHUB_STORAGE_TOKEN) {
+    throw new Error("GitHub storage token is missing; file cleanup is pending.");
   }
 
   const url = githubContentsUrl(fileKey);
-
   const current = await fetch(url, { headers: githubHeaders(env) });
-  if (!current.ok) return;
+  if (current.status === 404) return { deleted: true, alreadyMissing: true };
+  if (!current.ok) {
+    throw new Error(`GitHub file lookup failed: HTTP ${current.status}`);
+  }
 
   const meta = await current.json();
-  if (!meta?.sha) return;
+  if (!meta?.sha) throw new Error("GitHub file metadata did not include a SHA.");
 
   const removed = await fetch(url, {
     method: "DELETE",
-    headers: {
-      ...githubHeaders(env),
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      message: `Delete academy file: ${fileKey}`,
-      sha: meta.sha,
-    }),
+    headers: { ...githubHeaders(env), "Content-Type": "application/json" },
+    body: JSON.stringify({ message: `Delete academy file: ${fileKey}`, sha: meta.sha }),
   });
-
-  if (!removed.ok) {
-    console.error("GitHub delete failed:", removed.status);
+  if (!removed.ok && removed.status !== 404) {
+    const details = await removed.text().catch(() => "");
+    throw new Error(`GitHub file deletion failed: HTTP ${removed.status} ${details.slice(0, 200)}`);
   }
+  return { deleted: true };
 }
 
 async function uploadStudentPhotoToGitHub(env, fileBytes, contentType, studentId) {
@@ -1836,60 +1831,83 @@ if (method === "POST" && rejectPasswordMatch) {
         );
       }
 
-      // Permanent deletion intentionally removes this material's purchase requests
-      // and dependent records. The confirmation is handled by the admin UI.
+      // Permanently remove the material and every dependent row, including
+      // records that reference its purchase orders. Delete descendants first.
       try {
-        // Inspect only tables that already exist. Remove rows linked to this
-        // material, including purchase requests and their student-side hidden markers.
         const tableResult = await env.DB.prepare(
           "SELECT name FROM sqlite_master WHERE type = 'table' AND name NOT LIKE 'sqlite_%'"
         ).all();
         const tableNames = new Set((tableResult.results || []).map((item) => String(item.name || "")));
-        const dependentDeletes = [];
-        const queuedDeletes = new Set();
-
-        const queueDelete = (tableName, columnName) => {
-          if (!tableNames.has(tableName)) return;
-          if (!/^[A-Za-z_][A-Za-z0-9_]*$/.test(tableName) ||
-              !/^[A-Za-z_][A-Za-z0-9_]*$/.test(columnName)) return;
-          const key = tableName + "." + columnName;
-          if (queuedDeletes.has(key)) return;
-          queuedDeletes.add(key);
-          dependentDeletes.push(
-            env.DB.prepare(`DELETE FROM "${tableName}" WHERE "${columnName}" = ?`).bind(id)
-          );
-        };
+        const primaryKeys = new Map();
+        const edgesByParent = new Map();
 
         for (const tableName of tableNames) {
-          if (tableName === "materials" || !/^[A-Za-z_][A-Za-z0-9_]*$/.test(tableName)) continue;
-          const foreignKeys = await env.DB.prepare(
-            `PRAGMA foreign_key_list("${tableName}")`
-          ).all();
+          if (!/^[A-Za-z_][A-Za-z0-9_]*$/.test(tableName)) continue;
+          const [columns, foreignKeys] = await Promise.all([
+            env.DB.prepare(`PRAGMA table_info("${tableName}")`).all(),
+            env.DB.prepare(`PRAGMA foreign_key_list("${tableName}")`).all(),
+          ]);
+          const primaryKey = (columns.results || []).find((column) => Number(column.pk) > 0);
+          if (primaryKey) primaryKeys.set(tableName, String(primaryKey.name));
           for (const fk of (foreignKeys.results || [])) {
-            if (String(fk.table).toLowerCase() === "materials") {
-              queueDelete(tableName, String(fk.from || ""));
-            }
+            const parent = String(fk.table || "");
+            const childColumn = String(fk.from || "");
+            const parentColumn = String(fk.to || primaryKeys.get(parent) || "");
+            if (!tableNames.has(parent) ||
+                !/^[A-Za-z_][A-Za-z0-9_]*$/.test(parent) ||
+                !/^[A-Za-z_][A-Za-z0-9_]*$/.test(childColumn) ||
+                !/^[A-Za-z_][A-Za-z0-9_]*$/.test(parentColumn)) continue;
+            if (!edgesByParent.has(parent)) edgesByParent.set(parent, []);
+            edgesByParent.get(parent).push({ child: tableName, childColumn, parentColumn });
           }
         }
 
-        // Remove hidden-purchase markers before deleting their related orders.
-        if (tableNames.has("student_hidden_purchases")) {
-          dependentDeletes.unshift(
-            env.DB.prepare(
-              "DELETE FROM student_hidden_purchases WHERE order_id IN (SELECT id FROM orders WHERE material_id = ?)"
-            ).bind(id)
-          );
-        }
+        const deletionPlan = new Map();
+        const addDelete = (tableName, depth, condition) => {
+          if (!tableNames.has(tableName) ||
+              !/^[A-Za-z_][A-Za-z0-9_]*$/.test(tableName)) return;
+          const entry = deletionPlan.get(tableName) || { depth, conditions: [] };
+          entry.depth = Math.max(entry.depth, depth);
+          if (!entry.conditions.includes(condition)) entry.conditions.push(condition);
+          deletionPlan.set(tableName, entry);
+        };
 
-        // Legacy tables without declared foreign keys.
-        queueDelete("student_material_progress", "material_id");
-        queueDelete("student_favorites", "material_id");
-        queueDelete("archived_materials", "material_id");
-        queueDelete("orders", "material_id");
+        const walkDependents = (parent, parentCondition, depth, visited) => {
+          for (const edge of edgesByParent.get(parent) || []) {
+            if (visited.has(edge.child)) continue;
+            const childCondition = `"${edge.childColumn}" IN (SELECT "${edge.parentColumn}" FROM "${parent}" WHERE ${parentCondition})`;
+            addDelete(edge.child, depth, childCondition);
+            walkDependents(edge.child, childCondition, depth + 1, new Set([...visited, edge.child]));
+          }
+        };
+        walkDependents("materials", '"id" = ?', 1, new Set(["materials"]));
 
-        if (dependentDeletes.length) await env.DB.batch(dependentDeletes);
-        const result = await env.DB.prepare("DELETE FROM materials WHERE id = ?").bind(id).run();
-        if (!(result?.meta?.changes || 0)) {
+        // Tables created by older versions without declared foreign keys.
+        addDelete("student_material_progress", 1, '"material_id" = ?');
+        addDelete("student_favorites", 1, '"material_id" = ?');
+        addDelete("archived_materials", 1, '"material_id" = ?');
+        addDelete("orders", 1, '"material_id" = ?');
+        addDelete(
+          "student_hidden_purchases",
+          2,
+          '"order_id" IN (SELECT "id" FROM "orders" WHERE "material_id" = ?)'
+        );
+
+        const orderedDeletes = [...deletionPlan.entries()]
+          .sort((a, b) => b[1].depth - a[1].depth ||
+            (a[0] === "student_hidden_purchases" ? -1 : b[0] === "student_hidden_purchases" ? 1 : 0))
+          .map(([tableName, entry]) => env.DB.prepare(
+            `DELETE FROM "${tableName}" WHERE ${entry.conditions.map((condition) => `(${condition})`).join(" OR ")}`
+          ).bind(...entry.conditions.map(() => id)));
+
+        // Keep the final row deletion in the same D1 batch so a constraint
+        // failure rolls back the dependent cleanup instead of leaving partial data.
+        const results = await env.DB.batch([
+          ...orderedDeletes,
+          env.DB.prepare("DELETE FROM materials WHERE id = ?").bind(id),
+        ]);
+        const finalResult = results[results.length - 1];
+        if (!(finalResult?.meta?.changes || 0)) {
           return reply(request, env, { success: false, error: "Material not found." }, 404);
         }
       } catch (error) {
@@ -1899,7 +1917,7 @@ if (method === "POST" && rejectPasswordMatch) {
         });
         return reply(request, env, {
           success: false,
-          error: "تعذر حذف الدرس بسبب ارتباط ببيانات أخرى. تم الحفاظ على البيانات كما هي؛ يمكنك أرشفته بدلًا من الحذف.",
+          error: "تعذر حذف المحتوى بسبب ارتباط ببيانات أخرى. لم يتم تأكيد الحذف؛ راجع سجل الخادم.",
           code: "MATERIAL_DELETE_CONSTRAINT",
         }, 409);
       }
