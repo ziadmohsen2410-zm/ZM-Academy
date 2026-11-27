@@ -155,3 +155,104 @@ html[data-zm-mode="light"] body:has(.zm-shell) #zmPlat textarea,
 html[data-zm-mode="light"] body:has(.zm-shell) #zmPlat pre,
 body.light:has(.zm-shell) #zmPlat textarea,
 body.light:has(.zm-shell) #zmPlat pre{background:#F5F8FF!important;color:#1C2945!important;border-color:#D3E2F4!important}
+
+
+/* ZM Academy — consistent contrast and button system in both themes */
+:root{
+  --zm-button-start:#269FEA;
+  --zm-button-end:#7657E8;
+  --zm-button-text:#FFFFFF;
+  --zm-outline-text:#62C5FF;
+  --zm-focus:rgba(53,184,255,.22);
+}
+body button:not(.ghost):not(.secondary):not(.outline):not(.theme-toggle):not(.icon-btn):not(.reset-toggle):not(.reset-cancel):not(.danger):not(.delete):not(.nav-link),
+body .btn:not(.ghost):not(.secondary):not(.outline):not(.theme-toggle),
+body .primary:not(.ghost):not(.secondary){
+  background:linear-gradient(115deg,var(--zm-button-start),var(--zm-button-end))!important;
+  background-image:linear-gradient(115deg,var(--zm-button-start),var(--zm-button-end))!important;
+  color:var(--zm-button-text)!important;
+  -webkit-text-fill-color:var(--zm-button-text);
+  border-color:rgba(93,169,255,.48)!important;
+  text-shadow:0 1px 1px rgba(0,0,0,.12);
+}
+body button:not(.ghost):not(.secondary):not(.outline):not(.theme-toggle):not(.icon-btn):not(.reset-toggle):not(.reset-cancel):not(.danger):not(.delete):not(.nav-link) :is(span,strong,i,svg),
+body .btn:not(.ghost):not(.secondary):not(.outline):not(.theme-toggle) :is(span,strong,i,svg){
+  color:inherit!important;
+  fill:currentColor;
+}
+body :is(button.ghost,button.secondary,button.outline,.btn.ghost,.btn.secondary,.btn.outline,.theme-toggle,.icon-btn,.reset-toggle,.reset-cancel){
+  background:rgba(20,32,57,.82)!important;
+  color:#75CFFF!important;
+  -webkit-text-fill-color:#75CFFF;
+  border:1px solid rgba(91,157,226,.34)!important;
+  box-shadow:none!important;
+}
+body :is(button, a, input, select, textarea):focus-visible{
+  outline:3px solid var(--zm-focus)!important;
+  outline-offset:2px;
+}
+body :is(input,select,textarea){
+  color:#F4F7FF;
+  border-color:rgba(91,157,226,.34);
+}
+body :is(input,select,textarea)::placeholder{color:#91A3C1;opacity:1}
+body :is(.muted,.sub,.hint,.description,.help-text,small){color:var(--zm-muted)}
+body :is(.success,.ok,.msg.ok){color:#35C99A}
+body :is(.danger,.error,.err,.msg.err){color:#FF7188}
+body :is(.warning,.warn){color:#F4C46B}
+
+/* Light mode: crisp surfaces, dark readable text, high-contrast controls */
+html[data-zm-mode="light"],body[data-zm-mode="light"],body[data-theme="light"],body.light{
+  --zm-bg:#F3F7FF;
+  --zm-surface:#FFFFFF;
+  --zm-text:#17243C;
+  --zm-muted:#61718D;
+  --line:#D6E2F2;
+  --zm-focus:rgba(38,127,181,.22);
+  color-scheme:light;
+}
+html[data-zm-mode="light"] body,
+body[data-zm-mode="light"],body[data-theme="light"],body.light{
+  color:#17243C!important;
+  background-color:#F3F7FF;
+}
+html[data-zm-mode="light"] body :is(.card,.panel,.section,.tile,.course-card,.auth-card,.item,.notice,.profile),
+body[data-zm-mode="light"] :is(.card,.panel,.section,.tile,.course-card,.auth-card,.item,.notice,.profile),
+body[data-theme="light"] :is(.card,.panel,.section,.tile,.course-card,.auth-card,.item,.notice,.profile),
+body.light :is(.card,.panel,.section,.tile,.course-card,.auth-card,.item,.notice,.profile){
+  color:#17243C;
+  border-color:#D6E2F2;
+}
+html[data-zm-mode="light"] body :is(h1,h2,h3,h4,p,label,.brand,.brand-link,.eyebrow,.tag),
+body[data-zm-mode="light"] :is(h1,h2,h3,h4,p,label,.brand,.brand-link,.eyebrow,.tag),
+body[data-theme="light"] :is(h1,h2,h3,h4,p,label,.brand,.brand-link,.eyebrow,.tag),
+body.light :is(h1,h2,h3,h4,p,label,.brand,.brand-link,.eyebrow,.tag){
+  color:#243957;
+}
+html[data-zm-mode="light"] body :is(.muted,.sub,.hint,.description,.help-text,small),
+body[data-zm-mode="light"] :is(.muted,.sub,.hint,.description,.help-text,small),
+body[data-theme="light"] :is(.muted,.sub,.hint,.description,.help-text,small),
+body.light :is(.muted,.sub,.hint,.description,.help-text,small){color:#61718D}
+html[data-zm-mode="light"] body :is(input,select,textarea),
+body[data-zm-mode="light"] :is(input,select,textarea),
+body[data-theme="light"] :is(input,select,textarea),
+body.light :is(input,select,textarea){
+  background:#FFFFFF!important;color:#17243C!important;border-color:#C9D8EC!important;
+}
+html[data-zm-mode="light"] body :is(input,select,textarea)::placeholder,
+body[data-zm-mode="light"] :is(input,select,textarea)::placeholder,
+body[data-theme="light"] :is(input,select,textarea)::placeholder,
+body.light :is(input,select,textarea)::placeholder{color:#7888A2!important}
+html[data-zm-mode="light"] body :is(button.ghost,button.secondary,button.outline,.btn.ghost,.btn.secondary,.btn.outline,.theme-toggle,.icon-btn,.reset-toggle,.reset-cancel),
+body[data-zm-mode="light"] :is(button.ghost,button.secondary,button.outline,.btn.ghost,.btn.secondary,.btn.outline,.theme-toggle,.icon-btn,.reset-toggle,.reset-cancel),
+body[data-theme="light"] :is(button.ghost,button.secondary,button.outline,.btn.ghost,.btn.secondary,.btn.outline,.theme-toggle,.icon-btn,.reset-toggle,.reset-cancel),
+body.light :is(button.ghost,button.secondary,button.outline,.btn.ghost,.btn.secondary,.btn.outline,.theme-toggle,.icon-btn,.reset-toggle,.reset-cancel){
+  background:#EAF2FF!important;color:#176FB5!important;-webkit-text-fill-color:#176FB5;
+  border-color:#C9DDF4!important;
+}
+html[data-zm-mode="light"] body button:not(.ghost):not(.secondary):not(.outline):not(.theme-toggle):not(.icon-btn):not(.reset-toggle):not(.reset-cancel):not(.danger):not(.delete):not(.nav-link),
+body[data-zm-mode="light"] button:not(.ghost):not(.secondary):not(.outline):not(.theme-toggle):not(.icon-btn):not(.reset-toggle):not(.reset-cancel):not(.danger):not(.delete):not(.nav-link),
+body[data-theme="light"] button:not(.ghost):not(.secondary):not(.outline):not(.theme-toggle):not(.icon-btn):not(.reset-toggle):not(.reset-cancel):not(.danger):not(.delete):not(.nav-link),
+body.light button:not(.ghost):not(.secondary):not(.outline):not(.theme-toggle):not(.icon-btn):not(.reset-toggle):not(.reset-cancel):not(.danger):not(.delete):not(.nav-link){
+  color:#FFFFFF!important;-webkit-text-fill-color:#FFFFFF;
+}
