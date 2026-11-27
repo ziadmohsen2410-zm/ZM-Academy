@@ -1105,8 +1105,6 @@ async function openPdf(materialId,title,resumePage=1){
  pages.replaceChildren();
 
  try{
-  if(!window.pdfjsLib)throw Error("تعذر تحميل مكتبة PDF.");
-
   const response=await fetch(
    API+"/api/student/materials/"+encodeURIComponent(id)+"/view",
    {headers:{"Authorization":"Bearer "+token}}
@@ -1141,6 +1139,7 @@ async function openPdf(materialId,title,resumePage=1){
    return;
   }
   if(responseType!=="application/pdf")throw Error("نوع الملف المرتبط غير مدعوم للعرض.");
+  if(!window.pdfjsLib)throw Error("تعذر تحميل مكتبة PDF.");
   const buffer=await response.arrayBuffer();
   if(sequence!==pdfOpenSequence)return;
 
