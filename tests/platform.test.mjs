@@ -775,3 +775,14 @@ test("admin student directory supports details and account activation controls",
   assert.ok(admin.includes("window.__toggleStudentStatus=async(id,active)=>"));
   assert.ok(!admin.includes("عرض عبر API الحالي"));
 });
+
+
+test("admin refresh keeps the authenticated workspace visible during temporary API outages", () => {
+  const admin = read("admin.html");
+  assert.ok(admin.includes("readCachedAdminProfile"));
+  assert.ok(admin.includes("saveCachedAdminProfile(state.admin)"));
+  assert.ok(admin.includes("if(cachedProfile)"));
+  assert.ok(admin.includes("لم يتم تسجيل خروجك"));
+  assert.ok(admin.includes("window.addEventListener('online'"));
+  assert.ok(admin.includes("localStorage.removeItem(adminProfileCacheKey)"));
+});
