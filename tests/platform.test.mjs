@@ -650,3 +650,18 @@ test("all primary pages reference the refreshed shared black-gold stylesheet", (
     assert.ok(read(page).includes("zm-future-theme.css?v=4"), "Stale theme cache key in " + page);
   }
 });
+
+
+test("student content viewer serves attached images as images and keeps PDF delivery", () => {
+  const worker = read("worker.js");
+  const student = read("student.html");
+  assert.ok(worker.includes("const contentTypes ="));
+  assert.ok(worker.includes('jpg: "image/jpeg"'));
+  assert.ok(worker.includes('png: "image/png"'));
+  assert.ok(worker.includes('webp: "image/webp"'));
+  assert.ok(worker.includes('/^(materials|media)\\//.test(fileKey)'));
+  assert.ok(student.includes('responseType.startsWith("image/")'));
+  assert.ok(student.includes("URL.createObjectURL(imageBlob)"));
+  assert.ok(student.includes("pdfjsLib.getDocument"));
+  assert.ok(student.includes("URL.revokeObjectURL(activeImageObjectUrl)"));
+});
