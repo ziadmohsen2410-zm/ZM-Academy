@@ -3,7 +3,8 @@
 ## D1
 - اسم قاعدة البيانات: `zm-academy-db`
 - Binding: `DB`
-- نفّذ migrations من مجلد `migrations/` بالترتيب.
+- نفّذ `migrations/001_platform_core.sql` فقط لتأسيس جداول المنصة.
+- لا تنفّذ `migrations/002_column_extensions.sql`؛ فهو ملف توثيقي فقط. Worker يضيف أعمدة التوافق القديمة بعد فحص المخطط والتحقق من نجاح كل تعديل.
 
 ## أسرار Worker المطلوبة/الموصى بها
 - `GITHUB_STORAGE_TOKEN`: للرفع والتخزين في مستودع التخزين.

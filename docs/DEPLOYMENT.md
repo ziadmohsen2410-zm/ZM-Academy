@@ -7,13 +7,12 @@
 
 ## 2) قاعدة البيانات D1
 1. تأكد من وجود قاعدة `zm-academy-db` وربطها في `wrangler.toml`.
-2. نفّذ ملفات migrations بالترتيب:
-   - `migrations/001_platform_core.sql`
-   - أي migrations إضافية.
-3. يمكن التنفيذ عبر Wrangler:
+2. نفّذ ملف التأسيس الآمن التالي مرة واحدة:
    ```bash
    wrangler d1 execute zm-academy-db --file=./migrations/001_platform_core.sql
    ```
+3. **لا تنفّذ `migrations/002_column_extensions.sql` يدويًا.** الملف ملاحظة تاريخية فقط؛ أعمدة الجداول القديمة يضيفها Worker تلقائيًا بعد فحص `PRAGMA table_info` والتحقق من النتيجة. أوامر `ALTER TABLE ADD COLUMN` المباشرة ليست آمنة عند تكرارها في SQLite/D1.
+4. احتفظ بنسخة احتياطية من قاعدة البيانات قبل أي تغيير على بيئة الإنتاج.
 
 ## 3) Cloudflare Worker
 1. حدّث `wrangler.toml` بالقيم الصحيحة.
