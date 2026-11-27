@@ -761,3 +761,17 @@ test("student password reset updates credentials, revokes sessions, and closes t
   assert.ok(route.includes("status = 'completed'"));
   assert.ok(route.includes("resetResults[2]?.meta?.changes"));
 });
+
+
+test("admin student directory supports details and account activation controls", () => {
+  const worker = read("worker.js");
+  const admin = read("admin.html");
+  assert.ok(worker.includes("const studentDetailsMatch = path.match"));
+  assert.ok(worker.includes("if (method === \"PATCH\" && studentDetailsMatch)"));
+  assert.ok(worker.includes("DELETE FROM student_sessions WHERE student_id = ?"));
+  assert.ok(worker.includes("subjects: subjects.results || []"));
+  assert.ok(worker.includes("devices: devices.results || []"));
+  assert.ok(admin.includes("window.__viewStudent=async(id)=>"));
+  assert.ok(admin.includes("window.__toggleStudentStatus=async(id,active)=>"));
+  assert.ok(!admin.includes("عرض عبر API الحالي"));
+});
