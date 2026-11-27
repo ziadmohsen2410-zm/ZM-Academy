@@ -804,6 +804,8 @@ test("student login does not erase a newly created session after a temporary ver
   assert.ok(login.includes("if(token&&error.status===401)"));
   assert.ok(login.includes("تم إنشاء جلسة الدخول وحفظها"));
   assert.ok(login.includes("location.replace('./student.html')"));
+  assert.ok(login.includes("tokenSaved=true"));
+  assert.ok(login.includes("if(tokenSaved&&token&&error.status!==401)"));
   assert.ok(!login.includes("if(token){try{localStorage.removeItem('zm_student_token')"));
 });
 
