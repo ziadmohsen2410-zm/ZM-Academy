@@ -1818,12 +1818,9 @@ if (method === "POST" && rejectPasswordMatch) {
         );
       }
 
-      await ensureStudentLearningTables(env);
-      await ensureArchivedMaterialsTable(env);
-      await ensureStudentHiddenPurchasesTable(env);
-
-      // Keep purchase history intact: a material with orders must be archived,
-      // not permanently deleted. This avoids breaking financial/student records.
+      // Do not create auxiliary tables during deletion. Older databases may not
+      // have every learning/archive table, and creating them here can turn a
+      // simple delete into a 500 before the guarded deletion logic runs.
       const linkedOrders = await env.DB.prepare(
         "SELECT COUNT(*) AS total FROM orders WHERE material_id = ?"
       ).bind(id).first();
@@ -1836,33 +1833,44 @@ if (method === "POST" && rejectPasswordMatch) {
       }
 
       try {
-        // Discover any other tables that declare a foreign key to materials.
-        // Remove only rows belonging to this material before deleting its row.
-        const tables = await env.DB.prepare(
+        // Inspect only tables that already exist. Delete dependent rows for this
+        // material, but never touch orders or unrelated student records.
+        const tableResult = await env.DB.prepare(
           "SELECT name FROM sqlite_master WHERE type = 'table' AND name NOT LIKE 'sqlite_%'"
         ).all();
+        const tableNames = new Set((tableResult.results || []).map((item) => String(item.name || "")));
         const dependentDeletes = [];
-        for (const item of (tables.results || [])) {
-          const tableName = String(item.name || "");
-          if (!/^[A-Za-z_][A-Za-z0-9_]*$/.test(tableName) || tableName === "materials") continue;
+        const queuedDeletes = new Set();
+
+        const queueDelete = (tableName, columnName) => {
+          if (!tableNames.has(tableName)) return;
+          if (!/^[A-Za-z_][A-Za-z0-9_]*$/.test(tableName) ||
+              !/^[A-Za-z_][A-Za-z0-9_]*$/.test(columnName)) return;
+          const key = tableName + "." + columnName;
+          if (queuedDeletes.has(key)) return;
+          queuedDeletes.add(key);
+          dependentDeletes.push(
+            env.DB.prepare(`DELETE FROM "${tableName}" WHERE "${columnName}" = ?`).bind(id)
+          );
+        };
+
+        for (const tableName of tableNames) {
+          if (tableName === "materials" || !/^[A-Za-z_][A-Za-z0-9_]*$/.test(tableName)) continue;
           const foreignKeys = await env.DB.prepare(
             `PRAGMA foreign_key_list("${tableName}")`
           ).all();
           for (const fk of (foreignKeys.results || [])) {
-            if (String(fk.table).toLowerCase() !== "materials") continue;
-            const column = String(fk.from || "");
-            if (!/^[A-Za-z_][A-Za-z0-9_]*$/.test(column)) continue;
-            dependentDeletes.push(
-              env.DB.prepare(`DELETE FROM "${tableName}" WHERE "${column}" = ?`).bind(id)
-            );
+            if (String(fk.table).toLowerCase() === "materials") {
+              queueDelete(tableName, String(fk.from || ""));
+            }
           }
         }
-        // These tables intentionally have no declared FK in older databases.
-        dependentDeletes.push(
-          env.DB.prepare("DELETE FROM student_material_progress WHERE material_id = ?").bind(id),
-          env.DB.prepare("DELETE FROM student_favorites WHERE material_id = ?").bind(id),
-          env.DB.prepare("DELETE FROM archived_materials WHERE material_id = ?").bind(id)
-        );
+
+        // Legacy tables without declared foreign keys.
+        queueDelete("student_material_progress", "material_id");
+        queueDelete("student_favorites", "material_id");
+        queueDelete("archived_materials", "material_id");
+
         if (dependentDeletes.length) await env.DB.batch(dependentDeletes);
         const result = await env.DB.prepare("DELETE FROM materials WHERE id = ?").bind(id).run();
         if (!(result?.meta?.changes || 0)) {
