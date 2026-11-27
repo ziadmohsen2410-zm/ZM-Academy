@@ -839,3 +839,17 @@ test("admin can edit subjects and save changes", () => {
   assert.ok(admin.includes("method:editId?'PUT':'POST'"));
   assert.ok(worker.includes('if (method === "PUT" && path === "/api/subjects")'));
 });
+
+
+test("material deletion failures identify the exact D1 operation stage without claiming deletion succeeded", () => {
+  const worker = read("worker.js");
+  const start = worker.indexOf('if (method === "DELETE" && path === "/api/admin/materials")');
+  const end = worker.indexOf("// رفع ملف PDF إلى التخزين الخاص", start);
+  const route = worker.slice(start, end);
+  assert.ok(route.includes('let deletionStage = "read-table-catalog"'));
+  assert.ok(route.includes('deletionStage = `read-table-info:${tableName}`'));
+  assert.ok(route.includes('deletionStage = `read-foreign-keys:${tableName}`'));
+  assert.ok(route.includes('deletionStage = "atomic-dependent-row-delete-batch"'));
+  assert.ok(route.includes("diagnostic_stage: deletionStage"));
+  assert.ok(route.includes("MATERIAL_PERMANENT_DELETE_ERROR:"));
+});

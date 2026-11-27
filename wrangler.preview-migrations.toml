@@ -1,0 +1,8 @@
+name = "zm-academy-preview-migrations"
+compatibility_date = "2026-11-20"
+
+[[d1_databases]]
+binding = "PREVIEW_DB"
+database_name = "zm-academy-preview-db"
+database_id = "c52275bf-3929-4b44-b535-8926b3439a87"
+migrations_dir = "migrations"

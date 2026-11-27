@@ -9,3 +9,10 @@ ALLOWED_ORIGINS = "https://ziadmohsen2410-zm.github.io"
 binding = "DB"
 database_name = "zm-academy-db"
 database_id = "8bd76dbe-9a5b-40b1-b6fb-4c44ff240bff"
+
+[previews]
+
+[[previews.d1_databases]]
+binding = "DB"
+database_name = "zm-academy-preview-db"
+database_id = "c52275bf-3929-4b44-b535-8926b3439a87"
