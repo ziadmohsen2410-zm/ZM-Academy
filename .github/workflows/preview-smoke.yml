@@ -142,6 +142,9 @@ jobs:
 
           curl --fail --silent --show-error "$API/api/materials" \
             -H "Authorization: Bearer $STUDENT_TOKEN" -o /tmp/zm-student-materials.json
+          cat /tmp/zm-student-materials.json
+          wrangler d1 execute zm-academy-preview-db --remote --config wrangler.preview.toml \
+            --command="SELECT ss.student_id,ss.subject_id,s.grade,m.id,m.subject_id,(SELECT COUNT(*) FROM archived_subjects WHERE subject_id=ss.subject_id) AS subject_archived,(SELECT COUNT(*) FROM archived_materials WHERE material_id=m.id) AS material_archived FROM student_subjects ss JOIN subjects s ON s.id=ss.subject_id LEFT JOIN materials m ON m.subject_id=ss.subject_id WHERE ss.student_id=$STUDENT_ID;"
           python3 -c "import json; d=json.load(open('/tmp/zm-student-materials.json')); assert any(int(x['id'])==990001 for x in d.get('materials',[])), d"
 
           curl --fail --silent --show-error -X POST "$API/api/orders" \
