@@ -78,8 +78,10 @@ jobs:
 
           printf '%s' "$SETUP_KEY" | wrangler secret put ADMIN_SETUP_KEY --config wrangler.preview.toml
 
-          curl --fail --silent --show-error --retry 12 --retry-delay 5 --retry-all-errors "$API/api/health" -o /tmp/zm-health.json
-          python3 -c "import json; d=json.load(open('/tmp/zm-health.json')); assert d.get('success') is True and d.get('database') == 'connected', d"
+          HEALTH_STATUS="$(curl --silent --show-error --retry 12 --retry-delay 5 --retry-all-errors "$API/api/health" -o /tmp/zm-health.json -w '%{http_code}')"
+          echo "Preview health HTTP status: $HEALTH_STATUS"
+          cat /tmp/zm-health.json
+          python3 -c "import json,sys; d=json.load(open('/tmp/zm-health.json')); assert sys.argv[1] == '200' and d.get('success') is True and d.get('database') == 'connected', d" "$HEALTH_STATUS"
 
           curl --fail --silent --show-error -X POST "$API/api/admin/setup" \
             -H "Content-Type: application/json" \
