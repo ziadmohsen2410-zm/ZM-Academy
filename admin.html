@@ -142,7 +142,7 @@ body[data-theme='light']{background:var(--bg)!important;color:var(--text)!import
 
     <section id="sec-orders" class="section">
       <div class="card"><h3>الطلبات والمشتريات</h3>
-        <div class="toolbar"><select id="orderFilter"><option value="">كل الحالات</option><option value="pending">pending</option><option value="approved">approved</option><option value="rejected">rejected</option><option value="completed">completed</option></select><button class="ghost" id="reloadOrders">تحميل</button></div>
+        <div class="toolbar"><select id="orderFilter"><option value="pending" selected>الطلبات المعلقة</option><option value="">كل الطلبات (بما فيها المقبولة والمرفوضة)</option><option value="approved">approved</option><option value="rejected">rejected</option><option value="completed">completed</option></select><button class="ghost" id="reloadOrders">تحميل</button></div>
         <div class="table-wrap"><table><thead><tr><th>ID</th><th>الطالب</th><th>المحتوى</th><th>الحالة</th><th>التاريخ</th><th>إجراءات</th></tr></thead><tbody id="ordersTbody"></tbody></table></div>
       </div>
     </section>
