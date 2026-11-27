@@ -731,6 +731,7 @@ test("admin material list exposes archive, restore, and separately confirmed per
   assert.ok(worker.includes('!name.startsWith("sqlite_") && !name.startsWith("_cf_")'));
   assert.ok(worker.includes('let deletionStage = "read-table-catalog"'));
   assert.ok(worker.includes('diagnostic_stage: deletionStage'));
+  assert.ok(worker.includes('path.startsWith("/api/student/") && !path.startsWith("/api/student/platform/")'));
   assert.ok(worker.includes("const foreignKeysByTable = new Map()"));
 });
 
