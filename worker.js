@@ -1462,9 +1462,11 @@ if (method === "POST" && rejectPasswordMatch) {
 
     // قائمة الطلاب بالتفاصيل الصحيحة
     if (method === "GET" && path === "/api/admin/students") {
+      const hasActiveColumn = await hasDatabaseColumn(env, "students", "is_active");
+      const activeField = hasActiveColumn ? ", COALESCE(is_active, 1) AS is_active" : "";
       const rows = await env.DB.prepare(`
         SELECT id, name, phone, parent_phone,
-               grade, school, governorate, created_at
+               grade, school, governorate, created_at ${activeField}
         FROM students
         ORDER BY id DESC
         LIMIT 500
@@ -1474,6 +1476,52 @@ if (method === "POST" && rejectPasswordMatch) {
         success: true,
         students: rows.results || [],
       });
+    }
+
+    const studentDetailsMatch = path.match(/^\/api\/admin\/students\/(\d+)$/);
+    if (method === "GET" && studentDetailsMatch) {
+      const studentId = Number(studentDetailsMatch[1]);
+      const hasActiveColumn = await hasDatabaseColumn(env, "students", "is_active");
+      const activeField = hasActiveColumn ? ", COALESCE(s.is_active, 1) AS is_active" : "";
+      const student = await env.DB.prepare(`
+        SELECT s.id, s.name, s.phone, s.parent_phone, s.grade,
+               s.school, s.governorate, s.created_at ${activeField}
+        FROM students s WHERE s.id = ?
+      `).bind(studentId).first();
+      if (!student) return reply(request, env, { success: false, error: "الطالب غير موجود." }, 404);
+
+      await ensureStudentLearningTables(env);
+      const [subjects, orders, devices, progress] = await Promise.all([
+        env.DB.prepare(`SELECT sub.id, sub.name, sub.grade FROM student_subjects ss JOIN subjects sub ON sub.id=ss.subject_id WHERE ss.student_id=? ORDER BY sub.name`).bind(studentId).all(),
+        env.DB.prepare(`SELECT o.id, o.status, o.created_at, m.title AS material_title, m.price FROM orders o LEFT JOIN materials m ON m.id=o.material_id WHERE o.student_id=? ORDER BY o.id DESC LIMIT 100`).bind(studentId).all(),
+        env.DB.prepare(`SELECT id, device_name, status, created_at, reviewed_at FROM student_devices WHERE student_id=? ORDER BY id DESC LIMIT 30`).bind(studentId).all(),
+        env.DB.prepare(`SELECT p.material_id, p.last_page, p.completed_at, p.updated_at, m.title AS material_title FROM student_material_progress p LEFT JOIN materials m ON m.id=p.material_id WHERE p.student_id=? ORDER BY p.updated_at DESC LIMIT 100`).bind(studentId).all()
+      ]);
+      return reply(request, env, {
+        success: true, student,
+        subjects: subjects.results || [],
+        orders: orders.results || [],
+        devices: devices.results || [],
+        progress: progress.results || []
+      });
+    }
+
+    if (method === "PATCH" && studentDetailsMatch) {
+      const body = await readBody(request);
+      if (typeof body?.is_active !== "boolean") {
+        return reply(request, env, { success: false, error: "حالة حساب الطالب غير صالحة." }, 400);
+      }
+      if (!(await hasDatabaseColumn(env, "students", "is_active"))) {
+        return reply(request, env, { success: false, error: "حقل حالة الحساب غير مهيأ. حدّث إعدادات المنصة أولًا." }, 503);
+      }
+      const studentId = Number(studentDetailsMatch[1]);
+      const statements = [
+        env.DB.prepare("UPDATE students SET is_active = ? WHERE id = ?").bind(body.is_active ? 1 : 0, studentId)
+      ];
+      if (!body.is_active) statements.push(env.DB.prepare("DELETE FROM student_sessions WHERE student_id = ?").bind(studentId));
+      const results = await env.DB.batch(statements);
+      if (!(results[0]?.meta?.changes || 0)) return reply(request, env, { success: false, error: "الطالب غير موجود." }, 404);
+      return reply(request, env, { success: true, is_active: body.is_active });
     }
 
     // حذف طالب مع الحفاظ على سجل الطلبات
