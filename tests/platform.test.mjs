@@ -87,6 +87,16 @@ test("private provider credentials are not embedded in public pages", () => {
   }
 });
 
+test("platform schema bootstrap does not silently swallow table, index, or role initialization failures", () => {
+  const worker = read("worker.js");
+  assert.ok(worker.includes("PLATFORM_SCHEMA_TABLE_ERROR:"));
+  assert.ok(worker.includes("PLATFORM_SCHEMA_INDEX_ERROR:"));
+  assert.ok(worker.includes("PLATFORM_SCHEMA_ROLE_SEED_ERROR:"));
+  assert.match(worker, /throw new Error\(`Platform database setup failed while creating schema table group item/);
+  assert.match(worker, /throw new Error\(`Platform database setup failed while creating schema index/);
+  assert.ok(worker.includes("Required database table is missing:"));
+});
+
 test("the platform core migration is additive and repeat-safe by declaration", () => {
   const sql = read("migrations/001_platform_core.sql");
   assert.doesNotMatch(sql, /\bDROP\s+(?:TABLE|COLUMN|INDEX)\b|\bDELETE\s+FROM\b|\bTRUNCATE\b/i);
