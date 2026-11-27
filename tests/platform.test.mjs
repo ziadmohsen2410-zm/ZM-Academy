@@ -515,3 +515,35 @@ test("admin health badge checks the HTTP response and database health payload", 
   const admin = read("admin.html");
   assert.ok(admin.includes("!response.ok||data?.success!==true||data?.database!=='connected'"));
 });
+
+test("content managers can use the protected upload endpoint without media permission", () => {
+  const worker = read("worker.js");
+  assert.ok(worker.includes('path.startsWith("/api/admin/upload") ? null : "settings"'));
+  assert.ok(worker.includes('!hasPerm(auth.admin.role, "media")'));
+  assert.ok(worker.includes('!hasPerm(auth.admin.role, "content")'));
+});
+
+test("material creation form uploads supported files and stores the returned file key", () => {
+  const admin = read("admin.html");
+  assert.ok(admin.includes('id="matFile"'));
+  assert.ok(admin.includes("new FormData()"));
+  assert.ok(admin.includes("fd.append('file',file)"));
+  assert.ok(admin.includes("body.file_key=uploaded.file_key"));
+  assert.ok(admin.includes("8*1024*1024"));
+});
+
+test("backup export includes core academy data and filters credentials", () => {
+  const worker = read("worker.js");
+  assert.ok(worker.includes("'students','subjects','materials','orders'"));
+  assert.ok(worker.includes("sensitiveColumn=/password|token|secret|credential|api[_-]?key/i"));
+  assert.ok(worker.includes("version:2"));
+  assert.ok(!worker.includes("'admin_sessions'"));
+  assert.ok(!worker.includes("'student_sessions'"));
+});
+
+test("worker internal errors receive a request id and structured server-side context", () => {
+  const worker = read("worker.js");
+  assert.ok(worker.includes('requestId = crypto.randomUUID()'));
+  assert.ok(worker.includes('path: url.pathname'));
+  assert.ok(worker.includes('request_id: requestId'));
+});
