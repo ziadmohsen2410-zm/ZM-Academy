@@ -1,3 +1,10 @@
+DELETE FROM parent_sessions;
+DELETE FROM parent_student_links;
+DELETE FROM parents;
+DELETE FROM student_sessions;
+DELETE FROM student_devices;
+DELETE FROM student_accounts;
+DELETE FROM student_subjects;
 DELETE FROM student_hidden_purchases WHERE order_id = 990001;
 DELETE FROM preview_material_notes WHERE material_id = 990001;
 DELETE FROM student_material_progress WHERE material_id = 990001;
