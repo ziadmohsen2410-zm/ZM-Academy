@@ -93,12 +93,19 @@ const an=s.announcement||{};if(an.enabled&&an.text){let n=document.getElementByI
 const sections=s.sections||{};for(const [key,id] of Object.entries({subjects:'subjects',curriculum:'curriculum',library:'library',about:'about',join:'join'})){const node=document.getElementById(id);if(node&&typeof sections[key]==='boolean')node.hidden=!sections[key];}
 if(b.logoUrl){document.querySelectorAll('.brand img,.logo-large').forEach(n=>n.src=b.logoUrl);}if(b.heroImageUrl){const hero=document.querySelector('.hero');if(hero)hero.style.backgroundImage='linear-gradient(90deg,rgba(5,8,20,.82),rgba(5,8,20,.48)),url("'+b.heroImageUrl.replace(/["\\]/g,'')+'")';}
 if(b.whatsapp){document.querySelectorAll('a[href*="wa.me/"]').forEach(n=>{try{const u=new URL(n.href);u.pathname='/'+b.whatsapp.replace(/\D/g,'');n.href=u.href;}catch(e){}})}
-const social={facebook:b.facebook,youtube:b.youtube,telegram:b.telegram};let socialBox=document.getElementById('zmSocialLinks');if(Object.values(social).some(Boolean)&&!socialBox){socialBox=document.createElement('nav');socialBox.id='zmSocialLinks';socialBox.style.cssText='display:flex;justify-content:center;gap:10px;flex-wrap:wrap;padding:14px 18px;';const footer=document.querySelector('footer')||document.body;footer.append(socialBox);}if(socialBox){socialBox.replaceChildren();for(const [k,url] of Object.entries(social)){if(url){const a=document.createElement('a');a.href=url;a.target='_blank';a.rel='noopener noreferrer';a.textContent={facebook:'Facebook',youtube:'YouTube',telegram:'Telegram'}[k];a.style.cssText='padding:8px 14px;border-radius:999px;border:1px solid rgba(47,128,255,.25);background:rgba(13,27,53,.7);color:#9AA9C4;text-decoration:none;font-size:13px;font-weight:700';a.onmouseenter=()=>{a.style.color='#fff';a.style.borderColor='rgba(47,128,255,.5)'};a.onmouseleave=()=>{a.style.color='#9AA9C4';a.style.borderColor='rgba(47,128,255,.25)'};socialBox.append(a);}}}
+const contactBox=document.getElementById('zmContactLinks')||document.getElementById('zmSocialLinks');
+const whatsappDigits=String(b.whatsapp||'201115336341').replace(/\D/g,'');
+const social=[['whatsapp',whatsappDigits?'https://wa.me/'+whatsappDigits:''],['facebook',b.facebook||'']];
+let socialBox=contactBox;
+if(!socialBox){socialBox=document.createElement('nav');socialBox.id='zmContactLinks';socialBox.setAttribute('aria-label','التواصل مع الأكاديمية');socialBox.style.cssText='display:flex;justify-content:center;gap:10px;flex-wrap:wrap;padding:14px 0;';const target=document.querySelector('.cta .container')||document.querySelector('.auth-links')?.parentElement||document.querySelector('#supportSection')||document.querySelector('.card')||document.body;target.append(socialBox);}
+socialBox.replaceChildren();
+for(const [k,url] of social){if(!url)continue;const a=document.createElement('a');a.href=url;a.target='_blank';a.rel='noopener noreferrer';a.textContent=k==='whatsapp'?'تواصل عبر واتساب':'تابعنا على فيسبوك';a.className='contact-pill contact-'+k;a.style.cssText='display:inline-flex;align-items:center;justify-content:center;min-width:170px;padding:11px 18px;border-radius:999px;border:1px solid rgba(198,169,107,.48);background:linear-gradient(120deg,#343A44,#20242C);color:#F5F3EF;text-decoration:none;font-size:14px;font-weight:800;';socialBox.append(a);}
 }
 fetch(API+'/api/homepage',{cache:'no-store'}).then(r=>r.ok?r.json():null).then(d=>{if(d&&d.success)apply(d.settings)}).catch(()=>{});
 })();
 </script>
 <link rel="stylesheet" href="./assets/zm-future-theme.css?v=3">
+<style id="zm-contact-actions">.contact-pill{transition:transform .18s,filter .18s}.contact-pill:hover{transform:translateY(-2px);filter:brightness(1.1)}.contact-whatsapp{border-color:rgba(37,211,102,.55)!important}.contact-facebook{border-color:rgba(24,119,242,.65)!important}#zmContactLinks{margin-top:14px}</style>
 </head>
 <body>
 <main class="panel">
@@ -122,6 +129,7 @@ fetch(API+'/api/homepage',{cache:'no-store'}).then(r=>r.ok?r.json():null).then(d
   <button id="submitBtn" type="submit" data-i18n="create">إنشاء حساب الطالب</button>
  </form>
  <div id="message" role="status" aria-live="polite"></div>
+ <nav id="zmContactLinks" aria-label="التواصل مع الأكاديمية" style="display:flex;justify-content:center;gap:10px;flex-wrap:wrap;margin-top:14px"></nav>
  <nav class="auth-links" aria-label="روابط الحساب"><a class="back" href="./login.html">لديك حساب بالفعل؟ تسجيل الدخول</a><a class="back home-link" href="./parent.html">بوابة ولي الأمر</a><a href="./parent.html">بوابة ولي الأمر</a><a href="./index.html">العودة للصفحة الرئيسية</a></nav>
  <div class="hint">جميع البيانات مطلوبة لإتمام التسجيل. احتفظ باسم المستخدم وكلمة المرور ولا تشاركهما مع الآخرين.</div>
 </main>

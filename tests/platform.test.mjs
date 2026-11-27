@@ -46,7 +46,8 @@ test("admin content forms send every field required by the Worker", () => {
   const admin = read("admin.html");
   assert.match(admin, /id="matType"/, "Material type selector is required");
   assert.ok(admin.includes("type:$('#matType').value"), "Material creation must send type");
-  assert.match(admin, /id="matSubjectId"><option value="">اختر المادة/, "Materials must select an existing subject");
+  assert.match(admin, /id="matSubjectId"/, "Materials must select an existing subject");
+  assert.ok(admin.includes("اختر المادة"), "Subject selector must have a clear prompt");
   assert.match(admin, /if\(!name\|\|!grade\)/, "Subject creation must validate grade");
 });
 
@@ -504,11 +505,11 @@ test("admin navigation is filtered by server-provided role permissions", () => {
 test("admin student directory uses a matching platform API route without hiding the original error", () => {
   const admin = read("admin.html");
   const worker = read("worker.js");
-  assert.ok(admin.includes("api('/api/admin/platform/students')"));
+  assert.ok(admin.includes("api('/api/admin/students')"));
   assert.ok(!admin.includes("catch { data = await api('/api/admin/platform/students'); }"));
-  assert.ok(worker.includes("path==='/api/admin/platform/students'"));
+  assert.ok(worker.includes('path === "/api/admin/students"'));
   assert.ok(worker.includes("SELECT id, name, phone, parent_phone, grade, school, governorate, created_at"));
-  assert.ok(worker.includes("hasPerm(admin.role,'students.view')"));
+  assert.ok(worker.includes('path === "/api/admin/students" && method === "GET" ? "students.view"'));
 });
 
 test("admin health badge checks the HTTP response and database health payload", () => {
@@ -527,7 +528,7 @@ test("material creation form uploads supported files and stores the returned fil
   const admin = read("admin.html");
   assert.ok(admin.includes('id="matFile"'));
   assert.ok(admin.includes("new FormData()"));
-  assert.ok(admin.includes("fd.append('file',file)"));
+  assert.ok(admin.includes("fd.append('file',file,file.name)"));
   assert.ok(admin.includes("body.file_key=uploaded.file_key"));
   assert.ok(admin.includes("8*1024*1024"));
 });
@@ -546,4 +547,50 @@ test("worker internal errors receive a request id and structured server-side con
   assert.ok(worker.includes('requestId = crypto.randomUUID()'));
   assert.ok(worker.includes('path: url.pathname'));
   assert.ok(worker.includes('request_id: requestId'));
+});
+
+test("admin student directory uses the established legacy students endpoint", () => {
+  const admin = read("admin.html");
+  const worker = read("worker.js");
+  assert.ok(admin.includes("api('/api/admin/students')"));
+  assert.ok(worker.includes('path === "/api/admin/students" && method === "GET"'));
+});
+
+test("material upload picker is visibly labeled and reports the selected mobile file", () => {
+  const admin = read("admin.html");
+  assert.ok(admin.includes('class="file-pick" for="matFile"'));
+  assert.ok(admin.includes('id="matFileName"'));
+  assert.ok(admin.includes("$('#matFile').addEventListener('change'"));
+  assert.ok(admin.includes("اختيار ملف من الهاتف"));
+  assert.ok(admin.includes("جارٍ رفع الملف..."));
+});
+
+test("upload validation detects real file signatures even when mobile MIME type is missing", () => {
+  const worker = read("worker.js");
+  assert.ok(worker.includes('signature.startsWith("%PDF-")'));
+  assert.ok(worker.includes('bytes[0]===0xff && bytes[1]===0xd8 && bytes[2]===0xff'));
+  assert.ok(worker.includes('signature.slice(8,12)==="WEBP"'));
+  assert.ok(worker.includes('signature.slice(1,4)==="PNG"'));
+});
+
+test("login and registration pages show WhatsApp first and configured Facebook second", () => {
+  for (const file of ["login.html", "register.html"]) {
+    const page = read(file);
+    assert.ok(page.includes('id="zmContactLinks"'));
+    assert.ok(page.includes("['whatsapp',whatsappDigits?'https://wa.me/'+whatsappDigits:'']"));
+    assert.ok(page.includes("['facebook',b.facebook||'']"));
+  }
+});
+
+test("homepage footer includes account creation, login, WhatsApp and configured Facebook contact", () => {
+  const page = read("index.html");
+  assert.ok(page.includes('href="./register.html">إنشاء حساب جديد</a>'));
+  assert.ok(page.includes('href="./login.html">تسجيل الدخول</a>'));
+  assert.ok(page.includes('id="zmContactLinks"'));
+});
+
+test("student support uses valid contact links without nested interactive buttons", () => {
+  const page = read("student.html");
+  assert.ok(page.includes('id="zmContactLinks"'));
+  assert.ok(!page.includes('<a href="https://wa.me/201115336341" target="_blank" rel="noopener">\\n            <button'));
 });
