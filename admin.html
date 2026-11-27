@@ -610,7 +610,10 @@ window.__deleteMaterial=async(id,title)=>{
     await api('/api/admin/materials',{method:'DELETE',body:JSON.stringify({id})});
     showMsg('تم حذف المادة نهائيًا',true);
     await loadMaterials();
-  }catch(e){ showMsg('تعذر الحذف: '+e.message); }
+  }catch(e){
+    const detail=e?.data?.diagnostic;
+    showMsg('تعذر الحذف: '+e.message+(detail?' — تفاصيل قاعدة البيانات: '+detail:''));
+  }
 };
 async function loadOrders(){
   const tb=$('#ordersTbody'); tb.innerHTML='<tr><td colspan="6" class="muted">...</td></tr>';
