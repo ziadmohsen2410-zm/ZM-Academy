@@ -500,3 +500,18 @@ test("admin navigation is filtered by server-provided role permissions", () => {
   assert.ok(admin.includes("$('#bottomNav button[data-sec]')"));
   assert.ok(admin.includes("permissions.includes('audit.view')"));
 });
+
+test("admin student directory uses a matching platform API route without hiding the original error", () => {
+  const admin = read("admin.html");
+  const worker = read("worker.js");
+  assert.ok(admin.includes("api('/api/admin/platform/students')"));
+  assert.ok(!admin.includes("catch { data = await api('/api/admin/platform/students'); }"));
+  assert.ok(worker.includes("path==='/api/admin/platform/students'"));
+  assert.ok(worker.includes("SELECT id, name, phone, parent_phone, grade, school, governorate, created_at"));
+  assert.ok(worker.includes("hasPerm(admin.role,'students.view')"));
+});
+
+test("admin health badge checks the HTTP response and database health payload", () => {
+  const admin = read("admin.html");
+  assert.ok(admin.includes("!response.ok||data?.success!==true||data?.database!=='connected'"));
+});
