@@ -350,7 +350,7 @@ const fmtDate = (v)=>v?new Date(v).toLocaleString('ar-EG'):'-';
 const tokenKey='zm_admin_token';
 const readAdminToken=()=>{try{return localStorage.getItem(tokenKey)||sessionStorage.getItem(tokenKey)||'';}catch{return '';}};
 const readAdminCookie=()=>{try{const item=document.cookie.split('; ').find(x=>x.startsWith(tokenKey+'='));return item?decodeURIComponent(item.slice(tokenKey.length+1)):'';}catch{return '';}};
-const saveAdminCookie=(token)=>{try{document.cookie=tokenKey+'='+encodeURIComponent(token)+'; Max-Age=604800; Path=/ZM-Academy/; SameSite=Lax; Secure';}catch{}};
+const saveAdminCookie=(token)=>{try{document.cookie=tokenKey+'='+encodeURIComponent(token)+'; Max-Age=604800; Path=/ZM-Academy/; SameSite=Lax; Secure';return readAdminCookie()===token;}catch{return false;}};
 const clearAdminCookie=()=>{try{document.cookie=tokenKey+'=; Max-Age=0; Path=/ZM-Academy/; SameSite=Lax; Secure';}catch{}};
 const openAdminTokenDB=()=>new Promise((resolve,reject)=>{
   if(!('indexedDB' in window)) return reject(new Error('IndexedDB unavailable'));
@@ -379,14 +379,18 @@ const readSavedAdminTokens=async()=>{
   return [...new Set(candidates.filter(Boolean))];
 };
 const saveAdminToken=async(token)=>{
-  saveAdminCookie(token);
-  try{localStorage.setItem(tokenKey,token);}catch{}
-  try{sessionStorage.setItem(tokenKey,token);}catch{}
-  try{const db=await openAdminTokenDB();await new Promise((resolve,reject)=>{const tx=db.transaction('tokens','readwrite');tx.objectStore('tokens').put(token,tokenKey);tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);});db.close();}catch{}
+  let persisted=saveAdminCookie(token);
+  try{localStorage.setItem(tokenKey,token);persisted=true;}catch{}
+  try{sessionStorage.setItem(tokenKey,token);persisted=true;}catch{}
+  try{const db=await openAdminTokenDB();await new Promise((resolve,reject)=>{const tx=db.transaction('tokens','readwrite');tx.objectStore('tokens').put(token,tokenKey);tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);});db.close();persisted=true;}catch{}
+  if(!persisted)throw new Error('تعذر حفظ جلسة الإدارة على هذا الجهاز. اسمح بملفات تعريف الارتباط والتخزين المحلي ثم حاول مرة أخرى.');
 };
+const adminProfileCacheKey='zm_admin_profile_cache';
+const readCachedAdminProfile=()=>{try{const value=JSON.parse(localStorage.getItem(adminProfileCacheKey)||'null');return value&&Number(value.id)>0&&typeof value.role==='string'&&Array.isArray(value.permissions)?value:null;}catch{return null;}};
+const saveCachedAdminProfile=(profile)=>{try{localStorage.setItem(adminProfileCacheKey,JSON.stringify({id:profile.id,username:profile.username||'',display_name:profile.display_name||'',role:profile.role,permissions:Array.isArray(profile.permissions)?profile.permissions:[]}));}catch{}};
 const clearAdminToken=()=>{
   clearAdminCookie();
-  try{localStorage.removeItem(tokenKey);}catch{}
+  try{localStorage.removeItem(tokenKey);localStorage.removeItem(adminProfileCacheKey);}catch{}
   try{sessionStorage.removeItem(tokenKey);}catch{}
   try{openAdminTokenDB().then(db=>{const tx=db.transaction('tokens','readwrite');tx.objectStore('tokens').delete(tokenKey);tx.oncomplete=()=>db.close();tx.onerror=()=>db.close();}).catch(()=>{});}catch{}
 };
@@ -481,6 +485,7 @@ async function boot(){
       const me=await api('/api/admin/platform/me');
       state.admin=me.admin||me;
       await saveAdminToken(candidate);
+      saveCachedAdminProfile(state.admin);
       $('#adminIdentity').textContent=(state.admin.display_name||state.admin.username||'الإدارة')+(state.admin.role?' ('+state.admin.role+')':'');
       $('#loginView').classList.add('hidden');
       $('#appView').classList.remove('hidden');
@@ -488,9 +493,20 @@ async function boot(){
       return;
     }catch(e){
       if(e.status===401||e.status===403){lastAuthError=e;continue;}
+      const cachedProfile=readCachedAdminProfile();
+      if(cachedProfile){
+        state.admin=cachedProfile;
+        $('#adminIdentity').textContent=(state.admin.display_name||state.admin.username||'الإدارة')+(state.admin.role?' ('+state.admin.role+')':'');
+        $('#loginView').classList.add('hidden');
+        $('#appView').classList.remove('hidden');
+        buildNav();applyAdminTheme({mode:localStorage.getItem('zm_admin_theme_mode')||'dark'});checkHealth();
+        showMsg('تعذر الاتصال بالخادم مؤقتًا. لم يتم تسجيل خروجك؛ تم الاحتفاظ بجلسة الإدارة، وستعود المزامنة عند رجوع الاتصال.');
+        setSection(state.section);
+        return;
+      }
       $('#appView').classList.add('hidden');
       $('#loginView').classList.remove('hidden');
-      showLoginMsg('تعذر الاتصال للتحقق من جلسة الإدارة. بيانات الدخول محفوظة؛ حاول مرة أخرى. '+(e.message||''));
+      showLoginMsg('تعذر الاتصال للتحقق من جلسة الإدارة. لم يتم حذف بيانات الدخول؛ أعد المحاولة عند عودة الاتصال. '+(e.message||''));
       return;
     }
   }
@@ -769,6 +785,8 @@ async function loadSection(key){
 
 // events
 $('#loginBtn').onclick=login;
+window.addEventListener('online',()=>{if(state.token)boot();});
+window.addEventListener('offline',()=>{if(state.admin)showMsg('الاتصال بالإنترنت انقطع مؤقتًا. لم يتم تسجيل خروجك؛ ستتم إعادة المحاولة عند عودة الاتصال.');});
 $('#loginPass').addEventListener('keydown',e=>{if(e.key==='Enter')login();});
 $('#logoutBtn').onclick=logout;
 $('#refreshBtn').onclick=()=>loadSection(state.section).catch(e=>showMsg(e.message));
