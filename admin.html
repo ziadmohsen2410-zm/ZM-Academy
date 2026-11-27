@@ -480,11 +480,16 @@ async function boot(){
       return;
     }
   }
+  // Do not destroy saved credentials merely because the API rejected one
+  // validation request. Keep them available for retry and report the exact
+  // authorization outcome without exposing the token.
   state.token='';
-  clearAdminToken();
   $('#appView').classList.add('hidden');
   $('#loginView').classList.remove('hidden');
-  showLoginMsg(lastAuthError&&lastAuthError.status===403?'حساب الإدارة غير نشط أو تم إيقافه. تواصل مع مسؤول النظام.':'تعذر التحقق من الجلسة المحفوظة. سجل الدخول مرة أخرى.');
+  const authStatus=lastAuthError&&lastAuthError.status;
+  showLoginMsg(authStatus===403
+    ? 'حساب الإدارة غير نشط أو لا يملك صلاحية الدخول. بيانات الجلسة محفوظة ولم يتم حذفها.'
+    : 'الخادم رفض الجلسة المحفوظة (401). لم نحذف بيانات الدخول؛ أعد المحاولة أو سجّل الدخول إذا انتهت الجلسة.');
 }
 async function checkHealth(){
   try{
