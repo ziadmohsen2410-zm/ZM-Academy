@@ -8,6 +8,7 @@ on:
 
 permissions:
   contents: read
+  issues: write
 
 jobs:
   deploy:
@@ -53,3 +54,17 @@ jobs:
             https://zm-academy-api.ziadmohsen4567.workers.dev/api/health \
             -o /tmp/zm-academy-health.json
           python3 -c "import json; d=json.load(open('/tmp/zm-academy-health.json')); assert d.get('success') is True and d.get('database') == 'connected', d"
+
+      - name: Record successful production deployment
+        if: success()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh issue comment 36 --body "Production Worker deployment verified for commit ${GITHUB_SHA}. Health check confirmed success=true and database=connected. Run: ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+
+      - name: Record failed production deployment
+        if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh issue comment 36 --body "Production Worker deployment or health verification FAILED for commit ${GITHUB_SHA}. Inspect run: ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
