@@ -195,6 +195,10 @@ jobs:
             -H "Authorization: Bearer $PARENT_TOKEN" -o /tmp/zm-parent-overview.json
           python3 -c "import json; d=json.load(open('/tmp/zm-parent-overview.json')); assert d.get('success') is True and d.get('student',{}).get('id') == int('$STUDENT_ID') and any(x.get('status')=='approved' for x in d.get('orders',[])), d"
 
+          # Archive the material only after the student and parent flows have verified access.
+          wrangler d1 execute zm-academy-preview-db --remote --config wrangler.preview.toml \
+            --command="INSERT OR REPLACE INTO archived_materials (material_id) VALUES (990001);"
+
           # AI must fail safely and explicitly when no provider key is configured.
           AI_STATUS="$(curl --silent --show-error -X POST "$API/api/student/platform/ai" \
             -H "Authorization: Bearer $STUDENT_TOKEN" \
