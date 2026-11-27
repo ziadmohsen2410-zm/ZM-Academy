@@ -139,7 +139,7 @@ test("students can delete rejected purchases and hide completed purchases withou
   const worker = read("worker.js");
   assert.ok(worker.includes('if (order.status === "rejected")'));
   assert.ok(worker.includes("DELETE FROM orders"));
-  assert.ok(worker.includes("if (order.status === 'approved' || order.status === 'completed')"));
+  assert.ok(worker.includes('if (order.status === "approved" || order.status === "completed")'));
   assert.ok(worker.includes("INSERT OR IGNORE INTO student_hidden_purchases"));
   assert.ok(worker.includes("لا يمكن حذف طلب قيد المراجعة"));
 });
