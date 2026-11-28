@@ -670,6 +670,39 @@ async function ensureStudentPhotosTable(env) {
 }
 
 // جداول متابعة تقدم الطالب والمفضلة وأيام النشاط
+async function ensureColumn(env, table, column, ddl) {
+  // Verify live D1 schema before altering it. Swallowing every ALTER error
+  // allowed later SELECT statements to fail with an opaque internal 500.
+  const allowedTables = new Set(['admin_users','students','orders','materials','subjects','exam_attempts','student_material_progress','student_favorites']);
+  if (!allowedTables.has(table) || !/^[a-z_]+$/.test(column)) throw new Error('Unsupported schema migration target.');
+  const inspect = async () => {
+    const result = await env.DB.prepare(`PRAGMA table_info(${table})`).all();
+    return result.results || [];
+  };
+  let columns = await inspect();
+  if (!columns.length) {
+    // Core tables must exist before extending them. Optional tables such as
+    // exam_attempts may be created later in this same schema bootstrap.
+    if (['admin_users','students','orders','materials','subjects'].includes(table)) {
+      throw new Error(`Required database table is missing: ${table}. Check the base D1 schema before serving requests.`);
+    }
+    return false;
+  }
+  if (columns.some(item => item.name === column)) return true;
+  try {
+    await env.DB.prepare(`ALTER TABLE ${table} ADD COLUMN ${column} ${ddl}`).run();
+  } catch (error) {
+    columns = await inspect();
+    if (!columns.some(item => item.name === column)) {
+      console.error('SCHEMA_COLUMN_MIGRATION_ERROR:', {table,column,message:error?.message||String(error)});
+      throw new Error(`Database schema is missing ${table}.${column}; migration failed.`);
+    }
+  }
+  columns = await inspect();
+  if (!columns.some(item => item.name === column)) throw new Error(`Database schema verification failed for ${table}.${column}.`);
+  return true;
+}
+
 async function ensureStudentLearningTables(env) {
   await env.DB.batch([
     env.DB.prepare(`
@@ -3699,38 +3732,6 @@ if (method === "POST" && rejectPasswordMatch) {
     if (type === 'mcq' && (!Array.isArray(b?.options) || b.options.length < 2)) return 'سؤال الاختيار من متعدد يحتاج إلى اختيارين على الأقل';
     return null;
   };
-  async function ensureColumn(env, table, column, ddl) {
-    // Verify live D1 schema before altering it. Swallowing every ALTER error
-    // allowed later SELECT statements to fail with an opaque internal 500.
-    const allowedTables = new Set(['admin_users','students','orders','materials','subjects','exam_attempts','student_material_progress','student_favorites']);
-    if (!allowedTables.has(table) || !/^[a-z_]+$/.test(column)) throw new Error('Unsupported schema migration target.');
-    const inspect = async () => {
-      const result = await env.DB.prepare(`PRAGMA table_info(${table})`).all();
-      return result.results || [];
-    };
-    let columns = await inspect();
-    if (!columns.length) {
-      // Core tables must exist before extending them. Optional tables such as
-      // exam_attempts may be created later in this same schema bootstrap.
-      if (['admin_users','students','orders','materials','subjects'].includes(table)) {
-        throw new Error(`Required database table is missing: ${table}. Check the base D1 schema before serving requests.`);
-      }
-      return false;
-    }
-    if (columns.some(item => item.name === column)) return true;
-    try {
-      await env.DB.prepare(`ALTER TABLE ${table} ADD COLUMN ${column} ${ddl}`).run();
-    } catch (error) {
-      columns = await inspect();
-      if (!columns.some(item => item.name === column)) {
-        console.error('SCHEMA_COLUMN_MIGRATION_ERROR:', {table,column,message:error?.message||String(error)});
-        throw new Error(`Database schema is missing ${table}.${column}; migration failed.`);
-      }
-    }
-    columns = await inspect();
-    if (!columns.some(item => item.name === column)) throw new Error(`Database schema verification failed for ${table}.${column}.`);
-    return true;
-  }
   async function ensurePlatformSchema(env) {
     // core extensions on existing tables
     await ensureColumn(env, 'admin_users', 'display_name', 'TEXT');
