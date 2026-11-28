@@ -4034,6 +4034,7 @@ if (method === "POST" && rejectPasswordMatch) {
     }
     if (path==='/api/admin/platform/messages') {
       if (!hasPerm(admin.role,'students') && !hasPerm(admin.role,'students.view') && !hasPerm(admin.role,'content')) return reply(request,env,{success:false,error:'Forbidden'},403);
+      await env.DB.prepare(`CREATE TABLE IF NOT EXISTS academy_teacher_profiles (id INTEGER PRIMARY KEY AUTOINCREMENT,display_name TEXT NOT NULL,subject TEXT NOT NULL DEFAULT '',grade TEXT NOT NULL DEFAULT '',bio TEXT NOT NULL DEFAULT '',photo_url TEXT,contact_url TEXT,is_active INTEGER NOT NULL DEFAULT 1,sort_order INTEGER NOT NULL DEFAULT 0,created_at TEXT NOT NULL DEFAULT (datetime('now')))` ).run();
       await env.DB.prepare(`CREATE TABLE IF NOT EXISTS academy_teacher_messages (id INTEGER PRIMARY KEY AUTOINCREMENT,teacher_id INTEGER NOT NULL,student_id INTEGER NOT NULL,sender_type TEXT NOT NULL CHECK(sender_type IN ('student','teacher')),body TEXT NOT NULL,created_at TEXT NOT NULL DEFAULT (datetime('now')),read_at TEXT)`).run();
       if(method==='GET'){
         const teacherId=Number(url.searchParams.get('teacher_id')||0),studentId=Number(url.searchParams.get('student_id')||0);
@@ -4044,6 +4045,8 @@ if (method === "POST" && rejectPasswordMatch) {
       if(method==='POST'){
         const b=await readBody(request),teacherId=Number(b?.teacher_id),studentId=Number(b?.student_id),body=clean(b?.body,2000);
         if(!teacherId||!studentId||!body)return reply(request,env,{success:false,error:'بيانات الرد غير مكتملة.'},400);
+        const [teacherExists,studentExists]=await Promise.all([env.DB.prepare('SELECT id FROM academy_teacher_profiles WHERE id=? AND is_active=1').bind(teacherId).first(),env.DB.prepare('SELECT id FROM students WHERE id=?').bind(studentId).first()]);
+        if(!teacherExists||!studentExists)return reply(request,env,{success:false,error:'المدرس أو الطالب غير موجود.'},404);
         await env.DB.prepare("INSERT INTO academy_teacher_messages(teacher_id,student_id,sender_type,body) VALUES(?,?,'teacher',?)").bind(teacherId,studentId,body).run();
         await logAudit(env,{actor_type:'admin',actor_id:admin.id,actor_label:admin.username,action:'social.message.reply',entity_type:'teacher_message',ip,user_agent:ua});
         return reply(request,env,{success:true});
@@ -4669,6 +4672,7 @@ if (method === "POST" && rejectPasswordMatch) {
     if (path==='/api/student/platform/messages' && method==='POST') {
       const b=await readBody(request),teacherId=Number(b?.teacher_id),body=clean(b?.body,2000);
       if(!Number.isInteger(teacherId)||teacherId<1||!body)return reply(request,env,{success:false,error:'اختر المدرس واكتب رسالتك.'},400);
+      if(!await consumeApiRateLimit(env,request,'student_teacher_message',session.student_id,12,60))return reply(request,env,{success:false,error:'أرسلت رسائل كثيرة بسرعة. حاول بعد دقيقة.'},429);
       const teacher=await env.DB.prepare('SELECT id FROM academy_teacher_profiles WHERE id=? AND is_active=1').bind(teacherId).first();
       if(!teacher)return reply(request,env,{success:false,error:'المدرس غير متاح حاليًا.'},404);
       await env.DB.prepare("INSERT INTO academy_teacher_messages(teacher_id,student_id,sender_type,body) VALUES(?,?,'student',?)").bind(teacherId,session.student_id,body).run();
