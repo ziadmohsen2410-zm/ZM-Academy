@@ -2850,8 +2850,12 @@ if (method === "POST" && rejectPasswordMatch) {
       path === "/api/student/favorites" ||
       /^\/api\/student\/favorites\/\d+$/.test(path)
     ) {
+      let favoritesStage = "ensure-learning-tables";
+      try {
       await ensureStudentLearningTables(env);
+      favoritesStage = "ensure-archived-subjects";
       await ensureArchivedSubjectsTable(env);
+      favoritesStage = "ensure-archived-materials";
       await ensureArchivedMaterialsTable(env);
 
       if (method === "GET" && path === "/api/student/progress") {
@@ -2960,6 +2964,22 @@ if (method === "POST" && rejectPasswordMatch) {
           success: true,
           message: "تمت إزالة المحتوى من المفضلة.",
         });
+      }
+
+      } catch (error) {
+        console.error("STUDENT_FAVORITES_ROUTE_ERROR:", {
+          stage: favoritesStage,
+          method,
+          path,
+          studentId: session.student_id,
+          message: error?.message || String(error)
+        });
+        return reply(request, env, {
+          success:false,
+          error:"تعذر تنفيذ طلب المفضلة بسبب خطأ في قاعدة البيانات.",
+          code:"STUDENT_FAVORITES_ERROR",
+          stage:favoritesStage
+        }, 500);
       }
 
       if (method === "POST" && path === "/api/student/progress") {
