@@ -600,9 +600,44 @@ html[data-zm-student-palette="custom"] #zmPlat .hd{background:var(--zm-surface)!
 .zm-palette-preview span{padding:7px 12px;border-radius:9px;background:var(--preview-surface);color:var(--preview-muted)}
 .zm-palette-preview button{background:linear-gradient(120deg,var(--preview-primary),var(--preview-secondary));color:white}
 </style>
+
+<style id="zm-student-identity-fix">
+body.zm-student-dashboard{
+ --blue:#35B8FF;--purple:#9270FF;--zm-primary:#35B8FF;--zm-secondary:#9270FF;
+ --bg:#070B18;--surface:#101A2F;--surface2:#14213A;--surface3:#192947;
+ --text:#F4F7FF;--muted:#A8B5CC;--border:rgba(91,157,226,.25);
+ color-scheme:dark;background:radial-gradient(ellipse at 10% 4%,rgba(53,184,255,.12),transparent 36%),radial-gradient(ellipse at 92% 92%,rgba(146,112,255,.12),transparent 38%),#070B18;color:#F4F7FF;
+}
+body.zm-student-dashboard button:not(.secondary):not(.ghost):not(.icon-btn):not(.theme-toggle){background:linear-gradient(115deg,var(--blue),var(--purple));color:#fff}
+body.zm-student-dashboard .brand span{background:linear-gradient(90deg,var(--blue),var(--purple));background-clip:text;-webkit-background-clip:text}
+body.zm-student-dashboard .hero{background:linear-gradient(115deg,#145A9E,#347FC2 55%,#7658C8)}
+body.zm-student-dashboard[data-zm-mode="light"],body.zm-student-dashboard.light{
+ --bg:#F3F7FF;--surface:#FFFFFF;--surface2:#F5F8FF;--surface3:#EAF1FC;
+ --text:#1C2945;--muted:#64748B;--border:#D8E3F3;
+ color-scheme:light;background:linear-gradient(135deg,#FFFFFF,#F3F7FF);color:#1C2945;
+}
+body.zm-student-dashboard[data-zm-mode="light"] .card,
+body.zm-student-dashboard.light .card,
+body.zm-student-dashboard[data-zm-mode="light"] .item,
+body.zm-student-dashboard.light .item,
+body.zm-student-dashboard[data-zm-mode="light"] .profile,
+body.zm-student-dashboard.light .profile,
+body.zm-student-dashboard[data-zm-mode="light"] .empty,
+body.zm-student-dashboard.light .empty{background:#fff;color:#1C2945;border-color:#D8E3F3}
+body.zm-student-dashboard[data-zm-mode="light"] input,
+body.zm-student-dashboard.light input,
+body.zm-student-dashboard[data-zm-mode="light"] select,
+body.zm-student-dashboard.light select,
+body.zm-student-dashboard[data-zm-mode="light"] textarea,
+body.zm-student-dashboard.light textarea{background:#fff;color:#1C2945;border-color:#CBD9EC}
+body.zm-student-dashboard[data-zm-mode="light"] .secondary,
+body.zm-student-dashboard.light .secondary,
+body.zm-student-dashboard[data-zm-mode="light"] .icon-btn,
+body.zm-student-dashboard.light .icon-btn{background:#EDF4FF;color:#246FA8;border-color:#D3E2F4}
+</style>
 </head>
 
-<body>
+<body class="zm-student-dashboard">
 <header>
  <div class="nav">
   <div class="brand">
