@@ -4000,6 +4000,60 @@ if (method === "POST" && rejectPasswordMatch) {
       return reply(request, env, {success:true, admin:{id:admin.id, username:admin.username, display_name:admin.display_name, role:admin.role, permissions: ADMIN_PERMS[admin.role]||[]}});
     }
 
+    // Social publishing: posts are authored by staff and delivered only to their intended audience.
+    if (path==='/api/admin/platform/posts') {
+      if (!hasPerm(admin.role,'content')) return reply(request,env,{success:false,error:'Forbidden'},403);
+      if (method==='GET') {
+        const rows=await env.DB.prepare('SELECT * FROM academy_posts ORDER BY id DESC LIMIT 200').all();
+        return reply(request,env,{success:true,posts:rows.results||[]});
+      }
+      if (method==='POST') {
+        await env.DB.prepare(`CREATE TABLE IF NOT EXISTS academy_posts (id INTEGER PRIMARY KEY AUTOINCREMENT,title TEXT NOT NULL,body TEXT NOT NULL,image_url TEXT,link_url TEXT,audience_type TEXT NOT NULL DEFAULT 'all',audience_value TEXT,status TEXT NOT NULL DEFAULT 'published',created_by TEXT,created_at TEXT NOT NULL DEFAULT (datetime('now')))`).run();
+        const b=await readBody(request),title=clean(b?.title,160),body=clean(b?.body,5000);
+        if(!title||!body)return reply(request,env,{success:false,error:'العنوان ونص المنشور مطلوبان.'},400);
+        const audience=clean(b?.audience_type||'all',20),value=clean(b?.audience_value,120);
+        if(!['all','grade','student'].includes(audience))return reply(request,env,{success:false,error:'الجمهور المستهدف غير صالح.'},400);
+        if(audience==='grade'&&!value)return reply(request,env,{success:false,error:'حدد الصف المستهدف.'},400);
+        if(audience==='student'&&!/^\\d+$/.test(value))return reply(request,env,{success:false,error:'حدد رقم الطالب الصحيح.'},400);
+        const image=clean(b?.image_url,1000),link=clean(b?.link_url,1000);
+        const validUrl=v=>!v||/^https:\\/\\//i.test(v);
+        if(!validUrl(image)||!validUrl(link))return reply(request,env,{success:false,error:'يجب أن تبدأ الروابط بـ https://'},400);
+        const result=await env.DB.prepare(`INSERT INTO academy_posts(title,body,image_url,link_url,audience_type,audience_value,status,created_by) VALUES(?,?,?,?,?,?, 'published', ?)`).bind(title,body,image||null,link||null,audience,value||null,admin.display_name||admin.username).run();
+        await logAudit(env,{actor_type:'admin',actor_id:admin.id,actor_label:admin.username,action:'social.post.create',entity_type:'academy_post',entity_id:result.meta?.last_row_id,ip,user_agent:ua});
+        return reply(request,env,{success:true,id:result.meta?.last_row_id});
+      }
+    }
+    if (path.startsWith('/api/admin/platform/posts/') && method==='DELETE') {
+      if (!hasPerm(admin.role,'content')) return reply(request,env,{success:false,error:'Forbidden'},403);
+      const id=Number(path.split('/').pop());
+      if(!Number.isInteger(id)||id<1)return reply(request,env,{success:false,error:'رقم المنشور غير صالح.'},400);
+      await env.DB.prepare('DELETE FROM academy_posts WHERE id=?').bind(id).run();
+      await logAudit(env,{actor_type:'admin',actor_id:admin.id,actor_label:admin.username,action:'social.post.delete',entity_type:'academy_post',entity_id:id,ip,user_agent:ua});
+      return reply(request,env,{success:true});
+    }
+    if (path==='/api/admin/platform/teachers') {
+      if (!hasPerm(admin.role,'content')) return reply(request,env,{success:false,error:'Forbidden'},403);
+      await env.DB.prepare(`CREATE TABLE IF NOT EXISTS academy_teacher_profiles (id INTEGER PRIMARY KEY AUTOINCREMENT,display_name TEXT NOT NULL,subject TEXT NOT NULL DEFAULT '',grade TEXT NOT NULL DEFAULT '',bio TEXT NOT NULL DEFAULT '',photo_url TEXT,contact_url TEXT,is_active INTEGER NOT NULL DEFAULT 1,sort_order INTEGER NOT NULL DEFAULT 0,created_at TEXT NOT NULL DEFAULT (datetime('now')))`).run();
+      if(method==='GET'){
+        const rows=await env.DB.prepare('SELECT * FROM academy_teacher_profiles ORDER BY sort_order,id').all();
+        return reply(request,env,{success:true,teachers:rows.results||[]});
+      }
+      if(method==='POST'){
+        const b=await readBody(request),name=clean(b?.display_name,100),subject=clean(b?.subject,120),grade=clean(b?.grade,80),bio=clean(b?.bio,1000),photo=clean(b?.photo_url,1000),contact=clean(b?.contact_url,1000);
+        if(!name||!subject)return reply(request,env,{success:false,error:'اسم المدرس والمادة مطلوبان.'},400);
+        if((photo&&!/^https:\\/\\//i.test(photo))||(contact&&!/^https:\\/\\//i.test(contact)))return reply(request,env,{success:false,error:'الروابط يجب أن تبدأ بـ https://'},400);
+        const result=await env.DB.prepare('INSERT INTO academy_teacher_profiles(display_name,subject,grade,bio,photo_url,contact_url,sort_order) VALUES(?,?,?,?,?,?,?)').bind(name,subject,grade,bio,photo||null,contact||null,Number.isFinite(Number(b?.sort_order))?Math.max(0,Math.min(999,Number(b.sort_order))):0).run();
+        await logAudit(env,{actor_type:'admin',actor_id:admin.id,actor_label:admin.username,action:'social.teacher.create',entity_type:'teacher_profile',entity_id:result.meta?.last_row_id,ip,user_agent:ua});
+        return reply(request,env,{success:true,id:result.meta?.last_row_id});
+      }
+    }
+    if(path.startsWith('/api/admin/platform/teachers/')&&method==='DELETE'){
+      if(!hasPerm(admin.role,'content'))return reply(request,env,{success:false,error:'Forbidden'},403);
+      const id=Number(path.split('/').pop());
+      await env.DB.prepare('UPDATE academy_teacher_profiles SET is_active=0 WHERE id=?').bind(id).run();
+      return reply(request,env,{success:true});
+    }
+
     // Student directory (platform API alias for the legacy admin route).
     if (method==='GET' && path==='/api/admin/platform/students') {
       if (!hasPerm(admin.role,'students') && !hasPerm(admin.role,'students.view')) {
