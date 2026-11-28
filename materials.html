@@ -14,7 +14,7 @@ async function load(){try{
  $('#materials').innerHTML=rows.length?rows.map(m=>{
   const owned=Number(m.is_free)===1||purchases.some(p=>Number(p.material_id)===Number(m.id)&&(p.status==='approved'||p.status==='completed'));
   const pending=purchases.some(p=>Number(p.material_id)===Number(m.id)&&p.status==='pending');
-  const action=owned?'<a class="ghost" style="display:inline-block;padding:9px 13px;border-radius:10px" href="./student.html?openMaterial='+Number(m.id)+'">فتح المذكرة أو متابعة الدراسة ↗</a>':pending?'<span class="status">طلب الشراء قيد المراجعة</span>':'<a class="ghost" style="display:inline-block;padding:9px 13px;border-radius:10px" href="./student.html#paidSection">عرض خيارات الشراء ↗</a>';
+  const action=owned?(m.external_url?'<a class="ghost" style="display:inline-block;padding:9px 13px;border-radius:10px" href="'+esc(m.external_url)+'" target="_blank" rel="noopener noreferrer">فتح الرابط / الفيديو ↗</a>':'<a class="ghost" style="display:inline-block;padding:9px 13px;border-radius:10px" href="./student.html?openMaterial='+Number(m.id)+'">فتح المذكرة أو متابعة الدراسة ↗</a>'):pending?'<span class="status">طلب الشراء قيد المراجعة</span>':'<a class="ghost" style="display:inline-block;padding:9px 13px;border-radius:10px" href="./student.html#paidSection">عرض خيارات الشراء ↗</a>';
   return '<article class="post"><div class="muted">'+esc(subjectMap.get(Number(m.subject_id))||'مادة دراسية')+' · '+esc(m.type||'محتوى تعليمي')+'</div><h3>'+esc(m.title||'مذكرة تعليمية')+'</h3><p>'+(Number(m.is_free)===1?'محتوى مجاني':'السعر: '+esc(m.price??'غير محدد')+' جنيه')+'</p>'+action+'</article>';
  }).join(''):'<div class="empty">لا يوجد محتوى منشور في المواد المسجل بها حسابك حاليًا.</div>';
  status('عدد عناصر المحتوى في موادك: '+rows.length);
