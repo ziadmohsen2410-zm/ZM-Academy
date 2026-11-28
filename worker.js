@@ -4296,7 +4296,7 @@ if (method === "POST" && rejectPasswordMatch) {
             if(!subject||!title||!['pdf','image','video','link'].includes(contentType))
               return reply(request,env,{success:false,error:'حدد المادة والعنوان ونوع المحتوى بشكل صحيح.'},400);
             const requestedGrade=clean(String(form.get('grade')||''),80);
-            if(!requestedGrade || requestedGrade!==clean(subject.grade,80))
+            if(!requestedGrade || requestedGrade!==subject.grade)
               return reply(request,env,{success:false,error:'الصف المختار لا يطابق صف المادة. اختر الصف والمادة من الإسنادات.'},400);
             const assignment=await env.DB.prepare('SELECT id FROM teacher_assignments WHERE teacher_admin_id=? AND grade=? AND subject=?')
               .bind(admin.id,subject.grade,subject.name).first();
