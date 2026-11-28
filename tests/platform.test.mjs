@@ -180,7 +180,7 @@ test("student preferences accept only supported themes, colors, and font sizes",
   const helperEnd = worker.indexOf("\nasync function route", helperStart);
   const learningHelper = worker.slice(helperStart, helperEnd);
   assert.ok(learningHelper.includes("PRAGMA table_info(student_material_progress)"));
-  assert.ok(!learningHelper.includes("ensureColumn("), "Module-level favorites helper must not call route-scoped ensureColumn");
+  assert.ok(!learningHelper.includes("ensureColumn("), "Module-level learning helper must not call route-scoped schema helper");
 });
 
 test("students can delete rejected purchases and hide completed purchases without deleting records", () => {
