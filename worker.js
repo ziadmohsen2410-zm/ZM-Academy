@@ -806,7 +806,8 @@ async function route(request, env) {
     const assignments = [];
     for (const item of rawAssignments) {
       const grade = clean(item?.grade, 80), subject = clean(item?.subject, 120);
-      if (!grade || !subject) return reply(request, env, { success:false, error:'كل إسناد يجب أن يحتوي على الصف والمادة.' }, 400);
+      if (!['الصف الأول الثانوي','الصف الثاني الثانوي','الصف الثالث الثانوي'].includes(grade) || !subject)
+        return reply(request, env, { success:false, error:'اختر الصف الأول أو الثاني أو الثالث الثانوي واكتب المادة.' }, 400);
       if (!assignments.some(x => x.grade === grade && x.subject === subject)) assignments.push({ grade, subject });
     }
     const hash = await passwordHash(password);
@@ -4117,6 +4118,11 @@ if (method === "POST" && rejectPasswordMatch) {
         review_note TEXT, reviewed_by INTEGER, reviewed_at TEXT,
         created_at TEXT NOT NULL DEFAULT (datetime('now'))
       )`).run();
+      await env.DB.prepare(`CREATE TABLE IF NOT EXISTS teacher_assignments (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        teacher_admin_id INTEGER NOT NULL, grade TEXT NOT NULL, subject TEXT NOT NULL DEFAULT '',
+        created_at TEXT NOT NULL DEFAULT (datetime('now')), UNIQUE(teacher_admin_id,grade,subject)
+      )`).run();
       if(method==='GET'){
         const status=clean(url.searchParams.get('status')||'pending',20);
         const valid=['pending','approved','rejected'];
@@ -4152,11 +4158,11 @@ if (method === "POST" && rejectPasswordMatch) {
           }
           await env.DB.prepare('INSERT OR IGNORE INTO teacher_assignments(teacher_admin_id,grade,subject) VALUES(?,?,?)').bind(teacherId,grade,subjectName).run();
         }
-        await env.DB.prepare("UPDATE teacher_applications SET status='approved',review_note=?,reviewed_by=?,reviewed_at=datetime('now') WHERE id=?").bind(note||null,admin.id,id).run();
+        await env.DB.prepare("UPDATE teacher_applications SET status='approved',password_hash='',review_note=?,reviewed_by=?,reviewed_at=datetime('now') WHERE id=?").bind(note||null,admin.id,id).run();
         await logAudit(env,{actor_type:'admin',actor_id:admin.id,actor_label:admin.username,action:'teacher.application.approve',entity_type:'teacher_application',entity_id:id,details_json:{teacher_id:teacherId},ip,user_agent:ua});
         return reply(request,env,{success:true,status:'approved',teacher_id:teacherId,message:'تم قبول الطلب وإنشاء حساب المدرس وإسناد الصفوف والمواد.'});
       }
-      await env.DB.prepare("UPDATE teacher_applications SET status='rejected',review_note=?,reviewed_by=?,reviewed_at=datetime('now') WHERE id=?").bind(note||'لم يتم توضيح سبب الرفض.',admin.id,id).run();
+      await env.DB.prepare("UPDATE teacher_applications SET status='rejected',password_hash='',review_note=?,reviewed_by=?,reviewed_at=datetime('now') WHERE id=?").bind(note||'لم يتم توضيح سبب الرفض.',admin.id,id).run();
       await logAudit(env,{actor_type:'admin',actor_id:admin.id,actor_label:admin.username,action:'teacher.application.reject',entity_type:'teacher_application',entity_id:id,ip,user_agent:ua});
       return reply(request,env,{success:true,status:'rejected',message:'تم رفض طلب المدرس.'});
     }
