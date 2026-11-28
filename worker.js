@@ -4033,7 +4033,7 @@ if (method === "POST" && rejectPasswordMatch) {
       return reply(request,env,{success:true});
     }
     if (path==='/api/admin/platform/messages') {
-      if (!hasPerm(admin.role,'students') && !hasPerm(admin.role,'students.view') && !hasPerm(admin.role,'content')) return reply(request,env,{success:false,error:'Forbidden'},403);
+      if (!hasPerm(admin.role,'students') && !hasPerm(admin.role,'students.view')) return reply(request,env,{success:false,error:'Forbidden'},403);
       await env.DB.prepare(`CREATE TABLE IF NOT EXISTS academy_teacher_profiles (id INTEGER PRIMARY KEY AUTOINCREMENT,display_name TEXT NOT NULL,subject TEXT NOT NULL DEFAULT '',grade TEXT NOT NULL DEFAULT '',bio TEXT NOT NULL DEFAULT '',photo_url TEXT,contact_url TEXT,is_active INTEGER NOT NULL DEFAULT 1,sort_order INTEGER NOT NULL DEFAULT 0,created_at TEXT NOT NULL DEFAULT (datetime('now')))` ).run();
       await env.DB.prepare(`CREATE TABLE IF NOT EXISTS academy_teacher_messages (id INTEGER PRIMARY KEY AUTOINCREMENT,teacher_id INTEGER NOT NULL,student_id INTEGER NOT NULL,sender_type TEXT NOT NULL CHECK(sender_type IN ('student','teacher')),body TEXT NOT NULL,created_at TEXT NOT NULL DEFAULT (datetime('now')),read_at TEXT)`).run();
       if(method==='GET'){
