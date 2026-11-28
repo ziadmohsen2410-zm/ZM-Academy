@@ -61,9 +61,9 @@ function clean(value, max = 200) {
 const isAdminRole = (role) => ['super_admin','admin','content_manager','teacher','support'].includes(role);
 const ADMIN_PERMS = {
   super_admin: ['*'],
-  admin: ['dashboard','settings','students','content','orders','devices','parents','exams','ads','notifications','analytics','page_builder','theme','ai','backups','roles','audit','media'],
+  admin: ['dashboard','settings','students','attendance','content','orders','devices','parents','exams','ads','notifications','analytics','page_builder','theme','ai','backups','roles','audit','media'],
   content_manager: ['dashboard','content','media','page_builder','theme','ads','notifications','exams'],
-  teacher: ['dashboard','content','exams','analytics','notifications','students.view'],
+  teacher: ['dashboard','content','exams','analytics','notifications','students.view','attendance'],
   support: ['dashboard','students','orders','devices','parents','notifications','audit.view']
 };
 const hasPerm = (role, perm) => {
@@ -3802,6 +3802,8 @@ if (method === "POST" && rejectPasswordMatch) {
       `CREATE TABLE IF NOT EXISTS exam_questions (id INTEGER PRIMARY KEY AUTOINCREMENT, exam_id INTEGER NOT NULL, type TEXT NOT NULL, question_text TEXT NOT NULL, options_json TEXT, correct_answer_json TEXT, points REAL NOT NULL DEFAULT 1, order_index INTEGER NOT NULL DEFAULT 0, explanation TEXT)`,
       `CREATE TABLE IF NOT EXISTS exam_attempts (id INTEGER PRIMARY KEY AUTOINCREMENT, exam_id INTEGER NOT NULL, student_id INTEGER NOT NULL, started_at TEXT NOT NULL DEFAULT (datetime('now')), submitted_at TEXT, score REAL, max_score REAL, status TEXT NOT NULL DEFAULT 'in_progress', answers_json TEXT, question_order_json TEXT, feedback_json TEXT, graded_by TEXT, graded_at TEXT)`,
       `CREATE TABLE IF NOT EXISTS ai_logs (id INTEGER PRIMARY KEY AUTOINCREMENT, actor_type TEXT NOT NULL, actor_id INTEGER, tool TEXT NOT NULL, prompt_preview TEXT, response_status TEXT, tokens_estimate INTEGER, created_at TEXT NOT NULL DEFAULT (datetime('now')))`,
+      `CREATE TABLE IF NOT EXISTS attendance_sessions (id INTEGER PRIMARY KEY AUTOINCREMENT, title TEXT NOT NULL, grade TEXT NOT NULL, subject_id INTEGER, session_date TEXT NOT NULL, status TEXT NOT NULL DEFAULT 'open', created_by TEXT, created_at TEXT NOT NULL DEFAULT (datetime('now')), updated_at TEXT NOT NULL DEFAULT (datetime('now')))`,
+      `CREATE TABLE IF NOT EXISTS attendance_records (id INTEGER PRIMARY KEY AUTOINCREMENT, session_id INTEGER NOT NULL, student_id INTEGER NOT NULL, status TEXT NOT NULL CHECK(status IN ('present','absent','late','excused')), note TEXT NOT NULL DEFAULT '', marked_by TEXT, marked_at TEXT NOT NULL DEFAULT (datetime('now')), UNIQUE(session_id,student_id))`,
       `CREATE TABLE IF NOT EXISTS backup_runs (id INTEGER PRIMARY KEY AUTOINCREMENT, type TEXT NOT NULL, status TEXT NOT NULL, details_json TEXT, created_by TEXT, created_at TEXT NOT NULL DEFAULT (datetime('now')))`
     ];
     for (let i = 0; i < stmts.length; i++) {
@@ -3819,7 +3821,9 @@ if (method === "POST" && rejectPasswordMatch) {
       `CREATE INDEX IF NOT EXISTS idx_parent_links_parent ON parent_student_links(parent_id)`,
       `CREATE INDEX IF NOT EXISTS idx_exam_questions_exam ON exam_questions(exam_id)`,
       `CREATE INDEX IF NOT EXISTS idx_exam_attempts_exam_student ON exam_attempts(exam_id, student_id)`,
-      `CREATE INDEX IF NOT EXISTS idx_notifications_created ON notifications(created_at DESC)`
+      `CREATE INDEX IF NOT EXISTS idx_notifications_created ON notifications(created_at DESC)`,
+      `CREATE INDEX IF NOT EXISTS idx_attendance_sessions_date ON attendance_sessions(session_date DESC, grade)`,
+      `CREATE INDEX IF NOT EXISTS idx_attendance_records_student ON attendance_records(student_id, session_id)`
     ];
     for (let i = 0; i < idx.length; i++) {
       try {
@@ -4142,6 +4146,80 @@ if (method === "POST" && rejectPasswordMatch) {
         LIMIT 500
       `).all();
       return reply(request, env, {success:true, students:rows.results||[]});
+    }
+
+    // Attendance management: admin and assigned teacher role permission.
+    if (path.startsWith('/api/admin/platform/attendance')) {
+      if (!hasPerm(admin.role,'attendance')) return reply(request,env,{success:false,error:'Forbidden'},403);
+      if (method==='GET' && path==='/api/admin/platform/attendance/roster') {
+        const grade=clean(url.searchParams.get('grade')||'',80);
+        if(!grade)return reply(request,env,{success:false,error:'اختر الصف الدراسي أولًا.'},400);
+        const rows=await env.DB.prepare(`SELECT id,name,phone,grade,school FROM students WHERE grade=? AND COALESCE(is_active,1)=1 ORDER BY name COLLATE NOCASE LIMIT 500`).bind(grade).all();
+        return reply(request,env,{success:true,students:rows.results||[]});
+      }
+      if (method==='GET' && path==='/api/admin/platform/attendance/sessions') {
+        const grade=clean(url.searchParams.get('grade')||'',80);
+        const date=clean(url.searchParams.get('date')||'',10);
+        const where=[],args=[];
+        if(grade){where.push('s.grade=?');args.push(grade);}
+        if(date){where.push('s.session_date=?');args.push(date);}
+        const rows=await env.DB.prepare(`SELECT s.*, (SELECT COUNT(*) FROM attendance_records r WHERE r.session_id=s.id) AS marked_count, (SELECT COUNT(*) FROM students st WHERE st.grade=s.grade AND COALESCE(st.is_active,1)=1) AS roster_count FROM attendance_sessions s ${where.length?'WHERE '+where.join(' AND '):''} ORDER BY s.session_date DESC,s.id DESC LIMIT 200`).bind(...args).all();
+        return reply(request,env,{success:true,sessions:rows.results||[]});
+      }
+      if (method==='POST' && path==='/api/admin/platform/attendance/sessions') {
+        const b=await readBody(request),title=clean(b?.title,120),grade=clean(b?.grade,80),date=clean(b?.session_date,10),subjectId=Number(b?.subject_id||0);
+        if(!title||!grade||!/^\\d{4}-\\d{2}-\\d{2}$/.test(date)||!Number.isFinite(Date.parse(date+'T00:00:00Z')))return reply(request,env,{success:false,error:'العنوان والصف والتاريخ مطلوبة بصورة صحيحة.'},400);
+        if(subjectId<0||!Number.isInteger(subjectId))return reply(request,env,{success:false,error:'المادة غير صحيحة.'},400);
+        const result=await env.DB.prepare(`INSERT INTO attendance_sessions(title,grade,subject_id,session_date,created_by) VALUES(?,?,?,?,?)`).bind(title,grade,subjectId||null,date,admin.display_name||admin.username).run();
+        const id=Number(result.meta?.last_row_id||0);
+        await logAudit(env,{actor_type:'admin',actor_id:admin.id,actor_label:admin.username,action:'attendance.session.create',entity_type:'attendance_session',entity_id:id,details_json:{grade,date,subject_id:subjectId||null},ip,user_agent:ua});
+        return reply(request,env,{success:true,id});
+      }
+      const sessionMatch=path.match(/^\\/api\\/admin\\/platform\\/attendance\\/sessions\\/(\\d+)$/);
+      if(method==='GET'&&sessionMatch){
+        const id=Number(sessionMatch[1]);
+        const session=await env.DB.prepare('SELECT * FROM attendance_sessions WHERE id=?').bind(id).first();
+        if(!session)return reply(request,env,{success:false,error:'جلسة الحضور غير موجودة.'},404);
+        const rows=await env.DB.prepare(`SELECT st.id AS student_id,st.name,st.phone,st.grade,r.status,r.note,r.marked_by,r.marked_at FROM students st LEFT JOIN attendance_records r ON r.student_id=st.id AND r.session_id=? WHERE st.grade=? AND COALESCE(st.is_active,1)=1 ORDER BY st.name COLLATE NOCASE`).bind(id,session.grade).all();
+        return reply(request,env,{success:true,session,records:rows.results||[]});
+      }
+      const recordsMatch=path.match(/^\\/api\\/admin\\/platform\\/attendance\\/sessions\\/(\\d+)\\/records$/);
+      if(method==='PUT'&&recordsMatch){
+        const id=Number(recordsMatch[1]),session=await env.DB.prepare('SELECT id,grade,status FROM attendance_sessions WHERE id=?').bind(id).first();
+        if(!session)return reply(request,env,{success:false,error:'جلسة الحضور غير موجودة.'},404);
+        if(session.status!=='open')return reply(request,env,{success:false,error:'الجلسة مغلقة ولا يمكن تعديلها.'},409);
+        const b=await readBody(request),records=Array.isArray(b?.records)?b.records:[];
+        if(!records.length||records.length>500)return reply(request,env,{success:false,error:'قائمة الحضور فارغة أو تتجاوز الحد المسموح.'},400);
+        const allowed=new Set(['present','absent','late','excused']),seen=new Set(),batch=[];
+        for(const item of records){
+          const studentId=Number(item?.student_id),status=clean(item?.status,20),note=clean(item?.note,300);
+          if(!Number.isInteger(studentId)||studentId<1||!allowed.has(status)||seen.has(studentId))return reply(request,env,{success:false,error:'يوجد سجل حضور غير صالح أو مكرر.'},400);
+          seen.add(studentId);
+          const student=await env.DB.prepare('SELECT id FROM students WHERE id=? AND grade=? AND COALESCE(is_active,1)=1').bind(studentId,session.grade).first();
+          if(!student)return reply(request,env,{success:false,error:'أحد الطلاب لا ينتمي إلى الصف المحدد.'},400);
+          batch.push(env.DB.prepare(`INSERT INTO attendance_records(session_id,student_id,status,note,marked_by,marked_at) VALUES(?,?,?,?,?,datetime('now')) ON CONFLICT(session_id,student_id) DO UPDATE SET status=excluded.status,note=excluded.note,marked_by=excluded.marked_by,marked_at=datetime('now')`).bind(id,studentId,status,note,admin.display_name||admin.username));
+        }
+        await env.DB.batch(batch);
+        await env.DB.prepare("UPDATE attendance_sessions SET updated_at=datetime('now') WHERE id=?").bind(id).run();
+        await logAudit(env,{actor_type:'admin',actor_id:admin.id,actor_label:admin.username,action:'attendance.records.save',entity_type:'attendance_session',entity_id:id,details_json:{records:records.length},ip,user_agent:ua});
+        return reply(request,env,{success:true,saved:records.length});
+      }
+      if(method==='POST'&&/^\\/api\\/admin\\/platform\\/attendance\\/sessions\\/\\d+\\/lock$/.test(path)){
+        const id=Number(path.split('/')[6]);
+        const result=await env.DB.prepare("UPDATE attendance_sessions SET status='locked',updated_at=datetime('now') WHERE id=? AND status='open'").bind(id).run();
+        if(!result.meta?.changes)return reply(request,env,{success:false,error:'الجلسة غير موجودة أو مغلقة بالفعل.'},409);
+        await logAudit(env,{actor_type:'admin',actor_id:admin.id,actor_label:admin.username,action:'attendance.session.lock',entity_type:'attendance_session',entity_id:id,ip,user_agent:ua});
+        return reply(request,env,{success:true});
+      }
+      if(method==='GET'&&path==='/api/admin/platform/attendance/report'){
+        const grade=clean(url.searchParams.get('grade')||'',80),from=clean(url.searchParams.get('from')||'',10),to=clean(url.searchParams.get('to')||'',10);
+        const conditions=[],args=[];
+        if(grade){conditions.push('s.grade=?');args.push(grade);}
+        if(from&&/^\\d{4}-\\d{2}-\\d{2}$/.test(from)){conditions.push('s.session_date>=?');args.push(from);}
+        if(to&&/^\\d{4}-\\d{2}-\\d{2}$/.test(to)){conditions.push('s.session_date<=?');args.push(to);}
+        const rows=await env.DB.prepare(`SELECT st.id AS student_id,st.name,st.grade,COUNT(r.id) AS marked_sessions,SUM(CASE WHEN r.status='present' THEN 1 ELSE 0 END) AS present,SUM(CASE WHEN r.status='absent' THEN 1 ELSE 0 END) AS absent,SUM(CASE WHEN r.status='late' THEN 1 ELSE 0 END) AS late,SUM(CASE WHEN r.status='excused' THEN 1 ELSE 0 END) AS excused FROM attendance_records r JOIN attendance_sessions s ON s.id=r.session_id JOIN students st ON st.id=r.student_id ${conditions.length?'WHERE '+conditions.join(' AND '):''} GROUP BY st.id ORDER BY st.name COLLATE NOCASE LIMIT 1000`).bind(...args).all();
+        return reply(request,env,{success:true,rows:rows.results||[]});
+      }
     }
 
     // Settings
@@ -4570,7 +4648,7 @@ if (method === "POST" && rejectPasswordMatch) {
         'archived_subjects','archived_materials',
         'platform_settings','roles','role_permissions','page_drafts',
         'page_published','page_versions','parents','parent_student_links',
-        'notifications','notification_reads','ads','ad_events','exams',
+        'notifications','notification_reads','ads','ad_events','attendance_sessions','attendance_records','exams',
         'exam_questions','exam_attempts','audit_logs','ai_logs'
       ];
       const out={version:2,exported_at:nowIso(),tables:{},warnings:[]};
