@@ -149,6 +149,18 @@ jobs:
           python3 -c "import json; d=json.load(open('/tmp/zm-student-materials.json')); assert any(int(x['id'])==990001 for x in d.get('materials',[])), d"
           echo "Student registration, device approval, login, and material visibility passed."
 
+          # A new unapproved device must not invalidate the student's existing approved session.
+          SECOND_DEVICE_TOKEN="preview-device-token-second-000000000000000000000000"
+          SECOND_DEVICE_STATUS="$(curl --max-time 30 --silent --show-error -X POST "$API/api/students/login" \
+            -H "Content-Type: application/json" \
+            --data "{\\"username\\":\\"preview_student\\",\\"password\\":\\"$STUDENT_PASSWORD\\",\\"deviceToken\\":\\"$SECOND_DEVICE_TOKEN\\",\\"deviceName\\":\\"Preview Second Device\\"}" \
+            -o /tmp/zm-device-second-pending.json -w '%{http_code}')"
+          python3 -c "import json,sys; d=json.load(open('/tmp/zm-device-second-pending.json')); assert sys.argv[1]=='403' and d.get('code')=='DEVICE_APPROVAL_REQUIRED', d" "$SECOND_DEVICE_STATUS"
+          curl --max-time 30 --fail --silent --show-error "$API/api/student/me" \
+            -H "Authorization: Bearer $STUDENT_TOKEN" -o /tmp/zm-student-existing-device-still-active.json
+          python3 -c "import json,sys; d=json.load(open('/tmp/zm-student-existing-device-still-active.json')); assert d.get('success') is True and d.get('student',{}).get('id')==int(sys.argv[1]), d" "$STUDENT_ID"
+          echo "Pending second device does not block the previously approved device."
+
           curl --max-time 30 --fail --silent --show-error -X POST "$API/api/orders" \
             -H "Authorization: Bearer $STUDENT_TOKEN" \
             -H "Content-Type: application/json" \
@@ -163,6 +175,33 @@ jobs:
           curl --max-time 30 --fail --silent --show-error "$API/api/student/purchases" \
             -H "Authorization: Bearer $STUDENT_TOKEN" -o /tmp/zm-student-purchases-approved.json
           python3 -c "import json; d=json.load(open('/tmp/zm-student-purchases-approved.json')); rows=[x for x in d.get('purchases',[]) if int(x.get('order_id',0))==int('$ORDER_ID')]; assert rows and rows[0].get('status')=='approved', d"
+
+          # Approved purchases must block another purchase request.
+          APPROVED_DUPLICATE_STATUS="$(curl --max-time 30 --silent --show-error -X POST "$API/api/orders" \
+            -H "Authorization: Bearer $STUDENT_TOKEN" -H "Content-Type: application/json" \
+            --data '{"material_id":990001}' -o /tmp/zm-approved-duplicate.json -w '%{http_code}')"
+          python3 -c "import json,sys; d=json.load(open('/tmp/zm-approved-duplicate.json')); assert sys.argv[1]=='409' and d.get('code')=='ORDER_ALREADY_EXISTS', d" "$APPROVED_DUPLICATE_STATUS"
+
+          # Rejected requests remain visible to students, leave the admin pending queue,
+          # and allow the student to submit a fresh request for the same material.
+          curl --max-time 30 --fail --silent --show-error -X POST "$API/api/orders" \
+            -H "Authorization: Bearer $STUDENT_TOKEN" -H "Content-Type: application/json" \
+            --data '{"material_id":990002}' -o /tmp/zm-rejected-order-create.json
+          REJECTED_ORDER_ID="$(python3 -c "import json; print(json.load(open('/tmp/zm-rejected-order-create.json'))['order_id'])")"
+          curl --max-time 30 --fail --silent --show-error -X PATCH "$API/api/admin/orders/$REJECTED_ORDER_ID" \
+            -H "Authorization: Bearer $ADMIN_TOKEN" -H "Content-Type: application/json" \
+            --data '{"status":"rejected"}' -o /tmp/zm-order-rejected.json
+          curl --max-time 30 --fail --silent --show-error "$API/api/student/purchases" \
+            -H "Authorization: Bearer $STUDENT_TOKEN" -o /tmp/zm-student-purchases-rejected.json
+          python3 -c "import json; d=json.load(open('/tmp/zm-student-purchases-rejected.json')); rows=[x for x in d.get('purchases',[]) if int(x.get('order_id',0))==int('$REJECTED_ORDER_ID')]; assert rows and rows[0].get('status')=='rejected', d"
+          curl --max-time 30 --fail --silent --show-error "$API/api/admin/orders" \
+            -H "Authorization: Bearer $ADMIN_TOKEN" -o /tmp/zm-admin-pending-orders.json
+          python3 -c "import json; d=json.load(open('/tmp/zm-admin-pending-orders.json')); assert all(int(x.get('id',0))!=int('$REJECTED_ORDER_ID') for x in d.get('orders',[])), d"
+          RETRY_STATUS="$(curl --max-time 30 --silent --show-error -X POST "$API/api/orders" \
+            -H "Authorization: Bearer $STUDENT_TOKEN" -H "Content-Type: application/json" \
+            --data '{"material_id":990002}' -o /tmp/zm-retry-order.json -w '%{http_code}')"
+          python3 -c "import json,sys; d=json.load(open('/tmp/zm-retry-order.json')); assert sys.argv[1]=='201' and d.get('success') is True and d.get('status')=='pending', d" "$RETRY_STATUS"
+          echo "Approved duplicate prevention and rejected-order retry rules passed."
 
           # Register a parent, request a student link, and approve it from the admin portal.
           curl --max-time 30 --fail --silent --show-error -X POST "$API/api/parent/register" \
