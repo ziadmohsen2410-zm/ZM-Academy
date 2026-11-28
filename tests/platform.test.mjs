@@ -1061,7 +1061,7 @@ test("teacher content submissions require assigned subjects and explicit admin a
   assert.ok(worker.includes("teacher-portal/content"));
   assert.ok(worker.includes("teacher-content/submissions"));
   assert.ok(teacher.includes("إرسال للمراجعة"));
-  assert.ok(teacher.includes("contentType==='pdf'||contentType==='image'"));
+  assert.ok(teacher.includes("const file=type==='pdf'||type==='image'"));
   assert.ok(admin.includes("sec-teacher-content"));
   assert.ok(admin.includes("window.reviewTeacherSubmission"));
   assert.ok(admin.includes("window.previewTeacherFile"));
