@@ -699,7 +699,7 @@ async function ensureStudentLearningTables(env) {
       )
     `)
   ]);
-  // This helper is module-scoped; do not call ensureColumn(), which is scoped inside route().
+  // This helper is module-scoped; keep schema upgrades local to this helper.
   let columns = await env.DB.prepare("PRAGMA table_info(student_material_progress)").all();
   if (!(columns.results || []).some(column => column.name === "completed_at")) {
     try {
