@@ -3441,7 +3441,6 @@ if (method === "POST" && rejectPasswordMatch) {
 
     // طلبات الطالب ومشترياته مع تحديد العناصر المخفية
     if (method === "GET" && path === "/api/student/purchases") {
-      await ensureStudentHiddenPurchasesTable(env);
       const rows = await env.DB.prepare(
         `SELECT o.id AS order_id, o.status, o.created_at,
                 m.id AS material_id, m.title, m.type,
@@ -3991,11 +3990,55 @@ if (method === "POST" && rejectPasswordMatch) {
       const studentId = Number(path.split('/')[4]);
       const link = await env.DB.prepare(`SELECT status FROM parent_student_links WHERE parent_id=? AND student_id=?`).bind(ps.parent_id, studentId).first();
       if (!link || link.status!=='approved') return reply(request, env, {success:false,error:'غير مصرح'}, 403);
-      const student = await env.DB.prepare(`SELECT id,name,phone,grade,school,governorate FROM students WHERE id=?`).bind(studentId).first();
-      const subjects = await env.DB.prepare(`SELECT s.id,s.name FROM student_subjects ss JOIN subjects s ON s.id=ss.subject_id WHERE ss.student_id=?`).bind(studentId).all();
-      const orders = await env.DB.prepare(`SELECT o.id,o.status,o.created_at,m.title as material_title FROM orders o LEFT JOIN materials m ON m.id=o.material_id WHERE o.student_id=? ORDER BY o.id DESC LIMIT 50`).bind(studentId).all();
-      const attempts = await env.DB.prepare(`SELECT a.id,a.exam_id,CASE WHEN a.status='graded' AND e.show_results<>0 THEN a.score ELSE NULL END AS score,CASE WHEN a.status='graded' AND e.show_results<>0 THEN a.max_score ELSE NULL END AS max_score,a.status,a.submitted_at,e.title as exam_title FROM exam_attempts a JOIN exams e ON e.id=a.exam_id WHERE a.student_id=? ORDER BY a.id DESC LIMIT 50`).bind(studentId).all();
-      return reply(request, env, {success:true, student, subjects:subjects.results||[], orders:orders.results||[], attempts:attempts.results||[]});
+      // Parent overview is intentionally read-only and scoped to an approved link.
+      // Reuse the student's existing learning, purchase, and exam records; never expose
+      // passwords, private messages, answer payloads, or hidden student UI preferences.
+      await ensureStudentLearningTables(env);
+      await ensureStudentHiddenPurchasesTable(env);
+      await ensureArchivedSubjectsTable(env);
+      await ensureArchivedMaterialsTable(env);
+      const [student, subjects, purchases, progress, favorites, attempts, activityDays] = await Promise.all([
+        env.DB.prepare(`SELECT s.id,s.name,s.phone,s.parent_phone,s.grade,s.school,s.governorate,s.created_at,sa.username
+          FROM students s LEFT JOIN student_accounts sa ON sa.student_id=s.id WHERE s.id=?`).bind(studentId).first(),
+        env.DB.prepare(`SELECT sub.id,sub.name,sub.grade FROM student_subjects ss JOIN subjects sub ON sub.id=ss.subject_id
+          WHERE ss.student_id=? AND sub.id NOT IN (SELECT subject_id FROM archived_subjects) ORDER BY sub.name`).bind(studentId).all(),
+        env.DB.prepare(`SELECT o.id AS order_id,o.status,o.created_at,m.id AS material_id,m.title,m.type,m.price,
+          sub.name AS subject_name,CASE WHEN o.status IN ('approved','completed') THEN 1 ELSE 0 END AS has_access
+          FROM orders o LEFT JOIN materials m ON m.id=o.material_id LEFT JOIN subjects sub ON sub.id=m.subject_id
+          WHERE o.student_id=? ORDER BY o.id DESC LIMIT 200`).bind(studentId).all(),
+        env.DB.prepare(`SELECT p.material_id,p.last_page,p.updated_at,p.completed_at,m.title,m.type,sub.name AS subject_name
+          FROM student_material_progress p LEFT JOIN materials m ON m.id=p.material_id LEFT JOIN subjects sub ON sub.id=m.subject_id
+          WHERE p.student_id=? ORDER BY COALESCE(p.updated_at,p.completed_at) DESC LIMIT 200`).bind(studentId).all(),
+        env.DB.prepare(`SELECT f.material_id,f.created_at,m.title,m.type,sub.name AS subject_name
+          FROM student_favorites f LEFT JOIN materials m ON m.id=f.material_id LEFT JOIN subjects sub ON sub.id=m.subject_id
+          WHERE f.student_id=? ORDER BY f.created_at DESC LIMIT 200`).bind(studentId).all(),
+        env.DB.prepare(`SELECT a.id,a.exam_id,CASE WHEN a.status='graded' AND e.show_results<>0 THEN a.score ELSE NULL END AS score,
+          CASE WHEN a.status='graded' AND e.show_results<>0 THEN a.max_score ELSE NULL END AS max_score,
+          a.status,a.started_at,a.submitted_at,a.graded_at,e.title AS exam_title,e.show_results
+          FROM exam_attempts a JOIN exams e ON e.id=a.exam_id WHERE a.student_id=? ORDER BY a.id DESC LIMIT 100`).bind(studentId).all(),
+        env.DB.prepare(`SELECT activity_date FROM student_activity_days WHERE student_id=? ORDER BY activity_date DESC LIMIT 60`).bind(studentId).all()
+      ]);
+      const orderRows=purchases.results||[];
+      const progressRows=progress.results||[];
+      const attemptRows=attempts.results||[];
+      const stats={
+        subjects:(subjects.results||[]).length,
+        total_orders:orderRows.length,
+        active_purchases:orderRows.filter(x=>Number(x.has_access)===1).length,
+        pending_orders:orderRows.filter(x=>x.status==='pending').length,
+        rejected_orders:orderRows.filter(x=>x.status==='rejected').length,
+        materials_started:progressRows.length,
+        materials_completed:progressRows.filter(x=>!!x.completed_at).length,
+        exams:attemptRows.length,
+        graded_exams:attemptRows.filter(x=>x.status==='graded' && Number(x.show_results)!==0).length,
+        activity_days:(activityDays.results||[]).length
+      };
+      return reply(request, env, {
+        success:true, student, subjects:subjects.results||[], purchases:orderRows,
+        orders:orderRows, progress:progressRows, favorites:favorites.results||[],
+        attempts:attemptRows, activity_days:activityDays.results||[], stats,
+        attendance:{available:false,message:'سيتم تفعيل سجل الحضور والغياب في مرحلة لاحقة.'}
+      });
     }
     return reply(request, env, {success:false,error:'Not found'}, 404);
   }

@@ -29,7 +29,7 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,te
 <body>
 <main>
   <div class="card" style="display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap">
-    <div style="display:flex;align-items:center;gap:12px"><img src="./assets/academy-logo.jpg" alt="ZM Academy" style="width:64px;height:64px;object-fit:contain;border-radius:12px"><div><h1 data-i18n="title">بوابة ولي الأمر</h1><p class="muted" data-i18n="sub">متابعة الأبناء، النتائج، الطلبات، والتقارير.</p></div></div>
+    <div style="display:flex;align-items:center;gap:12px"><img src="./assets/academy-logo.jpg" alt="ZM Academy" style="width:64px;height:64px;object-fit:contain;border-radius:12px"><div><h1 data-i18n="title">بوابة ولي الأمر</h1><p class="muted" data-i18n="sub">متابعة الملف الدراسي والمشتريات والتقدم والاختبارات لكل ابن.</p></div></div>
     <div><a href="./index.html"><button class="ghost">الرئيسية</button></a> <button class="ghost hidden" id="logoutBtn">تسجيل الخروج</button></div>
   </div>
   <div id="msg" class="msg"></div>
@@ -69,7 +69,64 @@ async function boot(){if(!token){$('#authSec').classList.remove('hidden');$('#ap
 async function loadChildren(){ const d=await api('/api/parent/children'); const rows=d.children||[]; $('#childrenList').innerHTML=rows.length?rows.map(c=>`<div class="item"><div style="display:flex;justify-content:space-between;gap:10px;align-items:center"><div><strong>${esc(c.name)}</strong> <span class="muted">(${esc(c.grade||'-')})</span><div class="muted">حالة الربط: ${esc(c.status)}</div></div>${c.status==='approved'?`<button onclick="window.__viewChild(${c.id})">عرض</button>`:'<span class="muted">بانتظار الموافقة</span>'}</div></div>`).join(''):'<div class="muted">لا يوجد أبناء مرتبطون.</div>'; }
 async function loadParentNotifications(){try{const d=await api('/api/parent/notifications');const rows=d.notifications||[];$('#parentNotifications').innerHTML=rows.length?rows.map(n=>`<div class="item"><div style="display:flex;justify-content:space-between;gap:10px"><strong>${esc(n.title)}</strong>${Number(n.is_read)===0?`<button class="ghost" data-parent-read="${n.id}">تحديد كمقروء</button>`: '<span class="muted">مقروء</span>'}</div><div class="muted">${esc(n.type)} · ${esc(n.created_at||'')}</div><div>${esc(n.body)}</div></div>`).join(''):'<div class="muted">لا توجد إشعارات حاليًا.</div>';$('#parentNotifications').querySelectorAll('[data-parent-read]').forEach(btn=>btn.onclick=async()=>{try{await api('/api/parent/notifications/'+btn.dataset.parentRead+'/read',{method:'POST'});loadParentNotifications();}catch(e){msg(e.message);}});}catch(e){$('#parentNotifications').textContent=e.message;}}
 
-window.__viewChild=async(id)=>{ try{ const d=await api(`/api/parent/children/${id}/overview`); const s=d.student||{}; $('#summaryBox').innerHTML=`<div><strong>${esc(s.name)}</strong></div><div class="muted">${esc(s.grade||'-')} - ${esc(s.school||'-')}</div>`; $('#childDetails').innerHTML=`<div class="grid"><div class="item"><strong>المواد</strong><div class="muted">${(d.subjects||[]).map(x=>esc(x.name)).join('، ')||'لا يوجد'}</div></div><div class="item"><strong>الطلبات</strong><div class="muted">${(d.orders||[]).length} طلب</div></div><div class="item"><strong>محاولات الاختبار</strong><div class="muted">${(d.attempts||[]).length} محاولة</div></div></div><h3>الطلبات</h3><div class="wrap"><table><thead><tr><th>ID</th><th>المحتوى</th><th>الحالة</th></tr></thead><tbody>${(d.orders||[]).map(o=>`<tr><td>${o.id}</td><td>${esc(o.material_title||'-')}</td><td>${esc(o.status||'-')}</td></tr>`).join('')||'<tr><td colspan="3" class="muted">لا يوجد</td></tr>'}</tbody></table></div><h3>الاختبارات</h3><div class="wrap"><table><thead><tr><th>الاختبار</th><th>الدرجة</th><th>الحالة</th></tr></thead><tbody>${(d.attempts||[]).map(a=>`<tr><td>${esc(a.exam_title||'-')}</td><td>${esc(a.score??'-')} / ${esc(a.max_score??'-')}</td><td>${esc(a.status||'-')}</td></tr>`).join('')||'<tr><td colspan="3" class="muted">لا يوجد</td></tr>'}</tbody></table></div>`; }catch(e){ msg(e.message); } };
+window.__viewChild=async(id)=>{
+ try{
+  const d=await api(`/api/parent/children/${id}/overview`),s=d.student||{},st=d.stats||{};
+  const statusLabel=v=>({pending:'قيد المراجعة',approved:'تمت الموافقة',completed:'مكتمل',rejected:'مرفوض',graded:'تم التصحيح',submitted:'تم التسليم',in_progress:'جارٍ'}[v]||v||'—');
+  const rows=(items,cols,empty)=>items.length?`<div class="wrap"><table><thead><tr>${cols.map(c=>`<th>${c.label}</th>`).join('')}</tr></thead><tbody>${items.map(x=>`<tr>${cols.map(c=>`<td>${c.render(x)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`:`<div class="muted">${empty}</div>`;
+  $('#summaryBox').innerHTML=`<div class="grid">
+   <div class="item"><strong>المواد</strong><div class="muted">${st.subjects||0}</div></div>
+   <div class="item"><strong>المشتريات المتاحة</strong><div class="muted">${st.active_purchases||0}</div></div>
+   <div class="item"><strong>طلبات قيد المراجعة</strong><div class="muted">${st.pending_orders||0}</div></div>
+   <div class="item"><strong>دروس بدأها</strong><div class="muted">${st.materials_started||0}</div></div>
+   <div class="item"><strong>دروس مكتملة</strong><div class="muted">${st.materials_completed||0}</div></div>
+   <div class="item"><strong>محاولات الاختبار</strong><div class="muted">${st.exams||0}</div></div>
+  </div>`;
+  $('#childDetails').innerHTML=`
+   <section class="item"><h3>الملف الدراسي</h3><div class="grid">
+    <div><strong>الاسم:</strong> ${esc(s.name)}</div><div><strong>اسم المستخدم:</strong> ${esc(s.username||'—')}</div>
+    <div><strong>الصف:</strong> ${esc(s.grade||'—')}</div><div><strong>المدرسة:</strong> ${esc(s.school||'—')}</div>
+    <div><strong>المحافظة:</strong> ${esc(s.governorate||'—')}</div><div><strong>هاتف الطالب:</strong> ${esc(s.phone||'—')}</div>
+    <div><strong>هاتف ولي الأمر المسجل:</strong> ${esc(s.parent_phone||'—')}</div><div><strong>تاريخ التسجيل:</strong> ${esc(s.created_at||'—')}</div>
+   </div></section>
+   <section class="item"><h3>المواد المسجل بها</h3><div>${(d.subjects||[]).map(x=>`<span class="item" style="display:inline-block">${esc(x.name)} · ${esc(x.grade||'')}</span>`).join('')||'<span class="muted">لا توجد مواد مسجلة.</span>'}</div></section>
+   <section class="item"><h3>المشتريات والطلبات</h3><p class="muted">تشمل الطلبات الظاهرة والمخفية من قائمة الطالب؛ إخفاء الطالب لعملية شراء لا يخفيها عن ولي الأمر.</p>
+    ${rows(d.purchases||[],[
+     {label:'رقم',render:x=>esc(x.order_id)},
+     {label:'المحتوى',render:x=>esc(x.title||'محتوى محذوف/غير متاح')},
+     {label:'المادة',render:x=>esc(x.subject_name||'—')},
+     {label:'النوع',render:x=>esc(x.type||'—')},
+     {label:'السعر',render:x=>x.price==null?'—':esc(x.price)+' ج.م'},
+     {label:'الحالة',render:x=>esc(statusLabel(x.status))},
+     {label:'تاريخ الطلب',render:x=>esc(x.created_at||'—')},
+     {label:'إتاحة المحتوى',render:x=>Number(x.has_access)===1?'متاح':'غير متاح'}
+    ],'لا توجد مشتريات أو طلبات مسجلة.') }
+   </section>
+   <section class="item"><h3>تقدم الدروس والمحتوى</h3>
+    ${rows(d.progress||[],[
+     {label:'الدرس',render:x=>esc(x.title||'محتوى غير متاح')},
+     {label:'المادة',render:x=>esc(x.subject_name||'—')},
+     {label:'الصفحة الأخيرة',render:x=>esc(x.last_page??'—')},
+     {label:'الحالة',render:x=>x.completed_at?'مكتمل':'قيد المتابعة'},
+     {label:'آخر تحديث',render:x=>esc(x.updated_at||'—')}
+    ],'لم يبدأ الطالب متابعة أي درس مسجل بعد.')}
+   </section>
+   <section class="item"><h3>نتائج ومحاولات الاختبارات</h3>
+    ${rows(d.attempts||[],[
+     {label:'الاختبار',render:x=>esc(x.exam_title||'—')},
+     {label:'الدرجة',render:x=>x.score==null?'لم تُعلن بعد':esc(x.score)+' / '+esc(x.max_score??'—')},
+     {label:'الحالة',render:x=>esc(statusLabel(x.status))},
+     {label:'بدأ في',render:x=>esc(x.started_at||'—')},
+     {label:'تم التسليم',render:x=>esc(x.submitted_at||'—')},
+     {label:'تم التصحيح',render:x=>esc(x.graded_at||'—')}
+    ],'لا توجد محاولات اختبارات مسجلة.')}
+   </section>
+   <section class="item"><h3>المفضلة التعليمية</h3><div>${(d.favorites||[]).map(x=>`<span class="item" style="display:inline-block">${esc(x.title||'محتوى غير متاح')} · ${esc(x.subject_name||'')}</span>`).join('')||'<span class="muted">لا توجد عناصر محفوظة.</span>'}</div></section>
+   <section class="item"><h3>النشاط التعليمي</h3><p>أيام النشاط المسجلة: <strong>${st.activity_days||0}</strong></p><p class="muted">${(d.activity_days||[]).map(x=>esc(x.activity_date)).join(' · ')||'لا توجد أيام نشاط مسجلة حتى الآن.'}</p></section>
+   <section class="item"><h3>الحضور والغياب</h3><p class="muted">سيتم إضافة سجل الحضور والغياب لاحقًا، مع تواريخ الحصص وحالة الحضور والتأخير.</p></section>
+  `;
+ }catch(e){msg(e.message);}
+};
 $('#loginBtn').onclick=async()=>{ try{ const d=await api('/api/parent/login',{method:'POST',body:JSON.stringify({username:$('#lUser').value.trim(),password:$('#lPass').value})}); token=d.token; localStorage.setItem('zm_parent_token',token); saveParentProfile(d.parent); msg('تم تسجيل الدخول'); boot(); }catch(e){ msg(e.message); } };
 $('#regBtn').onclick=async()=>{ try{ await api('/api/parent/register',{method:'POST',body:JSON.stringify({name:$('#rName').value.trim(),username:$('#rUser').value.trim(),phone:$('#rPhone').value.trim(),email:$('#rEmail').value.trim(),password:$('#rPass').value})}); msg('تم إنشاء الحساب، يمكنك تسجيل الدخول'); }catch(e){ msg(e.message); } };
 $('#linkBtn').onclick=async()=>{ try{ await api('/api/parent/link-request',{method:'POST',body:JSON.stringify({student_username:$('#linkUser').value.trim(),student_phone:$('#linkPhone').value.trim()})}); msg('تم إرسال طلب الربط'); loadChildren(); }catch(e){ msg(e.message); } };
