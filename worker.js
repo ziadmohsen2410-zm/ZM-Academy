@@ -4159,6 +4159,7 @@ if (method === "POST" && rejectPasswordMatch) {
         created_at TEXT NOT NULL DEFAULT (datetime('now'))
       )`).run();
       await ensureColumn(env,'materials','external_url','TEXT');
+      await ensureColumn(env,'materials','file_key','TEXT');
 
       if (path === '/api/admin/platform/teacher-portal/content') {
         if (admin.role !== 'teacher') return reply(request,env,{success:false,error:'هذه الخدمة مخصصة لحسابات المدرسين.'},403);
@@ -4225,6 +4226,23 @@ if (method === "POST" && rejectPasswordMatch) {
           const rows=valid.includes(status)?await env.DB.prepare(query).bind(status).all():await env.DB.prepare(query).all();
           return reply(request,env,{success:true,submissions:rows.results||[]});
         }
+      }
+      const fileMatch=path.match(/^\\/api\\/admin\\/platform\\/teacher-content\\/submissions\\/(\\d+)\\/file$/);
+      if(fileMatch&&method==='GET'){
+        if(!hasPerm(admin.role,'content'))return reply(request,env,{success:false,error:'Forbidden'},403);
+        const item=await env.DB.prepare('SELECT file_key FROM teacher_content_submissions WHERE id=?').bind(Number(fileMatch[1])).first();
+        if(!item?.file_key||!/^(materials|media)\\//.test(item.file_key)||item.file_key.includes('..'))
+          return reply(request,env,{success:false,error:'الملف غير موجود.'},404);
+        if(!env.GITHUB_STORAGE_TOKEN)return reply(request,env,{success:false,error:'التخزين غير مهيأ.'},503);
+        const stored=await fetch(githubContentsUrl(item.file_key),{headers:githubHeaders(env)});
+        if(!stored.ok)return reply(request,env,{success:false,error:'تعذر جلب الملف من التخزين.'},502);
+        const data=await stored.json();
+        if(!data?.content||data.encoding!=='base64')return reply(request,env,{success:false,error:'صيغة الملف المخزن غير صالحة.'},502);
+        const binary=atob(String(data.content).replace(/\\s/g,''));
+        const bytes=Uint8Array.from(binary,ch=>ch.charCodeAt(0));
+        const ext=item.file_key.toLowerCase().split('.').pop();
+        const contentType=ext==='pdf'?'application/pdf':ext==='png'?'image/png':ext==='webp'?'image/webp':'image/jpeg';
+        return new Response(bytes,{status:200,headers:{...corsHeaders(request,env),'Content-Type':contentType,'Content-Disposition':'inline','Cache-Control':'private, no-store','X-Content-Type-Options':'nosniff'}});
       }
       const reviewMatch=path.match(/^\/api\/admin\/platform\/teacher-content\/submissions\/(\d+)\/review$/);
       if(reviewMatch&&method==='POST'){
