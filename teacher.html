@@ -6,7 +6,7 @@
 <div class="top"><div><h1>ZM Academy | بوابة المدرس</h1><p>مساحة العمل الخاصة بالصفوف والمواد المسندة إليك</p></div><button id="logout" class="hidden">تسجيل الخروج</button></div>
 <section class="card" id="loginBox"><h2>تسجيل دخول المدرس</h2><input id="username" placeholder="اسم المستخدم" autocomplete="username"><input id="password" type="password" placeholder="كلمة المرور" autocomplete="current-password"><button id="login">دخول</button><p id="loginMsg"></p><a href="./index.html">العودة للأكاديمية</a></section>
 <section class="card hidden" id="portal"><h2 id="welcome">أهلاً بك</h2><p class="muted">اختر إسنادًا لعرض كشف طلاب الصف المرتبط به.</p><div class="grid"><div><label>الصف المسند</label><select id="grade"></select></div><div><label>المادة المسندة</label><select id="subject"></select></div></div><button id="loadRoster">عرض كشف الطلاب</button><p id="status"></p><div id="roster"></div></section><section class="card hidden" id="contentBox"><h2>إضافة محتوى للمادة</h2><p class="muted">كل ما تضيفه يذهب إلى الإدارة للمراجعة، ولن يظهر للطلاب إلا بعد الموافقة.</p>
-<div class="grid"><div><label>المادة المسندة</label><select id="contentSubject"></select></div><div><label>عنوان المحتوى</label><input id="contentTitle" maxlength="180" placeholder="مثال: شرح الدرس الأول"></div>
+<div class="grid"><div><label>الصف المسند</label><select id="contentGrade"></select></div><div><label>المادة المسندة</label><select id="contentSubject"></select></div><div><label>عنوان المحتوى</label><input id="contentTitle" maxlength="180" placeholder="مثال: شرح الدرس الأول"></div>
 <div><label>نوع المحتوى</label><select id="contentType"><option value="pdf">ملف PDF</option><option value="image">صورة تعليمية</option><option value="video">رابط فيديو</option><option value="link">رابط خارجي</option></select></div>
 <div id="contentFileWrap"><label>الملف (PDF أو صورة حتى 25MB)</label><input id="contentFile" type="file" accept=".pdf,application/pdf,image/jpeg,image/png,image/webp"></div>
 <div id="contentUrlWrap" class="hidden"><label>الرابط</label><input id="contentUrl" type="url" placeholder="https://..."></div></div>
@@ -21,11 +21,19 @@ function showPortal(data){assignments=data.assignments||[];$('welcome').textCont
 let teacherSubjects=[];
 function setContentFields(){const type=$('contentType').value;const file=type==='pdf'||type==='image';$('contentFileWrap').classList.toggle('hidden',!file);$('contentUrlWrap').classList.toggle('hidden',file);}
 async function loadContentSubjects(){
- const r=await fetch(API+'/api/subjects');const d=await r.json();if(!r.ok||!d.success)throw Error(d.error||'تعذر تحميل المواد');
- const allowed=new Set(assignments.map(x=>x.grade+'|'+x.subject));
- teacherSubjects=(d.subjects||[]).filter(x=>allowed.has(x.grade+'|'+x.name));
- $('contentSubject').innerHTML=teacherSubjects.map(x=>'<option value="'+Number(x.id)+'">'+esc(x.grade)+' · '+esc(x.name)+'</option>').join('');
- if(!teacherSubjects.length)$('contentMsg').textContent='لا توجد مواد مطابقة لإسنادات حسابك حاليًا.';
+ const d=await req('/api/admin/platform/teacher-portal/subjects');
+ teacherSubjects=d.subjects||[];
+ const grades=[...new Set(assignments.map(x=>x.grade))];
+ $('contentGrade').innerHTML=grades.map(g=>'<option value="'+esc(g)+'">'+esc(g)+'</option>').join('');
+ if(!grades.length){$('contentSubject').innerHTML='';$('contentMsg').textContent='لا توجد صفوف مسندة إلى حسابك.';return;}
+ fillContentSubjects();
+}
+function fillContentSubjects(){
+ const grade=$('contentGrade').value;
+ const rows=teacherSubjects.filter(x=>x.grade===grade);
+ $('contentSubject').innerHTML=rows.map(x=>'<option value="'+Number(x.id)+'">'+esc(x.name)+'</option>').join('');
+ if(!rows.length){$('contentMsg').textContent='لا توجد مادة نشطة مرتبطة بهذا الصف في إسناداتك. راجع الإدارة لتأكيد ربط المادة.';}
+ else if($('contentMsg').textContent.startsWith('لا توجد مادة')) $('contentMsg').textContent='';
 }
 async function loadMySubmissions(){
  const d=await req('/api/admin/platform/teacher-portal/content');
@@ -35,7 +43,7 @@ async function loadMySubmissions(){
 async function submitTeacherContent(){
  const msg=$('contentMsg');msg.textContent='جارٍ إرسال المحتوى...';msg.className='';
  const type=$('contentType').value,form=new FormData();
- form.append('subject_id',$('contentSubject').value);form.append('title',$('contentTitle').value.trim());form.append('content_type',type);
+ form.append('subject_id',$('contentSubject').value);form.append('grade',$('contentGrade').value);form.append('title',$('contentTitle').value.trim());form.append('content_type',type);
  if(type==='pdf'||type==='image'){const f=$('contentFile').files[0];if(!f){msg.textContent='اختر الملف أولًا.';msg.className='error';return;}form.append('file',f);}
  else {form.append('external_url',$('contentUrl').value.trim());}
  try{const r=await fetch(API+'/api/admin/platform/teacher-portal/content',{method:'POST',headers:{Authorization:'Bearer '+token},body:form});const d=await r.json();if(!r.ok||!d.success)throw Error(d.error||'تعذر إرسال المحتوى');msg.textContent='تم إرسال المحتوى إلى الأدمن للمراجعة.';msg.className='ok';$('contentTitle').value='';$('contentUrl').value='';$('contentFile').value='';await loadMySubmissions();}
@@ -44,7 +52,7 @@ async function submitTeacherContent(){
 function fillSubjects(){const g=$('grade').value,rows=assignments.filter(x=>x.grade===g);$('subject').innerHTML=rows.map(x=>'<option value="'+esc(x.subject)+'">'+esc(x.subject)+'</option>').join('')}
 async function load(){const d=await req('/api/admin/platform/teacher-portal/me');if(!assignments.length)showPortal(d);else showPortal(d)}
 async function login(){ $('loginMsg').textContent='جارٍ تسجيل الدخول...';try{const r=await fetch(API+'/api/admin/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:$('username').value.trim(),password:$('password').value})});const d=await r.json();if(!r.ok||!d.success)throw Error(d.error||'بيانات الدخول غير صحيحة');token=d.token;localStorage.setItem(KEY,token);const me=await req('/api/admin/platform/teacher-portal/me');showPortal(me);$('loginMsg').textContent=''}catch(e){$('loginMsg').textContent=e.message;$('loginMsg').className='error'}}
-$('login').onclick=login;$('grade').onchange=fillSubjects;$('contentType').onchange=setContentFields;$('submitContent').onclick=submitTeacherContent;$('reloadContent').onclick=()=>loadMySubmissions().catch(e=>$('contentMsg').textContent=e.message);setContentFields();
+$('login').onclick=login;$('grade').onchange=fillSubjects;$('contentGrade').onchange=fillContentSubjects;$('contentType').onchange=setContentFields;$('submitContent').onclick=submitTeacherContent;$('reloadContent').onclick=()=>loadMySubmissions().catch(e=>$('contentMsg').textContent=e.message);setContentFields();
 $('loadRoster').onclick=async()=>{try{const q='?grade='+encodeURIComponent($('grade').value)+'&subject='+encodeURIComponent($('subject').value);const d=await req('/api/admin/platform/teacher-portal/roster'+q);$('status').textContent='عدد الطلاب: '+d.students.length;$('status').className='ok';$('roster').innerHTML=d.students.map(x=>'<div class="student"><b>'+esc(x.name)+'</b><div class="muted">'+esc(x.grade)+(x.school?' · '+esc(x.school):'')+'</div></div>').join('')||'<p>لا يوجد طلاب في هذا الصف حاليًا.</p>'}catch(e){$('status').textContent=e.message;$('status').className='error';$('roster').innerHTML=''}};
 $('logout').onclick=()=>{localStorage.removeItem(KEY);token='';location.reload()};
 if(token)load().catch(()=>{localStorage.removeItem(KEY);token=''});
