@@ -7,7 +7,7 @@
 <section class="card" id="loginBox"><h2>تسجيل دخول المدرس</h2><input id="username" placeholder="اسم المستخدم" autocomplete="username"><input id="password" type="password" placeholder="كلمة المرور" autocomplete="current-password"><button id="login">دخول</button><p id="loginMsg"></p><a href="./index.html">العودة للأكاديمية</a></section>
 <section class="card hidden" id="portal"><h2 id="welcome">أهلاً بك</h2><p class="muted">اختر إسنادًا لعرض كشف طلاب الصف المرتبط به.</p><div class="grid"><div><label>الصف المسند</label><select id="grade"></select></div><div><label>المادة المسندة</label><select id="subject"></select></div></div><button id="loadRoster">عرض كشف الطلاب</button><p id="status"></p><div id="roster"></div></section>
 </main><script>
-const API='https://zm-academy-api.ziadmohsen4567-workers.dev'.replace('4567-workers','4567');
+const API='https://zm-academy-api.ziadmohsen4567.workers.dev;
 const KEY='zm_teacher_token';let token=localStorage.getItem(KEY)||'',assignments=[];
 const $=id=>document.getElementById(id),esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 async function req(path,opts={}){const r=await fetch(API+path,{...opts,headers:{'Content-Type':'application/json',...(token?{Authorization:'Bearer '+token}:{}),...(opts.headers||{})}});const d=await r.json().catch(()=>({success:false,error:'استجابة غير مفهومة'}));if(!r.ok||!d.success)throw Error(d.error||'تعذر تنفيذ الطلب');return d}
