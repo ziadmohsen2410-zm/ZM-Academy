@@ -985,3 +985,22 @@ test("parent approved-child overview exposes existing learning and purchase reco
   assert.ok(!route.includes("answers_json"), "Parent overview must not expose raw exam answers");
   assert.ok(!route.includes("academy_teacher_messages"), "Parent overview must not expose private student messages");
 });
+
+test("attendance module is isolated behind the attendance permission and supports controlled session workflows", () => {
+  const worker = read("worker.js");
+  const admin = read("admin.html");
+  const migration = read("migrations/003_attendance.sql");
+  assert.ok(worker.includes("'attendance'"));
+  for (const route of [
+    "/api/admin/platform/attendance/sessions",
+    "/api/admin/platform/attendance/roster",
+    "/api/admin/platform/attendance/report"
+  ]) assert.ok(worker.includes(route), "Missing attendance route " + route);
+  assert.ok(worker.includes("attendance.records.save"));
+  assert.ok(worker.includes("status IN ('present','absent','late','excused')"));
+  assert.ok(admin.includes('id="sec-attendance"'));
+  assert.ok(admin.includes("attendance-status"));
+  assert.ok(admin.includes("/api/admin/platform/attendance/sessions/"));
+  assert.ok(migration.includes("CREATE TABLE IF NOT EXISTS attendance_sessions"));
+  assert.ok(migration.includes("CREATE TABLE IF NOT EXISTS attendance_records"));
+});
