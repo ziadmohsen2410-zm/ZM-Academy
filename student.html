@@ -755,6 +755,10 @@ function applyStudentPreferences(p){
  document.body.style.fontSize=p.fontSize==="large"?"17px":p.fontSize==="xlarge"?"19px":"";
  try{safeStorage.set("zm_student_prefs_cache",JSON.stringify(p));}catch(e){}
 }
+try{
+ const cachedStudentPrefs=JSON.parse(safeStorage.get("zm_student_prefs_cache")||"null");
+ if(cachedStudentPrefs)applyStudentPreferences(cachedStudentPrefs);
+}catch(e){}
 function setStudentTheme(mode,save=true){
  const light=mode==="light";
  document.documentElement.dataset.zmMode=light?"light":"dark";
