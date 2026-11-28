@@ -8,7 +8,7 @@ const read = (name) => fs.readFileSync(path.join(process.cwd(), name), "utf8");
 test("all primary platform files are present", () => {
   for (const file of [
     "worker.js", "admin.html", "student.html", "parent.html",
-    "index.html", "login.html", "register.html", "migrations/001_platform_core.sql"
+    "index.html", "login.html", "register.html", "teacher-register.html", "migrations/001_platform_core.sql"
   ]) assert.ok(fs.existsSync(path.join(process.cwd(), file)), "Missing " + file);
 });
 
@@ -1079,4 +1079,38 @@ test("approved teacher video and external links are returned to enrolled student
   assert.ok(student.includes("function openMaterialItem(item,resumePage=1)"));
   assert.ok(student.includes("window.open(item.external_url"));
   assert.ok(library.includes("فتح الرابط / الفيديو"));
+});
+
+
+test("teacher registration is approval-gated and supports multiple grades including third secondary", () => {
+  const worker = read("worker.js");
+  const registration = read("teacher-register.html");
+  const admin = read("admin.html");
+  assert.ok(worker.includes("/api/teacher/applications"));
+  assert.ok(worker.includes("/api/admin/platform/teacher-applications"));
+  assert.ok(worker.includes("teacher.application.approve"));
+  assert.ok(registration.includes("الصف الأول الثانوي"));
+  assert.ok(registration.includes("الصف الثاني الثانوي"));
+  assert.ok(registration.includes("الصف الثالث الثانوي"));
+  assert.ok(registration.includes("/api/teacher/applications"));
+  assert.ok(admin.includes("teacherApplicationsTbody"));
+  assert.ok(admin.includes("قبول وإنشاء الحساب"));
+});
+
+test("teacher content selection is explicitly grade-scoped in UI and Worker", () => {
+  const teacher = read("teacher.html");
+  const worker = read("worker.js");
+  assert.match(teacher, /id="contentGrade"/);
+  assert.ok(teacher.includes("/api/admin/platform/teacher-portal/subjects"));
+  assert.ok(teacher.includes("form.append('grade'"));
+  assert.ok(worker.includes("/api/admin/platform/teacher-portal/subjects"));
+  assert.ok(worker.includes("requestedGrade!==subject.grade"));
+  assert.ok(worker.includes("هذه المادة ليست ضمن إسنادات حسابك"));
+});
+
+test("homepage exposes independent teacher and parent portal entry points", () => {
+  const home = read("index.html");
+  assert.match(home, /href="\.\/teacher\.html">بوابة المدرس/);
+  assert.match(home, /href="\.\/parent\.html">بوابة ولي الأمر/);
+  assert.match(home, /href="\.\/teacher-register\.html">التقديم كمدرس/);
 });

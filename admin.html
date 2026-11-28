@@ -178,6 +178,12 @@ body[data-theme='light']{background:var(--bg)!important;color:var(--text)!import
 
     <section id="sec-teacher-content" class="section">
       <div class="card">
+        <h3>طلبات انضمام المدرسين</h3>
+        <p class="muted small">راجع بيانات المدرس والصفوف والمواد. عند الموافقة سيتم إنشاء الحساب وإسناد المواد، بما فيها المواد الجديدة المطلوبة.</p>
+        <div class="toolbar"><select id="teacherApplicationStatus"><option value="pending">طلبات معلقة</option><option value="approved">مقبولة</option><option value="rejected">مرفوضة</option><option value="">كل الطلبات</option></select><button class="ghost" id="reloadTeacherApplications">تحديث الطلبات</button></div>
+        <div class="table-wrap"><table><thead><tr><th>الاسم</th><th>اسم المستخدم</th><th>التواصل</th><th>الصفوف والمواد المطلوبة</th><th>التاريخ</th><th>الحالة / الإجراء</th></tr></thead><tbody id="teacherApplicationsTbody"><tr><td colspan="6" class="muted">جارٍ التحميل...</td></tr></tbody></table></div>
+      </div>
+      <div class="card">
         <h3>طلبات المحتوى المضافة بواسطة المدرسين</h3>
         <p class="muted small">لا يظهر أي محتوى للطلاب قبل موافقة الإدارة. راجع الملف أو الرابط ثم وافق أو ارفض مع توضيح السبب.</p>
         <div class="toolbar"><select id="teacherContentStatus"><option value="pending">طلبات معلقة</option><option value="approved">تمت الموافقة</option><option value="rejected">مرفوضة</option><option value="">كل الطلبات</option></select><button class="ghost" id="reloadTeacherContent">تحديث الطلبات</button></div>
@@ -665,6 +671,27 @@ window.__toggleSubjectArchive=async(id,action)=>{
   catch(e){ showMsg(e.message); }
 };
 
+async function loadTeacherApplications(){
+ const tb=$('#teacherApplicationsTbody');if(!tb)return;
+ tb.innerHTML='<tr><td colspan="6" class="muted">جارٍ تحميل الطلبات...</td></tr>';
+ try{
+  const status=$('#teacherApplicationStatus')?.value??'pending';
+  const d=await api('/api/admin/platform/teacher-applications'+(status?'?status='+encodeURIComponent(status):''));
+  const labels={pending:'بانتظار المراجعة',approved:'تم القبول',rejected:'مرفوض'};
+  tb.innerHTML=(d.applications||[]).map(x=>{
+   const assignments=(x.assignments||[]).map(a=>esc(a.grade)+' · '+esc(a.subject)).join('<br>');
+   const action=x.status==='pending'?'<button class="small" onclick="window.reviewTeacherApplication('+Number(x.id)+',\'approved\')">قبول وإنشاء الحساب</button> <button class="danger small" onclick="window.reviewTeacherApplication('+Number(x.id)+',\'rejected\')">رفض</button>':'—';
+   return '<tr><td>'+esc(x.display_name)+'</td><td>'+esc(x.username)+'</td><td>'+esc(x.email||'—')+'<br>'+esc(x.phone||'')+'</td><td>'+assignments+'</td><td>'+esc(x.created_at||'—')+'</td><td>'+esc(labels[x.status]||x.status)+'<br>'+(x.review_note?esc(x.review_note)+'<br>':'')+action+'</td></tr>';
+  }).join('')||'<tr><td colspan="6" class="muted">لا توجد طلبات في هذا التصنيف.</td></tr>';
+ }catch(e){tb.innerHTML='<tr><td colspan="6">تعذر تحميل طلبات المدرسين: '+esc(e.message)+'</td></tr>';}
+}
+window.reviewTeacherApplication=async function(id,decision){
+ let note=window.prompt(decision==='approved'?'ملاحظة اختيارية لقبول المدرس:':'سبب رفض الطلب:','');
+ if(note===null)return;
+ if(decision==='rejected'&&!note.trim()){showMsg('اكتب سبب الرفض حتى يعرف المتقدم المطلوب.');return;}
+ try{await api('/api/admin/platform/teacher-applications/'+Number(id)+'/review',{method:'POST',body:JSON.stringify({decision,note})});showMsg(decision==='approved'?'تم قبول المدرس وإنشاء حسابه.':'تم رفض طلب المدرس.',true);await loadTeacherApplications();}
+ catch(e){showMsg(e.message);}
+};
 async function loadTeacherSubmissions(){
  const tb=$('#teacherContentTbody');if(!tb)return;
  tb.innerHTML='<tr><td colspan="7" class="muted">جارٍ تحميل الطلبات...</td></tr>';
@@ -891,7 +918,7 @@ async function loadSection(key){
   if(key==='students') return loadStudents();
   if(key==='attendance') return loadAttendance();
   if(key==='content'){ await loadSubjects(); return loadMaterials(); }
-  if(key==='teacher-content') return loadTeacherSubmissions();
+  if(key==='teacher-content') { await Promise.all([loadTeacherApplications(),loadTeacherSubmissions()]); return; }
   if(key==='orders') return loadOrders();
   if(key==='devices') return loadDevices();
   if(key==='parents') return loadParents();
@@ -953,6 +980,8 @@ const resetMaterialEditor=()=>{$('#matEditId').value='';$('#matTitle').value='';
 $('#cancelMaterialEditBtn').onclick=resetMaterialEditor;
 $('#addMaterialBtn').onclick=async()=>{const btn=$('#addMaterialBtn');const editingId=Number($('#matEditId').value||0);try{const body={title:$('#matTitle').value.trim(),subject_id:Number($('#matSubjectId').value||0),type:$('#matType').value,price:Number($('#matPrice').value||0),is_free:Number($('#matFree').value||0)};const file=$('#matFile').files?.[0];if(!body.title||!body.subject_id)return showMsg('اكتب عنوان الدرس واختر المادة');if(!Number.isFinite(body.price)||body.price<0)return showMsg('السعر غير صحيح');if(file){if(!materialFileMime(file))return showMsg('الصيغ المسموحة: PDF وJPG وPNG وWEBP فقط');if(file.size<1||file.size>25*1024*1024)return showMsg('حجم الملف يجب ألا يتجاوز 25 ميجابايت');}if(body.type==='video'&&file)return showMsg('رفع ملفات الفيديو غير مدعوم حاليًا؛ استخدم رابطًا خارجيًا');btn.disabled=true;if(file){btn.textContent='جارٍ رفع الملف...';const fd=new FormData();fd.append('file',file,file.name);const response=await fetch(API+'/api/admin/upload',{method:'POST',headers:{Authorization:'Bearer '+state.token},body:fd});const uploaded=await response.json().catch(()=>({success:false,error:'استجابة رفع غير صالحة'}));if(!response.ok||uploaded.success!==true||!uploaded.file_key)throw new Error((uploaded.error||'تعذر رفع الملف')+(uploaded.request_id?' — مرجع: '+uploaded.request_id:''));body.file_key=uploaded.file_key;}btn.textContent=editingId?'جارٍ حفظ التعديلات...':'جارٍ حفظ المحتوى...';const result=await api('/api/admin/materials',{method:editingId?'PUT':'POST',body:JSON.stringify({...body,...(editingId?{id:editingId}:{})})});resetMaterialEditor();showMsg(editingId?'تم تحديث المحتوى بنجاح':'تمت إضافة المحتوى بنجاح (رقم '+result.id+')',true);await loadMaterials();}catch(e){showMsg(e.message);}finally{btn.disabled=false;btn.textContent=$('#matEditId').value?'حفظ التعديلات':'إضافة المحتوى';}};
 $('#reloadOrders').onclick=loadOrders;
+$('#reloadTeacherApplications')?.addEventListener('click',loadTeacherApplications);
+$('#teacherApplicationStatus')?.addEventListener('change',loadTeacherApplications);
 $('#reloadTeacherContent').onclick=loadTeacherSubmissions;
 $('#teacherContentStatus').onchange=loadTeacherSubmissions; $('#orderFilter').onchange=loadOrders;
 $('#reloadDevices').onclick=loadDevices;

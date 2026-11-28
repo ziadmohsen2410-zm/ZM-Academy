@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="ar" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#071226"><title>طلب انضمام مدرس | ZM Academy</title>
+<style>
+*{box-sizing:border-box}body{margin:0;min-height:100vh;padding:22px;background:radial-gradient(circle at 10% 0%,#173c72,transparent 35%),radial-gradient(circle at 90% 15%,#39265e,transparent 32%),#071226;color:#f7f9ff;font-family:Tahoma,Arial,sans-serif}.wrap{max-width:760px;margin:auto}.card{background:#0d1b35;border:1px solid #29466f;border-radius:20px;padding:22px;margin:14px 0;box-shadow:0 16px 45px #0005}h1{margin:0;color:#9bc5ff}p,.muted{color:#aebed8}input,select,button{font:inherit;border-radius:11px;padding:12px;border:1px solid #34527b;background:#09172d;color:#fff;width:100%;margin:6px 0}button{background:linear-gradient(110deg,#2678ff,#8657ed);border:0;font-weight:bold;cursor:pointer}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:10px}.assignment{display:grid;grid-template-columns:1fr 1fr auto;gap:8px;align-items:center;padding:10px;border:1px solid #24436e;border-radius:12px;margin:8px 0}.assignment button{width:auto;padding-inline:14px;background:#733c60}.muted{font-size:13px}.error{color:#ff9cac}.ok{color:#70e0ba}a{color:#9bc5ff}@media(max-width:520px){.assignment{grid-template-columns:1fr 1fr}.assignment button{grid-column:1/-1}}
+</style></head><body><main class="wrap">
+<div class="card"><h1>ZM Academy | طلب انضمام مدرس</h1><p>قدّم بياناتك والصفوف والمواد التي تدرّسها. لن يتم إنشاء حساب المدرس أو تفعيل الدخول إلا بعد مراجعة الإدارة والموافقة.</p><a href="./teacher.html">لديك حساب بالفعل؟ ادخل بوابة المدرس</a></div>
+<form class="card" id="applicationForm">
+<h2>البيانات الأساسية</h2><div class="grid">
+<div><label>الاسم بالكامل</label><input id="displayName" required maxlength="120"></div>
+<div><label>اسم المستخدم باللغة الإنجليزية</label><input id="username" required minlength="3" maxlength="60" pattern="[A-Za-z0-9_.-]+" autocomplete="username"></div>
+<div><label>كلمة المرور (12 حرفًا على الأقل)</label><input id="password" type="password" required minlength="12" autocomplete="new-password"></div>
+<div><label>البريد الإلكتروني (اختياري)</label><input id="email" type="email"></div>
+<div><label>رقم الهاتف (اختياري)</label><input id="phone" type="tel"></div>
+</div>
+<h2>الصفوف والمواد</h2><p class="muted">يمكنك إضافة أكثر من صف ومادة. يمكنك اختيار الصف الثالث الثانوي أيضًا، وإضافة مادة غير موجودة حاليًا ليتم مراجعتها مع الطلب.</p>
+<div id="assignments"></div><button type="button" id="addAssignment">+ إضافة صف ومادة</button>
+<button type="submit" id="submit">إرسال طلب الانضمام</button><p id="message" aria-live="polite"></p>
+</form></main>
+<script>
+const API='https://zm-academy-api.ziadmohsen4567.workers.dev';
+const $=id=>document.getElementById(id);
+function addRow(grade='الصف الأول الثانوي',subject=''){
+ const row=document.createElement('div');row.className='assignment';
+ row.innerHTML='<select class="grade" aria-label="الصف"><option>الصف الأول الثانوي</option><option>الصف الثاني الثانوي</option><option>الصف الثالث الثانوي</option></select><input class="subject" maxlength="120" placeholder="المادة مثل الفلسفة والمنطق" required><button type="button">حذف</button>';
+ row.querySelector('.grade').value=grade;row.querySelector('.subject').value=subject;
+ row.querySelector('button').onclick=()=>{if($('assignments').children.length>1)row.remove();else row.querySelector('.subject').value='';};
+ $('assignments').append(row);
+}
+$('addAssignment').onclick=()=>addRow();
+addRow();
+$('applicationForm').onsubmit=async e=>{
+ e.preventDefault();const msg=$('message'),btn=$('submit');msg.textContent='جارٍ إرسال الطلب...';msg.className='';btn.disabled=true;
+ const assignments=[...$('assignments').querySelectorAll('.assignment')].map(row=>({grade:row.querySelector('.grade').value,subject:row.querySelector('.subject').value.trim()})).filter(x=>x.subject);
+ try{
+  const r=await fetch(API+'/api/teacher/applications',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({display_name:$('displayName').value.trim(),username:$('username').value.trim(),password:$('password').value,email:$('email').value.trim(),phone:$('phone').value.trim(),assignments})});
+  const d=await r.json();if(!r.ok||!d.success)throw Error(d.error||'تعذر إرسال الطلب');
+  msg.textContent='تم استلام طلبك بنجاح. انتظر مراجعة الإدارة قبل تسجيل الدخول.';msg.className='ok';$('applicationForm').reset();$('assignments').innerHTML='';addRow();
+ }catch(err){msg.textContent=err.message;msg.className='error';}
+ finally{btn.disabled=false;}
+};
+</script></body></html>
