@@ -127,6 +127,34 @@ body[data-theme='light']{background:var(--bg)!important;color:var(--text)!import
       </div>
     </section>
 
+    <section id="sec-attendance" class="section">
+      <div class="split">
+        <div class="card">
+          <h3>إنشاء جلسة حضور</h3>
+          <label>عنوان الحصة / اللقاء</label><input id="attendanceTitle" maxlength="120" placeholder="مثال: حصة المنطق - الأسبوع الأول">
+          <div class="row"><div><label>الصف الدراسي</label><input id="attendanceGrade" maxlength="80" placeholder="الصف الأول الثانوي"></div><div><label>التاريخ</label><input id="attendanceDate" type="date"></div></div>
+          <label>رقم المادة (اختياري)</label><input id="attendanceSubjectId" type="number" min="1" placeholder="اتركه فارغًا إن لم تكن مرتبطة بمادة">
+          <button id="createAttendanceSessionBtn" type="button">إنشاء جلسة الحضور</button>
+          <p class="muted small">تظهر الجلسة للطلاب النشطين في الصف المختار. لا يتم تسجيل أي حضور تلقائيًا.</p>
+        </div>
+        <div class="card">
+          <h3>الجلسات السابقة</h3>
+          <div class="toolbar"><input id="attendanceFilterGrade" placeholder="فلترة بالصف"><input id="attendanceFilterDate" type="date"><button class="ghost" id="reloadAttendanceSessions">تحديث</button></div>
+          <div class="table-wrap"><table><thead><tr><th>الجلسة</th><th>الصف</th><th>التاريخ</th><th>المسجل</th><th>الحالة</th><th></th></tr></thead><tbody id="attendanceSessionsTbody"><tr><td colspan="6" class="muted">جارٍ التحميل...</td></tr></tbody></table></div>
+        </div>
+      </div>
+      <div class="card" style="margin-top:14px">
+        <div class="row" style="justify-content:space-between;align-items:center"><h3 id="attendanceEditorTitle">كشف الحضور</h3><div class="row"><button id="saveAttendanceBtn" type="button" disabled>حفظ الكشف</button><button class="ghost" id="lockAttendanceBtn" type="button" disabled>إغلاق الجلسة</button></div></div>
+        <div id="attendanceEditorHint" class="muted">اختر جلسة من القائمة لعرض الطلاب وتسجيل الحالة.</div>
+        <div class="table-wrap"><table><thead><tr><th>الطالب</th><th>الهاتف</th><th>الحالة</th><th>ملاحظة</th></tr></thead><tbody id="attendanceRecordsTbody"><tr><td colspan="4" class="muted">لم يتم اختيار جلسة.</td></tr></tbody></table></div>
+      </div>
+      <div class="card" style="margin-top:14px">
+        <h3>تقرير الحضور</h3>
+        <div class="toolbar"><input id="attendanceReportGrade" placeholder="الصف (اختياري)"><label>من <input id="attendanceReportFrom" type="date"></label><label>إلى <input id="attendanceReportTo" type="date"></label><button class="ghost" id="loadAttendanceReportBtn">عرض التقرير</button></div>
+        <div class="table-wrap"><table><thead><tr><th>الطالب</th><th>الصف</th><th>جلسات مسجلة</th><th>حاضر</th><th>غائب</th><th>متأخر</th><th>بعذر</th></tr></thead><tbody id="attendanceReportTbody"><tr><td colspan="7" class="muted">اختر الفلاتر ثم اعرض التقرير.</td></tr></tbody></table></div>
+      </div>
+    </section>
+
     <section id="sec-content" class="section">
       <div class="grid" style="grid-template-columns:1fr 1fr;gap:14px">
         <div class="card"><h3>المواد الدراسية</h3>
@@ -400,7 +428,7 @@ const clearAdminToken=()=>{
 const state={token:'', admin:null, section:'dashboard', cache:{}};
 const sectionGroups=[
   {label:'الرئيسية', items:[['dashboard','لوحة المعلومات','نظرة عامة سريعة']]},
-  {label:'الإدارة', items:[['students','الطلاب','إدارة الطلاب'],['parents','أولياء الأمور','حسابات وربط'],['orders','الطلبات','مراجعة الطلبات'],['devices','الأجهزة','طلبات الأجهزة']]},
+  {label:'الإدارة', items:[['students','الطلاب','إدارة الطلاب'],['attendance','الحضور والغياب','تسجيل ومتابعة الحضور'],['parents','أولياء الأمور','حسابات وربط'],['orders','الطلبات','مراجعة الطلبات'],['devices','الأجهزة','طلبات الأجهزة']]},
   {label:'التعليم', items:[['content','المحتوى','المواد والدروس'],['exams','الاختبارات','إنشاء وإدارة الاختبارات']]},
   {label:'التواصل', items:[['ads','الإعلانات','إدارة الإعلانات'],['notifications','الإشعارات','إرسال إشعارات']]},
   {label:'التصميم', items:[['homepage','الصفحة الرئيسية','محتوى الموقع الرئيسي'],['pages','محرر الصفحات','بناء ونشر الصفحات'],['theme','الثيم','الألوان والمظهر'],['media','الوسائط','الملفات والصور']]},
@@ -419,7 +447,7 @@ async function api(path, opts={}){
 }
 function closeSidebar(){ $('#sidebar')?.classList.remove('open'); $('#sidebarOverlay')?.classList.remove('open'); }
 function openSidebar(){ $('#sidebar')?.classList.add('open'); $('#sidebarOverlay')?.classList.add('open'); }
-const sectionPermission={dashboard:'dashboard',homepage:'page_builder',students:'students',parents:'parents',orders:'orders',devices:'devices',content:'content',exams:'exams',ads:'ads',notifications:'notifications',pages:'page_builder',theme:'theme',media:'media',ai:'ai',roles:'roles',backups:'backups',settings:'settings',audit:'audit'};
+const sectionPermission={dashboard:'dashboard',homepage:'page_builder',students:'students',attendance:'attendance',parents:'parents',orders:'orders',devices:'devices',content:'content',exams:'exams',ads:'ads',notifications:'notifications',pages:'page_builder',theme:'theme',media:'media',ai:'ai',roles:'roles',backups:'backups',settings:'settings',audit:'audit'};
 function canSeeSection(key){
   const permissions=state.admin?.permissions||[];
   const needed=sectionPermission[key]||key;
@@ -781,9 +809,41 @@ async function loadRoles(){ try{ const d=await api('/api/admin/platform/roles');
 window.__setRole=async(id)=>{ const sel=document.querySelector(`[data-role-uid="${id}"]`); if(!sel) return; try{ await api('/api/admin/platform/admin-users/'+id+'/role',{method:'PUT',body:JSON.stringify({role:sel.value})}); showMsg('تم تحديث الدور',true); loadRoles(); }catch(e){ showMsg(e.message); } };
 window.__toggleAdmin=async(id,is_active)=>{ if(!confirm(is_active?'تفعيل المستخدم؟':'إيقاف المستخدم؟')) return; try{ await api('/api/admin/platform/admin-users/'+id,{method:'PUT',body:JSON.stringify({is_active:!!is_active})}); showMsg('تم التحديث',true); loadRoles(); }catch(e){ showMsg(e.message); } };
 async function loadBackups(){ $('#backupOut').textContent='جاهز. اضغط تصدير JSON أو CSV.'; loadProgress(); }
+let currentAttendanceSession=null;
+const attendanceStatusLabels={present:'حاضر',absent:'غائب',late:'متأخر',excused:'غياب بعذر'};
+async function loadAttendanceSessions(){
+  const q=new URLSearchParams();
+  const grade=$('#attendanceFilterGrade').value.trim(),date=$('#attendanceFilterDate').value;
+  if(grade)q.set('grade',grade);if(date)q.set('date',date);
+  const d=await api('/api/admin/platform/attendance/sessions?'+q.toString());
+  const rows=d.sessions||[];
+  $('#attendanceSessionsTbody').innerHTML=rows.map(s=>`<tr><td>${esc(s.title)}</td><td>${esc(s.grade)}</td><td>${esc(s.session_date)}</td><td>${esc(s.marked_count)}/${esc(s.roster_count)}</td><td><span class="badge ${s.status==='locked'?'danger':'ok'}">${s.status==='locked'?'مغلقة':'مفتوحة'}</span></td><td><button class="ghost small" type="button" onclick="window.__openAttendanceSession(${Number(s.id)})">فتح الكشف</button></td></tr>`).join('')||'<tr><td colspan="6" class="muted">لا توجد جلسات حضور مطابقة.</td></tr>';
+}
+window.__openAttendanceSession=async(id)=>{
+  try{
+    const d=await api('/api/admin/platform/attendance/sessions/'+id);
+    currentAttendanceSession=d.session;
+    $('#attendanceEditorTitle').textContent='كشف الحضور — '+d.session.title;
+    $('#attendanceEditorHint').textContent=d.session.grade+' — '+d.session.session_date+(d.session.status==='locked'?' — الجلسة مغلقة':'');
+    $('#attendanceRecordsTbody').innerHTML=(d.records||[]).map(r=>`<tr data-student-id="${Number(r.student_id)}"><td>${esc(r.name)}</td><td>${esc(r.phone||'-')}</td><td><select class="attendance-status" ${d.session.status==='locked'?'disabled':''}><option value="">لم يسجل</option>${Object.entries(attendanceStatusLabels).map(([v,l])=>`<option value="${v}" ${r.status===v?'selected':''}>${l}</option>`).join('')}</select></td><td><input class="attendance-note" maxlength="300" value="${esc(r.note||'')}" placeholder="ملاحظة اختيارية" ${d.session.status==='locked'?'disabled':''}></td></tr>`).join('')||'<tr><td colspan="4" class="muted">لا يوجد طلاب نشطون في هذا الصف.</td></tr>';
+    $('#saveAttendanceBtn').disabled=d.session.status==='locked'||!(d.records||[]).length;
+    $('#lockAttendanceBtn').disabled=d.session.status==='locked';
+  }catch(e){showMsg(e.message);}
+};
+async function loadAttendance(){
+  $('#attendanceDate').value ||= new Date().toISOString().slice(0,10);
+  await loadAttendanceSessions();
+}
+async function loadAttendanceReport(){
+  const q=new URLSearchParams(),grade=$('#attendanceReportGrade').value.trim(),from=$('#attendanceReportFrom').value,to=$('#attendanceReportTo').value;
+  if(grade)q.set('grade',grade);if(from)q.set('from',from);if(to)q.set('to',to);
+  const d=await api('/api/admin/platform/attendance/report?'+q.toString());
+  $('#attendanceReportTbody').innerHTML=(d.rows||[]).map(r=>`<tr><td>${esc(r.name)}</td><td>${esc(r.grade)}</td><td>${esc(r.marked_sessions)}</td><td>${esc(r.present||0)}</td><td>${esc(r.absent||0)}</td><td>${esc(r.late||0)}</td><td>${esc(r.excused||0)}</td></tr>`).join('')||'<tr><td colspan="7" class="muted">لا توجد سجلات في الفترة المحددة.</td></tr>';
+}
 async function loadSection(key){
   if(key==='dashboard') return loadDashboard();
   if(key==='students') return loadStudents();
+  if(key==='attendance') return loadAttendance();
   if(key==='content'){ await loadSubjects(); return loadMaterials(); }
   if(key==='orders') return loadOrders();
   if(key==='devices') return loadDevices();
@@ -816,6 +876,26 @@ $('#globalSearch').addEventListener('keydown',e=>{if(e.key==='Enter'){const q=e.
 document.addEventListener('keydown',e=>{if(e.key==='/' && document.activeElement.tagName!=='INPUT' && document.activeElement.tagName!=='TEXTAREA'){e.preventDefault(); $('#globalSearch').focus();}});
 $('#studentSearch').addEventListener('input',()=>renderStudents(state.cache.students||[]));
 $('#reloadStudents').onclick=loadStudents;
+$('#reloadAttendanceSessions').onclick=()=>loadAttendanceSessions().catch(e=>showMsg(e.message));
+$('#createAttendanceSessionBtn').onclick=async()=>{
+  const body={title:$('#attendanceTitle').value.trim(),grade:$('#attendanceGrade').value.trim(),session_date:$('#attendanceDate').value,subject_id:Number($('#attendanceSubjectId').value||0)};
+  if(!body.title||!body.grade||!body.session_date)return showMsg('اكتب عنوان الجلسة والصف والتاريخ.');
+  const btn=$('#createAttendanceSessionBtn');btn.disabled=true;
+  try{const d=await api('/api/admin/platform/attendance/sessions',{method:'POST',body:JSON.stringify(body)});$('#attendanceTitle').value='';showMsg('تم إنشاء جلسة الحضور رقم '+d.id,true);await loadAttendanceSessions();await window.__openAttendanceSession(d.id);}catch(e){showMsg(e.message);}finally{btn.disabled=false;}
+};
+$('#saveAttendanceBtn').onclick=async()=>{
+  if(!currentAttendanceSession)return;
+  const records=[...$('#attendanceRecordsTbody').querySelectorAll('tr[data-student-id]')].map(row=>({student_id:Number(row.dataset.studentId),status:row.querySelector('.attendance-status').value,note:row.querySelector('.attendance-note').value.trim()})).filter(r=>r.status);
+  if(!records.length)return showMsg('حدد حالة طالب واحد على الأقل قبل الحفظ.');
+  const btn=$('#saveAttendanceBtn');btn.disabled=true;
+  try{const d=await api('/api/admin/platform/attendance/sessions/'+currentAttendanceSession.id+'/records',{method:'PUT',body:JSON.stringify({records})});showMsg('تم حفظ '+d.saved+' سجل حضور بنجاح.',true);await window.__openAttendanceSession(currentAttendanceSession.id);await loadAttendanceSessions();}catch(e){showMsg(e.message);}finally{btn.disabled=currentAttendanceSession?.status==='locked';}
+};
+$('#lockAttendanceBtn').onclick=async()=>{
+  if(!currentAttendanceSession||!confirm('إغلاق الجلسة؟ لن يمكن تعديل كشف الحضور بعدها.'))return;
+  try{await api('/api/admin/platform/attendance/sessions/'+currentAttendanceSession.id+'/lock',{method:'POST'});showMsg('تم إغلاق جلسة الحضور.',true);await window.__openAttendanceSession(currentAttendanceSession.id);await loadAttendanceSessions();}catch(e){showMsg(e.message);}
+};
+$('#loadAttendanceReportBtn').onclick=()=>loadAttendanceReport().catch(e=>showMsg(e.message));
+
 const resetSubjectEditor=()=>{$('#subEditId').value='';$('#subName').value='';$('#subGrade').value='';$('#addSubjectBtn').textContent='إضافة';$('#cancelSubjectEditBtn').hidden=true;};
 $('#cancelSubjectEditBtn').onclick=resetSubjectEditor;
 $('#subjectsTbody').addEventListener('click',event=>{const button=event.target.closest('button[data-subject-action="edit"]');if(!button)return;$('#subEditId').value=button.dataset.subjectId;$('#subName').value=button.dataset.subjectName||'';$('#subGrade').value=button.dataset.subjectGrade||'';$('#addSubjectBtn').textContent='حفظ تعديل المادة';$('#cancelSubjectEditBtn').hidden=false;$('#subName').focus();showMsg('تم تحميل بيانات المادة للتعديل. اضغط حفظ تعديل المادة.',true);});
