@@ -965,3 +965,23 @@ test("student social experience has dedicated pages, profile settings, feed, tea
   assert.ok(worker.includes("student_subject_orders"));
   assert.ok(worker.includes("student_public_profiles"));
 });
+
+
+test("parent approved-child overview exposes existing learning and purchase records without private message payloads", () => {
+  const worker = read("worker.js");
+  const parent = read("parent.html");
+  const start = worker.indexOf("if (method==='GET' && /^\\/api\\/parent\\/children\\/\\d+\\/overview$/.test(path))");
+  const end = worker.indexOf("return reply(request, env, {success:false,error:'Not found'}, 404);", start);
+  assert.notEqual(start, -1, "Approved parent child overview route must exist");
+  const route = worker.slice(start, end);
+  for (const field of ["purchases", "progress", "favorites", "attempts", "activity_days", "stats", "attendance"]) {
+    assert.ok(route.includes(field), "Parent overview response missing " + field);
+  }
+  assert.ok(route.includes("link.status!=='approved'"), "Only approved parent links may read student details");
+  assert.ok(route.includes("student_hidden_purchases") === false, "Parent view must not hide purchases hidden only from the student's list");
+  for (const section of ["المشتريات والطلبات", "تقدم الدروس والمحتوى", "نتائج ومحاولات الاختبارات", "الحضور والغياب"]) {
+    assert.ok(parent.includes(section), "Parent dashboard section missing " + section);
+  }
+  assert.ok(!route.includes("answers_json"), "Parent overview must not expose raw exam answers");
+  assert.ok(!route.includes("academy_teacher_messages"), "Parent overview must not expose private student messages");
+});
