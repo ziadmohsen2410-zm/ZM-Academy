@@ -694,7 +694,7 @@ test("all primary pages reference the refreshed shared stylesheet with current c
   for (const page of ["index.html","admin.html","login.html","register.html","parent.html"]) {
     assert.ok(read(page).includes("zm-future-theme.css?v=4"), "Stale theme cache key in " + page);
   }
-  assert.ok(read("student.html").includes("zm-future-theme.css?v=6"), "Student theme cache key was not refreshed");
+  assert.ok(read("student.html").includes("zm-future-theme.css?v=7"), "Student theme cache key was not refreshed");
 });
 
 test("student preferences route runs before the generic student API fallback", () => {
