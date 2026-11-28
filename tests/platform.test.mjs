@@ -168,13 +168,18 @@ test("student notifications are scoped to broadcast, matching student, or matchi
   assert.ok(!route.includes("audience_type IN ('all','student')"));
 });
 
-test("student preferences accept only supported themes, colors, and font sizes", () => {
+test("student preferences are routed inside the authenticated student handler with safe defaults", () => {
   const worker = read("worker.js");
-  assert.ok(worker.includes("const normalizeStudentPreferences = (value) =>"));
-  assert.ok(worker.includes("/^#[0-9a-fA-F]{6}$/"));
-  assert.ok(worker.includes("['dark','light'].includes(raw.mode)"));
-  assert.ok(worker.includes("['normal','large','xlarge'].includes(raw.fontSize)"));
-  assert.ok(worker.includes("normalizeStudentPreferences(body?.preferences)"));
+  const route = worker.indexOf('if (path === "/api/student/preferences" && ["GET", "PUT"].includes(method))');
+  const logout = worker.indexOf('if (method === "POST" && path === "/api/student/logout")', route);
+  assert.ok(route > 0 && logout > route, "preferences must be handled before the student fallback");
+  const handler = worker.slice(route, logout);
+  assert.ok(handler.includes("CREATE TABLE IF NOT EXISTS student_preferences"));
+  assert.ok(handler.includes('mode: ["dark", "light"].includes(saved.mode) ? saved.mode : "dark"'));
+  assert.ok(handler.includes('raw.mode === "light" ? "light" : "dark"'));
+  assert.ok(handler.includes("/^#[0-9a-fA-F]{6}$/"));
+  assert.ok(handler.includes('["normal", "large", "xlarge"].includes(raw.fontSize)'));
+  assert.ok(worker.includes("ensureColumn(env, 'student_favorites', 'created_at', 'TEXT')"));
 });
 
 test("students can delete rejected purchases and hide completed purchases without deleting records", () => {
@@ -652,7 +657,7 @@ test("materials schema migration verifies existing columns and does not swallow 
   assert.ok(!migration.includes("catch (_) {}"));
 });
 
-test("student and admin default visual identity is black and gold with white and gold light mode", () => {
+test("student dashboard uses dark blue-violet identity while admin keeps the academy black-gold identity", () => {
   const css = read("assets/zm-future-theme.css");
   const student = read("student.html");
   const admin = read("admin.html");
@@ -660,7 +665,10 @@ test("student and admin default visual identity is black and gold with white and
   assert.ok(css.includes("--zm-primary:#D4AF62"));
   assert.ok(css.includes("--zm-bg:#FFFFFF"));
   assert.ok(css.includes("--zm-text:#27231B"));
-  assert.ok(student.includes("#D4AF62"));
+  assert.ok(student.includes('id="zm-student-identity-fix"'));
+  assert.ok(student.includes("--zm-primary:#35B8FF"));
+  assert.ok(student.includes("--zm-secondary:#9270FF"));
+  assert.ok(student.includes('setStudentTheme("dark",false)'));
   assert.ok(admin.includes("t.primary||'#D4AF62'"));
 });
 
