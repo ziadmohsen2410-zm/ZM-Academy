@@ -63,7 +63,7 @@ const ADMIN_PERMS = {
   super_admin: ['*'],
   admin: ['dashboard','settings','students','attendance','content','orders','devices','parents','exams','ads','notifications','analytics','page_builder','theme','ai','backups','roles','audit','media'],
   content_manager: ['dashboard','content','media','page_builder','theme','ads','notifications','exams'],
-  teacher: ['dashboard','content','exams','analytics','notifications','students.view'],
+  teacher: ['dashboard'],
   support: ['dashboard','students','orders','devices','parents','notifications','audit.view']
 };
 const hasPerm = (role, perm) => {
