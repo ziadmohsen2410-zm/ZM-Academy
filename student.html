@@ -585,6 +585,14 @@ html[data-zm-student-palette="custom"] :is(input,select,textarea,#zmPlat input,#
  background:var(--zm-surface)!important;color:var(--zm-text)!important;border-color:var(--zm-primary)!important;
 }
 html[data-zm-student-palette="custom"] a{color:var(--zm-primary)}
+html[data-zm-student-palette="custom"] :is(header,.zm-sidebar,.zm-bottom-nav,.zm-topbar,.zm-user-chip,.profile,.zm-stat,.zm-welcome,.card,.item){background:var(--zm-surface)!important;color:var(--zm-text)!important;border-color:color-mix(in srgb,var(--zm-primary) 28%,var(--zm-surface))!important}
+html[data-zm-student-palette="custom"] .zm-sidebar{background:linear-gradient(180deg,var(--zm-surface),color-mix(in srgb,var(--zm-surface) 86%,var(--zm-primary)))!important}
+html[data-zm-student-palette="custom"] :is(.zm-side-nav a,.zm-bottom-nav a){color:var(--zm-muted)!important}
+html[data-zm-student-palette="custom"] :is(.zm-side-nav a.active,.zm-side-nav a:hover,.zm-bottom-nav a.active,.zm-bottom-nav a:hover){background:color-mix(in srgb,var(--zm-primary) 18%,var(--zm-surface))!important;color:var(--zm-text)!important;border-color:var(--zm-primary)!important}
+html[data-zm-student-palette="custom"] :is(.zm-page-title,.zm-side-brand b,.zm-stat b,.card h2){color:var(--zm-text)!important}
+html[data-zm-student-palette="custom"] :is(.zm-page-sub,.zm-side-brand small,.zm-stat-head,.zm-stat small){color:var(--zm-muted)!important}
+html[data-zm-student-palette="custom"] .zm-ic{background:color-mix(in srgb,var(--zm-primary) 18%,var(--zm-surface))!important;color:var(--zm-primary)!important}
+html[data-zm-student-palette="custom"] .zm-bar>div{background:linear-gradient(90deg,var(--zm-primary),var(--zm-secondary))!important}
 html[data-zm-student-palette="custom"] #zmPlat,
 html[data-zm-student-palette="custom"] #zmPlat .hd{background:var(--zm-surface)!important;color:var(--zm-text)!important}
 .zm-full-palette input[type=color]{height:48px;padding:4px;cursor:pointer}
@@ -793,7 +801,7 @@ function applyStudentPreferences(p){
  root.style.setProperty("--accent",palette.primary);
  root.style.setProperty("--purple",palette.secondary);
  root.style.setProperty("--accent2",palette.secondary);
- root.dataset.zmStudentPalette="custom";
+ if(["primary","secondary","background","surface","text","muted"].some(key=>validColor(p[key])))root.dataset.zmStudentPalette="custom";else root.removeAttribute("data-zm-student-palette");
  if(p.mode==="light"||p.mode==="dark"){
   root.dataset.zmMode=p.mode;
   document.body.dataset.zmMode=p.mode;
@@ -802,7 +810,7 @@ function applyStudentPreferences(p){
   if(themeButton)themeButton.textContent=p.mode==="light"?"☾":"☀️";
  }
  document.body.style.fontSize=p.fontSize==="large"?"17px":p.fontSize==="xlarge"?"19px":"";
- try{safeStorage.set("zm_student_prefs_cache",JSON.stringify({...p,...palette}));}catch(e){}
+ try{safeStorage.set("zm_student_prefs_cache",JSON.stringify(p));}catch(e){}
 }
 try{
  const cachedStudentPrefs=JSON.parse(safeStorage.get("zm_student_prefs_cache")||"null");
