@@ -1045,3 +1045,38 @@ test("preview smoke verifies teacher login, allowed roster, and denied cross-sco
     "teacher-attendance.json"
   ]) assert.ok(workflow.includes(text), "Preview teacher smoke assertion missing: " + text);
 });
+
+test("teacher content submissions require assigned subjects and explicit admin approval before student publication", () => {
+  const worker = read("worker.js");
+  const teacher = read("teacher.html");
+  const admin = read("admin.html");
+  const home = read("index.html");
+  const login = read("login.html");
+  const migration = read("migrations/005_teacher_content_approval.sql");
+  assert.ok(worker.includes("CREATE TABLE IF NOT EXISTS teacher_content_submissions"));
+  assert.ok(worker.includes("WHERE teacher_admin_id=? AND grade=? AND subject=?"));
+  assert.ok(worker.includes("status:'pending'") || worker.includes("status:'pending'"));
+  assert.ok(worker.includes("if(submission.status!=='pending')"));
+  assert.ok(worker.includes("teacher-content/submissions"));
+  assert.ok(worker.includes("teacher-portal/content"));
+  assert.ok(worker.includes("teacher-content/submissions"));
+  assert.ok(teacher.includes("إرسال للمراجعة"));
+  assert.ok(teacher.includes("contentType==='pdf'||contentType==='image'"));
+  assert.ok(admin.includes("sec-teacher-content"));
+  assert.ok(admin.includes("window.reviewTeacherSubmission"));
+  assert.ok(admin.includes("window.previewTeacherFile"));
+  assert.ok(home.includes('href="./teacher.html">بوابة المدرس</a>'));
+  assert.ok(login.includes('href="./teacher.html">👨‍🏫 بوابة المدرس</a>'));
+  assert.match(migration, /CREATE TABLE IF NOT EXISTS teacher_content_submissions/i);
+  assert.doesNotMatch(migration, /\\bDROP\\s+(?:TABLE|COLUMN|INDEX)\\b|\\bDELETE\\s+FROM\\b|\\bTRUNCATE\\b/i);
+});
+
+test("approved teacher video and external links are returned to enrolled students and opened as external resources", () => {
+  const worker = read("worker.js");
+  const student = read("student.html");
+  const library = read("materials.html");
+  assert.ok(worker.includes("m.type, m.price, m.is_free, m.external_url"));
+  assert.ok(student.includes("function openMaterialItem(item,resumePage=1)"));
+  assert.ok(student.includes("window.open(item.external_url"));
+  assert.ok(library.includes("فتح الرابط / الفيديو"));
+});
