@@ -176,6 +176,11 @@ test("student preferences accept only supported themes, colors, and font sizes",
   assert.ok(worker.includes("['normal','large','xlarge'].includes(raw.fontSize)"));
   assert.ok(worker.includes("cleanPreferences(body?.preferences)"));
   assert.ok(worker.includes("Student preferences must be handled before the generic"));
+  const helperStart = worker.indexOf("async function ensureStudentLearningTables");
+  const helperEnd = worker.indexOf("\nasync function route", helperStart);
+  const learningHelper = worker.slice(helperStart, helperEnd);
+  assert.ok(learningHelper.includes("PRAGMA table_info(student_material_progress)"));
+  assert.ok(!learningHelper.includes("ensureColumn("), "Module-level favorites helper must not call route-scoped ensureColumn");
 });
 
 test("students can delete rejected purchases and hide completed purchases without deleting records", () => {
