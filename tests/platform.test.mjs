@@ -629,7 +629,7 @@ test("login and registration pages show WhatsApp first and configured Facebook s
     const page = read(file);
     assert.ok(page.includes('id="zmContactLinks"'));
     assert.ok(page.includes("['whatsapp',whatsappDigits?'https://wa.me/'+whatsappDigits:'']"));
-    assert.ok(page.includes("['facebook',b.facebook||'https://www.facebook.com/share/1Q2dQN9a3z/']"));
+    assert.ok(page.includes("['facebook','https://www.facebook.com/share/1KcMypwfXc/']"));
   }
 });
 
@@ -913,7 +913,7 @@ test("student customization controls the complete page palette and Worker persis
 
 test("all public entry pages use the official ZM Academy Facebook page", () => {
   const official = "https://www.facebook.com/share/1KcMypwfXc/";
-  for (const file of ["index.html","welcome.html","login.html","register.html"]) {
+  for (const file of ["index.html","welcome.html","login.html","register.html","student.html"]) {
     const source = read(file);
     assert.ok(source.includes(official), "Official Facebook link missing from "+file);
     assert.ok(!source.includes("1Q2dQN9a3z"), "Personal Facebook link remains in "+file);
