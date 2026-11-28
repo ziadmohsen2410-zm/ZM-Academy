@@ -681,13 +681,15 @@ async function loadTeacherSubmissions(){
  }catch(e){tb.innerHTML='<tr><td colspan="7">تعذر تحميل الطلبات: '+esc(e.message)+'</td></tr>';}
 }
 window.previewTeacherFile=async function(id){
+ const previewWindow=window.open('about:blank','_blank');
  try{
   const response=await fetch(API+'/api/admin/platform/teacher-content/submissions/'+Number(id)+'/file',{headers:{Authorization:'Bearer '+state.token}});
   if(!response.ok){const data=await response.json().catch(()=>({}));throw new Error(data.error||'تعذر فتح الملف');}
-  const blob=await response.blob(),url=URL.createObjectURL(blob),opened=window.open(url,'_blank','noopener,noreferrer');
-  if(!opened){const link=document.createElement('a');link.href=url;link.download='teacher-content-'+Number(id);link.click();}
+  const blob=await response.blob(),url=URL.createObjectURL(blob);
+  if(previewWindow)previewWindow.location.href=url;
+  else{const link=document.createElement('a');link.href=url;link.download='teacher-content-'+Number(id);link.click();}
   setTimeout(()=>URL.revokeObjectURL(url),60000);
- }catch(e){showMsg(e.message||'تعذر معاينة الملف');}
+ }catch(e){if(previewWindow)previewWindow.close();showMsg(e.message||'تعذر معاينة الملف');}
 };
 window.reviewTeacherSubmission=async function(id,decision){
  let note=window.prompt(decision==='approved'?'ملاحظة اختيارية للموافقة:':'سبب رفض المحتوى (مطلوب):','');
