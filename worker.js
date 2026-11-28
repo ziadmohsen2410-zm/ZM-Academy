@@ -2385,7 +2385,7 @@ if (method === "POST" && rejectPasswordMatch) {
           .bind(session.student_id, subjectId)
           .all()
       : await env.DB.prepare(
-          `SELECT m.id, m.subject_id, m.title, m.type, m.price, m.is_free
+          `SELECT m.id, m.subject_id, m.title, m.type, m.price, m.is_free, m.external_url
            FROM materials m
            JOIN student_subjects ss ON ss.subject_id = m.subject_id
            WHERE ss.student_id = ?
