@@ -308,4 +308,4 @@ jobs:
 
       - name: Clean up isolated Preview fixtures
         if: always()
-        run: wrangler d1 execute zm-academy-preview-db --remote --config wrangler.preview.toml --file=tests/preview-smoke-reset.sql
+        run: npx --yes wrangler@4 d1 execute zm-academy-preview-db --remote --config wrangler.preview.toml --file=tests/preview-smoke-reset.sql
