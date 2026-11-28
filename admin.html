@@ -674,7 +674,7 @@ async function loadTeacherSubmissions(){
   const labels={pending:'بانتظار المراجعة',approved:'تمت الموافقة',rejected:'مرفوض'};
   const types={pdf:'PDF',image:'صورة',video:'فيديو',link:'رابط'};
   tb.innerHTML=(d.submissions||[]).map(x=>{
-   const attachment=x.file_key?'<a target="_blank" rel="noopener noreferrer" href="'+API+'/api/media/'+encodeURIComponent(x.file_key)+'">فتح الملف ↗</a>':x.external_url?'<a target="_blank" rel="noopener noreferrer" href="'+esc(x.external_url)+'">فتح الرابط ↗</a>':'—';
+   const attachment=x.file_key?'<a target="_blank" rel="noopener noreferrer" href="'+API+'/api/admin/platform/teacher-content/submissions/'+Number(x.id)+'/file'+'">فتح الملف ↗</a>':x.external_url?'<a target="_blank" rel="noopener noreferrer" href="'+esc(x.external_url)+'">فتح الرابط ↗</a>':'—';
    const action=x.status==='pending'?'<button class="small" onclick="window.reviewTeacherSubmission('+Number(x.id)+',\'approved\')">موافقة ونشر</button> <button class="danger small" onclick="window.reviewTeacherSubmission('+Number(x.id)+',\'rejected\')">رفض</button>':'—';
    return '<tr><td>'+esc(x.teacher_name||x.username)+'</td><td>'+esc(x.grade)+' · '+esc(x.subject_name)+'</td><td><b>'+esc(x.title)+'</b><div class="muted small">'+(types[x.content_type]||esc(x.content_type))+'</div></td><td>'+attachment+'</td><td>'+esc(x.created_at||'—')+'</td><td>'+esc(labels[x.status]||x.status)+'</td><td>'+(x.review_note?'<div class="small">'+esc(x.review_note)+'</div>':'')+action+'</td></tr>';
   }).join('')||'<tr><td colspan="7" class="muted">لا توجد طلبات في هذا التصنيف.</td></tr>';
