@@ -1434,11 +1434,13 @@ async function loadDashboard(){
     api("/api/materials"),
     api("/api/student/progress").catch(()=>({progress:[]})),
     api("/api/student/favorites").catch(()=>({favorites:[]})),
-    api("/api/student/preferences").catch(()=>({preferences:{}}))
+    api("/api/student/preferences").catch(()=>({preferences:{}})),
+    api("/api/student/platform/profile").catch(()=>({profile:{}}))
    ]);
    applyStudentPreferences(preferencesData.preferences||{});
 
    const student=me.student;
+   const displayName=profileData.profile?.display_name||student.name||"بك";
    currentStudent=student;
 
    const subjects=me.subjects||[];
@@ -1452,7 +1454,7 @@ async function loadDashboard(){
     .filter(p=>p.status==="approved"||p.status==="completed")
     .map(p=>Number(p.material_id));
 
-   $("welcome").textContent="أهلاً "+(student.name||"بك");
+   $("welcome").textContent="أهلاً "+displayName;
    $("studentInfo").textContent="الصف الدراسي: "+(student.grade||"غير محدد");
 
    const visible=purchaseList.filter(p=>!Number(p.is_hidden));
@@ -1467,7 +1469,7 @@ async function loadDashboard(){
    const totalMine=mine.length;
    const overallPct=totalMine?Math.round((completedCount/totalMine)*100):0;
    $("accountSummary").textContent=
-    "اسم الطالب: "+(student.name||"غير محدد")+
+    "اسم الطالب: "+displayName+
     " | الصف: "+(student.grade||"غير محدد")+
     " | عدد المواد: "+subjects.length+
     " | الطلبات والمشتريات الظاهرة: "+visible.length+
