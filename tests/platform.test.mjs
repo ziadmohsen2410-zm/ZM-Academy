@@ -731,6 +731,7 @@ test("admin material list exposes archive, restore, and separately confirmed per
   assert.ok(worker.includes('!name.startsWith("sqlite_") && !name.startsWith("_cf_")'));
   assert.ok(worker.includes('let deletionStage = "read-table-catalog"'));
   assert.ok(worker.includes('diagnostic_stage: deletionStage'));
+  assert.ok(worker.includes('path.startsWith("/api/student/") && !path.startsWith("/api/student/platform/")'));
   assert.ok(worker.includes("const foreignKeysByTable = new Map()"));
 });
 
@@ -859,5 +860,11 @@ test("isolated Preview smoke test is bound only to the Preview D1 database", () 
   assert.ok(workflow.includes("wrangler secret put ADMIN_SETUP_KEY"));
   assert.ok(workflow.includes("/api/admin/materials"));
   assert.ok(workflow.includes("PREVIEW_DELETE_SMOKE_PASS"));
+  assert.ok(workflow.includes("/api/students/register"));
+  assert.ok(workflow.includes("/api/admin/device-requests"));
+  assert.ok(workflow.includes("/api/parent/link-request"));
+  assert.ok(workflow.includes("/api/parent/children"));
   assert.ok(fixture.includes("preview_material_notes"));
+  assert.ok(fixture.includes("CREATE TABLE IF NOT EXISTS student_accounts"));
+  assert.ok(read("migrations/004_preview_student_accounts.sql").includes("CREATE TABLE IF NOT EXISTS student_accounts"));
 });
