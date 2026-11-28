@@ -4126,7 +4126,7 @@ if (method === "POST" && rejectPasswordMatch) {
         return reply(request,env,{success:true,applications:(rows.results||[]).map(x=>({...x,assignments:safeJsonParse(x.assignments_json,[])}))});
       }
     }
-    const teacherApplicationReview=path.match(/^\\/api\\/admin\\/platform\\/teacher-applications\\/(\\d+)\\/review$/);
+    const teacherApplicationReview=path.match(/^\/api\/admin\/platform\/teacher-applications\/(\d+)\/review$/);
     if(teacherApplicationReview && method==='POST'){
       if(!hasPerm(admin.role,'roles'))return reply(request,env,{success:false,error:'Forbidden'},403);
       const id=Number(teacherApplicationReview[1]),body=await readBody(request);
