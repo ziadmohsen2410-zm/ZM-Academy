@@ -2776,7 +2776,39 @@ if (method === "POST" && rejectPasswordMatch) {
       expiresInDays: SESSION_DAYS,
     });
           }
-    // مسارات الطالب المحمية بتسجيل الدخول
+    // Student preferences must be handled before the generic /api/student/* fallback.
+  if (path === '/api/student/preferences' && ['GET','PUT'].includes(method)) {
+    const session = await studentSession(request, env);
+    if (!session) return reply(request, env, {success:false,error:'يلزم تسجيل الدخول.'}, 401);
+    await env.DB.prepare(`
+      CREATE TABLE IF NOT EXISTS student_preferences (
+        student_id INTEGER PRIMARY KEY,
+        preferences_json TEXT NOT NULL DEFAULT '{}',
+        updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+      )
+    `).run();
+    if (method === 'GET') {
+      const row = await env.DB.prepare(
+        'SELECT preferences_json FROM student_preferences WHERE student_id=?'
+      ).bind(session.student_id).first();
+      return reply(request, env, {
+        success:true,
+        preferences: normalizeStudentPreferences(safeJsonParse(row?.preferences_json, {mode:'dark'}))
+      });
+    }
+    const body = await readBody(request);
+    const prefs = normalizeStudentPreferences(body?.preferences);
+    await env.DB.prepare(`
+      INSERT INTO student_preferences(student_id,preferences_json,updated_at)
+      VALUES(?,?,datetime('now'))
+      ON CONFLICT(student_id) DO UPDATE SET
+        preferences_json=excluded.preferences_json,
+        updated_at=datetime('now')
+    `).bind(session.student_id, JSON.stringify(prefs)).run();
+    return reply(request, env, {success:true, preferences:prefs});
+  }
+
+  // مسارات الطالب المحمية بتسجيل الدخول
   if (path.startsWith("/api/student/") && !path.startsWith("/api/student/platform/")) {
     const session = await studentSession(request, env);
 
@@ -2831,7 +2863,7 @@ if (method === "POST" && rejectPasswordMatch) {
 
       if (method === "GET" && path === "/api/student/favorites") {
         const rows = await env.DB.prepare(`
-          SELECT f.material_id, f.created_at,
+          SELECT f.material_id,
                  m.title, m.type, m.price, m.is_free,
                  sub.name AS subject_name
           FROM student_favorites f
@@ -2847,7 +2879,7 @@ if (method === "POST" && rejectPasswordMatch) {
             AND m.id NOT IN (
               SELECT material_id FROM archived_materials
             )
-          ORDER BY f.created_at DESC
+          ORDER BY f.rowid DESC
           LIMIT 200
         `).bind(session.student_id).all();
 
@@ -3912,24 +3944,6 @@ if (method === "POST" && rejectPasswordMatch) {
       return reply(request, env, {success:true, student, subjects:subjects.results||[], orders:orders.results||[], attempts:attempts.results||[]});
     }
     return reply(request, env, {success:false,error:'Not found'}, 404);
-  }
-
-  // ---- Student preferences ----
-  if (method === 'GET' && path === '/api/student/preferences') {
-    const session = await studentSession(request, env);
-    if (!session) return reply(request, env, {success:false,error:'Unauthorized'}, 401);
-    await ensurePlatformSchema(env);
-    const row = await env.DB.prepare(`SELECT preferences_json FROM student_preferences WHERE student_id=?`).bind(session.student_id).first();
-    return reply(request, env, {success:true, preferences: normalizeStudentPreferences(safeJsonParse(row?.preferences_json, {}))});
-  }
-  if (method === 'PUT' && path === '/api/student/preferences') {
-    const session = await studentSession(request, env);
-    if (!session) return reply(request, env, {success:false,error:'Unauthorized'}, 401);
-    await ensurePlatformSchema(env);
-    const body = await readBody(request);
-    const prefs = normalizeStudentPreferences(body?.preferences);
-    await env.DB.prepare(`INSERT INTO student_preferences(student_id,preferences_json,updated_at) VALUES(?,?,datetime('now')) ON CONFLICT(student_id) DO UPDATE SET preferences_json=excluded.preferences_json, updated_at=datetime('now')`).bind(session.student_id, JSON.stringify(prefs)).run();
-    return reply(request, env, {success:true});
   }
 
   // ---- Admin platform endpoints ----
