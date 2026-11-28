@@ -732,6 +732,29 @@ if(window.pdfjsLib){
 }
 
 /* الوضع الليلي والنهاري */
+function applyStudentPreferences(p){
+ if(!p||typeof p!=="object")return;
+ const root=document.documentElement;
+ if(p.mode==="light"||p.mode==="dark"){
+  root.dataset.zmMode=p.mode;
+  document.body.dataset.zmMode=p.mode;
+  document.body.classList.toggle("light",p.mode==="light");
+  const themeButton=$("themeBtn");
+  if(themeButton)themeButton.textContent=p.mode==="light"?"☾":"☀️";
+ }
+ if(/^#[0-9a-f]{6}$/i.test(String(p.primary||""))){
+  root.style.setProperty("--zm-primary",p.primary);
+  root.style.setProperty("--blue",p.primary);
+  root.style.setProperty("--accent",p.primary);
+ }
+ if(/^#[0-9a-f]{6}$/i.test(String(p.secondary||""))){
+  root.style.setProperty("--zm-secondary",p.secondary);
+  root.style.setProperty("--purple",p.secondary);
+  root.style.setProperty("--accent2",p.secondary);
+ }
+ document.body.style.fontSize=p.fontSize==="large"?"17px":p.fontSize==="xlarge"?"19px":"";
+ try{safeStorage.set("zm_student_prefs_cache",JSON.stringify(p));}catch(e){}
+}
 function setStudentTheme(mode,save=true){
  const light=mode==="light";
  document.documentElement.dataset.zmMode=light?"light":"dark";
@@ -1324,14 +1347,17 @@ async function loadDashboard(){
     purchases,
     materialsData,
     progressData,
-    favoritesData
+    favoritesData,
+    preferencesData
    ]=await Promise.all([
     api("/api/student/me"),
     api("/api/student/purchases"),
     api("/api/materials"),
     api("/api/student/progress").catch(()=>({progress:[]})),
-    api("/api/student/favorites").catch(()=>({favorites:[]}))
+    api("/api/student/favorites").catch(()=>({favorites:[]})),
+    api("/api/student/preferences").catch(()=>({preferences:{}}))
    ]);
+   applyStudentPreferences(preferencesData.preferences||{});
 
    const student=me.student;
    currentStudent=student;
@@ -1415,32 +1441,21 @@ async function loadDashboard(){
     favBtn.textContent=fav?"★ إزالة من المفضلة":"☆ أضف للمفضلة";
 
     favBtn.addEventListener("click",async()=>{
-     favBtn.disabled=true;
-
+     const buttons=[...document.querySelectorAll("[data-favorite-id]")].filter(x=>Number(x.dataset.favoriteId)===id);
+     buttons.forEach(x=>x.disabled=true);
      const currently=studentFavorites.some(f=>Number(f.material_id)===id);
-
      try{
-      if(currently){
-       await api("/api/student/favorites/"+encodeURIComponent(id),{method:"DELETE"});
-       studentFavorites=studentFavorites.filter(f=>Number(f.material_id)!==id);
-      }else{
-       await api("/api/student/favorites/"+encodeURIComponent(id),{method:"POST"});
-
-       studentFavorites.push({
-        material_id:id,
-        title:m.title,
-        type:m.type,
-        is_free:m.is_free,
-        price:m.price
-       });
-      }
-
+      await api("/api/student/favorites/"+encodeURIComponent(id),{method:currently?"DELETE":"POST"});
+      // Re-read the server's canonical list so every card and the favorites panel stay in sync.
+      const fresh=await api("/api/student/favorites");
+      studentFavorites=Array.isArray(fresh.favorites)?fresh.favorites:[];
       renderFavoriteMaterials();
       refreshFavoriteButtons();
+      showMsg(currently?"تمت إزالة المذكرة من المفضلة.":"تمت إضافة المذكرة إلى المفضلة.",true);
      }catch(e){
-      message.textContent=e.message;
+      showMsg(e.message||"تعذر تحديث المفضلة.");
      }finally{
-      favBtn.disabled=false;
+      buttons.forEach(x=>x.disabled=false);
      }
     });
 
@@ -1673,7 +1688,7 @@ async function render(){const b=$('#zmPlatBody'); b.innerHTML='<div class="muted
  if(tab==='notif'){ const d=await api('/api/student/platform/notifications'); const rows=d.notifications||[]; b.innerHTML=rows.length?rows.map(n=>`<div class="item"><div style="display:flex;justify-content:space-between;gap:10px"><strong>${esc(n.title)}</strong>${n.is_read?'<span class="muted">مقروء</span>':`<button data-read="${n.id}">تحديد كمقروء</button>`}</div><div class="muted">${esc(n.type)} - ${esc(n.created_at||'')}</div><div>${esc(n.body)}</div></div>`).join(''):'<div class="muted">لا توجد إشعارات.</div>'; b.querySelectorAll('[data-read]').forEach(btn=>btn.onclick=async()=>{await api(`/api/student/platform/notifications/${btn.dataset.read}/read`,{method:'POST'}); render();}); }
  if(tab==='exams'){ const d=await api('/api/student/platform/exams'); const rows=d.exams||[]; b.innerHTML=rows.length?rows.map(e=>`<div class="item"><strong>${esc(e.title)}</strong><div class="muted">${esc(e.description||'')}</div><div class="muted">المدة: ${esc(e.duration_minutes||'-')} دقيقة | المحاولات: ${esc(e.my_attempts||0)}/${esc(e.attempts_allowed||1)}</div><button data-start="${e.id}" data-active="${e.active_attempt_id||''}" ${!e.active_attempt_id&&Number(e.my_attempts||0)>=Number(e.attempts_allowed||1)?'disabled':''}>${e.active_attempt_id?'استكمال الاختبار':Number(e.my_attempts||0)>=Number(e.attempts_allowed||1)?'انتهت المحاولات':'بدء الاختبار'}</button>${e.last_attempt_id&&['submitted','graded'].includes(e.last_attempt_status)?` <button class="ghost" data-result="${e.last_attempt_id}" data-exam="${e.id}">عرض النتيجة</button>`:''}<div id="examBox-${e.id}"></div></div>`).join(''):'<div class="muted">لا توجد اختبارات منشورة.</div>'; b.querySelectorAll('[data-start]').forEach(btn=>btn.onclick=()=>startExam(btn.dataset.start,btn.dataset.active)); b.querySelectorAll('[data-result]').forEach(btn=>btn.onclick=()=>refreshExamResult(btn.dataset.result,document.getElementById('examBox-'+btn.dataset.exam))); }
  if(tab==='ai'){ b.innerHTML=`<div class="item"><div class="muted">مساعد تعليمي للطلاب. لا يشارك بياناتك مع طلاب آخرين.</div><textarea id="zmAiPrompt" rows="5" placeholder="اسأل عن درس، اطلب ملخصًا، أو اطلب أسئلة تدريبية..."></textarea><button id="zmAiRun">إرسال</button><pre id="zmAiOut" style="white-space:pre-wrap;background:#0c1428;padding:12px;border-radius:10px;margin-top:10px"></pre></div>`; $('#zmAiRun').onclick=async()=>{ const prompt=$('#zmAiPrompt').value.trim(); if(!prompt) return; $('#zmAiOut').textContent='جارٍ التفكير...'; try{ const d=await api('/api/student/platform/ai',{method:'POST',body:JSON.stringify({prompt})}); $('#zmAiOut').textContent=d.text||JSON.stringify(d,null,2); }catch(e){ $('#zmAiOut').textContent=e.message; } }; }
- if(tab==='prefs'){ let prefs={}; try{ const d=await api('/api/student/preferences'); prefs=d.preferences||{}; }catch{} b.innerHTML=`<div class="item"><div class="row"><div><label>الوضع</label><select id="pMode"><option value="dark">داكن</option><option value="light">فاتح</option></select></div><div><label>حجم الخط</label><select id="pFont"><option value="normal">عادي</option><option value="large">كبير</option><option value="xlarge">كبير جدًا</option></select></div></div><div class="row"><div><label>اللون الأساسي</label><input id="pPrimary" type="color" value="${esc(prefs.primary||'#D4AF62')}"></div><div><label>اللون الثانوي</label><input id="pSecondary" type="color" value="${esc(prefs.secondary||'#A9823D')}"></div></div><button id="pSave">حفظ التخصيص</button> <button id="pReset" style="background:#182440;color:#fff;border:1px solid rgba(135,166,230,.2)">استعادة الافتراضي</button><div class="muted" style="margin-top:10px">التخصيص خاص بحسابك فقط.</div></div>`; $('#pMode').value=prefs.mode||'dark'; $('#pFont').value=prefs.fontSize||'normal'; $('#pSave').onclick=async()=>{ const np={mode:$('#pMode').value,fontSize:$('#pFont').value,primary:$('#pPrimary').value,secondary:$('#pSecondary').value}; await api('/api/student/preferences',{method:'PUT',body:JSON.stringify({preferences:np})}); applyPrefs(np); alert('تم الحفظ'); }; $('#pReset').onclick=async()=>{ await api('/api/student/preferences',{method:'PUT',body:JSON.stringify({preferences:{}})}); localStorage.removeItem('zm_student_prefs_cache'); location.reload(); }; }
+ if(tab==='prefs'){ let prefs={}; try{ const d=await api('/api/student/preferences'); prefs=d.preferences||{}; }catch{} b.innerHTML=`<div class="item"><div class="row"><div><label>الوضع</label><select id="pMode"><option value="dark">داكن</option><option value="light">فاتح</option></select></div><div><label>حجم الخط</label><select id="pFont"><option value="normal">عادي</option><option value="large">كبير</option><option value="xlarge">كبير جدًا</option></select></div></div><div class="row"><div><label>اللون الأساسي</label><input id="pPrimary" type="color" value="${esc(prefs.primary||'#D4AF62')}"></div><div><label>اللون الثانوي</label><input id="pSecondary" type="color" value="${esc(prefs.secondary||'#A9823D')}"></div></div><button id="pSave">حفظ التخصيص</button> <button id="pReset" style="background:#182440;color:#fff;border:1px solid rgba(135,166,230,.2)">استعادة الافتراضي</button><div class="muted" style="margin-top:10px">التخصيص خاص بحسابك فقط.</div></div>`; $('#pMode').value=prefs.mode||'dark'; $('#pFont').value=prefs.fontSize||'normal'; $('#pSave').onclick=async()=>{ const np={mode:$('#pMode').value,fontSize:$('#pFont').value,primary:$('#pPrimary').value,secondary:$('#pSecondary').value}; await api('/api/student/preferences',{method:'PUT',body:JSON.stringify({preferences:np})}); applyPrefs(np); showMsg('تم حفظ التخصيص وتطبيقه على لوحة الطالب.',true); }; $('#pReset').onclick=async()=>{ await api('/api/student/preferences',{method:'PUT',body:JSON.stringify({preferences:{}})}); localStorage.removeItem('zm_student_prefs_cache'); location.reload(); }; }
 }catch(e){ b.innerHTML=`<div class="muted">خطأ: ${esc(e.message)}</div>`; }
 }
 async function refreshExamResult(attemptId,box){ try{const result=await api(`/api/student/platform/exam-attempts/${attemptId}/result`);if(result.results_pending_manual){box.innerHTML='الاختبار بانتظار التصحيح.';return;}if(result.results_hidden){box.innerHTML='تم التصحيح، والنتيجة مخفية حسب إعدادات الاختبار.';return;}if(result.score==null){box.innerHTML='لم يتم اعتماد النتيجة بعد.';return;}const notes=(result.feedback||[]).filter(x=>x.comment).map(x=>'<div class="item"><strong>'+esc(x.question_text)+'</strong><p>'+esc(x.comment)+'</p></div>').join('');box.innerHTML='<div class="item">النتيجة النهائية: '+esc(result.score)+' / '+esc(result.max_score)+'</div>'+notes;}catch(err){box.innerHTML=esc(err.message);} }
@@ -1691,7 +1706,7 @@ async function startExam(id,activeAttemptId){ const box=document.getElementById(
  form.onsubmit=async(ev)=>{ev.preventDefault();if(examTimerId)clearInterval(examTimerId);try{const answers=collectAnswers();const result=await api(`/api/student/platform/exam-attempts/${attemptId}/submit`,{method:'POST',body:JSON.stringify({answers})});box.innerHTML=`<div class="item">${result.results_pending_manual?'تم تسليم الاختبار، والإجابات المقالية بانتظار تصحيح المدرس.':result.score==null?'تم تسليم الاختبار.':'تم الإرسال. النتيجة: '+esc(result.score)+' / '+esc(result.max_score)} <span class="muted">(${esc(result.status)})</span><button type="button" class="ghost" id="refreshExamResult">تحديث النتيجة</button></div>`;box.querySelector('#refreshExamResult').onclick=()=>refreshExamResult(attemptId,box);}catch(err){const state=form.querySelector('[data-save-state]');if(state)state.textContent=err.message;}}; 
  }catch(e){box.innerHTML=`<div class="muted">${esc(e.message)}</div>`;}
 }
-function applyPrefs(p){if(!p)return;const root=document.documentElement;if(p.mode==='light'||p.mode==='dark'){root.dataset.zmMode=p.mode;document.body.dataset.zmMode=p.mode;document.body.classList.toggle('light',p.mode==='light');const themeButton=document.getElementById('themeBtn');if(themeButton)themeButton.textContent=p.mode==='light'?'☾':'☀️';}if(p.primary){root.style.setProperty('--blue',p.primary);root.style.setProperty('--zm-primary',p.primary);}if(p.secondary){root.style.setProperty('--purple',p.secondary);root.style.setProperty('--zm-secondary',p.secondary);}const fs=p.fontSize==='large'?'17px':p.fontSize==='xlarge'?'19px':'';if(fs)document.body.style.fontSize=fs;try{localStorage.setItem('zm_student_prefs_cache',JSON.stringify(p));}catch{}}
+function applyPrefs(p){applyStudentPreferences(p);}
 try{ const cached=JSON.parse(localStorage.getItem('zm_student_prefs_cache')||'null'); if(cached) applyPrefs(cached); }catch{}
 $('#zmPlatBtn').onclick=()=>{ $('#zmPlat').classList.add('open'); render(); }; $('#zmPlatClose').onclick=()=>$('#zmPlat').classList.remove('open');
 document.querySelectorAll('#zmPlat .tabs button').forEach(b=>b.onclick=()=>setTab(b.dataset.t));
