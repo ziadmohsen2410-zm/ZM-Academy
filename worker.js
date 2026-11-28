@@ -4220,7 +4220,7 @@ if (method === "POST" && rejectPasswordMatch) {
           return reply(request,env,{success:true});
         }
       }
-      if (path==='/api/admin/platform/teacher-portal/me' || path==='/api/admin/platform/teacher-portal/assignments' || path==='/api/admin/platform/teacher-portal/roster') {
+      if (path==='/api/admin/platform/teacher-portal/me' || path==='/api/admin/platform/teacher-portal/assignments' || path==='/api/admin/platform/teacher-portal/subjects' || path==='/api/admin/platform/teacher-portal/roster') {
         if(admin.role!=='teacher')return reply(request,env,{success:false,error:'هذه البوابة مخصصة لحسابات المدرسين.'},403);
         if(path.endsWith('/me')){
           const rows=await env.DB.prepare('SELECT id,grade,subject FROM teacher_assignments WHERE teacher_admin_id=? ORDER BY grade,subject').bind(admin.id).all();
