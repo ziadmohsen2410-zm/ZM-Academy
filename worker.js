@@ -4003,6 +4003,7 @@ if (method === "POST" && rejectPasswordMatch) {
     // Social publishing: posts are authored by staff and delivered only to their intended audience.
     if (path==='/api/admin/platform/posts') {
       if (!hasPerm(admin.role,'content')) return reply(request,env,{success:false,error:'Forbidden'},403);
+      await env.DB.prepare(`CREATE TABLE IF NOT EXISTS academy_posts (id INTEGER PRIMARY KEY AUTOINCREMENT,title TEXT NOT NULL,body TEXT NOT NULL,image_url TEXT,link_url TEXT,audience_type TEXT NOT NULL DEFAULT 'all',audience_value TEXT,status TEXT NOT NULL DEFAULT 'published',created_by TEXT,created_at TEXT NOT NULL DEFAULT (datetime('now')))` ).run();
       if (method==='GET') {
         const rows=await env.DB.prepare('SELECT * FROM academy_posts ORDER BY id DESC LIMIT 200').all();
         return reply(request,env,{success:true,posts:rows.results||[]});
@@ -4613,7 +4614,7 @@ if (method === "POST" && rejectPasswordMatch) {
       return reply(request,env,{success:true,subject_ids:unique});
     }
     if (method==='GET' && path==='/api/student/platform/feed') {
-      const rows=await env.DB.prepare(`SELECT p.*,COALESCE(NULLIF(sp.display_name,''),s.name,'إدارة الأكاديمية') AS author_name,(SELECT COUNT(*) FROM academy_post_likes l WHERE l.post_id=p.id) AS likes_count,(SELECT COUNT(*) FROM academy_post_comments c WHERE c.post_id=p.id) AS comments_count,EXISTS(SELECT 1 FROM academy_post_likes l WHERE l.post_id=p.id AND l.student_id=?) AS liked FROM academy_posts p LEFT JOIN admin_users a ON a.username=p.created_by LEFT JOIN students s ON 1=0 LEFT JOIN student_public_profiles sp ON 1=0 WHERE p.status='published' AND (p.audience_type='all' OR (p.audience_type='grade' AND p.audience_value=(SELECT grade FROM students WHERE id=?)) OR (p.audience_type='student' AND p.audience_value=CAST(? AS TEXT))) ORDER BY p.id DESC LIMIT 60`).bind(session.student_id,session.student_id,session.student_id).all();
+      const rows=await env.DB.prepare(`SELECT p.*,COALESCE(NULLIF(p.created_by,''),'إدارة الأكاديمية') AS author_name,(SELECT COUNT(*) FROM academy_post_likes l WHERE l.post_id=p.id) AS likes_count,(SELECT COUNT(*) FROM academy_post_comments c WHERE c.post_id=p.id) AS comments_count,EXISTS(SELECT 1 FROM academy_post_likes l WHERE l.post_id=p.id AND l.student_id=?) AS liked FROM academy_posts p WHERE p.status='published' AND (p.audience_type='all' OR (p.audience_type='grade' AND p.audience_value=(SELECT grade FROM students WHERE id=?)) OR (p.audience_type='student' AND p.audience_value=CAST(? AS TEXT))) ORDER BY p.id DESC LIMIT 60`).bind(session.student_id,session.student_id,session.student_id).all();
       return reply(request,env,{success:true,posts:rows.results||[]});
     }
     if (method==='POST' && /^\\/api\\/student\\/platform\\/feed\\/\\d+\\/like$/.test(path)) {
@@ -4626,6 +4627,8 @@ if (method === "POST" && rejectPasswordMatch) {
       return reply(request,env,{success:true,liked:!existing});
     }
     if (method==='GET' && /^\\/api\\/student\\/platform\\/feed\\/\\d+\\/comments$/.test(path)) {
+      const visible=await env.DB.prepare(`SELECT id FROM academy_posts WHERE id=? AND status='published' AND (audience_type='all' OR (audience_type='grade' AND audience_value=(SELECT grade FROM students WHERE id=?)) OR (audience_type='student' AND audience_value=CAST(? AS TEXT)))`).bind(Number(path.split('/')[5]),session.student_id,session.student_id).first();
+      if(!visible)return reply(request,env,{success:false,error:'المنشور غير متاح.'},404);
       const id=Number(path.split('/')[5]);
       const rows=await env.DB.prepare(`SELECT c.id,c.body,c.created_at,COALESCE(NULLIF(p.display_name,''),s.name,'طالب') AS author_name FROM academy_post_comments c JOIN students s ON s.id=c.student_id LEFT JOIN student_public_profiles p ON p.student_id=s.id WHERE c.post_id=? ORDER BY c.id ASC LIMIT 100`).bind(id).all();
       return reply(request,env,{success:true,comments:rows.results||[]});
