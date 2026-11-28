@@ -1,4 +1,9 @@
--- Remove only records owned by this smoke test. Never truncate shared Preview data.
+-- This database is the dedicated disposable Preview D1 database (wrangler.preview.toml), never production.
+-- Clear Preview-only admin identities so the setup smoke test always starts from a known state.
+DELETE FROM admin_sessions;
+DELETE FROM admin_users;
+
+-- Remove only records owned by this smoke test from the remaining Preview fixtures.
 DELETE FROM parent_sessions
 WHERE parent_id IN (SELECT id FROM parents WHERE username = 'preview_parent');
 
