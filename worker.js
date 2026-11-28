@@ -678,6 +678,7 @@ async function ensureStudentLearningTables(env) {
         material_id INTEGER NOT NULL,
         last_page INTEGER NOT NULL DEFAULT 1,
         updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
+        completed_at TEXT,
         PRIMARY KEY (student_id, material_id)
       )
     `),
@@ -698,7 +699,16 @@ async function ensureStudentLearningTables(env) {
       )
     `)
   ]);
-  await ensureColumn(env, 'student_material_progress', 'completed_at', 'TEXT');
+  // This helper is module-scoped; do not call ensureColumn(), which is scoped inside route().
+  let columns = await env.DB.prepare("PRAGMA table_info(student_material_progress)").all();
+  if (!(columns.results || []).some(column => column.name === "completed_at")) {
+    try {
+      await env.DB.prepare("ALTER TABLE student_material_progress ADD COLUMN completed_at TEXT").run();
+    } catch (error) {
+      columns = await env.DB.prepare("PRAGMA table_info(student_material_progress)").all();
+      if (!(columns.results || []).some(column => column.name === "completed_at")) throw error;
+    }
+  }
 }
 
 async function route(request, env) {
