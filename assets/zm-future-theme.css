@@ -719,3 +719,28 @@ body.light:has(.zm-shell) #zmPlat textarea,
 body.light:has(.zm-shell) #zmPlat pre{
   background:#F5F8FF!important;color:#1B2942!important;border-color:#D3E2F4!important;
 }
+
+
+/* Student grade chip: ensure the text remains readable in pearl light mode. */
+html[data-zm-mode="light"] body:has(.zm-shell) #studentInfo,
+body[data-zm-mode="light"]:has(.zm-shell) #studentInfo,
+body[data-theme="light"]:has(.zm-shell) #studentInfo,
+body.light:has(.zm-shell) #studentInfo{
+  display:inline-flex!important;
+  align-items:center!important;
+  background:#EAF2FC!important;
+  color:#174F7A!important;
+  -webkit-text-fill-color:#174F7A!important;
+  border:1px solid #C7DDF3!important;
+  font-weight:800!important;
+  opacity:1!important;
+  text-shadow:none!important;
+  box-shadow:0 2px 8px rgba(35,85,135,.06)!important;
+}
+html[data-zm-mode="light"] body:has(.zm-shell) #studentInfo *,
+body[data-zm-mode="light"]:has(.zm-shell) #studentInfo *,
+body[data-theme="light"]:has(.zm-shell) #studentInfo *,
+body.light:has(.zm-shell) #studentInfo *{
+  color:#174F7A!important;
+  -webkit-text-fill-color:#174F7A!important;
+}
