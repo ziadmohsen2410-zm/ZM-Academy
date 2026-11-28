@@ -1,3 +1,10 @@
+-- Simulate an older production favorites table that predates the created_at column.
+CREATE TABLE IF NOT EXISTS student_favorites (
+  student_id INTEGER NOT NULL,
+  material_id INTEGER NOT NULL,
+  PRIMARY KEY (student_id, material_id)
+);
+
 INSERT OR REPLACE INTO subjects (id, name, grade) VALUES (990001, 'Preview smoke test', 'Preview');
 INSERT OR REPLACE INTO students (id, name, phone, parent_phone, grade, school, governorate) VALUES (990001, 'Preview smoke student', '01000000000', '01000000001', 'Preview', 'Test school', 'Preview');
 INSERT OR REPLACE INTO materials (id, subject_id, title, type, price, is_free, file_key) VALUES (990001, 990001, 'Preview deletion fixture', 'lesson', 10, 0, NULL);
