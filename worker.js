@@ -4000,6 +4000,81 @@ if (method === "POST" && rejectPasswordMatch) {
       return reply(request, env, {success:true, admin:{id:admin.id, username:admin.username, display_name:admin.display_name, role:admin.role, permissions: ADMIN_PERMS[admin.role]||[]}});
     }
 
+    // Social publishing: posts are authored by staff and delivered only to their intended audience.
+    if (path==='/api/admin/platform/posts') {
+      if (!hasPerm(admin.role,'content')) return reply(request,env,{success:false,error:'Forbidden'},403);
+      await env.DB.prepare(`CREATE TABLE IF NOT EXISTS academy_posts (id INTEGER PRIMARY KEY AUTOINCREMENT,title TEXT NOT NULL,body TEXT NOT NULL,image_url TEXT,link_url TEXT,audience_type TEXT NOT NULL DEFAULT 'all',audience_value TEXT,status TEXT NOT NULL DEFAULT 'published',created_by TEXT,created_at TEXT NOT NULL DEFAULT (datetime('now')))` ).run();
+      if (method==='GET') {
+        const rows=await env.DB.prepare('SELECT * FROM academy_posts ORDER BY id DESC LIMIT 200').all();
+        return reply(request,env,{success:true,posts:rows.results||[]});
+      }
+      if (method==='POST') {
+        await env.DB.prepare(`CREATE TABLE IF NOT EXISTS academy_posts (id INTEGER PRIMARY KEY AUTOINCREMENT,title TEXT NOT NULL,body TEXT NOT NULL,image_url TEXT,link_url TEXT,audience_type TEXT NOT NULL DEFAULT 'all',audience_value TEXT,status TEXT NOT NULL DEFAULT 'published',created_by TEXT,created_at TEXT NOT NULL DEFAULT (datetime('now')))`).run();
+        const b=await readBody(request),title=clean(b?.title,160),body=clean(b?.body,5000);
+        if(!title||!body)return reply(request,env,{success:false,error:'العنوان ونص المنشور مطلوبان.'},400);
+        const audience=clean(b?.audience_type||'all',20),value=clean(b?.audience_value,120);
+        if(!['all','grade','student'].includes(audience))return reply(request,env,{success:false,error:'الجمهور المستهدف غير صالح.'},400);
+        if(audience==='grade'&&!value)return reply(request,env,{success:false,error:'حدد الصف المستهدف.'},400);
+        if(audience==='student'&&!/^\d+$/.test(value))return reply(request,env,{success:false,error:'حدد رقم الطالب الصحيح.'},400);
+        const image=clean(b?.image_url,1000),link=clean(b?.link_url,1000);
+        const validUrl=v=>!v||/^https:\/\//i.test(v);
+        if(!validUrl(image)||!validUrl(link))return reply(request,env,{success:false,error:'يجب أن تبدأ الروابط بـ https://'},400);
+        const result=await env.DB.prepare(`INSERT INTO academy_posts(title,body,image_url,link_url,audience_type,audience_value,status,created_by) VALUES(?,?,?,?,?,?, 'published', ?)`).bind(title,body,image||null,link||null,audience,value||null,admin.display_name||admin.username).run();
+        await logAudit(env,{actor_type:'admin',actor_id:admin.id,actor_label:admin.username,action:'social.post.create',entity_type:'academy_post',entity_id:result.meta?.last_row_id,ip,user_agent:ua});
+        return reply(request,env,{success:true,id:result.meta?.last_row_id});
+      }
+    }
+    if (path.startsWith('/api/admin/platform/posts/') && method==='DELETE') {
+      if (!hasPerm(admin.role,'content')) return reply(request,env,{success:false,error:'Forbidden'},403);
+      const id=Number(path.split('/').pop());
+      if(!Number.isInteger(id)||id<1)return reply(request,env,{success:false,error:'رقم المنشور غير صالح.'},400);
+      await env.DB.prepare('DELETE FROM academy_posts WHERE id=?').bind(id).run();
+      await logAudit(env,{actor_type:'admin',actor_id:admin.id,actor_label:admin.username,action:'social.post.delete',entity_type:'academy_post',entity_id:id,ip,user_agent:ua});
+      return reply(request,env,{success:true});
+    }
+    if (path==='/api/admin/platform/messages') {
+      if (!hasPerm(admin.role,'students') && !hasPerm(admin.role,'students.view')) return reply(request,env,{success:false,error:'Forbidden'},403);
+      await env.DB.prepare(`CREATE TABLE IF NOT EXISTS academy_teacher_profiles (id INTEGER PRIMARY KEY AUTOINCREMENT,display_name TEXT NOT NULL,subject TEXT NOT NULL DEFAULT '',grade TEXT NOT NULL DEFAULT '',bio TEXT NOT NULL DEFAULT '',photo_url TEXT,contact_url TEXT,is_active INTEGER NOT NULL DEFAULT 1,sort_order INTEGER NOT NULL DEFAULT 0,created_at TEXT NOT NULL DEFAULT (datetime('now')))` ).run();
+      await env.DB.prepare(`CREATE TABLE IF NOT EXISTS academy_teacher_messages (id INTEGER PRIMARY KEY AUTOINCREMENT,teacher_id INTEGER NOT NULL,student_id INTEGER NOT NULL,sender_type TEXT NOT NULL CHECK(sender_type IN ('student','teacher')),body TEXT NOT NULL,created_at TEXT NOT NULL DEFAULT (datetime('now')),read_at TEXT)`).run();
+      if(method==='GET'){
+        const teacherId=Number(url.searchParams.get('teacher_id')||0),studentId=Number(url.searchParams.get('student_id')||0);
+        if(teacherId&&studentId){const rows=await env.DB.prepare(`SELECT m.*,s.name AS student_name,t.display_name AS teacher_name FROM academy_teacher_messages m JOIN students s ON s.id=m.student_id JOIN academy_teacher_profiles t ON t.id=m.teacher_id WHERE m.teacher_id=? AND m.student_id=? ORDER BY m.id ASC LIMIT 300`).bind(teacherId,studentId).all();await env.DB.prepare("UPDATE academy_teacher_messages SET read_at=datetime('now') WHERE teacher_id=? AND student_id=? AND sender_type='student' AND read_at IS NULL").bind(teacherId,studentId).run();return reply(request,env,{success:true,messages:rows.results||[]});}
+        const rows=await env.DB.prepare(`SELECT t.id AS teacher_id,t.display_name,s.id AS student_id,s.name AS student_name,MAX(m.created_at) AS last_message_at,(SELECT body FROM academy_teacher_messages x WHERE x.teacher_id=t.id AND x.student_id=s.id ORDER BY x.id DESC LIMIT 1) AS last_message,SUM(CASE WHEN m.sender_type='student' AND m.read_at IS NULL THEN 1 ELSE 0 END) AS unread FROM academy_teacher_messages m JOIN students s ON s.id=m.student_id JOIN academy_teacher_profiles t ON t.id=m.teacher_id GROUP BY t.id,s.id ORDER BY last_message_at DESC LIMIT 200`).all();
+        return reply(request,env,{success:true,conversations:rows.results||[]});
+      }
+      if(method==='POST'){
+        const b=await readBody(request),teacherId=Number(b?.teacher_id),studentId=Number(b?.student_id),body=clean(b?.body,2000);
+        if(!teacherId||!studentId||!body)return reply(request,env,{success:false,error:'بيانات الرد غير مكتملة.'},400);
+        const [teacherExists,studentExists]=await Promise.all([env.DB.prepare('SELECT id FROM academy_teacher_profiles WHERE id=? AND is_active=1').bind(teacherId).first(),env.DB.prepare('SELECT id FROM students WHERE id=?').bind(studentId).first()]);
+        if(!teacherExists||!studentExists)return reply(request,env,{success:false,error:'المدرس أو الطالب غير موجود.'},404);
+        await env.DB.prepare("INSERT INTO academy_teacher_messages(teacher_id,student_id,sender_type,body) VALUES(?,?,'teacher',?)").bind(teacherId,studentId,body).run();
+        await logAudit(env,{actor_type:'admin',actor_id:admin.id,actor_label:admin.username,action:'social.message.reply',entity_type:'teacher_message',ip,user_agent:ua});
+        return reply(request,env,{success:true});
+      }
+    }
+    if (path==='/api/admin/platform/teachers') {
+      if (!hasPerm(admin.role,'content')) return reply(request,env,{success:false,error:'Forbidden'},403);
+      await env.DB.prepare(`CREATE TABLE IF NOT EXISTS academy_teacher_profiles (id INTEGER PRIMARY KEY AUTOINCREMENT,display_name TEXT NOT NULL,subject TEXT NOT NULL DEFAULT '',grade TEXT NOT NULL DEFAULT '',bio TEXT NOT NULL DEFAULT '',photo_url TEXT,contact_url TEXT,is_active INTEGER NOT NULL DEFAULT 1,sort_order INTEGER NOT NULL DEFAULT 0,created_at TEXT NOT NULL DEFAULT (datetime('now')))`).run();
+      if(method==='GET'){
+        const rows=await env.DB.prepare('SELECT * FROM academy_teacher_profiles ORDER BY sort_order,id').all();
+        return reply(request,env,{success:true,teachers:rows.results||[]});
+      }
+      if(method==='POST'){
+        const b=await readBody(request),name=clean(b?.display_name,100),subject=clean(b?.subject,120),grade=clean(b?.grade,80),bio=clean(b?.bio,1000),photo=clean(b?.photo_url,1000),contact=clean(b?.contact_url,1000);
+        if(!name||!subject)return reply(request,env,{success:false,error:'اسم المدرس والمادة مطلوبان.'},400);
+        if((photo&&!/^https:\/\//i.test(photo))||(contact&&!/^https:\/\//i.test(contact)))return reply(request,env,{success:false,error:'الروابط يجب أن تبدأ بـ https://'},400);
+        const result=await env.DB.prepare('INSERT INTO academy_teacher_profiles(display_name,subject,grade,bio,photo_url,contact_url,sort_order) VALUES(?,?,?,?,?,?,?)').bind(name,subject,grade,bio,photo||null,contact||null,Number.isFinite(Number(b?.sort_order))?Math.max(0,Math.min(999,Number(b.sort_order))):0).run();
+        await logAudit(env,{actor_type:'admin',actor_id:admin.id,actor_label:admin.username,action:'social.teacher.create',entity_type:'teacher_profile',entity_id:result.meta?.last_row_id,ip,user_agent:ua});
+        return reply(request,env,{success:true,id:result.meta?.last_row_id});
+      }
+    }
+    if(path.startsWith('/api/admin/platform/teachers/')&&method==='DELETE'){
+      if(!hasPerm(admin.role,'content'))return reply(request,env,{success:false,error:'Forbidden'},403);
+      const id=Number(path.split('/').pop());
+      await env.DB.prepare('UPDATE academy_teacher_profiles SET is_active=0 WHERE id=?').bind(id).run();
+      return reply(request,env,{success:true});
+    }
+
     // Student directory (platform API alias for the legacy admin route).
     if (method==='GET' && path==='/api/admin/platform/students') {
       if (!hasPerm(admin.role,'students') && !hasPerm(admin.role,'students.view')) {
@@ -4525,13 +4600,99 @@ if (method === "POST" && rejectPasswordMatch) {
     return reply(request, env, {success:false,error:'Not found'}, 404);
   }
 
+  // ---- Student social experience: profiles, feed, teacher directory, subject ordering ----
+  if (path.startsWith('/api/student/platform/')) {
+    const session = await studentSession(request, env);
+    if (!session) return reply(request, env, {success:false,error:'يلزم تسجيل الدخول.'}, 401);
+    await Promise.all([
+      env.DB.prepare(`CREATE TABLE IF NOT EXISTS student_public_profiles (student_id INTEGER PRIMARY KEY, display_name TEXT NOT NULL DEFAULT '', bio TEXT NOT NULL DEFAULT '', updated_at TEXT NOT NULL DEFAULT (datetime('now')))`).run(),
+      env.DB.prepare(`CREATE TABLE IF NOT EXISTS student_subject_orders (student_id INTEGER PRIMARY KEY, subject_ids_json TEXT NOT NULL DEFAULT '[]', updated_at TEXT NOT NULL DEFAULT (datetime('now')))`).run(),
+      env.DB.prepare(`CREATE TABLE IF NOT EXISTS academy_posts (id INTEGER PRIMARY KEY AUTOINCREMENT, title TEXT NOT NULL, body TEXT NOT NULL, image_url TEXT, link_url TEXT, audience_type TEXT NOT NULL DEFAULT 'all', audience_value TEXT, status TEXT NOT NULL DEFAULT 'published', created_by TEXT, created_at TEXT NOT NULL DEFAULT (datetime('now')))`).run(),
+      env.DB.prepare(`CREATE TABLE IF NOT EXISTS academy_post_likes (post_id INTEGER NOT NULL, student_id INTEGER NOT NULL, created_at TEXT NOT NULL DEFAULT (datetime('now')), PRIMARY KEY(post_id,student_id), FOREIGN KEY(post_id) REFERENCES academy_posts(id) ON DELETE CASCADE)`).run(),
+      env.DB.prepare(`CREATE TABLE IF NOT EXISTS academy_post_comments (id INTEGER PRIMARY KEY AUTOINCREMENT, post_id INTEGER NOT NULL, student_id INTEGER NOT NULL, body TEXT NOT NULL, created_at TEXT NOT NULL DEFAULT (datetime('now')), FOREIGN KEY(post_id) REFERENCES academy_posts(id) ON DELETE CASCADE)`).run(),
+      env.DB.prepare(`CREATE TABLE IF NOT EXISTS academy_teacher_profiles (id INTEGER PRIMARY KEY AUTOINCREMENT, display_name TEXT NOT NULL, subject TEXT NOT NULL DEFAULT '', grade TEXT NOT NULL DEFAULT '', bio TEXT NOT NULL DEFAULT '', photo_url TEXT, contact_url TEXT, is_active INTEGER NOT NULL DEFAULT 1, sort_order INTEGER NOT NULL DEFAULT 0, created_at TEXT NOT NULL DEFAULT (datetime('now')))`).run(),
+      env.DB.prepare(`CREATE TABLE IF NOT EXISTS academy_teacher_messages (id INTEGER PRIMARY KEY AUTOINCREMENT,teacher_id INTEGER NOT NULL,student_id INTEGER NOT NULL,sender_type TEXT NOT NULL CHECK(sender_type IN ('student','teacher')),body TEXT NOT NULL,created_at TEXT NOT NULL DEFAULT (datetime('now')),read_at TEXT)`).run()
+    ]);
+    if (method==='GET' && path==='/api/student/platform/profile') {
+      const row=await env.DB.prepare(`SELECT s.id,s.name,s.grade,p.display_name,p.bio FROM students s LEFT JOIN student_public_profiles p ON p.student_id=s.id WHERE s.id=?`).bind(session.student_id).first();
+      return reply(request,env,{success:true,profile:{id:row?.id,name:row?.name,grade:row?.grade,display_name:row?.display_name||row?.name||'',bio:row?.bio||''}});
+    }
+    if (method==='PUT' && path==='/api/student/platform/profile') {
+      const body=await readBody(request), displayName=clean(body?.display_name,40), bio=clean(body?.bio,240);
+      if(displayName.length<2) return reply(request,env,{success:false,error:'الاسم الظاهر يجب ألا يقل عن حرفين.'},400);
+      await env.DB.prepare(`INSERT INTO student_public_profiles(student_id,display_name,bio,updated_at) VALUES(?,?,?,datetime('now')) ON CONFLICT(student_id) DO UPDATE SET display_name=excluded.display_name,bio=excluded.bio,updated_at=datetime('now')`).bind(session.student_id,displayName,bio).run();
+      return reply(request,env,{success:true,profile:{display_name:displayName,bio}});
+    }
+    if (method==='GET' && path==='/api/student/platform/subjects/order') {
+      const row=await env.DB.prepare('SELECT subject_ids_json FROM student_subject_orders WHERE student_id=?').bind(session.student_id).first();
+      let subjectIds=[];try{subjectIds=JSON.parse(row?.subject_ids_json||'[]')}catch{}
+      return reply(request,env,{success:true,subject_ids:Array.isArray(subjectIds)?subjectIds.filter(Number.isInteger):[]});
+    }
+    if (method==='PUT' && path==='/api/student/platform/subjects/order') {
+      const body=await readBody(request), ids=Array.isArray(body?.subject_ids)?body.subject_ids.map(Number).filter(n=>Number.isInteger(n)&&n>0).slice(0,100):[];
+      const unique=[...new Set(ids)];
+      const enrolled=await env.DB.prepare('SELECT subject_id FROM student_subjects WHERE student_id=?').bind(session.student_id).all();
+      const allowed=new Set((enrolled.results||[]).map(x=>Number(x.subject_id)));
+      if(unique.some(id=>!allowed.has(id)))return reply(request,env,{success:false,error:'لا يمكن ترتيب مادة غير مسجل بها حسابك.'},400);
+      await env.DB.prepare(`INSERT INTO student_subject_orders(student_id,subject_ids_json,updated_at) VALUES(?,?,datetime('now')) ON CONFLICT(student_id) DO UPDATE SET subject_ids_json=excluded.subject_ids_json,updated_at=datetime('now')`).bind(session.student_id,JSON.stringify(unique)).run();
+      return reply(request,env,{success:true,subject_ids:unique});
+    }
+    if (method==='GET' && path==='/api/student/platform/feed') {
+      const rows=await env.DB.prepare(`SELECT p.*,COALESCE(NULLIF(p.created_by,''),'إدارة الأكاديمية') AS author_name,(SELECT COUNT(*) FROM academy_post_likes l WHERE l.post_id=p.id) AS likes_count,(SELECT COUNT(*) FROM academy_post_comments c WHERE c.post_id=p.id) AS comments_count,EXISTS(SELECT 1 FROM academy_post_likes l WHERE l.post_id=p.id AND l.student_id=?) AS liked FROM academy_posts p WHERE p.status='published' AND (p.audience_type='all' OR (p.audience_type='grade' AND p.audience_value=(SELECT grade FROM students WHERE id=?)) OR (p.audience_type='student' AND p.audience_value=CAST(? AS TEXT))) ORDER BY p.id DESC LIMIT 60`).bind(session.student_id,session.student_id,session.student_id).all();
+      return reply(request,env,{success:true,posts:rows.results||[]});
+    }
+    if (method==='POST' && /^\/api\/student\/platform\/feed\/\d+\/like$/.test(path)) {
+      const id=Number(path.split('/')[5]);
+      const post=await env.DB.prepare(`SELECT id FROM academy_posts WHERE id=? AND status='published' AND (audience_type='all' OR (audience_type='grade' AND audience_value=(SELECT grade FROM students WHERE id=?)) OR (audience_type='student' AND audience_value=CAST(? AS TEXT)))`).bind(id,session.student_id,session.student_id).first();
+      if(!post)return reply(request,env,{success:false,error:'المنشور غير متاح.'},404);
+      const existing=await env.DB.prepare('SELECT 1 AS ok FROM academy_post_likes WHERE post_id=? AND student_id=?').bind(id,session.student_id).first();
+      if(existing)await env.DB.prepare('DELETE FROM academy_post_likes WHERE post_id=? AND student_id=?').bind(id,session.student_id).run();
+      else await env.DB.prepare('INSERT OR IGNORE INTO academy_post_likes(post_id,student_id) VALUES(?,?)').bind(id,session.student_id).run();
+      return reply(request,env,{success:true,liked:!existing});
+    }
+    if (method==='GET' && /^\/api\/student\/platform\/feed\/\d+\/comments$/.test(path)) {
+      const visible=await env.DB.prepare(`SELECT id FROM academy_posts WHERE id=? AND status='published' AND (audience_type='all' OR (audience_type='grade' AND audience_value=(SELECT grade FROM students WHERE id=?)) OR (audience_type='student' AND audience_value=CAST(? AS TEXT)))`).bind(Number(path.split('/')[5]),session.student_id,session.student_id).first();
+      if(!visible)return reply(request,env,{success:false,error:'المنشور غير متاح.'},404);
+      const id=Number(path.split('/')[5]);
+      const rows=await env.DB.prepare(`SELECT c.id,c.body,c.created_at,COALESCE(NULLIF(p.display_name,''),s.name,'طالب') AS author_name FROM academy_post_comments c JOIN students s ON s.id=c.student_id LEFT JOIN student_public_profiles p ON p.student_id=s.id WHERE c.post_id=? ORDER BY c.id ASC LIMIT 100`).bind(id).all();
+      return reply(request,env,{success:true,comments:rows.results||[]});
+    }
+    if (method==='POST' && /^\/api\/student\/platform\/feed\/\d+\/comments$/.test(path)) {
+      const id=Number(path.split('/')[5]), body=await readBody(request), comment=clean(body?.body,1000);
+      if(!comment)return reply(request,env,{success:false,error:'اكتب تعليقًا أولًا.'},400);
+      const post=await env.DB.prepare(`SELECT id FROM academy_posts WHERE id=? AND status='published' AND (audience_type='all' OR (audience_type='grade' AND audience_value=(SELECT grade FROM students WHERE id=?)) OR (audience_type='student' AND audience_value=CAST(? AS TEXT)))`).bind(id,session.student_id,session.student_id).first();
+      if(!post)return reply(request,env,{success:false,error:'المنشور غير متاح.'},404);
+      await env.DB.prepare('INSERT INTO academy_post_comments(post_id,student_id,body) VALUES(?,?,?)').bind(id,session.student_id,comment).run();
+      return reply(request,env,{success:true});
+    }
+    if (path==='/api/student/platform/messages' && method==='GET') {
+      const teacherId=Number(url.searchParams.get('teacher_id')||0);
+      if(!teacherId){const rows=await env.DB.prepare(`SELECT t.id AS teacher_id,t.display_name,t.subject,MAX(m.created_at) AS last_message_at,(SELECT body FROM academy_teacher_messages x WHERE x.teacher_id=t.id AND x.student_id=? ORDER BY x.id DESC LIMIT 1) AS last_message FROM academy_teacher_profiles t JOIN academy_teacher_messages m ON m.teacher_id=t.id AND m.student_id=? WHERE t.is_active=1 GROUP BY t.id ORDER BY last_message_at DESC`).bind(session.student_id,session.student_id).all();return reply(request,env,{success:true,conversations:rows.results||[]});}
+      const rows=await env.DB.prepare('SELECT id,teacher_id,student_id,sender_type,body,created_at FROM academy_teacher_messages WHERE teacher_id=? AND student_id=? ORDER BY id ASC LIMIT 300').bind(teacherId,session.student_id).all();
+      await env.DB.prepare("UPDATE academy_teacher_messages SET read_at=datetime('now') WHERE teacher_id=? AND student_id=? AND sender_type='teacher' AND read_at IS NULL").bind(teacherId,session.student_id).run();
+      return reply(request,env,{success:true,messages:rows.results||[]});
+    }
+    if (path==='/api/student/platform/messages' && method==='POST') {
+      const b=await readBody(request),teacherId=Number(b?.teacher_id),body=clean(b?.body,2000);
+      if(!Number.isInteger(teacherId)||teacherId<1||!body)return reply(request,env,{success:false,error:'اختر المدرس واكتب رسالتك.'},400);
+      if(!await consumeApiRateLimit(env,request,'student_teacher_message',session.student_id,12,60))return reply(request,env,{success:false,error:'أرسلت رسائل كثيرة بسرعة. حاول بعد دقيقة.'},429);
+      const teacher=await env.DB.prepare('SELECT id FROM academy_teacher_profiles WHERE id=? AND is_active=1').bind(teacherId).first();
+      if(!teacher)return reply(request,env,{success:false,error:'المدرس غير متاح حاليًا.'},404);
+      await env.DB.prepare("INSERT INTO academy_teacher_messages(teacher_id,student_id,sender_type,body) VALUES(?,?,'student',?)").bind(teacherId,session.student_id,body).run();
+      return reply(request,env,{success:true});
+    }
+    if (method==='GET' && path==='/api/student/platform/teachers') {
+      const rows=await env.DB.prepare(`SELECT id,display_name,subject,grade,bio,photo_url,contact_url FROM academy_teacher_profiles WHERE is_active=1 ORDER BY sort_order ASC,id ASC LIMIT 100`).all();
+      return reply(request,env,{success:true,teachers:rows.results||[]});
+    }
+  }
   // ---- Student exams/notifications/AI ----
   if (path.startsWith('/api/student/platform/')) {
     const session = await studentSession(request, env);
     if (!session) return reply(request, env, {success:false,error:'Unauthorized'}, 401);
     const studentPathParts=path.split('/');
-    const isExamResumeRoute=studentPathParts.length===6&&studentPathParts[4]==='exam-attempts'&&/^\\d+$/.test(studentPathParts[5]);
-    const isExamStartRoute=studentPathParts.length===7&&studentPathParts[4]==='exams'&&studentPathParts[6]==='start'&&/^\\d+$/.test(studentPathParts[5]);
+    const isExamResumeRoute=studentPathParts.length===6&&studentPathParts[4]==='exam-attempts'&&/^\d+$/.test(studentPathParts[5]);
+    const isExamStartRoute=studentPathParts.length===7&&studentPathParts[4]==='exams'&&studentPathParts[6]==='start'&&/^\d+$/.test(studentPathParts[5]);
     if (isExamResumeRoute||isExamStartRoute) await ensureColumn(env,'exam_attempts','question_order_json','TEXT');
     if (method==='GET' && path==='/api/student/platform/notifications') {
       // Only show broadcasts and notifications explicitly addressed to this student or their grade.

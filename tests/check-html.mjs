@@ -5,7 +5,9 @@ import vm from "node:vm";
 const root = process.cwd();
 const pages = [
   "index.html", "welcome.html", "login.html", "register.html",
-  "admin.html", "student.html", "parent.html", "page.html", "certificate.html"
+  "admin.html", "student.html", "parent.html", "page.html", "certificate.html",
+  "feed.html", "subjects.html", "teachers.html", "settings.html", "social-admin.html",
+  "materials.html", "progress.html", "orders.html", "messages.html", "social-inbox.html"
 ];
 
 for (const page of pages) {

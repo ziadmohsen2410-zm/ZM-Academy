@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#080d1b"><title>محتواي الدراسي | ZM Academy</title><link rel="stylesheet" href="./social-pages.css"></head>
+<body><div class="app"><header class="top"><a class="brand" href="./student.html">✦ ZM Academy</a><a class="ghost" href="./student.html" style="padding:8px 12px;border-radius:10px">لوحة الطالب ↗</a></header>
+<div class="layout"><nav class="side"><a href="./feed.html">📰 الأخبار</a><a href="./subjects.html">📚 ترتيب المواد</a><a href="./materials.html" class="active">📖 المحتوى</a><a href="./progress.html">📈 تقدمي</a><a href="./orders.html">🛒 مشترياتي</a><a href="./teachers.html">👩‍🏫 المدرسون</a><a href="./settings.html">⚙️ الإعدادات</a></nav>
+<main class="panel"><h1>محتواي الدراسي</h1><div class="muted">مذكرات ودروس المواد المسجل بها حسابك، مع متابعة حالة الوصول لكل محتوى.</div><div id="status" class="status">جارٍ تحميل المحتوى...</div><div id="materials"></div></main></div></div>
+<script src="./social-pages.js"></script><script>
+const {api,$,esc,status}=window.ZM;
+async function load(){try{
+ const [me,md,pd]=await Promise.all([api('/api/student/me'),api('/api/materials'),api('/api/student/purchases')]);
+ const subjects=me.subjects||[],subjectMap=new Map(subjects.map(s=>[Number(s.id),s.name||s.title||'مادة']));
+ const allowed=new Set(subjects.map(s=>Number(s.id))),purchases=pd.purchases||[];
+ const rows=(md.materials||[]).filter(m=>allowed.has(Number(m.subject_id)));
+ $('#materials').innerHTML=rows.length?rows.map(m=>{
+  const owned=Number(m.is_free)===1||purchases.some(p=>Number(p.material_id)===Number(m.id)&&(p.status==='approved'||p.status==='completed'));
+  const pending=purchases.some(p=>Number(p.material_id)===Number(m.id)&&p.status==='pending');
+  const action=owned?'<a class="ghost" style="display:inline-block;padding:9px 13px;border-radius:10px" href="./student.html?openMaterial='+Number(m.id)+'">فتح المذكرة أو متابعة الدراسة ↗</a>':pending?'<span class="status">طلب الشراء قيد المراجعة</span>':'<a class="ghost" style="display:inline-block;padding:9px 13px;border-radius:10px" href="./student.html#paidSection">عرض خيارات الشراء ↗</a>';
+  return '<article class="post"><div class="muted">'+esc(subjectMap.get(Number(m.subject_id))||'مادة دراسية')+' · '+esc(m.type||'محتوى تعليمي')+'</div><h3>'+esc(m.title||'مذكرة تعليمية')+'</h3><p>'+(Number(m.is_free)===1?'محتوى مجاني':'السعر: '+esc(m.price??'غير محدد')+' جنيه')+'</p>'+action+'</article>';
+ }).join(''):'<div class="empty">لا يوجد محتوى منشور في المواد المسجل بها حسابك حاليًا.</div>';
+ status('عدد عناصر المحتوى في موادك: '+rows.length);
+}catch(e){status(e.message)}}load();
+</script></body></html>

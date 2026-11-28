@@ -162,6 +162,57 @@ jobs:
             -H "Authorization: Bearer $STUDENT_TOKEN" -o /tmp/zm-student-preferences-readback.json
           python3 -c "import json; p=json.load(open('/tmp/zm-student-preferences-readback.json')).get('preferences',{}); assert p.get('primary')=='#35B8FF' and p.get('secondary')=='#9270FF' and p.get('fontSize')=='large' and p.get('mode')=='dark', p"
           echo "Student preferences GET/PUT/readback passed."
+          # Exercise social feed, public profile, subject ordering, teacher directory, and private messages.
+          curl --max-time 30 --fail --silent --show-error -X PUT "$API/api/student/platform/profile" \
+            -H "Authorization: Bearer $STUDENT_TOKEN" -H "Content-Type: application/json" \
+            --data '{"display_name":"Preview Student Alias","bio":"Preview profile bio"}' -o /tmp/zm-profile-save.json
+          curl --max-time 30 --fail --silent --show-error "$API/api/student/platform/profile" \
+            -H "Authorization: Bearer $STUDENT_TOKEN" -o /tmp/zm-profile-read.json
+          python3 -c "import json; p=json.load(open('/tmp/zm-profile-read.json')).get('profile',{}); assert p.get('display_name')=='Preview Student Alias' and p.get('bio')=='Preview profile bio', p"
+
+          curl --max-time 30 --fail --silent --show-error -X PUT "$API/api/student/platform/subjects/order" \
+            -H "Authorization: Bearer $STUDENT_TOKEN" -H "Content-Type: application/json" \
+            --data '{"subject_ids":[990001]}' -o /tmp/zm-subject-order-save.json
+          curl --max-time 30 --fail --silent --show-error "$API/api/student/platform/subjects/order" \
+            -H "Authorization: Bearer $STUDENT_TOKEN" -o /tmp/zm-subject-order-read.json
+          python3 -c "import json; d=json.load(open('/tmp/zm-subject-order-read.json')); assert d.get('subject_ids')==[990001], d"
+
+          curl --max-time 30 --fail --silent --show-error -X POST "$API/api/admin/platform/teachers" \
+            -H "Authorization: Bearer $ADMIN_TOKEN" -H "Content-Type: application/json" \
+            --data '{"display_name":"Preview Teacher","subject":"Logic","grade":"Preview","bio":"Teacher profile smoke test"}' \
+            -o /tmp/zm-teacher-create.json
+          TEACHER_ID="$(python3 -c "import json; print(json.load(open('/tmp/zm-teacher-create.json'))['id'])")"
+          curl --max-time 30 --fail --silent --show-error -X POST "$API/api/admin/platform/posts" \
+            -H "Authorization: Bearer $ADMIN_TOKEN" -H "Content-Type: application/json" \
+            --data '{"title":"Preview academy announcement","body":"Social feed smoke test","audience_type":"all"}' \
+            -o /tmp/zm-post-create.json
+          POST_ID="$(python3 -c "import json; print(json.load(open('/tmp/zm-post-create.json'))['id'])")"
+          curl --max-time 30 --fail --silent --show-error "$API/api/student/platform/feed" \
+            -H "Authorization: Bearer $STUDENT_TOKEN" -o /tmp/zm-feed.json
+          python3 -c "import json,sys; d=json.load(open('/tmp/zm-feed.json')); assert any(int(p.get('id',0))==int(sys.argv[1]) for p in d.get('posts',[])), d" "$POST_ID"
+          curl --max-time 30 --fail --silent --show-error -X POST "$API/api/student/platform/feed/$POST_ID/like" \
+            -H "Authorization: Bearer $STUDENT_TOKEN" -o /tmp/zm-post-like.json
+          curl --max-time 30 --fail --silent --show-error -X POST "$API/api/student/platform/feed/$POST_ID/comments" \
+            -H "Authorization: Bearer $STUDENT_TOKEN" -H "Content-Type: application/json" \
+            --data '{"body":"Preview comment"}' -o /tmp/zm-post-comment.json
+          curl --max-time 30 --fail --silent --show-error "$API/api/student/platform/teachers" \
+            -H "Authorization: Bearer $STUDENT_TOKEN" -o /tmp/zm-teachers.json
+          python3 -c "import json,sys; d=json.load(open('/tmp/zm-teachers.json')); assert any(int(t.get('id',0))==int(sys.argv[1]) for t in d.get('teachers',[])), d" "$TEACHER_ID"
+
+          curl --max-time 30 --fail --silent --show-error -X POST "$API/api/student/platform/messages" \
+            -H "Authorization: Bearer $STUDENT_TOKEN" -H "Content-Type: application/json" \
+            --data "{\"teacher_id\":$TEACHER_ID,\"body\":\"Preview student message\"}" -o /tmp/zm-student-message.json
+          curl --max-time 30 --fail --silent --show-error "$API/api/admin/platform/messages?teacher_id=$TEACHER_ID&student_id=$STUDENT_ID" \
+            -H "Authorization: Bearer $ADMIN_TOKEN" -o /tmp/zm-admin-message-thread.json
+          python3 -c "import json; d=json.load(open('/tmp/zm-admin-message-thread.json')); assert any(m.get('body')=='Preview student message' for m in d.get('messages',[])), d"
+          curl --max-time 30 --fail --silent --show-error -X POST "$API/api/admin/platform/messages" \
+            -H "Authorization: Bearer $ADMIN_TOKEN" -H "Content-Type: application/json" \
+            --data "{\"teacher_id\":$TEACHER_ID,\"student_id\":$STUDENT_ID,\"body\":\"Preview teacher reply\"}" -o /tmp/zm-admin-message-reply.json
+          curl --max-time 30 --fail --silent --show-error "$API/api/student/platform/messages?teacher_id=$TEACHER_ID" \
+            -H "Authorization: Bearer $STUDENT_TOKEN" -o /tmp/zm-student-message-thread.json
+          python3 -c "import json; d=json.load(open('/tmp/zm-student-message-thread.json')); assert any(m.get('body')=='Preview teacher reply' for m in d.get('messages',[])), d"
+          echo "Social feed, profile settings, subject ordering, teacher directory, and private messaging passed."
+
 
           # Exercise favorite add, list, remove, and empty list against the isolated Preview D1.
           FAVORITE_ADD_STATUS="$(curl --max-time 30 --silent --show-error -X POST "$API/api/student/favorites/990001" \

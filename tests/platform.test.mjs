@@ -935,3 +935,21 @@ test("all public entry pages use the official ZM Academy Facebook page", () => {
     assert.ok(!source.includes("1Q2dQN9a3z"), "Personal Facebook link remains in "+file);
   }
 });
+
+test("student social experience has dedicated pages, profile settings, feed, teachers, and saved subject ordering", () => {
+  const student = read("student.html");
+  const worker = read("worker.js");
+  for (const page of ["feed.html","subjects.html","teachers.html","settings.html","social-admin.html"]) {
+    assert.ok(read(page).includes("ZM Academy"), "Missing ZM Academy branding in "+page);
+  }
+  for (const href of ["./feed.html","./subjects.html","./teachers.html","./settings.html"]) {
+    assert.ok(student.includes(href), "Student navigation missing "+href);
+  }
+  for (const route of ["/api/student/platform/profile","/api/student/platform/subjects/order","/api/student/platform/feed","/api/student/platform/teachers","/api/student/platform/messages","/api/admin/platform/posts","/api/admin/platform/teachers","/api/admin/platform/messages"]) {
+    assert.ok(worker.includes(route), "Missing social API route "+route);
+  }
+  assert.ok(worker.includes("academy_post_likes"));
+  assert.ok(worker.includes("academy_post_comments"));
+  assert.ok(worker.includes("student_subject_orders"));
+  assert.ok(worker.includes("student_public_profiles"));
+});

@@ -624,12 +624,16 @@ html[data-zm-student-palette="custom"] #zmPlat .hd{background:var(--zm-surface)!
     <aside class="zm-sidebar" aria-label="القائمة الجانبية">
       <div class="zm-side-brand"><img src="./assets/academy-logo.jpg" alt="ZM"><div><b>ZM Academy</b><small>منصة التعلم</small></div></div>
       <nav class="zm-side-nav">
-        <a href="#welcomeCard" class="active">🏠 الرئيسية</a>
-        <a href="#subjectsSection">📚 المواد</a>
-        <a href="#learningSection">📈 تقدمي</a>
-        <a href="#paidSection">📖 المذكرات</a>
-        <a href="#purchasesSection">🛒 الطلبات</a>
-        <a href="#supportSection">⚙️ الدعم</a>
+        <a href="./student.html" class="active">🏠 الرئيسية</a>
+        <a href="./feed.html">📰 مجتمع وأخبار الأكاديمية</a>
+        <a href="./subjects.html">📚 ترتيب المواد</a>
+        <a href="./materials.html">📖 المحتوى الدراسي</a>
+        <a href="./progress.html">📈 تقدمي الدراسي</a>
+        <a href="./orders.html">🛒 مشترياتي وطلباتي</a>
+        <a href="./teachers.html">👩‍🏫 دليل المدرسين</a>
+        <a href="./messages.html">✉️ رسائلي للمدرسين</a>
+        <a href="./settings.html">⚙️ إعدادات حسابي</a>
+        <a href="#supportSection">💬 الدعم والمساعدة</a>
       </nav>
     </aside>
 
@@ -721,10 +725,10 @@ html[data-zm-student-palette="custom"] #zmPlat .hd{background:var(--zm-surface)!
   </div>
 
   <nav class="zm-bottom-nav" aria-label="تنقل الهاتف">
-    <a href="#welcomeCard" class="active"><span>🏠</span><small>الرئيسية</small></a>
-    <a href="#subjectsSection"><span>📚</span><small>المواد</small></a>
-    <a href="#learningSection"><span>📈</span><small>تقدمي</small></a>
-    <a href="#supportSection"><span>👤</span><small>حسابي</small></a>
+    <a href="./student.html" class="active"><span>🏠</span><small>الرئيسية</small></a>
+    <a href="./subjects.html"><span>📚</span><small>المواد</small></a>
+    <a href="./progress.html"><span>📈</span><small>تقدمي</small></a>
+    <a href="./settings.html"><span>👤</span><small>حسابي</small></a>
   </nav>
  </section>
 </main>
@@ -1423,21 +1427,28 @@ async function loadDashboard(){
     materialsData,
     progressData,
     favoritesData,
-    preferencesData
+    preferencesData,
+    profileData,
+    subjectOrderData
    ]=await Promise.all([
     api("/api/student/me"),
     api("/api/student/purchases"),
     api("/api/materials"),
     api("/api/student/progress").catch(()=>({progress:[]})),
     api("/api/student/favorites").catch(()=>({favorites:[]})),
-    api("/api/student/preferences").catch(()=>({preferences:{}}))
+    api("/api/student/preferences").catch(()=>({preferences:{}})),
+    api("/api/student/platform/profile").catch(()=>({profile:{}})),
+    api("/api/student/platform/subjects/order").catch(()=>({subject_ids:[]}))
    ]);
    applyStudentPreferences(preferencesData.preferences||{});
 
    const student=me.student;
+   const displayName=profileData.profile?.display_name||student.name||"بك";
    currentStudent=student;
 
    const subjects=me.subjects||[];
+   const subjectOrder=subjectOrderData.subject_ids||[];
+   subjects.sort((a,b)=>{const ai=subjectOrder.indexOf(Number(a.id)),bi=subjectOrder.indexOf(Number(b.id));return (ai<0?999:ai)-(bi<0?999:bi)});
    const materials=materialsData.materials||[];
    const purchaseList=purchases.purchases||[];
 
@@ -1448,7 +1459,7 @@ async function loadDashboard(){
     .filter(p=>p.status==="approved"||p.status==="completed")
     .map(p=>Number(p.material_id));
 
-   $("welcome").textContent="أهلاً "+(student.name||"بك");
+   $("welcome").textContent="أهلاً "+displayName;
    $("studentInfo").textContent="الصف الدراسي: "+(student.grade||"غير محدد");
 
    const visible=purchaseList.filter(p=>!Number(p.is_hidden));
@@ -1463,7 +1474,7 @@ async function loadDashboard(){
    const totalMine=mine.length;
    const overallPct=totalMine?Math.round((completedCount/totalMine)*100):0;
    $("accountSummary").textContent=
-    "اسم الطالب: "+(student.name||"غير محدد")+
+    "اسم الطالب: "+displayName+
     " | الصف: "+(student.grade||"غير محدد")+
     " | عدد المواد: "+subjects.length+
     " | الطلبات والمشتريات الظاهرة: "+visible.length+
@@ -1702,6 +1713,14 @@ async function loadDashboard(){
 
    dashboard.classList.remove("hidden");
    message.textContent="تم تحميل لوحة الطالب بنجاح.";
+
+   const requestedMaterialId=Number(new URLSearchParams(location.search).get("openMaterial")||0);
+   if(requestedMaterialId){
+    const requested=mine.find(m=>Number(m.id)===requestedMaterialId);
+    const canOpen=requested&&(Number(requested.is_free)===1||purchaseList.some(p=>Number(p.material_id)===requestedMaterialId&&(p.status==="approved"||p.status==="completed")));
+    if(canOpen)openPdf(requestedMaterialId,requested.title,getSavedPage(requestedMaterialId));
+    else if(requested)showMsg("هذه المذكرة تحتاج إلى موافقة طلب الشراء أولًا.");
+   }
 
    loadStudentPhoto();
 
