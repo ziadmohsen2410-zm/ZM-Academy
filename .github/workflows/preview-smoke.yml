@@ -116,6 +116,38 @@ jobs:
           python3 -c "import json,sys; d=json.load(open('/tmp/zm-student-register.json')); assert sys.argv[1] == '201' and d.get('success') is True, d" "$REG_STATUS"
           STUDENT_ID="$(python3 -c "import json; print(json.load(open('/tmp/zm-student-register.json'))['student_id'])")"
 
+          # Create a teacher account with one explicit grade/subject assignment.
+          TEACHER_PASSWORD="$(python3 -c 'import secrets; print(secrets.token_urlsafe(30))')"
+          echo "::add-mask::$TEACHER_PASSWORD"
+          TEACHER_CREATE_STATUS="$(curl --max-time 30 --silent --show-error -X POST "$API/api/admin/platform/teacher-accounts" \
+            -H "Authorization: Bearer $ADMIN_TOKEN" -H "Content-Type: application/json" \
+            --data "{\\"username\\":\\"preview_teacher\\",\\"password\\":\\"$TEACHER_PASSWORD\\",\\"display_name\\":\\"Preview Teacher\\",\\"assignments\\":[{\\"grade\\":\\"Preview\\",\\"subject\\":\\"Logic\\"}]}" \
+            -o /tmp/zm-teacher-create.json -w '%{http_code}')"
+          python3 -c "import json,sys; d=json.load(open('/tmp/zm-teacher-create.json')); assert sys.argv[1]=='200' and d.get('success') is True, d" "$TEACHER_CREATE_STATUS"
+          curl --max-time 30 --fail --silent --show-error -X POST "$API/api/admin/login" \
+            -H "Content-Type: application/json" \
+            --data "{\\"username\\":\\"preview_teacher\\",\\"password\\":\\"$TEACHER_PASSWORD\\"}" \
+            -o /tmp/zm-teacher-login.json
+          TEACHER_TOKEN="$(python3 -c "import json; print(json.load(open('/tmp/zm-teacher-login.json'))['token'])")"
+          test -n "$TEACHER_TOKEN"
+          echo "::add-mask::$TEACHER_TOKEN"
+          curl --max-time 30 --fail --silent --show-error "$API/api/admin/platform/teacher-portal/me" \
+            -H "Authorization: Bearer $TEACHER_TOKEN" -o /tmp/zm-teacher-me.json
+          python3 -c "import json; d=json.load(open('/tmp/zm-teacher-me.json')); assert d.get('success') is True and len(d.get('assignments',[]))==1 and d['assignments'][0].get('grade')=='Preview', d"
+          curl --max-time 30 --fail --silent --show-error "$API/api/admin/platform/teacher-portal/roster?grade=Preview&subject=Logic" \
+            -H "Authorization: Bearer $TEACHER_TOKEN" -o /tmp/zm-teacher-roster.json
+          python3 -c "import json,sys; d=json.load(open('/tmp/zm-teacher-roster.json')); assert d.get('success') is True and any(int(x['id'])==int(sys.argv[1]) for x in d.get('students',[])), d" "$STUDENT_ID"
+          WRONG_SCOPE_STATUS="$(curl --max-time 30 --silent --show-error "$API/api/admin/platform/teacher-portal/roster?grade=Other&subject=Logic" \
+            -H "Authorization: Bearer $TEACHER_TOKEN" -o /tmp/zm-teacher-wrong-scope.json -w '%{http_code}')"
+          python3 -c "import json,sys; d=json.load(open('/tmp/zm-teacher-wrong-scope.json')); assert sys.argv[1]=='403' and d.get('success') is False, d" "$WRONG_SCOPE_STATUS"
+          GLOBAL_STUDENTS_STATUS="$(curl --max-time 30 --silent --show-error "$API/api/admin/platform/students" \
+            -H "Authorization: Bearer $TEACHER_TOKEN" -o /tmp/zm-teacher-global-students.json -w '%{http_code}')"
+          python3 -c "import json,sys; d=json.load(open('/tmp/zm-teacher-global-students.json')); assert sys.argv[1]=='403' and d.get('success') is False, d" "$GLOBAL_STUDENTS_STATUS"
+          TEACHER_ATTENDANCE_STATUS="$(curl --max-time 30 --silent --show-error "$API/api/admin/platform/attendance/sessions" \
+            -H "Authorization: Bearer $TEACHER_TOKEN" -o /tmp/zm-teacher-attendance.json -w '%{http_code}')"
+          python3 -c "import json,sys; d=json.load(open('/tmp/zm-teacher-attendance.json')); assert sys.argv[1]=='403' and d.get('success') is False, d" "$TEACHER_ATTENDANCE_STATUS"
+          echo "Teacher account login, assigned roster, cross-scope denial, and global student/attendance denial passed."
+
           DEVICE_TOKEN="preview-device-token-00000000000000000000000000000000"
           DEVICE_STATUS="$(curl --max-time 30 --silent --show-error -X POST "$API/api/students/login" \
             -H "Content-Type: application/json" \
