@@ -30,7 +30,7 @@ async function loadContentSubjects(){
 }
 function fillContentSubjects(){
  const grade=$('contentGrade').value;
- const rows=teacherSubjects.filter(x=>x.grade===grade);
+ const rows=teacherSubjects.filter(x=>String(x.grade||'').trim()===String(grade||'').trim());
  $('contentSubject').innerHTML=rows.map(x=>'<option value="'+Number(x.id)+'">'+esc(x.name)+'</option>').join('');
  if(!rows.length){$('contentMsg').textContent='لا توجد مادة نشطة مرتبطة بهذا الصف في إسناداتك. راجع الإدارة لتأكيد ربط المادة.';}
  else if($('contentMsg').textContent.startsWith('لا توجد مادة')) $('contentMsg').textContent='';
