@@ -1854,7 +1854,7 @@ async function render(){const b=$('#zmPlatBody'); b.innerHTML='<div class="muted
  };
  const openColorPicker=k=>{
   editingKey=k;editingHsv=rgbToHsv(getColor(k));
-  $('#zmColorPickerTitle').textContent='اختيار '+({primary:'اللون الأساسي',secondary:'اللون الثانوي',background:'لون الخلفية',surface:'لون البطاقات',text:'لون النص الأساسي',muted:'لون النص الثانوي'}[k]||'اللون'));
+  $('#zmColorPickerTitle').textContent='اختيار '+({primary:'اللون الأساسي',secondary:'اللون الثانوي',background:'لون الخلفية',surface:'لون البطاقات',text:'لون النص الأساسي',muted:'لون النص الثانوي'}[k]||'اللون');
   picker.hidden=false;updatePicker();
  };
  document.querySelectorAll('#zmPlat [data-color-key]').forEach(el=>el.addEventListener('click',()=>openColorPicker(el.dataset.colorKey)));
