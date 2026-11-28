@@ -23,7 +23,7 @@ for (const page of pages) {
     try {
       new vm.Script(source, { filename: page + " inline script " + index });
     } catch (error) {
-      throw new Error("Invalid JavaScript in " + page + ", inline script " + index + ": " + error.message);
+      throw new Error("Invalid JavaScript in " + page + ", inline script " + index + ": " + error.stack);
     }
   }
 
