@@ -588,3 +588,134 @@ html[data-zm-mode="light"] body:has(.zm-shell) :where(button,.btn,.primary,.smal
   background:linear-gradient(115deg,var(--zm-primary),var(--zm-secondary))!important;
   color:#fff!important;-webkit-text-fill-color:#fff!important;border-color:transparent!important;
 }
+
+
+/* FINAL STUDENT LIGHT THEME OVERRIDES — keep every surface readable. */
+html[data-zm-mode="light"]{
+  color-scheme:light!important;
+  --zm-primary:#247FB8!important;
+  --zm-secondary:#7656CE!important;
+  --zm-bg:#F4F7FD!important;
+  --zm-surface:#FFFFFF!important;
+  --zm-text:#1B2942!important;
+  --zm-muted:#60718C!important;
+  --bg:#F4F7FD!important;
+  --bg2:#EDF2FA!important;
+  --panel:#FFFFFF!important;
+  --panel-2:#F7F9FD!important;
+  --surface:#FFFFFF!important;
+  --surface2:#F7F9FD!important;
+  --surface3:#EAF0FA!important;
+  --text:#1B2942!important;
+  --muted:#60718C!important;
+  --primary:#247FB8!important;
+  --secondary:#7656CE!important;
+  --blue:#247FB8!important;
+  --purple:#7656CE!important;
+  --accent:#247FB8!important;
+  --accent2:#7656CE!important;
+  --line:#D8E2F0!important;
+  --border:#D8E2F0!important;
+  --zm-button-start:#247FB8!important;
+  --zm-button-end:#7656CE!important;
+  --zm-button-text:#FFFFFF!important;
+}
+html[data-zm-mode="light"] body:has(.zm-shell),
+body[data-zm-mode="light"]:has(.zm-shell),
+body.light:has(.zm-shell){
+  color-scheme:light!important;
+  color:#1B2942!important;
+  background:linear-gradient(145deg,#FFFFFF 0%,#F4F7FD 60%,#EEF3FC 100%)!important;
+}
+html[data-zm-mode="light"] body:has(.zm-shell) :is(header,footer,.zm-sidebar,.zm-bottom-nav,.topbar,.mobile-bar),
+body[data-zm-mode="light"]:has(.zm-shell) :is(header,footer,.zm-sidebar,.zm-bottom-nav,.topbar,.mobile-bar),
+body.light:has(.zm-shell) :is(header,footer,.zm-sidebar,.zm-bottom-nav,.topbar,.mobile-bar){
+  background:#FFFFFF!important;
+  color:#1B2942!important;
+  border-color:#D8E2F0!important;
+  box-shadow:0 8px 26px rgba(35,65,110,.07)!important;
+}
+html[data-zm-mode="light"] body:has(.zm-shell) :is(.card,.panel,.section,.course-card,.tile,.item,.profile,.notice,.empty,.zm-welcome),
+body[data-zm-mode="light"]:has(.zm-shell) :is(.card,.panel,.section,.course-card,.tile,.item,.profile,.notice,.empty,.zm-welcome),
+body.light:has(.zm-shell) :is(.card,.panel,.section,.course-card,.tile,.item,.profile,.notice,.empty,.zm-welcome){
+  background:#FFFFFF!important;
+  color:#1B2942!important;
+  border-color:#D8E2F0!important;
+  box-shadow:0 10px 28px rgba(35,65,110,.07)!important;
+}
+html[data-zm-mode="light"] body:has(.zm-shell) :is(h1,h2,h3,h4,p,label,strong,b,td,th,.brand,.brand-link,.zm-page-title,.zm-side-brand b),
+body[data-zm-mode="light"]:has(.zm-shell) :is(h1,h2,h3,h4,p,label,strong,b,td,th,.brand,.brand-link,.zm-page-title,.zm-side-brand b),
+body.light:has(.zm-shell) :is(h1,h2,h3,h4,p,label,strong,b,td,th,.brand,.brand-link,.zm-page-title,.zm-side-brand b){
+  color:#1B3555!important;
+}
+html[data-zm-mode="light"] body:has(.zm-shell) :is(.muted,.sub,.hint,.description,small,.zm-page-sub,.zm-side-brand small),
+body[data-zm-mode="light"]:has(.zm-shell) :is(.muted,.sub,.hint,.description,small,.zm-page-sub,.zm-side-brand small),
+body.light:has(.zm-shell) :is(.muted,.sub,.hint,.description,small,.zm-page-sub,.zm-side-brand small){
+  color:#60718C!important;
+}
+html[data-zm-mode="light"] body:has(.zm-shell) :is(input,select,textarea),
+body[data-zm-mode="light"]:has(.zm-shell) :is(input,select,textarea),
+body.light:has(.zm-shell) :is(input,select,textarea){
+  background:#FFFFFF!important;
+  color:#1B2942!important;
+  border-color:#C9D8EB!important;
+  color-scheme:light!important;
+}
+html[data-zm-mode="light"] body:has(.zm-shell) :is(input,select,textarea)::placeholder,
+body[data-zm-mode="light"]:has(.zm-shell) :is(input,select,textarea)::placeholder,
+body.light:has(.zm-shell) :is(input,select,textarea)::placeholder{color:#7A8AA2!important;opacity:1}
+html[data-zm-mode="light"] body:has(.zm-shell) button:not(.ghost):not(.secondary):not(.outline):not(.theme-toggle):not(.icon-btn):not(.reset-toggle):not(.reset-cancel):not(.danger):not(.delete),
+body[data-zm-mode="light"]:has(.zm-shell) button:not(.ghost):not(.secondary):not(.outline):not(.theme-toggle):not(.icon-btn):not(.reset-toggle):not(.reset-cancel):not(.danger):not(.delete),
+body.light:has(.zm-shell) button:not(.ghost):not(.secondary):not(.outline):not(.theme-toggle):not(.icon-btn):not(.reset-toggle):not(.reset-cancel):not(.danger):not(.delete){
+  background:linear-gradient(115deg,#247FB8,#7656CE)!important;
+  color:#FFFFFF!important;
+  -webkit-text-fill-color:#FFFFFF!important;
+  border-color:transparent!important;
+}
+html[data-zm-mode="light"] body:has(.zm-shell) :is(button.ghost,button.secondary,button.outline,.ghost,.secondary,.outline,.theme-toggle,.icon-btn,.reset-toggle,.reset-cancel),
+body[data-zm-mode="light"]:has(.zm-shell) :is(button.ghost,button.secondary,button.outline,.ghost,.secondary,.outline,.theme-toggle,.icon-btn,.reset-toggle,.reset-cancel),
+body.light:has(.zm-shell) :is(button.ghost,button.secondary,button.outline,.ghost,.secondary,.outline,.theme-toggle,.icon-btn,.reset-toggle,.reset-cancel){
+  background:#EAF2FC!important;
+  color:#216FA7!important;
+  -webkit-text-fill-color:#216FA7!important;
+  border:1px solid #C9DDF2!important;
+  box-shadow:none!important;
+}
+html[data-zm-mode="light"] body:has(.zm-shell) .zm-side-nav a,
+html[data-zm-mode="light"] body:has(.zm-shell) .zm-bottom-nav a,
+body[data-zm-mode="light"]:has(.zm-shell) .zm-side-nav a,
+body[data-zm-mode="light"]:has(.zm-shell) .zm-bottom-nav a,
+body.light:has(.zm-shell) .zm-side-nav a,
+body.light:has(.zm-shell) .zm-bottom-nav a{color:#526782!important}
+html[data-zm-mode="light"] body:has(.zm-shell) .zm-side-nav a.active,
+html[data-zm-mode="light"] body:has(.zm-shell) .zm-bottom-nav a.active,
+body[data-zm-mode="light"]:has(.zm-shell) .zm-side-nav a.active,
+body[data-zm-mode="light"]:has(.zm-shell) .zm-bottom-nav a.active,
+body.light:has(.zm-shell) .zm-side-nav a.active,
+body.light:has(.zm-shell) .zm-bottom-nav a.active{
+  background:#EAF2FC!important;color:#176FAE!important;border-color:#C9DDF2!important;
+}
+html[data-zm-mode="light"] body:has(.zm-shell) #zmPlat,
+html[data-zm-mode="light"] body:has(.zm-shell) #zmPlat .hd,
+html[data-zm-mode="light"] body:has(.zm-shell) #zmPlat .item,
+body[data-zm-mode="light"]:has(.zm-shell) #zmPlat,
+body[data-zm-mode="light"]:has(.zm-shell) #zmPlat .hd,
+body[data-zm-mode="light"]:has(.zm-shell) #zmPlat .item,
+body.light:has(.zm-shell) #zmPlat,
+body.light:has(.zm-shell) #zmPlat .hd,
+body.light:has(.zm-shell) #zmPlat .item{
+  background:#FFFFFF!important;color:#1B2942!important;border-color:#D8E2F0!important;
+}
+html[data-zm-mode="light"] body:has(.zm-shell) #zmPlat .tabs button,
+body[data-zm-mode="light"]:has(.zm-shell) #zmPlat .tabs button,
+body.light:has(.zm-shell) #zmPlat .tabs button{
+  background:#EAF2FC!important;color:#315577!important;border-color:#D3E2F4!important;
+}
+html[data-zm-mode="light"] body:has(.zm-shell) #zmPlat textarea,
+html[data-zm-mode="light"] body:has(.zm-shell) #zmPlat pre,
+body[data-zm-mode="light"]:has(.zm-shell) #zmPlat textarea,
+body[data-zm-mode="light"]:has(.zm-shell) #zmPlat pre,
+body.light:has(.zm-shell) #zmPlat textarea,
+body.light:has(.zm-shell) #zmPlat pre{
+  background:#F5F8FF!important;color:#1B2942!important;border-color:#D3E2F4!important;
+}
