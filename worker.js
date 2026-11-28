@@ -2793,7 +2793,7 @@ if (method === "POST" && rejectPasswordMatch) {
       ).bind(session.student_id).first();
       return reply(request, env, {
         success:true,
-        preferences: normalizeStudentPreferences(safeJsonParse(row?.preferences_json, {mode:'dark'}))
+        preferences: normalizeStudentPreferences(row?.preferences_json ? safeJsonParse(row.preferences_json, {mode:'dark'}) : {mode:'dark'})
       });
     }
     const body = await readBody(request);
