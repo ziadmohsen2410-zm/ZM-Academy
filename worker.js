@@ -4631,6 +4631,9 @@ if (method === "POST" && rejectPasswordMatch) {
     if (method==='PUT' && path==='/api/student/platform/subjects/order') {
       const body=await readBody(request), ids=Array.isArray(body?.subject_ids)?body.subject_ids.map(Number).filter(n=>Number.isInteger(n)&&n>0).slice(0,100):[];
       const unique=[...new Set(ids)];
+      const enrolled=await env.DB.prepare('SELECT subject_id FROM student_subjects WHERE student_id=?').bind(session.student_id).all();
+      const allowed=new Set((enrolled.results||[]).map(x=>Number(x.subject_id)));
+      if(unique.some(id=>!allowed.has(id)))return reply(request,env,{success:false,error:'لا يمكن ترتيب مادة غير مسجل بها حسابك.'},400);
       await env.DB.prepare(`INSERT INTO student_subject_orders(student_id,subject_ids_json,updated_at) VALUES(?,?,datetime('now')) ON CONFLICT(student_id) DO UPDATE SET subject_ids_json=excluded.subject_ids_json,updated_at=datetime('now')`).bind(session.student_id,JSON.stringify(unique)).run();
       return reply(request,env,{success:true,subject_ids:unique});
     }
