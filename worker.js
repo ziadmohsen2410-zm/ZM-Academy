@@ -2787,17 +2787,27 @@ if (method === "POST" && rejectPasswordMatch) {
         updated_at TEXT NOT NULL DEFAULT (datetime('now'))
       )
     `).run();
+    const cleanPreferences = (value) => {
+      const raw = value && typeof value === 'object' && !Array.isArray(value) ? value : {};
+      const prefs = {};
+      if (['dark','light'].includes(raw.mode)) prefs.mode = raw.mode;
+      if (typeof raw.primary === 'string' && /^#[0-9a-fA-F]{6}$/.test(raw.primary)) prefs.primary = raw.primary;
+      if (typeof raw.secondary === 'string' && /^#[0-9a-fA-F]{6}$/.test(raw.secondary)) prefs.secondary = raw.secondary;
+      if (['normal','large','xlarge'].includes(raw.fontSize)) prefs.fontSize = raw.fontSize;
+      return prefs;
+    };
     if (method === 'GET') {
       const row = await env.DB.prepare(
         'SELECT preferences_json FROM student_preferences WHERE student_id=?'
       ).bind(session.student_id).first();
-      return reply(request, env, {
-        success:true,
-        preferences: normalizeStudentPreferences(row?.preferences_json ? safeJsonParse(row.preferences_json, {mode:'dark'}) : {mode:'dark'})
-      });
+      let stored = {mode:'dark'};
+      if (row?.preferences_json) {
+        try { stored = JSON.parse(row.preferences_json); } catch { stored = {mode:'dark'}; }
+      }
+      return reply(request, env, {success:true, preferences:cleanPreferences(stored)});
     }
     const body = await readBody(request);
-    const prefs = normalizeStudentPreferences(body?.preferences);
+    const prefs = cleanPreferences(body?.preferences);
     await env.DB.prepare(`
       INSERT INTO student_preferences(student_id,preferences_json,updated_at)
       VALUES(?,?,datetime('now'))
