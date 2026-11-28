@@ -670,6 +670,39 @@ async function ensureStudentPhotosTable(env) {
 }
 
 // جداول متابعة تقدم الطالب والمفضلة وأيام النشاط
+async function ensureColumn(env, table, column, ddl) {
+  // Verify live D1 schema before altering it. Swallowing every ALTER error
+  // allowed later SELECT statements to fail with an opaque internal 500.
+  const allowedTables = new Set(['admin_users','students','orders','materials','subjects','exam_attempts','student_material_progress','student_favorites']);
+  if (!allowedTables.has(table) || !/^[a-z_]+$/.test(column)) throw new Error('Unsupported schema migration target.');
+  const inspect = async () => {
+    const result = await env.DB.prepare(`PRAGMA table_info(${table})`).all();
+    return result.results || [];
+  };
+  let columns = await inspect();
+  if (!columns.length) {
+    // Core tables must exist before extending them. Optional tables such as
+    // exam_attempts may be created later in this same schema bootstrap.
+    if (['admin_users','students','orders','materials','subjects'].includes(table)) {
+      throw new Error(`Required database table is missing: ${table}. Check the base D1 schema before serving requests.`);
+    }
+    return false;
+  }
+  if (columns.some(item => item.name === column)) return true;
+  try {
+    await env.DB.prepare(`ALTER TABLE ${table} ADD COLUMN ${column} ${ddl}`).run();
+  } catch (error) {
+    columns = await inspect();
+    if (!columns.some(item => item.name === column)) {
+      console.error('SCHEMA_COLUMN_MIGRATION_ERROR:', {table,column,message:error?.message||String(error)});
+      throw new Error(`Database schema is missing ${table}.${column}; migration failed.`);
+    }
+  }
+  columns = await inspect();
+  if (!columns.some(item => item.name === column)) throw new Error(`Database schema verification failed for ${table}.${column}.`);
+  return true;
+}
+
 async function ensureStudentLearningTables(env) {
   await env.DB.batch([
     env.DB.prepare(`
@@ -699,6 +732,13 @@ async function ensureStudentLearningTables(env) {
     `)
   ]);
   await ensureColumn(env, 'student_material_progress', 'completed_at', 'TEXT');
+  // Older production installs may have the favorites table without its timestamp.
+  await ensureColumn(env, 'student_favorites', 'created_at', 'TEXT');
+  await env.DB.prepare(`
+    UPDATE student_favorites
+    SET created_at = COALESCE(NULLIF(created_at, ''), CURRENT_TIMESTAMP)
+    WHERE created_at IS NULL OR created_at = ''
+  `).run();
 }
 
 async function route(request, env) {
@@ -3442,6 +3482,52 @@ if (method === "POST" && rejectPasswordMatch) {
       }, 409);
     }
 
+    // تفضيلات الطالب: يجب أن تكون داخل المسار المحمي قبل الـ fallback العام.
+    if (path === "/api/student/preferences" && ["GET", "PUT"].includes(method)) {
+      await env.DB.prepare(`
+        CREATE TABLE IF NOT EXISTS student_preferences (
+          student_id INTEGER PRIMARY KEY,
+          preferences_json TEXT NOT NULL DEFAULT '{}',
+          updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+        )
+      `).run();
+
+      if (method === "GET") {
+        const row = await env.DB.prepare(
+          "SELECT preferences_json FROM student_preferences WHERE student_id = ?"
+        ).bind(session.student_id).first();
+        let saved = {};
+        try {
+          const parsed = JSON.parse(row?.preferences_json || "{}");
+          if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) saved = parsed;
+        } catch {}
+        const preferences = {
+          mode: ["dark", "light"].includes(saved.mode) ? saved.mode : "dark",
+          fontSize: ["normal", "large", "xlarge"].includes(saved.fontSize) ? saved.fontSize : "normal",
+          primary: typeof saved.primary === "string" && /^#[0-9a-fA-F]{6}$/.test(saved.primary) ? saved.primary : "#35B8FF",
+          secondary: typeof saved.secondary === "string" && /^#[0-9a-fA-F]{6}$/.test(saved.secondary) ? saved.secondary : "#9270FF"
+        };
+        return reply(request, env, { success: true, preferences });
+      }
+
+      const body = await readBody(request);
+      const raw = body?.preferences && typeof body.preferences === "object" && !Array.isArray(body.preferences) ? body.preferences : {};
+      const preferences = {
+        mode: raw.mode === "light" ? "light" : "dark",
+        fontSize: ["normal", "large", "xlarge"].includes(raw.fontSize) ? raw.fontSize : "normal",
+        primary: typeof raw.primary === "string" && /^#[0-9a-fA-F]{6}$/.test(raw.primary) ? raw.primary : "#35B8FF",
+        secondary: typeof raw.secondary === "string" && /^#[0-9a-fA-F]{6}$/.test(raw.secondary) ? raw.secondary : "#9270FF"
+      };
+      await env.DB.prepare(`
+        INSERT INTO student_preferences (student_id, preferences_json, updated_at)
+        VALUES (?, ?, datetime('now'))
+        ON CONFLICT(student_id) DO UPDATE SET
+          preferences_json = excluded.preferences_json,
+          updated_at = datetime('now')
+      `).bind(session.student_id, JSON.stringify(preferences)).run();
+      return reply(request, env, { success: true, preferences });
+    }
+
     // تسجيل خروج الطالب
     if (method === "POST" && path === "/api/student/logout") {
       await env.DB.prepare(
@@ -3646,38 +3732,6 @@ if (method === "POST" && rejectPasswordMatch) {
     if (type === 'mcq' && (!Array.isArray(b?.options) || b.options.length < 2)) return 'سؤال الاختيار من متعدد يحتاج إلى اختيارين على الأقل';
     return null;
   };
-  async function ensureColumn(env, table, column, ddl) {
-    // Verify live D1 schema before altering it. Swallowing every ALTER error
-    // allowed later SELECT statements to fail with an opaque internal 500.
-    const allowedTables = new Set(['admin_users','students','orders','materials','subjects','exam_attempts','student_material_progress']);
-    if (!allowedTables.has(table) || !/^[a-z_]+$/.test(column)) throw new Error('Unsupported schema migration target.');
-    const inspect = async () => {
-      const result = await env.DB.prepare(`PRAGMA table_info(${table})`).all();
-      return result.results || [];
-    };
-    let columns = await inspect();
-    if (!columns.length) {
-      // Core tables must exist before extending them. Optional tables such as
-      // exam_attempts may be created later in this same schema bootstrap.
-      if (['admin_users','students','orders','materials','subjects'].includes(table)) {
-        throw new Error(`Required database table is missing: ${table}. Check the base D1 schema before serving requests.`);
-      }
-      return false;
-    }
-    if (columns.some(item => item.name === column)) return true;
-    try {
-      await env.DB.prepare(`ALTER TABLE ${table} ADD COLUMN ${column} ${ddl}`).run();
-    } catch (error) {
-      columns = await inspect();
-      if (!columns.some(item => item.name === column)) {
-        console.error('SCHEMA_COLUMN_MIGRATION_ERROR:', {table,column,message:error?.message||String(error)});
-        throw new Error(`Database schema is missing ${table}.${column}; migration failed.`);
-      }
-    }
-    columns = await inspect();
-    if (!columns.some(item => item.name === column)) throw new Error(`Database schema verification failed for ${table}.${column}.`);
-    return true;
-  }
   async function ensurePlatformSchema(env) {
     // core extensions on existing tables
     await ensureColumn(env, 'admin_users', 'display_name', 'TEXT');
@@ -3912,24 +3966,6 @@ if (method === "POST" && rejectPasswordMatch) {
       return reply(request, env, {success:true, student, subjects:subjects.results||[], orders:orders.results||[], attempts:attempts.results||[]});
     }
     return reply(request, env, {success:false,error:'Not found'}, 404);
-  }
-
-  // ---- Student preferences ----
-  if (method === 'GET' && path === '/api/student/preferences') {
-    const session = await studentSession(request, env);
-    if (!session) return reply(request, env, {success:false,error:'Unauthorized'}, 401);
-    await ensurePlatformSchema(env);
-    const row = await env.DB.prepare(`SELECT preferences_json FROM student_preferences WHERE student_id=?`).bind(session.student_id).first();
-    return reply(request, env, {success:true, preferences: normalizeStudentPreferences(safeJsonParse(row?.preferences_json, {}))});
-  }
-  if (method === 'PUT' && path === '/api/student/preferences') {
-    const session = await studentSession(request, env);
-    if (!session) return reply(request, env, {success:false,error:'Unauthorized'}, 401);
-    await ensurePlatformSchema(env);
-    const body = await readBody(request);
-    const prefs = normalizeStudentPreferences(body?.preferences);
-    await env.DB.prepare(`INSERT INTO student_preferences(student_id,preferences_json,updated_at) VALUES(?,?,datetime('now')) ON CONFLICT(student_id) DO UPDATE SET preferences_json=excluded.preferences_json, updated_at=datetime('now')`).bind(session.student_id, JSON.stringify(prefs)).run();
-    return reply(request, env, {success:true});
   }
 
   // ---- Admin platform endpoints ----
