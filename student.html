@@ -1747,7 +1747,19 @@ loadDashboard();
 #zmPlat .tabs button{background:#182440;color:#eef4ff;border:1px solid rgba(135,166,230,.2);border-radius:10px;padding:8px 12px;cursor:pointer}
 #zmPlat .tabs button.active{background:linear-gradient(120deg,#D4AF62,#A9823D);color:#08101f}
 #zmPlat .bd{padding:16px}#zmPlat .item{padding:12px;border:1px solid rgba(135,166,230,.18);border-radius:12px;background:#172440;margin-bottom:10px}
-#zmPlat input[type="color"]{direction:ltr!important;writing-mode:horizontal-tb!important;unicode-bidi:isolate!important;}
+#zmPlat .zm-color-choice{width:100%;display:flex;align-items:center;gap:9px;justify-content:flex-start;background:#0c1428;color:#f4f7ff;border:1px solid rgba(135,166,230,.24);box-shadow:none;text-align:left;direction:ltr;min-height:48px}
+#zmPlat .zm-color-choice b{font:700 13px monospace;flex:1}
+#zmPlat .zm-color-swatch{width:25px;height:25px;border:2px solid #fff8;border-radius:7px;flex:none}
+#zmPlat .zm-color-choice span:last-child{font-size:11px;color:#a5b3d0;white-space:nowrap}
+#zmPlat .zm-color-picker{padding:14px;margin:12px 0;border:1px solid rgba(135,166,230,.3);border-radius:14px;background:#0c1428}
+#zmPlat .zm-color-picker[hidden]{display:none!important}
+#zmPlat .zm-color-picker-head,#zmPlat .zm-color-picker-actions{display:flex;align-items:center;justify-content:space-between;gap:8px}
+#zmPlat .zm-color-current{height:54px;border:2px solid #fff8;border-radius:10px;margin:12px 0}
+#zmPlat input[type="range"]{display:block;width:100%;height:28px;padding:0;margin:4px 0 14px;direction:ltr!important;writing-mode:horizontal-tb!important;unicode-bidi:isolate!important;accent-color:#35a8ff;touch-action:pan-y}
+#zmPlat #zmHue{background:linear-gradient(to right,red,#ff0,#0f0,#0ff,#00f,#f0f,red)}
+#zmPlat #zmHex{direction:ltr!important;text-align:left;font-family:monospace;font-weight:800;letter-spacing:1px}
+#zmPlat .zm-color-picker-actions{margin-top:12px}
+#zmPlat .zm-color-picker-actions button{flex:1}
 #zmPlat input,#zmPlat textarea,#zmPlat select{width:100%;padding:10px;border-radius:10px;border:1px solid rgba(135,166,230,.2);background:#0c1428;color:#f4f7ff;margin:6px 0 10px}
 #zmPlat .row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 #zmPlat .muted{color:#a5b3d0;font-size:13px}
@@ -1779,44 +1791,98 @@ async function render(){const b=$('#zmPlatBody'); b.innerHTML='<div class="muted
    <div><label for="pFont">حجم الخط</label><select id="pFont"><option value="normal">عادي</option><option value="large">كبير</option><option value="xlarge">كبير جدًا</option></select></div>
   </div>
   <div class="row">
-   <div><label for="pPrimary">اللون الأساسي (الأزرار والعناوين)</label><input id="pPrimary" type="color" value="${color('primary')}"></div>
-   <div><label for="pSecondary">اللون الثانوي (التدرجات والتأكيد)</label><input id="pSecondary" type="color" value="${color('secondary')}"></div>
-   <div><label for="pBackground">لون خلفية الصفحة</label><input id="pBackground" type="color" value="${color('background')}"></div>
-   <div><label for="pSurface">لون البطاقات والقوائم</label><input id="pSurface" type="color" value="${color('surface')}"></div>
-   <div><label for="pText">لون النص الأساسي</label><input id="pText" type="color" value="${color('text')}"></div>
-   <div><label for="pMuted">لون النص الثانوي</label><input id="pMuted" type="color" value="${color('muted')}"></div>
+   <div><label>اللون الأساسي (الأزرار والعناوين)</label><button type="button" class="zm-color-choice" data-color-key="primary" data-value="${color('primary')}"><span class="zm-color-swatch" style="background:${color('primary')}"></span><b>${color('primary')}</b><span>اختيار اللون</span></button></div>
+   <div><label>اللون الثانوي (التدرجات والتأكيد)</label><button type="button" class="zm-color-choice" data-color-key="secondary" data-value="${color('secondary')}"><span class="zm-color-swatch" style="background:${color('secondary')}"></span><b>${color('secondary')}</b><span>اختيار اللون</span></button></div>
+   <div><label>لون خلفية الصفحة</label><button type="button" class="zm-color-choice" data-color-key="background" data-value="${color('background')}"><span class="zm-color-swatch" style="background:${color('background')}"></span><b>${color('background')}</b><span>اختيار اللون</span></button></div>
+   <div><label>لون البطاقات والقوائم</label><button type="button" class="zm-color-choice" data-color-key="surface" data-value="${color('surface')}"><span class="zm-color-swatch" style="background:${color('surface')}"></span><b>${color('surface')}</b><span>اختيار اللون</span></button></div>
+   <div><label>لون النص الأساسي</label><button type="button" class="zm-color-choice" data-color-key="text" data-value="${color('text')}"><span class="zm-color-swatch" style="background:${color('text')}"></span><b>${color('text')}</b><span>اختيار اللون</span></button></div>
+   <div><label>لون النص الثانوي</label><button type="button" class="zm-color-choice" data-color-key="muted" data-value="${color('muted')}"><span class="zm-color-swatch" style="background:${color('muted')}"></span><b>${color('muted')}</b><span>اختيار اللون</span></button></div>
   </div>
   <div class="zm-palette-preview" id="zmPalettePreview"><strong>معاينة ألوانك</strong><span>بطاقة تجريبية</span><button type="button" tabindex="-1">زر تجريبي</button></div>
+  <div id="zmColorPicker" class="zm-color-picker" hidden>
+   <div class="zm-color-picker-head"><strong id="zmColorPickerTitle">اختيار اللون</strong><button type="button" id="zmColorPickerClose" class="secondary">إغلاق</button></div>
+   <div class="zm-color-current" id="zmColorCurrent"></div>
+   <label for="zmHue">درجة اللون</label><input id="zmHue" type="range" min="0" max="360" value="210" dir="ltr">
+   <label for="zmSaturation">تشبع اللون</label><input id="zmSaturation" type="range" min="0" max="100" value="80" dir="ltr">
+   <label for="zmBrightness">سطوع اللون</label><input id="zmBrightness" type="range" min="0" max="100" value="100" dir="ltr">
+   <label for="zmHex">كود اللون (HEX)</label><input id="zmHex" type="text" inputmode="text" maxlength="7" value="#35B8FF" dir="ltr" autocomplete="off">
+   <div class="zm-color-picker-actions"><button type="button" id="zmColorApply">اعتماد اللون</button><button type="button" id="zmColorCancel" class="secondary">إلغاء</button></div>
+  </div>
   <button id="pSave">حفظ وتطبيق الألوان على الواجهة كلها</button>
   <button id="pReset" class="secondary">استعادة ألوان ZM Academy الافتراضية</button>
   <div class="muted" style="margin-top:10px">تقدر تغيّر كل لون بشكل مستقل، والتخصيص يفضل محفوظًا لحسابك عند تسجيل الدخول من جديد.</div>
  </div>`;
  $('#pMode').value=mode;$('#pFont').value=prefs.fontSize||'normal';
  const keys=['primary','secondary','background','surface','text','muted'];
- const preview=()=>{
-  const q=id=>$('#'+id).value;
-  const el=$('#zmPalettePreview');
-  el.style.setProperty('--preview-primary',q('pPrimary'));
-  el.style.setProperty('--preview-secondary',q('pSecondary'));
-  el.style.setProperty('--preview-bg',q('pBackground'));
-  el.style.setProperty('--preview-surface',q('pSurface'));
-  el.style.setProperty('--preview-text',q('pText'));
-  el.style.setProperty('--preview-muted',q('pMuted'));
+ const getColor=k=>$('#zmPlat [data-color-key="'+k+'"]').dataset.value;
+ const setColor=(k,v,custom=true)=>{
+  const el=$('#zmPlat [data-color-key="'+k+'"]');
+  el.dataset.value=v;
+  el.querySelector('b').textContent=v;
+  el.querySelector('.zm-color-swatch').style.background=v;
+  if(custom)el.dataset.custom='1';
  };
- keys.forEach(k=>$('#p'+k[0].toUpperCase()+k.slice(1)).addEventListener('input',preview));
+ keys.forEach(k=>{if(prefs[k])$('#zmPlat [data-color-key="'+k+'"]').dataset.custom='1';});
+ const preview=()=>{
+  const el=$('#zmPalettePreview');
+  el.style.setProperty('--preview-primary',getColor('primary'));
+  el.style.setProperty('--preview-secondary',getColor('secondary'));
+  el.style.setProperty('--preview-bg',getColor('background'));
+  el.style.setProperty('--preview-surface',getColor('surface'));
+  el.style.setProperty('--preview-text',getColor('text'));
+  el.style.setProperty('--preview-muted',getColor('muted'));
+ };
+ const rgbToHsv=hex=>{
+  const n=parseInt(hex.slice(1),16),r=((n>>16)&255)/255,g=((n>>8)&255)/255,b=(n&255)/255;
+  const max=Math.max(r,g,b),min=Math.min(r,g,b),delta=max-min;
+  let h=0;if(delta){if(max===r)h=60*(((g-b)/delta)%6);else if(max===g)h=60*((b-r)/delta+2);else h=60*((r-g)/delta+4);}
+  if(h<0)h+=360;return {h,s:max?delta/max*100:0,v:max*100};
+ };
+ const hsvToHex=(h,s,v)=>{
+  s/=100;v/=100;const c=v*s,x=c*(1-Math.abs((h/60)%2-1)),m=v-c;
+  let r=0,g=0,b=0;if(h<60){r=c;g=x;}else if(h<120){r=x;g=c;}else if(h<180){g=c;b=x;}else if(h<240){g=x;b=c;}else if(h<300){r=x;b=c;}else{r=c;b=x;}
+  return '#'+[r,g,b].map(z=>Math.round((z+m)*255).toString(16).padStart(2,'0')).join('').toUpperCase();
+ };
+ let editingKey=null,editingHsv=null;
+ const picker=$('#zmColorPicker'),hexInput=$('#zmHex');
+ const updatePicker=()=>{
+  const hex=hsvToHex(editingHsv.h,editingHsv.s,editingHsv.v);
+  $('#zmHue').value=Math.round(editingHsv.h);$('#zmSaturation').value=Math.round(editingHsv.s);$('#zmBrightness').value=Math.round(editingHsv.v);
+  hexInput.value=hex;$('#zmColorCurrent').style.background=hex;
+  $('#zmSaturation').style.background='linear-gradient(to right,#888,'+hsvToHex(editingHsv.h,100,100)+')';
+  $('#zmBrightness').style.background='linear-gradient(to right,#000,'+hsvToHex(editingHsv.h,editingHsv.s,100)+')';
+ };
+ const openColorPicker=k=>{
+  editingKey=k;editingHsv=rgbToHsv(getColor(k));
+  $('#zmColorPickerTitle').textContent='اختيار '+({primary:'اللون الأساسي',secondary:'اللون الثانوي',background:'لون الخلفية',surface:'لون البطاقات',text:'لون النص الأساسي',muted:'لون النص الثانوي'}[k]||'اللون'));
+  picker.hidden=false;updatePicker();
+ };
+ document.querySelectorAll('#zmPlat [data-color-key]').forEach(el=>el.addEventListener('click',()=>openColorPicker(el.dataset.colorKey)));
+ ['zmHue','zmSaturation','zmBrightness'].forEach(id=>$('#'+id).addEventListener('input',()=>{
+  editingHsv={h:Number($('#zmHue').value),s:Number($('#zmSaturation').value),v:Number($('#zmBrightness').value)};updatePicker();
+ }));
+ hexInput.addEventListener('input',()=>{
+  if(/^#[0-9a-f]{6}$/i.test(hexInput.value)){editingHsv=rgbToHsv(hexInput.value);updatePicker();}
+ });
+ const closePicker=()=>{picker.hidden=true;};
+ $('#zmColorPickerClose').onclick=closePicker;$('#zmColorCancel').onclick=closePicker;
+ $('#zmColorApply').onclick=()=>{
+  if(!editingKey)return;
+  const hex=/^#[0-9a-f]{6}$/i.test(hexInput.value)?hexInput.value.toUpperCase():hsvToHex(editingHsv.h,editingHsv.s,editingHsv.v);
+  setColor(editingKey,hex);preview();closePicker();
+ };
  $('#pMode').onchange=()=>{
   const d=defaults($('#pMode').value);
   for(const k of ['background','surface','text','muted']){
-   const el=$('#p'+k[0].toUpperCase()+k.slice(1));
-   if(el.dataset.custom!=='1')el.value=d[k];
+   const el=$('#zmPlat [data-color-key="'+k+'"]');
+   if(el.dataset.custom!=='1')setColor(k,d[k],false);
   }
   preview();
  };
- keys.forEach(k=>$('#p'+k[0].toUpperCase()+k.slice(1)).addEventListener('change',e=>e.target.dataset.custom='1'));
  preview();
  $('#pSave').onclick=async()=>{
   const np={mode:$('#pMode').value,fontSize:$('#pFont').value};
-  for(const k of keys)np[k]=$('#p'+k[0].toUpperCase()+k.slice(1)).value;
+  for(const k of keys)np[k]=getColor(k);
   try{const saved=await api('/api/student/preferences',{method:'PUT',body:JSON.stringify({preferences:np})});applyPrefs(saved.preferences||np);showMsg('تم حفظ ألوان الواجهة بالكامل وتطبيقها.',true);}
   catch(e){showMsg('تعذر حفظ التخصيص: '+e.message,false);}
  };
