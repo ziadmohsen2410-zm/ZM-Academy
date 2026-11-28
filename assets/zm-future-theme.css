@@ -744,3 +744,42 @@ body.light:has(.zm-shell) #studentInfo *{
   color:#174F7A!important;
   -webkit-text-fill-color:#174F7A!important;
 }
+
+
+/* Student platform service tabs: override the global light-mode button gradient. */
+html[data-zm-mode="light"] body:has(.zm-shell) #zmPlat .tabs button,
+body[data-zm-mode="light"]:has(.zm-shell) #zmPlat .tabs button,
+body.light:has(.zm-shell) #zmPlat .tabs button{
+  background:#EAF2FC!important;
+  background-image:none!important;
+  color:#174F7A!important;
+  -webkit-text-fill-color:#174F7A!important;
+  border:1px solid #BFD5EC!important;
+  font-weight:800!important;
+  opacity:1!important;
+  text-shadow:none!important;
+}
+html[data-zm-mode="light"] body:has(.zm-shell) #zmPlat .tabs button.active,
+body[data-zm-mode="light"]:has(.zm-shell) #zmPlat .tabs button.active,
+body.light:has(.zm-shell) #zmPlat .tabs button.active{
+  background:linear-gradient(115deg,#247FB8,#7656CE)!important;
+  background-image:linear-gradient(115deg,#247FB8,#7656CE)!important;
+  color:#FFFFFF!important;
+  -webkit-text-fill-color:#FFFFFF!important;
+  border-color:transparent!important;
+  box-shadow:0 3px 10px rgba(36,127,184,.2)!important;
+}
+html[data-zm-mode="light"] body:has(.zm-shell) #zmPlat .hd,
+body[data-zm-mode="light"]:has(.zm-shell) #zmPlat .hd,
+body.light:has(.zm-shell) #zmPlat .hd{
+  color:#173653!important;
+}
+html[data-zm-mode="light"] body:has(.zm-shell) #zmPlat .hd button,
+body[data-zm-mode="light"]:has(.zm-shell) #zmPlat .hd button,
+body.light:has(.zm-shell) #zmPlat .hd button{
+  background:#EAF2FC!important;
+  background-image:none!important;
+  color:#174F7A!important;
+  -webkit-text-fill-color:#174F7A!important;
+  border:1px solid #BFD5EC!important;
+}
