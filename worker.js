@@ -3441,7 +3441,6 @@ if (method === "POST" && rejectPasswordMatch) {
 
     // طلبات الطالب ومشترياته مع تحديد العناصر المخفية
     if (method === "GET" && path === "/api/student/purchases") {
-      await ensureStudentHiddenPurchasesTable(env);
       const rows = await env.DB.prepare(
         `SELECT o.id AS order_id, o.status, o.created_at,
                 m.id AS material_id, m.title, m.type,
