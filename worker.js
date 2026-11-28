@@ -2801,8 +2801,9 @@ if (method === "POST" && rejectPasswordMatch) {
       const raw = value && typeof value === 'object' && !Array.isArray(value) ? value : {};
       const prefs = {};
       if (['dark','light'].includes(raw.mode)) prefs.mode = raw.mode;
-      if (typeof raw.primary === 'string' && /^#[0-9a-fA-F]{6}$/.test(raw.primary)) prefs.primary = raw.primary;
-      if (typeof raw.secondary === 'string' && /^#[0-9a-fA-F]{6}$/.test(raw.secondary)) prefs.secondary = raw.secondary;
+      for (const key of ['primary','secondary','background','surface','text','muted']) {
+        if (typeof raw[key] === 'string' && /^#[0-9a-fA-F]{6}$/.test(raw[key])) prefs[key] = raw[key];
+      }
       if (['normal','large','xlarge'].includes(raw.fontSize)) prefs.fontSize = raw.fontSize;
       return prefs;
     };
@@ -3703,8 +3704,9 @@ if (method === "POST" && rejectPasswordMatch) {
     const raw=value&&typeof value==='object'&&!Array.isArray(value)?value:{};
     const prefs={};
     if(['dark','light'].includes(raw.mode)) prefs.mode=raw.mode;
-    if(typeof raw.primary==='string' && /^#[0-9a-fA-F]{6}$/.test(raw.primary)) prefs.primary=raw.primary;
-    if(typeof raw.secondary==='string' && /^#[0-9a-fA-F]{6}$/.test(raw.secondary)) prefs.secondary=raw.secondary;
+    for (const key of ['primary','secondary','background','surface','text','muted']) {
+      if(typeof raw[key]==='string' && /^#[0-9a-fA-F]{6}$/.test(raw[key])) prefs[key]=raw[key];
+    }
     if(['normal','large','xlarge'].includes(raw.fontSize)) prefs.fontSize=raw.fontSize;
     return prefs;
   };
