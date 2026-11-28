@@ -1765,7 +1765,7 @@ loadDashboard();
 #zmPlat .muted{color:#a5b3d0;font-size:13px}
 @media(max-width:700px){#zmPlat .row{grid-template-columns:1fr}}
 </style>
-<button id="zmPlatBtn" type="button">منصتي</button>
+<button id="zmPlatBtn" type="button" aria-label="فتح خدمات المنصة" aria-controls="zmPlat" aria-expanded="false" title="خدمات المنصة"><span aria-hidden="true">✦</span></button>
 <div id="zmPlat" aria-hidden="true"><div class="hd"><strong>خدمات المنصة</strong><button id="zmPlatClose" style="background:#182440;color:#fff;border:1px solid rgba(135,166,230,.2);border-radius:10px;padding:8px 12px">إغلاق</button></div><div class="tabs"><button data-t="notif" class="active">الإشعارات</button><button data-t="exams">الاختبارات</button><button data-t="ai">مساعد AI</button><button data-t="prefs">تخصيص الواجهة</button></div><div class="bd"><div id="zmPlatBody" class="muted">جارٍ التحميل...</div></div></div>
 <script>
 (()=>{const API='https://zm-academy-api.ziadmohsen4567.workers.dev';const key='zm_student_token';const getToken=()=>{try{return localStorage.getItem(key)||''}catch{return ''}};const $=s=>document.querySelector(s);const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c]));
@@ -1912,8 +1912,14 @@ async function startExam(id,activeAttemptId){ const box=document.getElementById(
 }
 function applyPrefs(p){applyStudentPreferences(p);}
 try{ const cached=JSON.parse(localStorage.getItem('zm_student_prefs_cache')||'null'); if(cached) applyPrefs(cached); }catch{}
-$('#zmPlatBtn').onclick=()=>{ $('#zmPlat').classList.add('open'); render(); }; $('#zmPlatClose').onclick=()=>$('#zmPlat').classList.remove('open');
-document.querySelectorAll('#zmPlat .tabs button').forEach(b=>b.onclick=()=>setTab(b.dataset.t));
+const platformButton=document.getElementById('zmPlatBtn');
+const platformPanel=document.getElementById('zmPlat');
+const closePlatform=()=>{platformPanel.classList.remove('open');platformPanel.setAttribute('aria-hidden','true');platformButton.setAttribute('aria-expanded','false');};
+const openPlatform=()=>{platformPanel.classList.add('open');platformPanel.setAttribute('aria-hidden','false');platformButton.setAttribute('aria-expanded','true');render();};
+platformButton.addEventListener('click',ev=>{ev.preventDefault();ev.stopPropagation();if(platformPanel.classList.contains('open'))closePlatform();else openPlatform();});
+document.getElementById('zmPlatClose').addEventListener('click',closePlatform);
+document.querySelectorAll('#zmPlat .tabs button').forEach(b=>b.addEventListener('click',()=>setTab(b.dataset.t)));
+document.addEventListener('keydown',ev=>{if(ev.key==='Escape')closePlatform();});
 })();
 </script>
 
@@ -1925,5 +1931,27 @@ document.querySelectorAll('#zmPlat .tabs button').forEach(b=>b.onclick=()=>setTa
   }
 }catch(e){}})();
 </script>
+
+<style id="zm-platform-floating-control">
+#zmPlatBtn{
+ position:fixed!important;left:18px!important;right:auto!important;bottom:20px!important;
+ width:48px!important;height:48px!important;min-width:48px!important;min-height:48px!important;
+ padding:0!important;display:grid!important;place-items:center!important;
+ border-radius:50%!important;border:1px solid rgba(212,175,98,.42)!important;
+ background:rgba(17,27,52,.88)!important;color:#D4AF62!important;
+ font-size:21px!important;line-height:1!important;
+ box-shadow:0 5px 18px rgba(0,0,0,.22)!important;z-index:10001!important;
+ backdrop-filter:blur(12px);-webkit-tap-highlight-color:transparent;
+}
+#zmPlatBtn span{display:block;transform:translateY(-1px)}
+#zmPlatBtn:focus-visible{outline:2px solid #D4AF62;outline-offset:3px}
+#zmPlat{z-index:10000!important;inset:auto 14px 78px 14px!important;width:auto!important;max-width:720px!important;max-height:min(76vh,680px)!important;margin:0 auto!important}
+#zmPlat[aria-hidden="true"]{pointer-events:none}
+#zmPlat.open{pointer-events:auto}
+@media(max-width:560px){
+ #zmPlatBtn{left:14px!important;right:auto!important;bottom:16px!important;width:46px!important;height:46px!important;min-width:46px!important;min-height:46px!important}
+ #zmPlat{left:10px!important;right:10px!important;bottom:72px!important;max-height:78vh!important}
+}
+</style>
 </body>
 </html>
