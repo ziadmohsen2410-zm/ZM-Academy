@@ -6,3 +6,5 @@ INSERT OR REPLACE INTO student_hidden_purchases (student_id, order_id) VALUES (9
 INSERT OR REPLACE INTO student_material_progress (student_id, material_id, last_page) VALUES (990001, 990001, 3);
 INSERT OR REPLACE INTO student_favorites (student_id, material_id) VALUES (990001, 990001);
 INSERT OR REPLACE INTO preview_material_notes (material_id, note) VALUES (990001, 'recursive dependency fixture');
+
+INSERT OR REPLACE INTO materials (id, subject_id, title, type, price, is_free, file_key) VALUES (990002, 990001, 'Preview rejected-order fixture', 'lesson', 15, 0, NULL);

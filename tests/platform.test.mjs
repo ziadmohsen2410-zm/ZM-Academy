@@ -864,6 +864,11 @@ test("isolated Preview smoke test is bound only to the Preview D1 database", () 
   assert.ok(workflow.includes("/api/admin/device-requests"));
   assert.ok(workflow.includes("/api/parent/link-request"));
   assert.ok(workflow.includes("/api/parent/children"));
+  assert.ok(workflow.includes("SECOND_DEVICE_TOKEN"));
+  assert.ok(workflow.includes("DEVICE_APPROVAL_REQUIRED"));
+  assert.ok(workflow.includes("ORDER_ALREADY_EXISTS"));
+  assert.ok(workflow.includes("REJECTED_ORDER_ID"));
+  assert.ok(workflow.includes("990002"));
   assert.ok(fixture.includes("preview_material_notes"));
   assert.ok(fixture.includes("CREATE TABLE IF NOT EXISTS student_accounts"));
   assert.ok(read("migrations/004_preview_student_accounts.sql").includes("CREATE TABLE IF NOT EXISTS student_accounts"));
