@@ -16,4 +16,3 @@ CREATE TABLE IF NOT EXISTS teacher_content_submissions (
 );
 CREATE INDEX IF NOT EXISTS idx_teacher_content_status ON teacher_content_submissions(status, id);
 CREATE INDEX IF NOT EXISTS idx_teacher_content_teacher ON teacher_content_submissions(teacher_admin_id, id);
-ALTER TABLE materials ADD COLUMN external_url TEXT;
