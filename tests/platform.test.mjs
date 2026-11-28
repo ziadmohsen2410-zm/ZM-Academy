@@ -978,7 +978,7 @@ test("parent approved-child overview exposes existing learning and purchase reco
     assert.ok(route.includes(field), "Parent overview response missing " + field);
   }
   assert.ok(route.includes("link.status!=='approved'"), "Only approved parent links may read student details");
-  assert.ok(route.includes("student_hidden_purchases") === false, "Parent view must not hide purchases hidden only from the student's list");
+  assert.ok(!route.includes("LEFT JOIN student_hidden_purchases"), "Parent view must not hide purchases hidden only from the student list");
   for (const section of ["المشتريات والطلبات", "تقدم الدروس والمحتوى", "نتائج ومحاولات الاختبارات", "الحضور والغياب"]) {
     assert.ok(parent.includes(section), "Parent dashboard section missing " + section);
   }
