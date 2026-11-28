@@ -945,7 +945,7 @@ test("student social experience has dedicated pages, profile settings, feed, tea
   for (const href of ["./feed.html","./subjects.html","./teachers.html","./settings.html"]) {
     assert.ok(student.includes(href), "Student navigation missing "+href);
   }
-  for (const route of ["/api/student/platform/profile","/api/student/platform/subjects/order","/api/student/platform/feed","/api/student/platform/teachers","/api/admin/platform/posts","/api/admin/platform/teachers"]) {
+  for (const route of ["/api/student/platform/profile","/api/student/platform/subjects/order","/api/student/platform/feed","/api/student/platform/teachers","/api/student/platform/messages","/api/admin/platform/posts","/api/admin/platform/teachers","/api/admin/platform/messages"]) {
     assert.ok(worker.includes(route), "Missing social API route "+route);
   }
   assert.ok(worker.includes("academy_post_likes"));
