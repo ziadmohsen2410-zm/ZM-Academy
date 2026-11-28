@@ -121,12 +121,12 @@ jobs:
           echo "::add-mask::$TEACHER_PASSWORD"
           TEACHER_CREATE_STATUS="$(curl --max-time 30 --silent --show-error -X POST "$API/api/admin/platform/teacher-accounts" \
             -H "Authorization: Bearer $ADMIN_TOKEN" -H "Content-Type: application/json" \
-            --data "{\\"username\\":\\"preview_teacher\\",\\"password\\":\\"$TEACHER_PASSWORD\\",\\"display_name\\":\\"Preview Teacher\\",\\"assignments\\":[{\\"grade\\":\\"Preview\\",\\"subject\\":\\"Logic\\"}]}" \
+            --data "{\"username\":\"preview_teacher\",\"password\":\"$TEACHER_PASSWORD\",\"display_name\":\"Preview Teacher\",\"assignments\":[{\"grade\":\"Preview\",\"subject\":\"Logic\"}]}" \
             -o /tmp/zm-teacher-create.json -w '%{http_code}')"
           python3 -c "import json,sys; d=json.load(open('/tmp/zm-teacher-create.json')); assert sys.argv[1]=='200' and d.get('success') is True, d" "$TEACHER_CREATE_STATUS"
           curl --max-time 30 --fail --silent --show-error -X POST "$API/api/admin/login" \
             -H "Content-Type: application/json" \
-            --data "{\\"username\\":\\"preview_teacher\\",\\"password\\":\\"$TEACHER_PASSWORD\\"}" \
+            --data "{\"username\":\"preview_teacher\",\"password\":\"$TEACHER_PASSWORD\"}" \
             -o /tmp/zm-teacher-login.json
           TEACHER_TOKEN="$(python3 -c "import json; print(json.load(open('/tmp/zm-teacher-login.json'))['token'])")"
           test -n "$TEACHER_TOKEN"
