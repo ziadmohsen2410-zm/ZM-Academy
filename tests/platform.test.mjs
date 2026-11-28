@@ -1004,3 +1004,19 @@ test("attendance module is isolated behind the attendance permission and support
   assert.ok(migration.includes("CREATE TABLE IF NOT EXISTS attendance_sessions"));
   assert.ok(migration.includes("CREATE TABLE IF NOT EXISTS attendance_records"));
 });
+
+
+test("teacher accounts are separate from public teacher profiles and scoped by explicit grade-subject assignments", () => {
+  const worker = read("worker.js");
+  const teacher = read("teacher.html");
+  const management = read("teacher-management.html");
+  assert.ok(worker.includes("CREATE TABLE IF NOT EXISTS teacher_assignments"));
+  assert.ok(worker.includes("INSERT INTO admin_users(username,password_hash,display_name,email,role,is_active,created_at)"));
+  assert.ok(worker.includes("WHERE teacher_admin_id=? AND grade=? AND subject=?"));
+  assert.ok(worker.includes("غير مصرح بعرض هذا الصف أو المادة"));
+  assert.ok(worker.includes("admin.role!=='teacher'"));
+  assert.ok(teacher.includes("/api/admin/platform/teacher-portal/me"));
+  assert.ok(teacher.includes("/api/admin/platform/teacher-portal/roster"));
+  assert.ok(management.includes("/api/admin/platform/teacher-accounts"));
+  assert.ok(!worker.includes("hasPerm('teacher','attendance')"));
+});
