@@ -174,7 +174,13 @@ test("student preferences accept only supported themes, colors, and font sizes",
   assert.ok(worker.includes("/^#[0-9a-fA-F]{6}$/"));
   assert.ok(worker.includes("['dark','light'].includes(raw.mode)"));
   assert.ok(worker.includes("['normal','large','xlarge'].includes(raw.fontSize)"));
-  assert.ok(worker.includes("normalizeStudentPreferences(body?.preferences)"));
+  assert.ok(worker.includes("cleanPreferences(body?.preferences)"));
+  assert.ok(worker.includes("Student preferences must be handled before the generic"));
+  const helperStart = worker.indexOf("async function ensureStudentLearningTables");
+  const helperEnd = worker.indexOf("\nasync function route", helperStart);
+  const learningHelper = worker.slice(helperStart, helperEnd);
+  assert.ok(learningHelper.includes("PRAGMA table_info(student_material_progress)"));
+  assert.ok(!learningHelper.includes("ensureColumn("), "Module-level learning helper must not call route-scoped schema helper");
 });
 
 test("students can delete rejected purchases and hide completed purchases without deleting records", () => {
@@ -684,10 +690,29 @@ test("admin order queue only shows pending requests; approval preserves entitlem
   assert.ok(!admin.includes('id="orderFilter"'));
 });
 
-test("all primary pages reference the refreshed shared black-gold stylesheet", () => {
-  for (const page of ["index.html","admin.html","login.html","register.html","student.html","parent.html"]) {
+test("all primary pages reference the refreshed shared stylesheet with current cache keys", () => {
+  for (const page of ["index.html","admin.html","login.html","register.html","parent.html"]) {
     assert.ok(read(page).includes("zm-future-theme.css?v=4"), "Stale theme cache key in " + page);
   }
+  assert.ok(read("student.html").includes("zm-future-theme.css?v=5"), "Student theme cache key was not refreshed");
+});
+
+test("student preferences route runs before the generic student API fallback", () => {
+  const worker = read("worker.js");
+  const prefs = worker.indexOf("Student preferences must be handled before the generic");
+  const generic = worker.indexOf('if (path.startsWith("/api/student/")');
+  assert.ok(prefs >= 0 && generic > prefs, "Student preferences route is unreachable");
+  assert.ok(worker.includes("CREATE TABLE IF NOT EXISTS student_preferences"));
+  assert.ok(!worker.includes("SELECT f.material_id, f.created_at"), "Favorites query still requires a legacy created_at column");
+});
+
+test("student dashboard defaults to black blue-violet and persists the selected theme", () => {
+  const student = read("student.html");
+  const theme = read("assets/zm-future-theme.css");
+  assert.ok(student.includes('setStudentTheme("dark",false)'));
+  assert.ok(student.includes('api("/api/student/preferences",{method:"PUT"'));
+  assert.ok(theme.includes("definitive Future dark palette (blue / violet, never gold)"));
+  assert.ok(theme.includes("--zm-primary:#35B8FF;--zm-secondary:#9270FF"));
 });
 
 

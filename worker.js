@@ -678,6 +678,7 @@ async function ensureStudentLearningTables(env) {
         material_id INTEGER NOT NULL,
         last_page INTEGER NOT NULL DEFAULT 1,
         updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
+        completed_at TEXT,
         PRIMARY KEY (student_id, material_id)
       )
     `),
@@ -698,7 +699,16 @@ async function ensureStudentLearningTables(env) {
       )
     `)
   ]);
-  await ensureColumn(env, 'student_material_progress', 'completed_at', 'TEXT');
+  // This helper is module-scoped; keep schema upgrades local to this helper.
+  let columns = await env.DB.prepare("PRAGMA table_info(student_material_progress)").all();
+  if (!(columns.results || []).some(column => column.name === "completed_at")) {
+    try {
+      await env.DB.prepare("ALTER TABLE student_material_progress ADD COLUMN completed_at TEXT").run();
+    } catch (error) {
+      columns = await env.DB.prepare("PRAGMA table_info(student_material_progress)").all();
+      if (!(columns.results || []).some(column => column.name === "completed_at")) throw error;
+    }
+  }
 }
 
 async function route(request, env) {
@@ -2776,7 +2786,49 @@ if (method === "POST" && rejectPasswordMatch) {
       expiresInDays: SESSION_DAYS,
     });
           }
-    // مسارات الطالب المحمية بتسجيل الدخول
+    // Student preferences must be handled before the generic /api/student/* fallback.
+  if (path === '/api/student/preferences' && ['GET','PUT'].includes(method)) {
+    const session = await studentSession(request, env);
+    if (!session) return reply(request, env, {success:false,error:'يلزم تسجيل الدخول.'}, 401);
+    await env.DB.prepare(`
+      CREATE TABLE IF NOT EXISTS student_preferences (
+        student_id INTEGER PRIMARY KEY,
+        preferences_json TEXT NOT NULL DEFAULT '{}',
+        updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+      )
+    `).run();
+    const cleanPreferences = (value) => {
+      const raw = value && typeof value === 'object' && !Array.isArray(value) ? value : {};
+      const prefs = {};
+      if (['dark','light'].includes(raw.mode)) prefs.mode = raw.mode;
+      if (typeof raw.primary === 'string' && /^#[0-9a-fA-F]{6}$/.test(raw.primary)) prefs.primary = raw.primary;
+      if (typeof raw.secondary === 'string' && /^#[0-9a-fA-F]{6}$/.test(raw.secondary)) prefs.secondary = raw.secondary;
+      if (['normal','large','xlarge'].includes(raw.fontSize)) prefs.fontSize = raw.fontSize;
+      return prefs;
+    };
+    if (method === 'GET') {
+      const row = await env.DB.prepare(
+        'SELECT preferences_json FROM student_preferences WHERE student_id=?'
+      ).bind(session.student_id).first();
+      let stored = {mode:'dark'};
+      if (row?.preferences_json) {
+        try { stored = JSON.parse(row.preferences_json); } catch { stored = {mode:'dark'}; }
+      }
+      return reply(request, env, {success:true, preferences:cleanPreferences(stored)});
+    }
+    const body = await readBody(request);
+    const prefs = cleanPreferences(body?.preferences);
+    await env.DB.prepare(`
+      INSERT INTO student_preferences(student_id,preferences_json,updated_at)
+      VALUES(?,?,datetime('now'))
+      ON CONFLICT(student_id) DO UPDATE SET
+        preferences_json=excluded.preferences_json,
+        updated_at=datetime('now')
+    `).bind(session.student_id, JSON.stringify(prefs)).run();
+    return reply(request, env, {success:true, preferences:prefs});
+  }
+
+  // مسارات الطالب المحمية بتسجيل الدخول
   if (path.startsWith("/api/student/") && !path.startsWith("/api/student/platform/")) {
     const session = await studentSession(request, env);
 
@@ -2798,8 +2850,12 @@ if (method === "POST" && rejectPasswordMatch) {
       path === "/api/student/favorites" ||
       /^\/api\/student\/favorites\/\d+$/.test(path)
     ) {
+      let favoritesStage = "ensure-learning-tables";
+      try {
       await ensureStudentLearningTables(env);
+      favoritesStage = "ensure-archived-subjects";
       await ensureArchivedSubjectsTable(env);
+      favoritesStage = "ensure-archived-materials";
       await ensureArchivedMaterialsTable(env);
 
       if (method === "GET" && path === "/api/student/progress") {
@@ -2831,7 +2887,7 @@ if (method === "POST" && rejectPasswordMatch) {
 
       if (method === "GET" && path === "/api/student/favorites") {
         const rows = await env.DB.prepare(`
-          SELECT f.material_id, f.created_at,
+          SELECT f.material_id,
                  m.title, m.type, m.price, m.is_free,
                  sub.name AS subject_name
           FROM student_favorites f
@@ -2847,7 +2903,7 @@ if (method === "POST" && rejectPasswordMatch) {
             AND m.id NOT IN (
               SELECT material_id FROM archived_materials
             )
-          ORDER BY f.created_at DESC
+          ORDER BY f.rowid DESC
           LIMIT 200
         `).bind(session.student_id).all();
 
@@ -2908,6 +2964,22 @@ if (method === "POST" && rejectPasswordMatch) {
           success: true,
           message: "تمت إزالة المحتوى من المفضلة.",
         });
+      }
+
+      } catch (error) {
+        console.error("STUDENT_FAVORITES_ROUTE_ERROR:", {
+          stage: favoritesStage,
+          method,
+          path,
+          studentId: session.student_id,
+          message: error?.message || String(error)
+        });
+        return reply(request, env, {
+          success:false,
+          error:"تعذر تنفيذ طلب المفضلة بسبب خطأ في قاعدة البيانات.",
+          code:"STUDENT_FAVORITES_ERROR",
+          stage:favoritesStage
+        }, 500);
       }
 
       if (method === "POST" && path === "/api/student/progress") {
@@ -3912,24 +3984,6 @@ if (method === "POST" && rejectPasswordMatch) {
       return reply(request, env, {success:true, student, subjects:subjects.results||[], orders:orders.results||[], attempts:attempts.results||[]});
     }
     return reply(request, env, {success:false,error:'Not found'}, 404);
-  }
-
-  // ---- Student preferences ----
-  if (method === 'GET' && path === '/api/student/preferences') {
-    const session = await studentSession(request, env);
-    if (!session) return reply(request, env, {success:false,error:'Unauthorized'}, 401);
-    await ensurePlatformSchema(env);
-    const row = await env.DB.prepare(`SELECT preferences_json FROM student_preferences WHERE student_id=?`).bind(session.student_id).first();
-    return reply(request, env, {success:true, preferences: normalizeStudentPreferences(safeJsonParse(row?.preferences_json, {}))});
-  }
-  if (method === 'PUT' && path === '/api/student/preferences') {
-    const session = await studentSession(request, env);
-    if (!session) return reply(request, env, {success:false,error:'Unauthorized'}, 401);
-    await ensurePlatformSchema(env);
-    const body = await readBody(request);
-    const prefs = normalizeStudentPreferences(body?.preferences);
-    await env.DB.prepare(`INSERT INTO student_preferences(student_id,preferences_json,updated_at) VALUES(?,?,datetime('now')) ON CONFLICT(student_id) DO UPDATE SET preferences_json=excluded.preferences_json, updated_at=datetime('now')`).bind(session.student_id, JSON.stringify(prefs)).run();
-    return reply(request, env, {success:true});
   }
 
   // ---- Admin platform endpoints ----

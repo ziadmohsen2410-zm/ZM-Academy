@@ -149,6 +149,35 @@ jobs:
           python3 -c "import json; d=json.load(open('/tmp/zm-student-materials.json')); assert any(int(x['id'])==990001 for x in d.get('materials',[])), d"
           echo "Student registration, device approval, login, and material visibility passed."
 
+          # Student preferences must be reachable before the generic student API fallback.
+          curl --max-time 30 --fail --silent --show-error "$API/api/student/preferences" \
+            -H "Authorization: Bearer $STUDENT_TOKEN" -o /tmp/zm-student-preferences-default.json
+          python3 -c "import json; d=json.load(open('/tmp/zm-student-preferences-default.json')); assert d.get('success') is True and d.get('preferences',{}).get('mode')=='dark', d"
+          PREFS_STATUS="$(curl --max-time 30 --silent --show-error -X PUT "$API/api/student/preferences" \
+            -H "Authorization: Bearer $STUDENT_TOKEN" -H "Content-Type: application/json" \
+            --data '{"preferences":{"mode":"dark","primary":"#35B8FF","secondary":"#9270FF","fontSize":"large"}}' \
+            -o /tmp/zm-student-preferences-save.json -w '%{http_code}')"
+          python3 -c "import json,sys; d=json.load(open('/tmp/zm-student-preferences-save.json')); assert sys.argv[1]=='200' and d.get('success') is True, d" "$PREFS_STATUS"
+          curl --max-time 30 --fail --silent --show-error "$API/api/student/preferences" \
+            -H "Authorization: Bearer $STUDENT_TOKEN" -o /tmp/zm-student-preferences-readback.json
+          python3 -c "import json; p=json.load(open('/tmp/zm-student-preferences-readback.json')).get('preferences',{}); assert p.get('primary')=='#35B8FF' and p.get('secondary')=='#9270FF' and p.get('fontSize')=='large' and p.get('mode')=='dark', p"
+          echo "Student preferences GET/PUT/readback passed."
+
+          # Exercise favorite add, list, remove, and empty list against the isolated Preview D1.
+          FAVORITE_ADD_STATUS="$(curl --max-time 30 --silent --show-error -X POST "$API/api/student/favorites/990001" \
+            -H "Authorization: Bearer $STUDENT_TOKEN" -o /tmp/zm-favorite-add.json -w '%{http_code}')"
+          python3 -c "import json,sys; d=json.load(open('/tmp/zm-favorite-add.json')); assert sys.argv[1]=='201' and d.get('success') is True, d" "$FAVORITE_ADD_STATUS"
+          curl --max-time 30 --fail --silent --show-error "$API/api/student/favorites" \
+            -H "Authorization: Bearer $STUDENT_TOKEN" -o /tmp/zm-favorites-listed.json
+          python3 -c "import json; d=json.load(open('/tmp/zm-favorites-listed.json')); assert d.get('success') is True and any(int(x.get('material_id',0))==990001 for x in d.get('favorites',[])), d"
+          FAVORITE_REMOVE_STATUS="$(curl --max-time 30 --silent --show-error -X DELETE "$API/api/student/favorites/990001" \
+            -H "Authorization: Bearer $STUDENT_TOKEN" -o /tmp/zm-favorite-remove.json -w '%{http_code}')"
+          python3 -c "import json,sys; d=json.load(open('/tmp/zm-favorite-remove.json')); assert sys.argv[1]=='200' and d.get('success') is True, d" "$FAVORITE_REMOVE_STATUS"
+          curl --max-time 30 --fail --silent --show-error "$API/api/student/favorites" \
+            -H "Authorization: Bearer $STUDENT_TOKEN" -o /tmp/zm-favorites-empty.json
+          python3 -c "import json; d=json.load(open('/tmp/zm-favorites-empty.json')); assert d.get('success') is True and not any(int(x.get('material_id',0))==990001 for x in d.get('favorites',[])), d"
+          echo "Student favorites add/list/remove flow passed."
+
           # A new unapproved device must not invalidate the student's existing approved session.
           SECOND_DEVICE_TOKEN="preview-device-token-second-000000000000000000000000"
           SECOND_DEVICE_STATUS="$(curl --max-time 30 --silent --show-error -X POST "$API/api/students/login" \
@@ -279,4 +308,4 @@ jobs:
 
       - name: Clean up isolated Preview fixtures
         if: always()
-        run: wrangler d1 execute zm-academy-preview-db --remote --config wrangler.preview.toml --file=tests/preview-smoke-reset.sql
+        run: npx --yes wrangler@4 d1 execute zm-academy-preview-db --remote --config wrangler.preview.toml --file=tests/preview-smoke-reset.sql
