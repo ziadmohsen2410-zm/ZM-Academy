@@ -1427,7 +1427,9 @@ async function loadDashboard(){
     materialsData,
     progressData,
     favoritesData,
-    preferencesData
+    preferencesData,
+    profileData,
+    subjectOrderData
    ]=await Promise.all([
     api("/api/student/me"),
     api("/api/student/purchases"),
