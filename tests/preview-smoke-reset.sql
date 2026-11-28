@@ -20,26 +20,26 @@ WHERE student_id IN (
 DELETE FROM student_hidden_purchases
 WHERE order_id IN (
   SELECT id FROM orders
-  WHERE material_id = 990001
+  WHERE material_id IN (990001, 990002)
      OR student_id IN (SELECT id FROM students WHERE phone = '01000000002')
 )
 OR student_id IN (SELECT id FROM students WHERE id = 990001 OR phone = '01000000002');
 
-DELETE FROM preview_material_notes WHERE material_id = 990001;
+DELETE FROM preview_material_notes WHERE material_id IN (990001, 990002);
 
 DELETE FROM student_material_progress
-WHERE material_id = 990001
+WHERE material_id IN (990001, 990002)
    OR student_id IN (SELECT id FROM students WHERE id = 990001 OR phone = '01000000002');
 
 DELETE FROM student_favorites
-WHERE material_id = 990001
+WHERE material_id IN (990001, 990002)
    OR student_id IN (SELECT id FROM students WHERE id = 990001 OR phone = '01000000002');
 
-DELETE FROM archived_materials WHERE material_id = 990001;
+DELETE FROM archived_materials WHERE material_id IN (990001, 990002);
 DELETE FROM archived_subjects WHERE subject_id = 990001;
 
 DELETE FROM orders
-WHERE material_id = 990001
+WHERE material_id IN (990001, 990002)
    OR student_id IN (SELECT id FROM students WHERE phone = '01000000002');
 
 DELETE FROM student_subjects
@@ -53,7 +53,7 @@ WHERE username = 'preview_student'
 DELETE FROM students
 WHERE id = 990001 OR phone = '01000000002';
 
-DELETE FROM materials WHERE id = 990001;
+DELETE FROM materials WHERE id IN (990001, 990002);
 DELETE FROM subjects WHERE id = 990001;
 
 DELETE FROM admin_sessions
