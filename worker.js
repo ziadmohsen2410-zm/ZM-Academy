@@ -4015,7 +4015,7 @@ if (method === "POST" && rejectPasswordMatch) {
         const audience=clean(b?.audience_type||'all',20),value=clean(b?.audience_value,120);
         if(!['all','grade','student'].includes(audience))return reply(request,env,{success:false,error:'الجمهور المستهدف غير صالح.'},400);
         if(audience==='grade'&&!value)return reply(request,env,{success:false,error:'حدد الصف المستهدف.'},400);
-        if(audience==='student'&&!/^\\d+$/.test(value))return reply(request,env,{success:false,error:'حدد رقم الطالب الصحيح.'},400);
+        if(audience==='student'&&!/^\d+$/.test(value))return reply(request,env,{success:false,error:'حدد رقم الطالب الصحيح.'},400);
         const image=clean(b?.image_url,1000),link=clean(b?.link_url,1000);
         const validUrl=v=>!v||/^https:\/\//i.test(v);
         if(!validUrl(image)||!validUrl(link))return reply(request,env,{success:false,error:'يجب أن تبدأ الروابط بـ https://'},400);
@@ -4617,7 +4617,7 @@ if (method === "POST" && rejectPasswordMatch) {
       const rows=await env.DB.prepare(`SELECT p.*,COALESCE(NULLIF(p.created_by,''),'إدارة الأكاديمية') AS author_name,(SELECT COUNT(*) FROM academy_post_likes l WHERE l.post_id=p.id) AS likes_count,(SELECT COUNT(*) FROM academy_post_comments c WHERE c.post_id=p.id) AS comments_count,EXISTS(SELECT 1 FROM academy_post_likes l WHERE l.post_id=p.id AND l.student_id=?) AS liked FROM academy_posts p WHERE p.status='published' AND (p.audience_type='all' OR (p.audience_type='grade' AND p.audience_value=(SELECT grade FROM students WHERE id=?)) OR (p.audience_type='student' AND p.audience_value=CAST(? AS TEXT))) ORDER BY p.id DESC LIMIT 60`).bind(session.student_id,session.student_id,session.student_id).all();
       return reply(request,env,{success:true,posts:rows.results||[]});
     }
-    if (method==='POST' && /^\/api\/student\/platform\/feed\/\\d+\/like$/.test(path)) {
+    if (method==='POST' && /^\/api\/student\/platform\/feed\/\d+\/like$/.test(path)) {
       const id=Number(path.split('/')[5]);
       const post=await env.DB.prepare(`SELECT id FROM academy_posts WHERE id=? AND status='published' AND (audience_type='all' OR (audience_type='grade' AND audience_value=(SELECT grade FROM students WHERE id=?)) OR (audience_type='student' AND audience_value=CAST(? AS TEXT)))`).bind(id,session.student_id,session.student_id).first();
       if(!post)return reply(request,env,{success:false,error:'المنشور غير متاح.'},404);
@@ -4626,14 +4626,14 @@ if (method === "POST" && rejectPasswordMatch) {
       else await env.DB.prepare('INSERT OR IGNORE INTO academy_post_likes(post_id,student_id) VALUES(?,?)').bind(id,session.student_id).run();
       return reply(request,env,{success:true,liked:!existing});
     }
-    if (method==='GET' && /^\/api\/student\/platform\/feed\/\\d+\/comments$/.test(path)) {
+    if (method==='GET' && /^\/api\/student\/platform\/feed\/\d+\/comments$/.test(path)) {
       const visible=await env.DB.prepare(`SELECT id FROM academy_posts WHERE id=? AND status='published' AND (audience_type='all' OR (audience_type='grade' AND audience_value=(SELECT grade FROM students WHERE id=?)) OR (audience_type='student' AND audience_value=CAST(? AS TEXT)))`).bind(Number(path.split('/')[5]),session.student_id,session.student_id).first();
       if(!visible)return reply(request,env,{success:false,error:'المنشور غير متاح.'},404);
       const id=Number(path.split('/')[5]);
       const rows=await env.DB.prepare(`SELECT c.id,c.body,c.created_at,COALESCE(NULLIF(p.display_name,''),s.name,'طالب') AS author_name FROM academy_post_comments c JOIN students s ON s.id=c.student_id LEFT JOIN student_public_profiles p ON p.student_id=s.id WHERE c.post_id=? ORDER BY c.id ASC LIMIT 100`).bind(id).all();
       return reply(request,env,{success:true,comments:rows.results||[]});
     }
-    if (method==='POST' && /^\/api\/student\/platform\/feed\/\\d+\/comments$/.test(path)) {
+    if (method==='POST' && /^\/api\/student\/platform\/feed\/\d+\/comments$/.test(path)) {
       const id=Number(path.split('/')[5]), body=await readBody(request), comment=clean(body?.body,1000);
       if(!comment)return reply(request,env,{success:false,error:'اكتب تعليقًا أولًا.'},400);
       const post=await env.DB.prepare(`SELECT id FROM academy_posts WHERE id=? AND status='published' AND (audience_type='all' OR (audience_type='grade' AND audience_value=(SELECT grade FROM students WHERE id=?)) OR (audience_type='student' AND audience_value=CAST(? AS TEXT)))`).bind(id,session.student_id,session.student_id).first();
@@ -4651,8 +4651,8 @@ if (method === "POST" && rejectPasswordMatch) {
     const session = await studentSession(request, env);
     if (!session) return reply(request, env, {success:false,error:'Unauthorized'}, 401);
     const studentPathParts=path.split('/');
-    const isExamResumeRoute=studentPathParts.length===6&&studentPathParts[4]==='exam-attempts'&&/^\\d+$/.test(studentPathParts[5]);
-    const isExamStartRoute=studentPathParts.length===7&&studentPathParts[4]==='exams'&&studentPathParts[6]==='start'&&/^\\d+$/.test(studentPathParts[5]);
+    const isExamResumeRoute=studentPathParts.length===6&&studentPathParts[4]==='exam-attempts'&&/^\d+$/.test(studentPathParts[5]);
+    const isExamStartRoute=studentPathParts.length===7&&studentPathParts[4]==='exams'&&studentPathParts[6]==='start'&&/^\d+$/.test(studentPathParts[5]);
     if (isExamResumeRoute||isExamStartRoute) await ensureColumn(env,'exam_attempts','question_order_json','TEXT');
     if (method==='GET' && path==='/api/student/platform/notifications') {
       // Only show broadcasts and notifications explicitly addressed to this student or their grade.
