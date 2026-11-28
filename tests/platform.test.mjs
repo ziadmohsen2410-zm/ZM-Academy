@@ -168,6 +168,17 @@ test("student notifications are scoped to broadcast, matching student, or matchi
   assert.ok(!route.includes("audience_type IN ('all','student')"));
 });
 
+test("legacy favorites schema is upgraded before favorite queries use created_at", () => {
+  const worker = read("worker.js");
+  const start = worker.indexOf("async function ensureStudentLearningTables");
+  const end = worker.indexOf("\nasync function route", start);
+  const helper = worker.slice(start, end);
+  assert.ok(helper.includes('ensureLocalColumn("student_favorites", "created_at", "TEXT")'));
+  assert.ok(helper.includes("UPDATE student_favorites"));
+  assert.ok(helper.includes("PRAGMA table_info"));
+  assert.ok(helper.includes("Student learning schema verification failed"));
+});
+
 test("student preferences accept only supported themes, colors, and font sizes", () => {
   const worker = read("worker.js");
   assert.ok(worker.includes("const normalizeStudentPreferences = (value) =>"));
