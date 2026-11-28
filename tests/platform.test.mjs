@@ -8,7 +8,7 @@ const read = (name) => fs.readFileSync(path.join(process.cwd(), name), "utf8");
 test("all primary platform files are present", () => {
   for (const file of [
     "worker.js", "admin.html", "student.html", "parent.html",
-    "index.html", "login.html", "register.html", "migrations/001_platform_core.sql"
+    "index.html", "login.html", "register.html", "teacher-register.html", "migrations/001_platform_core.sql"
   ]) assert.ok(fs.existsSync(path.join(process.cwd(), file)), "Missing " + file);
 });
 
