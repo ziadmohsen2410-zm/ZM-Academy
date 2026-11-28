@@ -506,3 +506,85 @@ html[data-zm-mode="light"] :where(button,.btn,.primary,.small-btn),body[data-zm-
 html[data-zm-mode="light"] :where(.theme-toggle,.secondary,.ghost,.outline,.reset-toggle,.reset-cancel,.icon-btn),body[data-zm-mode="light"] :where(.theme-toggle,.secondary,.ghost,.outline,.reset-toggle,.reset-cancel,.icon-btn),body[data-theme="light"] :where(.theme-toggle,.secondary,.ghost,.outline,.reset-toggle,.reset-cancel,.icon-btn),body.light :where(.theme-toggle,.secondary,.ghost,.outline,.reset-toggle,.reset-cancel,.icon-btn){background:#F8F6F0!important;color:#705A32!important;-webkit-text-fill-color:#705A32!important;border-color:#E3D7BD!important}
 html[data-zm-mode="light"] a,body[data-zm-mode="light"] a,body[data-theme="light"] a,body.light a{color:#80632E}
 html[data-zm-mode="light"] :where(header,.topbar,.sidebar,.mobile-bar,.bottom-nav),body[data-zm-mode="light"] :where(header,.topbar,.sidebar,.mobile-bar,.bottom-nav),body[data-theme="light"] :where(header,.topbar,.sidebar,.mobile-bar,.bottom-nav),body.light :where(header,.topbar,.sidebar,.mobile-bar,.bottom-nav){background:rgba(255,255,255,.96)!important;border-color:#E8DFC9!important}
+
+
+/* ZM student dashboard — definitive Future dark palette (blue / violet, never gold). */
+html:not([data-zm-mode="light"]){
+  --zm-primary:#35B8FF;--zm-secondary:#9270FF;
+  --blue:var(--zm-primary);--purple:var(--zm-secondary);
+  --accent:var(--zm-primary);--accent2:var(--zm-secondary);
+  --gold:#35B8FF;--line:rgba(83,157,240,.24);
+  color-scheme:dark;
+}
+html:not([data-zm-mode="light"]) body:has(.zm-shell){
+  --bg:#05070D!important;--bg2:#080D18!important;
+  --surface:#0B1220!important;--surface2:#101B30!important;--surface3:#162642!important;
+  --panel:#0B1220!important;--panel-2:#101B30!important;
+  --text:#F5F8FF!important;--muted:#AAB8D0!important;
+  --border:rgba(83,157,240,.24)!important;--line:rgba(83,157,240,.24)!important;
+  --blue:var(--zm-primary)!important;--purple:var(--zm-secondary)!important;
+  --accent:var(--zm-primary)!important;--accent2:var(--zm-secondary)!important;
+  color-scheme:dark!important;color:#F5F8FF!important;
+  background:
+    radial-gradient(ellipse at 10% 0%,rgba(53,184,255,.11),transparent 34%),
+    radial-gradient(ellipse at 92% 100%,rgba(146,112,255,.12),transparent 36%),
+    linear-gradient(145deg,#03050A,#080D18 58%,#05070D)!important;
+}
+html:not([data-zm-mode="light"]) body:has(.zm-shell) header,
+html:not([data-zm-mode="light"]) body:has(.zm-shell) .zm-sidebar,
+html:not([data-zm-mode="light"]) body:has(.zm-shell) footer{
+  background:rgba(8,14,27,.96)!important;border-color:rgba(83,157,240,.24)!important;
+}
+html:not([data-zm-mode="light"]) body:has(.zm-shell) :where(.card,.panel,.section,.course-card,.tile,.auth-card,.item,.profile,.notice,.empty){
+  background:linear-gradient(145deg,#101B30,#0A1221)!important;
+  color:#F5F8FF!important;border-color:rgba(83,157,240,.22)!important;
+  box-shadow:0 16px 42px rgba(0,0,0,.30),inset 0 1px 0 rgba(255,255,255,.025)!important;
+}
+html:not([data-zm-mode="light"]) body:has(.zm-shell) :where(h1,h2,h3,h4,.brand,.brand-link,.eyebrow,.tag,label,a){
+  color:var(--zm-primary);
+}
+html:not([data-zm-mode="light"]) body:has(.zm-shell) :where(.muted,.sub,.hint,.description,small){color:#AAB8D0!important}
+html:not([data-zm-mode="light"]) body:has(.zm-shell) :where(input,select,textarea){
+  background:#0A1426!important;color:#F5F8FF!important;border-color:rgba(83,157,240,.30)!important;
+}
+html:not([data-zm-mode="light"]) body:has(.zm-shell) :where(button,.btn,.primary,.small-btn){
+  background:linear-gradient(115deg,var(--zm-primary),var(--zm-secondary))!important;
+  color:#06101F!important;-webkit-text-fill-color:#06101F!important;
+  border:1px solid color-mix(in srgb,var(--zm-primary) 55%,transparent)!important;
+  box-shadow:0 9px 25px rgba(53,139,236,.18)!important;
+}
+html:not([data-zm-mode="light"]) body:has(.zm-shell) :where(.secondary,.ghost,.outline,.theme-toggle,.icon-btn){
+  background:#14213A!important;color:#C7D9F5!important;-webkit-text-fill-color:#C7D9F5!important;
+  border:1px solid rgba(83,157,240,.25)!important;box-shadow:none!important;
+}
+html:not([data-zm-mode="light"]) body:has(.zm-shell) .hero,
+html:not([data-zm-mode="light"]) body:has(.zm-shell) .zm-welcome{
+  background:linear-gradient(115deg,#1269A8,#3342A0 58%,#6847B8)!important;
+  border-color:rgba(83,157,240,.35)!important;
+}
+html:not([data-zm-mode="light"]) body:has(.zm-shell) .quick-nav a:hover,
+html:not([data-zm-mode="light"]) body:has(.zm-shell) .zm-side-nav a.active{
+  color:#fff!important;background:linear-gradient(110deg,rgba(53,184,255,.18),rgba(146,112,255,.18))!important;
+  border-color:rgba(83,157,240,.35)!important;
+}
+
+/* Light mode stays pearl/white with the same blue-violet identity. */
+html[data-zm-mode="light"]{
+  --zm-primary:#258ED0;--zm-secondary:#7657D9;
+  --blue:var(--zm-primary);--purple:var(--zm-secondary);
+  --accent:var(--zm-primary);--accent2:var(--zm-secondary);
+  color-scheme:light;
+}
+html[data-zm-mode="light"] body:has(.zm-shell){
+  --bg:#F4F7FD!important;--surface:#FFFFFF!important;--surface2:#F5F8FF!important;
+  --surface3:#EAF1FF!important;--text:#17243C!important;--muted:#64748B!important;
+  --border:#D8E3F3!important;--line:#D8E3F3!important;
+  background:linear-gradient(145deg,#FFFFFF,#F1F5FD)!important;color:#17243C!important;
+}
+html[data-zm-mode="light"] body:has(.zm-shell) :where(.card,.panel,.section,.course-card,.tile,.item,.profile,.notice,.empty){
+  background:#FFFFFF!important;color:#17243C!important;border-color:#D8E3F3!important;
+}
+html[data-zm-mode="light"] body:has(.zm-shell) :where(button,.btn,.primary,.small-btn){
+  background:linear-gradient(115deg,var(--zm-primary),var(--zm-secondary))!important;
+  color:#fff!important;-webkit-text-fill-color:#fff!important;border-color:transparent!important;
+}
