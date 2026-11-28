@@ -1814,15 +1814,15 @@ async function render(){const b=$('#zmPlatBody'); b.innerHTML='<div class="muted
  </div>`;
  $('#pMode').value=mode;$('#pFont').value=prefs.fontSize||'normal';
  const keys=['primary','secondary','background','surface','text','muted'];
- const getColor=k=>$('#zmPlat [data-color-key="'+k+'"]').dataset.value;
+ const getColor=k=>document.querySelector('#zmPlat [data-color-key="'+k+'"]').dataset.value;
  const setColor=(k,v,custom=true)=>{
-  const el=$('#zmPlat [data-color-key="'+k+'"]');
+  const el=document.querySelector('#zmPlat [data-color-key="'+k+'"]');
   el.dataset.value=v;
   el.querySelector('b').textContent=v;
   el.querySelector('.zm-color-swatch').style.background=v;
   if(custom)el.dataset.custom='1';
  };
- keys.forEach(k=>{if(prefs[k])$('#zmPlat [data-color-key="'+k+'"]').dataset.custom='1';});
+ keys.forEach(k=>{if(prefs[k])document.querySelector('#zmPlat [data-color-key="'+k+'"]').dataset.custom='1';});
  const preview=()=>{
   const el=$('#zmPalettePreview');
   el.style.setProperty('--preview-primary',getColor('primary'));
@@ -1874,7 +1874,7 @@ async function render(){const b=$('#zmPlatBody'); b.innerHTML='<div class="muted
  $('#pMode').onchange=()=>{
   const d=defaults($('#pMode').value);
   for(const k of ['background','surface','text','muted']){
-   const el=$('#zmPlat [data-color-key="'+k+'"]');
+   const el=document.querySelector('#zmPlat [data-color-key="'+k+'"]');
    if(el.dataset.custom!=='1')setColor(k,d[k],false);
   }
   preview();
