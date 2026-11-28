@@ -4017,7 +4017,7 @@ if (method === "POST" && rejectPasswordMatch) {
         if(audience==='grade'&&!value)return reply(request,env,{success:false,error:'حدد الصف المستهدف.'},400);
         if(audience==='student'&&!/^\\d+$/.test(value))return reply(request,env,{success:false,error:'حدد رقم الطالب الصحيح.'},400);
         const image=clean(b?.image_url,1000),link=clean(b?.link_url,1000);
-        const validUrl=v=>!v||/^https:\\/\\//i.test(v);
+        const validUrl=v=>!v||/^https:\/\//i.test(v);
         if(!validUrl(image)||!validUrl(link))return reply(request,env,{success:false,error:'يجب أن تبدأ الروابط بـ https://'},400);
         const result=await env.DB.prepare(`INSERT INTO academy_posts(title,body,image_url,link_url,audience_type,audience_value,status,created_by) VALUES(?,?,?,?,?,?, 'published', ?)`).bind(title,body,image||null,link||null,audience,value||null,admin.display_name||admin.username).run();
         await logAudit(env,{actor_type:'admin',actor_id:admin.id,actor_label:admin.username,action:'social.post.create',entity_type:'academy_post',entity_id:result.meta?.last_row_id,ip,user_agent:ua});
@@ -4042,7 +4042,7 @@ if (method === "POST" && rejectPasswordMatch) {
       if(method==='POST'){
         const b=await readBody(request),name=clean(b?.display_name,100),subject=clean(b?.subject,120),grade=clean(b?.grade,80),bio=clean(b?.bio,1000),photo=clean(b?.photo_url,1000),contact=clean(b?.contact_url,1000);
         if(!name||!subject)return reply(request,env,{success:false,error:'اسم المدرس والمادة مطلوبان.'},400);
-        if((photo&&!/^https:\\/\\//i.test(photo))||(contact&&!/^https:\\/\\//i.test(contact)))return reply(request,env,{success:false,error:'الروابط يجب أن تبدأ بـ https://'},400);
+        if((photo&&!/^https:\/\//i.test(photo))||(contact&&!/^https:\/\//i.test(contact)))return reply(request,env,{success:false,error:'الروابط يجب أن تبدأ بـ https://'},400);
         const result=await env.DB.prepare('INSERT INTO academy_teacher_profiles(display_name,subject,grade,bio,photo_url,contact_url,sort_order) VALUES(?,?,?,?,?,?,?)').bind(name,subject,grade,bio,photo||null,contact||null,Number.isFinite(Number(b?.sort_order))?Math.max(0,Math.min(999,Number(b.sort_order))):0).run();
         await logAudit(env,{actor_type:'admin',actor_id:admin.id,actor_label:admin.username,action:'social.teacher.create',entity_type:'teacher_profile',entity_id:result.meta?.last_row_id,ip,user_agent:ua});
         return reply(request,env,{success:true,id:result.meta?.last_row_id});
@@ -4617,7 +4617,7 @@ if (method === "POST" && rejectPasswordMatch) {
       const rows=await env.DB.prepare(`SELECT p.*,COALESCE(NULLIF(p.created_by,''),'إدارة الأكاديمية') AS author_name,(SELECT COUNT(*) FROM academy_post_likes l WHERE l.post_id=p.id) AS likes_count,(SELECT COUNT(*) FROM academy_post_comments c WHERE c.post_id=p.id) AS comments_count,EXISTS(SELECT 1 FROM academy_post_likes l WHERE l.post_id=p.id AND l.student_id=?) AS liked FROM academy_posts p WHERE p.status='published' AND (p.audience_type='all' OR (p.audience_type='grade' AND p.audience_value=(SELECT grade FROM students WHERE id=?)) OR (p.audience_type='student' AND p.audience_value=CAST(? AS TEXT))) ORDER BY p.id DESC LIMIT 60`).bind(session.student_id,session.student_id,session.student_id).all();
       return reply(request,env,{success:true,posts:rows.results||[]});
     }
-    if (method==='POST' && /^\\/api\\/student\\/platform\\/feed\\/\\d+\\/like$/.test(path)) {
+    if (method==='POST' && /^\/api\/student\/platform\/feed\/\\d+\/like$/.test(path)) {
       const id=Number(path.split('/')[5]);
       const post=await env.DB.prepare(`SELECT id FROM academy_posts WHERE id=? AND status='published' AND (audience_type='all' OR (audience_type='grade' AND audience_value=(SELECT grade FROM students WHERE id=?)) OR (audience_type='student' AND audience_value=CAST(? AS TEXT)))`).bind(id,session.student_id,session.student_id).first();
       if(!post)return reply(request,env,{success:false,error:'المنشور غير متاح.'},404);
@@ -4626,14 +4626,14 @@ if (method === "POST" && rejectPasswordMatch) {
       else await env.DB.prepare('INSERT OR IGNORE INTO academy_post_likes(post_id,student_id) VALUES(?,?)').bind(id,session.student_id).run();
       return reply(request,env,{success:true,liked:!existing});
     }
-    if (method==='GET' && /^\\/api\\/student\\/platform\\/feed\\/\\d+\\/comments$/.test(path)) {
+    if (method==='GET' && /^\/api\/student\/platform\/feed\/\\d+\/comments$/.test(path)) {
       const visible=await env.DB.prepare(`SELECT id FROM academy_posts WHERE id=? AND status='published' AND (audience_type='all' OR (audience_type='grade' AND audience_value=(SELECT grade FROM students WHERE id=?)) OR (audience_type='student' AND audience_value=CAST(? AS TEXT)))`).bind(Number(path.split('/')[5]),session.student_id,session.student_id).first();
       if(!visible)return reply(request,env,{success:false,error:'المنشور غير متاح.'},404);
       const id=Number(path.split('/')[5]);
       const rows=await env.DB.prepare(`SELECT c.id,c.body,c.created_at,COALESCE(NULLIF(p.display_name,''),s.name,'طالب') AS author_name FROM academy_post_comments c JOIN students s ON s.id=c.student_id LEFT JOIN student_public_profiles p ON p.student_id=s.id WHERE c.post_id=? ORDER BY c.id ASC LIMIT 100`).bind(id).all();
       return reply(request,env,{success:true,comments:rows.results||[]});
     }
-    if (method==='POST' && /^\\/api\\/student\\/platform\\/feed\\/\\d+\\/comments$/.test(path)) {
+    if (method==='POST' && /^\/api\/student\/platform\/feed\/\\d+\/comments$/.test(path)) {
       const id=Number(path.split('/')[5]), body=await readBody(request), comment=clean(body?.body,1000);
       if(!comment)return reply(request,env,{success:false,error:'اكتب تعليقًا أولًا.'},400);
       const post=await env.DB.prepare(`SELECT id FROM academy_posts WHERE id=? AND status='published' AND (audience_type='all' OR (audience_type='grade' AND audience_value=(SELECT grade FROM students WHERE id=?)) OR (audience_type='student' AND audience_value=CAST(? AS TEXT)))`).bind(id,session.student_id,session.student_id).first();
