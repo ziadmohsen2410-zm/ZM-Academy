@@ -4236,9 +4236,11 @@ if (method === "POST" && rejectPasswordMatch) {
         if(!submission)return reply(request,env,{success:false,error:'طلب المحتوى غير موجود.'},404);
         if(submission.status!=='pending')return reply(request,env,{success:false,error:'تمت مراجعة هذا الطلب من قبل.'},409);
         if(decision==='approved'){
+          const price=Number(body?.price??0),isFree=body?.is_free===false||Number(body?.is_free)===0?0:1;
+          if(!Number.isFinite(price)||price<0||price>MAX_PRICE)return reply(request,env,{success:false,error:'السعر غير صالح.'},400);
           const materialType=submission.content_type==='pdf'?'pdf':submission.content_type==='image'?'lesson':submission.content_type==='video'?'video':'link';
           const created=await env.DB.prepare(`INSERT INTO materials(subject_id,title,type,price,is_free,file_key,external_url)
-            VALUES(?,?,?,0,1,?,?)`).bind(submission.subject_id,submission.title,materialType,submission.file_key,submission.external_url).run();
+            VALUES(?,?,?,?,?,?,?)`).bind(submission.subject_id,submission.title,materialType,price,isFree,submission.file_key,submission.external_url).run();
           await env.DB.prepare(`UPDATE teacher_content_submissions SET status='approved',review_note=?,reviewed_by=?,reviewed_at=datetime('now'),material_id=? WHERE id=?`)
             .bind(note||null,admin.id,Number(created.meta?.last_row_id||0),id).run();
         } else {
