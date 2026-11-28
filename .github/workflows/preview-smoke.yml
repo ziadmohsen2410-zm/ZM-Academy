@@ -149,6 +149,30 @@ jobs:
           python3 -c "import json; d=json.load(open('/tmp/zm-student-materials.json')); assert any(int(x['id'])==990001 for x in d.get('materials',[])), d"
           echo "Student registration, device approval, login, and material visibility passed."
 
+          # Student preferences must be reachable inside the authenticated route and persist.
+          curl --max-time 30 --fail --silent --show-error "$API/api/student/preferences" \
+            -H "Authorization: Bearer $STUDENT_TOKEN" -o /tmp/zm-student-prefs-default.json
+          python3 -c "import json; d=json.load(open('/tmp/zm-student-prefs-default.json')); p=d.get('preferences',{}); assert d.get('success') is True and p.get('mode')=='dark' and p.get('primary')=='#35B8FF' and p.get('secondary')=='#9270FF', d"
+          curl --max-time 30 --fail --silent --show-error -X PUT "$API/api/student/preferences" \
+            -H "Authorization: Bearer $STUDENT_TOKEN" -H "Content-Type: application/json" \
+            --data '{"preferences":{"mode":"dark","fontSize":"large","primary":"#123456","secondary":"#654321"}}' \
+            -o /tmp/zm-student-prefs-save.json
+          curl --max-time 30 --fail --silent --show-error "$API/api/student/preferences" \
+            -H "Authorization: Bearer $STUDENT_TOKEN" -o /tmp/zm-student-prefs-readback.json
+          python3 -c "import json; d=json.load(open('/tmp/zm-student-prefs-readback.json')); p=d.get('preferences',{}); assert d.get('success') is True and p.get('primary')=='#123456' and p.get('secondary')=='#654321' and p.get('fontSize')=='large', d"
+
+          # Favorite add/list/remove must work against the isolated Preview D1 database.
+          curl --max-time 30 --fail --silent --show-error -X POST "$API/api/student/favorites/990001" \
+            -H "Authorization: Bearer $STUDENT_TOKEN" -o /tmp/zm-favorite-add.json
+          python3 -c "import json; d=json.load(open('/tmp/zm-favorite-add.json')); assert d.get('success') is True, d"
+          curl --max-time 30 --fail --silent --show-error "$API/api/student/favorites" \
+            -H "Authorization: Bearer $STUDENT_TOKEN" -o /tmp/zm-favorites-list.json
+          python3 -c "import json; d=json.load(open('/tmp/zm-favorites-list.json')); assert d.get('success') is True and any(int(x.get('material_id',0))==990001 for x in d.get('favorites',[])), d"
+          curl --max-time 30 --fail --silent --show-error -X DELETE "$API/api/student/favorites/990001" \
+            -H "Authorization: Bearer $STUDENT_TOKEN" -o /tmp/zm-favorite-remove.json
+          python3 -c "import json; d=json.load(open('/tmp/zm-favorite-remove.json')); assert d.get('success') is True, d"
+          echo "Student preferences read/write and favorites add/list/remove passed."
+
           # A new unapproved device must not invalidate the student's existing approved session.
           SECOND_DEVICE_TOKEN="preview-device-token-second-000000000000000000000000"
           SECOND_DEVICE_STATUS="$(curl --max-time 30 --silent --show-error -X POST "$API/api/students/login" \
