@@ -174,7 +174,8 @@ test("student preferences accept only supported themes, colors, and font sizes",
   assert.ok(worker.includes("/^#[0-9a-fA-F]{6}$/"));
   assert.ok(worker.includes("['dark','light'].includes(raw.mode)"));
   assert.ok(worker.includes("['normal','large','xlarge'].includes(raw.fontSize)"));
-  assert.ok(worker.includes("normalizeStudentPreferences(body?.preferences)"));
+  assert.ok(worker.includes("cleanPreferences(body?.preferences)"));
+  assert.ok(worker.includes("Student preferences must be handled before the generic"));
 });
 
 test("students can delete rejected purchases and hide completed purchases without deleting records", () => {
