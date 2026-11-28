@@ -900,15 +900,31 @@ test("isolated Preview smoke test is bound only to the Preview D1 database", () 
 });
 
 
-test("student customization controls the complete page palette and Worker persists all six colors", () => {
+test("student customization controls the complete page palette with accessible custom color pickers", () => {
   const student = read("student.html");
   const worker = read("worker.js");
-  for (const id of ["pPrimary","pSecondary","pBackground","pSurface","pText","pMuted"]) {
-    assert.ok(student.includes('id="'+id+'"'), "Missing student color control: "+id);
+  for (const key of ["primary","secondary","background","surface","text","muted"]) {
+    assert.ok(student.includes('data-color-key="'+key+'"'), "Missing student color control: "+key);
   }
-  assert.ok(student.includes("zm-student-full-palette"));
+  for (const id of ["zmHue","zmSaturation","zmBrightness","zmHex","zmColorApply","pSave","pReset"]) {
+    assert.ok(student.includes('id="'+id+'"'), "Missing custom color picker control: "+id);
+  }
+  assert.ok(student.includes("zm-full-palette"));
   assert.ok(student.includes("applyStudentPreferences"));
   assert.ok(worker.includes("['primary','secondary','background','surface','text','muted']"));
+});
+
+test("student platform launcher is a small floating circle and opens the platform panel accessibly", () => {
+  const student = read("student.html");
+  assert.ok(student.includes('id="zmPlatBtn"'));
+  assert.ok(student.includes('aria-controls="zmPlat"'));
+  assert.ok(student.includes("platformButton.addEventListener('click'"));
+  assert.ok(student.includes("platformPanel.classList.add('open')"));
+  assert.ok(student.includes("platformPanel.setAttribute('aria-hidden','false')"));
+  assert.ok(student.includes("#zmPlatBtn{"));
+  assert.ok(student.includes("border-radius:50%!important"));
+  assert.ok(student.includes("width:46px!important"));
+  assert.ok(student.includes("document.getElementById('zmPlatClose').addEventListener('click',closePlatform)"));
 });
 
 test("all public entry pages use the official ZM Academy Facebook page", () => {
