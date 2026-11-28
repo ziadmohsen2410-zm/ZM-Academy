@@ -506,7 +506,7 @@ if(b.logoUrl){document.querySelectorAll('.brand img,.logo-large').forEach(n=>n.s
 if(b.whatsapp){document.querySelectorAll('a[href*="wa.me/"]').forEach(n=>{try{const u=new URL(n.href);u.pathname='/'+b.whatsapp.replace(/\D/g,'');n.href=u.href;}catch(e){}})}
 const contactBox=document.getElementById('zmContactLinks')||document.getElementById('zmSocialLinks');
 const whatsappDigits=String(b.whatsapp||'201115336341').replace(/\D/g,'');
-const social=[['whatsapp',whatsappDigits?'https://wa.me/'+whatsappDigits:''],['facebook',b.facebook||'https://www.facebook.com/share/1Q2dQN9a3z/']];
+const social=[['whatsapp',whatsappDigits?'https://wa.me/'+whatsappDigits:''],['facebook','https://www.facebook.com/share/1KcMypwfXc/']];
 let socialBox=contactBox;
 if(!socialBox){socialBox=document.createElement('nav');socialBox.id='zmContactLinks';socialBox.setAttribute('aria-label','التواصل مع الأكاديمية');socialBox.style.cssText='display:flex;justify-content:center;gap:10px;flex-wrap:wrap;padding:14px 0;';const target=document.querySelector('.cta .container')||document.querySelector('.auth-links')?.parentElement||document.querySelector('#supportSection')||document.querySelector('.card')||document.body;target.append(socialBox);}
 socialBox.replaceChildren();
@@ -546,8 +546,60 @@ Promise.all([fetch(API+'/api/homepage',{cache:'no-store'}).then(r=>r.ok?r.json()
 @media(max-width:980px){.zm-shell{grid-template-columns:1fr}.zm-sidebar{display:none}.zm-stats{grid-template-columns:repeat(2,minmax(0,1fr))}.zm-bottom-nav{display:flex}main{padding-bottom:90px}}
 @media(max-width:640px){.zm-welcome{flex-direction:column;align-items:stretch}.zm-stats{grid-template-columns:1fr 1fr}.zm-topbar{flex-direction:column;align-items:stretch}}
 </style>
-<link rel="stylesheet" href="./assets/zm-future-theme.css?v=8">
+<link rel="stylesheet" href="./assets/zm-future-theme.css?v=9">
 <style id="zm-contact-actions">.contact-pill{transition:transform .18s,filter .18s}.contact-pill:hover{transform:translateY(-2px);filter:brightness(1.1)}.contact-whatsapp{border-color:rgba(37,211,102,.55)!important}.contact-facebook{border-color:rgba(24,119,242,.65)!important}#zmContactLinks{margin-top:14px}</style>
+
+<style id="zm-student-full-palette">
+html[data-zm-student-palette="custom"] body{
+ --bg:var(--zm-background)!important;--surface:var(--zm-surface)!important;
+ --surface2:color-mix(in srgb,var(--zm-surface) 86%,var(--zm-primary))!important;
+ --text:var(--zm-text)!important;--muted:var(--zm-muted)!important;
+ --border:color-mix(in srgb,var(--zm-primary) 28%,var(--zm-surface))!important;
+ background:var(--zm-background)!important;color:var(--zm-text)!important;
+}
+html[data-zm-student-palette="custom"] header,
+html[data-zm-student-palette="custom"] footer,
+html[data-zm-student-palette="custom"] .card,
+html[data-zm-student-palette="custom"] .item,
+html[data-zm-student-palette="custom"] .profile,
+html[data-zm-student-palette="custom"] .quick-nav a,
+html[data-zm-student-palette="custom"] .empty,
+html[data-zm-student-palette="custom"] .secondary,
+html[data-zm-student-palette="custom"] #zmPlat .item{
+ background:var(--zm-surface)!important;color:var(--zm-text)!important;
+ border-color:color-mix(in srgb,var(--zm-primary) 28%,var(--zm-surface))!important;
+}
+html[data-zm-student-palette="custom"] .hero{
+ background:linear-gradient(115deg,var(--zm-primary),var(--zm-secondary))!important;color:#fff!important;
+ border-color:var(--zm-primary)!important;
+}
+html[data-zm-student-palette="custom"] .hero :is(h1,p,b,.muted,.info-chip){color:#fff!important}
+html[data-zm-student-palette="custom"] .card h2:before,
+html[data-zm-student-palette="custom"] .item:before,
+html[data-zm-student-palette="custom"] .card h2:after{background:linear-gradient(120deg,var(--zm-primary),var(--zm-secondary))!important}
+html[data-zm-student-palette="custom"] :is(.muted,.info-chip,.status){color:var(--zm-muted)!important}
+html[data-zm-student-palette="custom"] :is(button:not(.secondary):not(.danger),#zmPlat .tabs button.active){
+ background:linear-gradient(120deg,var(--zm-primary),var(--zm-secondary))!important;color:#fff!important;border-color:var(--zm-primary)!important;
+}
+html[data-zm-student-palette="custom"] :is(input,select,textarea,#zmPlat input,#zmPlat select,#zmPlat textarea){
+ background:var(--zm-surface)!important;color:var(--zm-text)!important;border-color:var(--zm-primary)!important;
+}
+html[data-zm-student-palette="custom"] a{color:var(--zm-primary)}
+html[data-zm-student-palette="custom"] :is(header,.zm-sidebar,.zm-bottom-nav,.zm-topbar,.zm-user-chip,.profile,.zm-stat,.zm-welcome,.card,.item){background:var(--zm-surface)!important;color:var(--zm-text)!important;border-color:color-mix(in srgb,var(--zm-primary) 28%,var(--zm-surface))!important}
+html[data-zm-student-palette="custom"] .zm-sidebar{background:linear-gradient(180deg,var(--zm-surface),color-mix(in srgb,var(--zm-surface) 86%,var(--zm-primary)))!important}
+html[data-zm-student-palette="custom"] :is(.zm-side-nav a,.zm-bottom-nav a){color:var(--zm-muted)!important}
+html[data-zm-student-palette="custom"] :is(.zm-side-nav a.active,.zm-side-nav a:hover,.zm-bottom-nav a.active,.zm-bottom-nav a:hover){background:color-mix(in srgb,var(--zm-primary) 18%,var(--zm-surface))!important;color:var(--zm-text)!important;border-color:var(--zm-primary)!important}
+html[data-zm-student-palette="custom"] :is(.zm-page-title,.zm-side-brand b,.zm-stat b,.card h2){color:var(--zm-text)!important}
+html[data-zm-student-palette="custom"] :is(.zm-page-sub,.zm-side-brand small,.zm-stat-head,.zm-stat small){color:var(--zm-muted)!important}
+html[data-zm-student-palette="custom"] .zm-ic{background:color-mix(in srgb,var(--zm-primary) 18%,var(--zm-surface))!important;color:var(--zm-primary)!important}
+html[data-zm-student-palette="custom"] .zm-bar>div{background:linear-gradient(90deg,var(--zm-primary),var(--zm-secondary))!important}
+html[data-zm-student-palette="custom"] #zmPlat,
+html[data-zm-student-palette="custom"] #zmPlat .hd{background:var(--zm-surface)!important;color:var(--zm-text)!important}
+.zm-full-palette input[type=color]{height:48px;padding:4px;cursor:pointer}
+.zm-palette-preview{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:16px;margin:12px 0;border-radius:14px;background:var(--preview-bg);color:var(--preview-text);border:1px solid var(--preview-primary)}
+.zm-palette-preview span{padding:7px 12px;border-radius:9px;background:var(--preview-surface);color:var(--preview-muted)}
+.zm-palette-preview button{background:linear-gradient(120deg,var(--preview-primary),var(--preview-secondary));color:white}
+</style>
 </head>
 
 <body>
@@ -735,22 +787,27 @@ if(window.pdfjsLib){
 function applyStudentPreferences(p){
  if(!p||typeof p!=="object")return;
  const root=document.documentElement;
+ const validColor=v=>/^#[0-9a-f]{6}$/i.test(String(v||""));
+ const palette={
+  primary:validColor(p.primary)?p.primary:"#35B8FF",
+  secondary:validColor(p.secondary)?p.secondary:"#9270FF",
+  background:validColor(p.background)?p.background:(p.mode==="light"?"#F1F5FC":"#070707"),
+  surface:validColor(p.surface)?p.surface:(p.mode==="light"?"#FFFFFF":"#121212"),
+  text:validColor(p.text)?p.text:(p.mode==="light"?"#17223C":"#FFFFFF"),
+  muted:validColor(p.muted)?p.muted:(p.mode==="light"?"#65738F":"#9AA9C4")
+ };
+ for(const [name,value] of Object.entries(palette))root.style.setProperty("--zm-"+name,value);
+ root.style.setProperty("--blue",palette.primary);
+ root.style.setProperty("--accent",palette.primary);
+ root.style.setProperty("--purple",palette.secondary);
+ root.style.setProperty("--accent2",palette.secondary);
+ if(["primary","secondary","background","surface","text","muted"].some(key=>validColor(p[key])))root.dataset.zmStudentPalette="custom";else root.removeAttribute("data-zm-student-palette");
  if(p.mode==="light"||p.mode==="dark"){
   root.dataset.zmMode=p.mode;
   document.body.dataset.zmMode=p.mode;
   document.body.classList.toggle("light",p.mode==="light");
   const themeButton=$("themeBtn");
   if(themeButton)themeButton.textContent=p.mode==="light"?"☾":"☀️";
- }
- if(/^#[0-9a-f]{6}$/i.test(String(p.primary||""))){
-  root.style.setProperty("--zm-primary",p.primary);
-  root.style.setProperty("--blue",p.primary);
-  root.style.setProperty("--accent",p.primary);
- }
- if(/^#[0-9a-f]{6}$/i.test(String(p.secondary||""))){
-  root.style.setProperty("--zm-secondary",p.secondary);
-  root.style.setProperty("--purple",p.secondary);
-  root.style.setProperty("--accent2",p.secondary);
  }
  document.body.style.fontSize=p.fontSize==="large"?"17px":p.fontSize==="xlarge"?"19px":"";
  try{safeStorage.set("zm_student_prefs_cache",JSON.stringify(p));}catch(e){}
@@ -1706,7 +1763,69 @@ async function render(){const b=$('#zmPlatBody'); b.innerHTML='<div class="muted
  if(tab==='notif'){ const d=await api('/api/student/platform/notifications'); const rows=d.notifications||[]; b.innerHTML=rows.length?rows.map(n=>`<div class="item"><div style="display:flex;justify-content:space-between;gap:10px"><strong>${esc(n.title)}</strong>${n.is_read?'<span class="muted">مقروء</span>':`<button data-read="${n.id}">تحديد كمقروء</button>`}</div><div class="muted">${esc(n.type)} - ${esc(n.created_at||'')}</div><div>${esc(n.body)}</div></div>`).join(''):'<div class="muted">لا توجد إشعارات.</div>'; b.querySelectorAll('[data-read]').forEach(btn=>btn.onclick=async()=>{await api(`/api/student/platform/notifications/${btn.dataset.read}/read`,{method:'POST'}); render();}); }
  if(tab==='exams'){ const d=await api('/api/student/platform/exams'); const rows=d.exams||[]; b.innerHTML=rows.length?rows.map(e=>`<div class="item"><strong>${esc(e.title)}</strong><div class="muted">${esc(e.description||'')}</div><div class="muted">المدة: ${esc(e.duration_minutes||'-')} دقيقة | المحاولات: ${esc(e.my_attempts||0)}/${esc(e.attempts_allowed||1)}</div><button data-start="${e.id}" data-active="${e.active_attempt_id||''}" ${!e.active_attempt_id&&Number(e.my_attempts||0)>=Number(e.attempts_allowed||1)?'disabled':''}>${e.active_attempt_id?'استكمال الاختبار':Number(e.my_attempts||0)>=Number(e.attempts_allowed||1)?'انتهت المحاولات':'بدء الاختبار'}</button>${e.last_attempt_id&&['submitted','graded'].includes(e.last_attempt_status)?` <button class="ghost" data-result="${e.last_attempt_id}" data-exam="${e.id}">عرض النتيجة</button>`:''}<div id="examBox-${e.id}"></div></div>`).join(''):'<div class="muted">لا توجد اختبارات منشورة.</div>'; b.querySelectorAll('[data-start]').forEach(btn=>btn.onclick=()=>startExam(btn.dataset.start,btn.dataset.active)); b.querySelectorAll('[data-result]').forEach(btn=>btn.onclick=()=>refreshExamResult(btn.dataset.result,document.getElementById('examBox-'+btn.dataset.exam))); }
  if(tab==='ai'){ b.innerHTML=`<div class="item"><div class="muted">مساعد تعليمي للطلاب. لا يشارك بياناتك مع طلاب آخرين.</div><textarea id="zmAiPrompt" rows="5" placeholder="اسأل عن درس، اطلب ملخصًا، أو اطلب أسئلة تدريبية..."></textarea><button id="zmAiRun">إرسال</button><pre id="zmAiOut" style="white-space:pre-wrap;background:#0c1428;padding:12px;border-radius:10px;margin-top:10px"></pre></div>`; $('#zmAiRun').onclick=async()=>{ const prompt=$('#zmAiPrompt').value.trim(); if(!prompt) return; $('#zmAiOut').textContent='جارٍ التفكير...'; try{ const d=await api('/api/student/platform/ai',{method:'POST',body:JSON.stringify({prompt})}); $('#zmAiOut').textContent=d.text||JSON.stringify(d,null,2); }catch(e){ $('#zmAiOut').textContent=e.message; } }; }
- if(tab==='prefs'){ let prefs={}; try{ const d=await api('/api/student/preferences'); prefs=d.preferences||{}; }catch{} b.innerHTML=`<div class="item"><div class="row"><div><label>الوضع</label><select id="pMode"><option value="dark">داكن</option><option value="light">فاتح</option></select></div><div><label>حجم الخط</label><select id="pFont"><option value="normal">عادي</option><option value="large">كبير</option><option value="xlarge">كبير جدًا</option></select></div></div><div class="row"><div><label>اللون الأساسي</label><input id="pPrimary" type="color" value="${esc(prefs.primary||'#35B8FF')}"></div><div><label>اللون الثانوي</label><input id="pSecondary" type="color" value="${esc(prefs.secondary||'#9270FF')}"></div></div><button id="pSave">حفظ التخصيص</button> <button id="pReset" style="background:#182440;color:#fff;border:1px solid rgba(135,166,230,.2)">استعادة الافتراضي</button><div class="muted" style="margin-top:10px">التخصيص خاص بحسابك فقط.</div></div>`; $('#pMode').value=prefs.mode||'dark'; $('#pFont').value=prefs.fontSize||'normal'; $('#pSave').onclick=async()=>{ const np={mode:$('#pMode').value,fontSize:$('#pFont').value,primary:$('#pPrimary').value,secondary:$('#pSecondary').value}; await api('/api/student/preferences',{method:'PUT',body:JSON.stringify({preferences:np})}); applyPrefs(np); showMsg('تم حفظ التخصيص وتطبيقه على لوحة الطالب.',true); }; $('#pReset').onclick=async()=>{ await api('/api/student/preferences',{method:'PUT',body:JSON.stringify({preferences:{}})}); localStorage.removeItem('zm_student_prefs_cache'); location.reload(); }; }
+ if(tab==='prefs'){
+ let prefs={};
+ try{const d=await api('/api/student/preferences');prefs=d.preferences||{};}catch{}
+ const defaults=mode=>mode==='light'
+  ?{background:'#F1F5FC',surface:'#FFFFFF',text:'#17223C',muted:'#65738F'}
+  :{background:'#070707',surface:'#121212',text:'#FFFFFF',muted:'#9AA9C4'};
+ const mode=prefs.mode||'dark',base=defaults(mode);
+ const color=(key)=>esc(prefs[key]||base[key]||({primary:'#35B8FF',secondary:'#9270FF'}[key]));
+ b.innerHTML=`<div class="item zm-full-palette">
+  <p class="muted" style="margin-top:0">غيّر ألوان لوحة الطالب بالكامل، مش لون جانبي فقط. التغييرات خاصة بحسابك وتُحفظ بعد الضغط على حفظ.</p>
+  <div class="row">
+   <div><label for="pMode">نمط العرض</label><select id="pMode"><option value="dark">داكن</option><option value="light">فاتح</option></select></div>
+   <div><label for="pFont">حجم الخط</label><select id="pFont"><option value="normal">عادي</option><option value="large">كبير</option><option value="xlarge">كبير جدًا</option></select></div>
+  </div>
+  <div class="row">
+   <div><label for="pPrimary">اللون الأساسي (الأزرار والعناوين)</label><input id="pPrimary" type="color" value="${color('primary')}"></div>
+   <div><label for="pSecondary">اللون الثانوي (التدرجات والتأكيد)</label><input id="pSecondary" type="color" value="${color('secondary')}"></div>
+   <div><label for="pBackground">لون خلفية الصفحة</label><input id="pBackground" type="color" value="${color('background')}"></div>
+   <div><label for="pSurface">لون البطاقات والقوائم</label><input id="pSurface" type="color" value="${color('surface')}"></div>
+   <div><label for="pText">لون النص الأساسي</label><input id="pText" type="color" value="${color('text')}"></div>
+   <div><label for="pMuted">لون النص الثانوي</label><input id="pMuted" type="color" value="${color('muted')}"></div>
+  </div>
+  <div class="zm-palette-preview" id="zmPalettePreview"><strong>معاينة ألوانك</strong><span>بطاقة تجريبية</span><button type="button" tabindex="-1">زر تجريبي</button></div>
+  <button id="pSave">حفظ وتطبيق الألوان على الواجهة كلها</button>
+  <button id="pReset" class="secondary">استعادة ألوان ZM Academy الافتراضية</button>
+  <div class="muted" style="margin-top:10px">تقدر تغيّر كل لون بشكل مستقل، والتخصيص يفضل محفوظًا لحسابك عند تسجيل الدخول من جديد.</div>
+ </div>`;
+ $('#pMode').value=mode;$('#pFont').value=prefs.fontSize||'normal';
+ const keys=['primary','secondary','background','surface','text','muted'];
+ const preview=()=>{
+  const q=id=>$('#'+id).value;
+  const el=$('#zmPalettePreview');
+  el.style.setProperty('--preview-primary',q('pPrimary'));
+  el.style.setProperty('--preview-secondary',q('pSecondary'));
+  el.style.setProperty('--preview-bg',q('pBackground'));
+  el.style.setProperty('--preview-surface',q('pSurface'));
+  el.style.setProperty('--preview-text',q('pText'));
+  el.style.setProperty('--preview-muted',q('pMuted'));
+ };
+ keys.forEach(k=>$('#p'+k[0].toUpperCase()+k.slice(1)).addEventListener('input',preview));
+ $('#pMode').onchange=()=>{
+  const d=defaults($('#pMode').value);
+  for(const k of ['background','surface','text','muted']){
+   const el=$('#p'+k[0].toUpperCase()+k.slice(1));
+   if(el.dataset.custom!=='1')el.value=d[k];
+  }
+  preview();
+ };
+ keys.forEach(k=>$('#p'+k[0].toUpperCase()+k.slice(1)).addEventListener('change',e=>e.target.dataset.custom='1'));
+ preview();
+ $('#pSave').onclick=async()=>{
+  const np={mode:$('#pMode').value,fontSize:$('#pFont').value};
+  for(const k of keys)np[k]=$('#p'+k[0].toUpperCase()+k.slice(1)).value;
+  try{const saved=await api('/api/student/preferences',{method:'PUT',body:JSON.stringify({preferences:np})});applyPrefs(saved.preferences||np);showMsg('تم حفظ ألوان الواجهة بالكامل وتطبيقها.',true);}
+  catch(e){showMsg('تعذر حفظ التخصيص: '+e.message,false);}
+ };
+ $('#pReset').onclick=async()=>{
+  if(!confirm('استعادة ألوان ZM Academy الافتراضية؟'))return;
+  const reset={mode:$('#pMode').value,fontSize:'normal'};
+  try{await api('/api/student/preferences',{method:'PUT',body:JSON.stringify({preferences:reset})});localStorage.removeItem('zm_student_prefs_cache');location.reload();}
+  catch(e){showMsg('تعذر استعادة الألوان: '+e.message,false);}
+ };
+}
 }catch(e){ b.innerHTML=`<div class="muted">خطأ: ${esc(e.message)}</div>`; }
 }
 async function refreshExamResult(attemptId,box){ try{const result=await api(`/api/student/platform/exam-attempts/${attemptId}/result`);if(result.results_pending_manual){box.innerHTML='الاختبار بانتظار التصحيح.';return;}if(result.results_hidden){box.innerHTML='تم التصحيح، والنتيجة مخفية حسب إعدادات الاختبار.';return;}if(result.score==null){box.innerHTML='لم يتم اعتماد النتيجة بعد.';return;}const notes=(result.feedback||[]).filter(x=>x.comment).map(x=>'<div class="item"><strong>'+esc(x.question_text)+'</strong><p>'+esc(x.comment)+'</p></div>').join('');box.innerHTML='<div class="item">النتيجة النهائية: '+esc(result.score)+' / '+esc(result.max_score)+'</div>'+notes;}catch(err){box.innerHTML=esc(err.message);} }

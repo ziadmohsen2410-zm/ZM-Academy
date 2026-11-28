@@ -629,7 +629,7 @@ test("login and registration pages show WhatsApp first and configured Facebook s
     const page = read(file);
     assert.ok(page.includes('id="zmContactLinks"'));
     assert.ok(page.includes("['whatsapp',whatsappDigits?'https://wa.me/'+whatsappDigits:'']"));
-    assert.ok(page.includes("['facebook',b.facebook||'https://www.facebook.com/share/1Q2dQN9a3z/']"));
+    assert.ok(page.includes("['facebook','https://www.facebook.com/share/1KcMypwfXc/']"));
   }
 });
 
@@ -694,7 +694,7 @@ test("all primary pages reference the refreshed shared stylesheet with current c
   for (const page of ["index.html","admin.html","login.html","register.html","parent.html"]) {
     assert.ok(read(page).includes("zm-future-theme.css?v=4"), "Stale theme cache key in " + page);
   }
-  assert.ok(read("student.html").includes("zm-future-theme.css?v=8"), "Student theme cache key was not refreshed");
+  assert.ok(read("student.html").includes("zm-future-theme.css?v=9"), "Student theme cache key was not refreshed");
 });
 
 test("student preferences route runs before the generic student API fallback", () => {
@@ -897,4 +897,25 @@ test("isolated Preview smoke test is bound only to the Preview D1 database", () 
   assert.ok(fixture.includes("preview_material_notes"));
   assert.ok(fixture.includes("CREATE TABLE IF NOT EXISTS student_accounts"));
   assert.ok(read("migrations/004_preview_student_accounts.sql").includes("CREATE TABLE IF NOT EXISTS student_accounts"));
+});
+
+
+test("student customization controls the complete page palette and Worker persists all six colors", () => {
+  const student = read("student.html");
+  const worker = read("worker.js");
+  for (const id of ["pPrimary","pSecondary","pBackground","pSurface","pText","pMuted"]) {
+    assert.ok(student.includes('id="'+id+'"'), "Missing student color control: "+id);
+  }
+  assert.ok(student.includes("zm-student-full-palette"));
+  assert.ok(student.includes("applyStudentPreferences"));
+  assert.ok(worker.includes("['primary','secondary','background','surface','text','muted']"));
+});
+
+test("all public entry pages use the official ZM Academy Facebook page", () => {
+  const official = "https://www.facebook.com/share/1KcMypwfXc/";
+  for (const file of ["index.html","welcome.html","login.html","register.html","student.html"]) {
+    const source = read(file);
+    assert.ok(source.includes(official), "Official Facebook link missing from "+file);
+    assert.ok(!source.includes("1Q2dQN9a3z"), "Personal Facebook link remains in "+file);
+  }
 });
