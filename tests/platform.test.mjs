@@ -190,7 +190,8 @@ test("student preferences accept only supported themes, colors, and font sizes",
   const helperStart = worker.indexOf("async function ensureStudentLearningTables");
   const helperEnd = worker.indexOf("\nasync function route", helperStart);
   const learningHelper = worker.slice(helperStart, helperEnd);
-  assert.ok(learningHelper.includes("PRAGMA table_info(student_material_progress)"));
+  assert.ok(learningHelper.includes("PRAGMA table_info(${table})"));
+  assert.ok(learningHelper.includes('ensureLocalColumn("student_material_progress", "completed_at", "TEXT")'));
   assert.ok(!learningHelper.includes("ensureColumn("), "Module-level learning helper must not call route-scoped schema helper");
 });
 
