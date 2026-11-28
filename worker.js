@@ -4059,6 +4059,86 @@ if (method === "POST" && rejectPasswordMatch) {
       return reply(request, env, {success:true, admin:{id:admin.id, username:admin.username, display_name:admin.display_name, role:admin.role, permissions: ADMIN_PERMS[admin.role]||[]}});
     }
 
+    // Teacher accounts and grade-scoped assignments (Phase 2 foundation).
+    if (path.startsWith('/api/admin/platform/teacher-accounts') || path.startsWith('/api/admin/platform/teacher-portal/')) {
+      await env.DB.prepare(`CREATE TABLE IF NOT EXISTS teacher_assignments (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        teacher_admin_id INTEGER NOT NULL,
+        grade TEXT NOT NULL,
+        subject TEXT NOT NULL DEFAULT '',
+        created_at TEXT NOT NULL DEFAULT (datetime('now')),
+        UNIQUE(teacher_admin_id, grade, subject)
+      )`).run();
+
+      if (path==='/api/admin/platform/teacher-accounts') {
+        if (!hasPerm(admin.role,'roles')) return reply(request,env,{success:false,error:'Forbidden'},403);
+        if (method==='GET') {
+          const rows=await env.DB.prepare(`SELECT a.id,a.username,a.display_name,a.email,a.is_active,a.created_at,
+            (SELECT COUNT(*) FROM teacher_assignments ta WHERE ta.teacher_admin_id=a.id) AS assignment_count
+            FROM admin_users a WHERE a.role='teacher' ORDER BY a.id DESC LIMIT 200`).all();
+          return reply(request,env,{success:true,teachers:rows.results||[]});
+        }
+        if (method==='POST') {
+          const b=await readBody(request),username=clean(b?.username,60),password=String(b?.password||''),
+            displayName=clean(b?.display_name,120),email=clean(b?.email,120).toLowerCase();
+          const assignments=Array.isArray(b?.assignments)?b.assignments.slice(0,50):[];
+          if(!/^[A-Za-z0-9_.-]{3,60}$/.test(username)||password.length<12||!displayName||!assignments.length)
+            return reply(request,env,{success:false,error:'اسم المستخدم والاسم وكلمة مرور 12 حرفًا على الأقل وإسناد واحد مطلوبة.'},400);
+          const existing=await env.DB.prepare('SELECT id FROM admin_users WHERE username=?').bind(username).first();
+          if(existing)return reply(request,env,{success:false,error:'اسم المستخدم موجود بالفعل.'},409);
+          const cleanAssignments=[];
+          for(const item of assignments){
+            const grade=clean(item?.grade,80),subject=clean(item?.subject,120);
+            if(!grade||!subject)return reply(request,env,{success:false,error:'كل إسناد يجب أن يحتوي على صف ومادة.'},400);
+            if(!cleanAssignments.some(x=>x.grade===grade&&x.subject===subject))cleanAssignments.push({grade,subject});
+          }
+          const hash=await passwordHash(password);
+          const result=await env.DB.prepare(`INSERT INTO admin_users(username,password_hash,display_name,email,role,is_active,created_at)
+            VALUES(?,?,?,?, 'teacher',1,datetime('now'))`).bind(username,hash,displayName,email).run();
+          const teacherId=Number(result.meta?.last_row_id||0);
+          for(const item of cleanAssignments) await env.DB.prepare('INSERT OR IGNORE INTO teacher_assignments(teacher_admin_id,grade,subject) VALUES(?,?,?)').bind(teacherId,item.grade,item.subject).run();
+          await logAudit(env,{actor_type:'admin',actor_id:admin.id,actor_label:admin.username,action:'teacher.account.create',entity_type:'admin_user',entity_id:teacherId,details_json:{assignments:cleanAssignments},ip,user_agent:ua});
+          return reply(request,env,{success:true,id:teacherId});
+        }
+      }
+      if (/^\/api\/admin\/platform\/teacher-accounts\/\d+\/assignments$/.test(path)) {
+        if (!hasPerm(admin.role,'roles')) return reply(request,env,{success:false,error:'Forbidden'},403);
+        const teacherId=Number(path.split('/')[5]);
+        const target=await env.DB.prepare("SELECT id FROM admin_users WHERE id=? AND role='teacher'").bind(teacherId).first();
+        if(!target)return reply(request,env,{success:false,error:'حساب المدرس غير موجود.'},404);
+        if(method==='GET'){
+          const rows=await env.DB.prepare('SELECT id,grade,subject,created_at FROM teacher_assignments WHERE teacher_admin_id=? ORDER BY grade,subject').bind(teacherId).all();
+          return reply(request,env,{success:true,assignments:rows.results||[]});
+        }
+        if(method==='POST'){
+          const b=await readBody(request),grade=clean(b?.grade,80),subject=clean(b?.subject,120);
+          if(!grade||!subject)return reply(request,env,{success:false,error:'الصف والمادة مطلوبان.'},400);
+          await env.DB.prepare('INSERT OR IGNORE INTO teacher_assignments(teacher_admin_id,grade,subject) VALUES(?,?,?)').bind(teacherId,grade,subject).run();
+          await logAudit(env,{actor_type:'admin',actor_id:admin.id,actor_label:admin.username,action:'teacher.assignment.add',entity_type:'teacher_assignment',entity_id:teacherId,details_json:{grade,subject},ip,user_agent:ua});
+          return reply(request,env,{success:true});
+        }
+      }
+      if (path==='/api/admin/platform/teacher-portal/me' || path==='/api/admin/platform/teacher-portal/assignments' || path==='/api/admin/platform/teacher-portal/roster') {
+        if(admin.role!=='teacher')return reply(request,env,{success:false,error:'هذه البوابة مخصصة لحسابات المدرسين.'},403);
+        if(path.endsWith('/me')){
+          const rows=await env.DB.prepare('SELECT id,grade,subject FROM teacher_assignments WHERE teacher_admin_id=? ORDER BY grade,subject').bind(admin.id).all();
+          return reply(request,env,{success:true,teacher:{id:admin.id,name:admin.display_name||admin.username},assignments:rows.results||[]});
+        }
+        if(path.endsWith('/assignments')){
+          const rows=await env.DB.prepare('SELECT id,grade,subject FROM teacher_assignments WHERE teacher_admin_id=? ORDER BY grade,subject').bind(admin.id).all();
+          return reply(request,env,{success:true,assignments:rows.results||[]});
+        }
+        if(method==='GET'&&path.endsWith('/roster')){
+          const grade=clean(url.searchParams.get('grade')||'',80),subject=clean(url.searchParams.get('subject')||'',120);
+          if(!grade||!subject)return reply(request,env,{success:false,error:'اختر الصف والمادة المسندين.'},400);
+          const assignment=await env.DB.prepare('SELECT id FROM teacher_assignments WHERE teacher_admin_id=? AND grade=? AND subject=?').bind(admin.id,grade,subject).first();
+          if(!assignment)return reply(request,env,{success:false,error:'غير مصرح بعرض هذا الصف أو المادة.'},403);
+          const rows=await env.DB.prepare('SELECT id,name,grade,school FROM students WHERE grade=? AND COALESCE(is_active,1)=1 ORDER BY name COLLATE NOCASE LIMIT 500').bind(grade).all();
+          return reply(request,env,{success:true,students:rows.results||[]});
+        }
+      }
+    }
+
     // Social publishing: posts are authored by staff and delivered only to their intended audience.
     if (path==='/api/admin/platform/posts') {
       if (!hasPerm(admin.role,'content')) return reply(request,env,{success:false,error:'Forbidden'},403);
