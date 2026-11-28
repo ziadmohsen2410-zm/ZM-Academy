@@ -1159,7 +1159,7 @@ function renderFavoriteMaterials(){
   if(Number(item.is_free)===1||ownedMaterialIds.includes(id)){
    const open=document.createElement("button");
    open.textContent="فتح المذكرة";
-   open.addEventListener("click",()=>openPdf(id,item.title,getSavedPage(id)));
+   open.addEventListener("click",()=>openMaterialItem(item,getSavedPage(id)));
    div.appendChild(open);
   }
  });
@@ -1203,6 +1203,14 @@ function stopPdfViewer(){
  $("pdfViewer").classList.add("hidden");
  $("viewerPages").replaceChildren();
  $("viewerMessage").textContent="جارٍ تجهيز المذكرة...";
+}
+
+function openMaterialItem(item,resumePage=1){
+ if(item?.external_url){
+  window.open(item.external_url,'_blank','noopener,noreferrer');
+  return;
+ }
+ return openPdf(item?.id,item?.title,resumePage);
 }
 
 async function openPdf(materialId,title,resumePage=1){
@@ -1601,7 +1609,7 @@ async function loadDashboard(){
     if(owned){
      const open=document.createElement("button");
      open.textContent=saved>1?"متابعة من الصفحة "+saved:"فتح المذكرة";
-     open.addEventListener("click",()=>openPdf(id,m.title,saved));
+     open.addEventListener("click",()=>openMaterialItem(m,saved));
      div.appendChild(open);
      return;
     }
@@ -1697,7 +1705,7 @@ async function loadDashboard(){
        ?"متابعة من الصفحة "+saved
        :"فتح المذكرة";
 
-      b.addEventListener("click",()=>openPdf(id,p.title,saved));
+      b.addEventListener("click",()=>openMaterialItem(mine.find(x=>Number(x.id)===id)||p,saved));
       div.appendChild(b);
      }
 
@@ -1753,7 +1761,7 @@ async function loadDashboard(){
    if(requestedMaterialId){
     const requested=mine.find(m=>Number(m.id)===requestedMaterialId);
     const canOpen=requested&&(Number(requested.is_free)===1||purchaseList.some(p=>Number(p.material_id)===requestedMaterialId&&(p.status==="approved"||p.status==="completed")));
-    if(canOpen)openPdf(requestedMaterialId,requested.title,getSavedPage(requestedMaterialId));
+    if(canOpen)openMaterialItem(requested,getSavedPage(requestedMaterialId));
     else if(requested)showMsg("هذه المذكرة تحتاج إلى موافقة طلب الشراء أولًا.");
    }
 

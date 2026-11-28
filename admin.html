@@ -176,6 +176,15 @@ body[data-theme='light']{background:var(--bg)!important;color:var(--text)!import
       </div>
     </section>
 
+    <section id="sec-teacher-content" class="section">
+      <div class="card">
+        <h3>طلبات المحتوى المضافة بواسطة المدرسين</h3>
+        <p class="muted small">لا يظهر أي محتوى للطلاب قبل موافقة الإدارة. راجع الملف أو الرابط ثم وافق أو ارفض مع توضيح السبب.</p>
+        <div class="toolbar"><select id="teacherContentStatus"><option value="pending">طلبات معلقة</option><option value="approved">تمت الموافقة</option><option value="rejected">مرفوضة</option><option value="">كل الطلبات</option></select><button class="ghost" id="reloadTeacherContent">تحديث الطلبات</button></div>
+        <div class="table-wrap"><table><thead><tr><th>المدرس</th><th>الصف والمادة</th><th>العنوان والنوع</th><th>المرفق / الرابط</th><th>التاريخ</th><th>الحالة</th><th>ملاحظات / إجراء</th></tr></thead><tbody id="teacherContentTbody"><tr><td colspan="7" class="muted">جارٍ التحميل...</td></tr></tbody></table></div>
+      </div>
+    </section>
+
     <section id="sec-orders" class="section">
       <div class="card"><h3>الطلبات والمشتريات</h3>
         <div class="toolbar"><span class="muted small">تظهر هنا الطلبات المعلقة فقط. بعد الموافقة أو الرفض تختفي من القائمة.</span><button class="ghost" id="reloadOrders">تحميل</button></div>
@@ -430,7 +439,7 @@ const state={token:'', admin:null, section:'dashboard', cache:{}};
 const sectionGroups=[
   {label:'الرئيسية', items:[['dashboard','لوحة المعلومات','نظرة عامة سريعة']]},
   {label:'الإدارة', items:[['students','الطلاب','إدارة الطلاب'],['attendance','الحضور والغياب','تسجيل ومتابعة الحضور'],['parents','أولياء الأمور','حسابات وربط'],['orders','الطلبات','مراجعة الطلبات'],['devices','الأجهزة','طلبات الأجهزة']]},
-  {label:'التعليم', items:[['content','المحتوى','المواد والدروس'],['exams','الاختبارات','إنشاء وإدارة الاختبارات']]},
+  {label:'التعليم', items:[['content','المحتوى','المواد والدروس'],['teacher-content','محتوى المدرسين','مراجعة واعتماد إضافات المدرسين'],['exams','الاختبارات','إنشاء وإدارة الاختبارات']]},
   {label:'التواصل', items:[['ads','الإعلانات','إدارة الإعلانات'],['notifications','الإشعارات','إرسال إشعارات']]},
   {label:'التصميم', items:[['homepage','الصفحة الرئيسية','محتوى الموقع الرئيسي'],['pages','محرر الصفحات','بناء ونشر الصفحات'],['theme','الثيم','الألوان والمظهر'],['media','الوسائط','الملفات والصور']]},
   {label:'النظام', items:[['ai','الذكاء الاصطناعي','مساعد AI'],['roles','الأدوار','المستخدمون والصلاحيات'],['backups','النسخ','تصدير ونسخ احتياطي'],['settings','الإعدادات','إعدادات عامة'],['audit','السجل','سجل العمليات']]},
@@ -448,7 +457,7 @@ async function api(path, opts={}){
 }
 function closeSidebar(){ $('#sidebar')?.classList.remove('open'); $('#sidebarOverlay')?.classList.remove('open'); }
 function openSidebar(){ $('#sidebar')?.classList.add('open'); $('#sidebarOverlay')?.classList.add('open'); }
-const sectionPermission={dashboard:'dashboard',homepage:'page_builder',students:'students',attendance:'attendance',parents:'parents',orders:'orders',devices:'devices',content:'content',exams:'exams',ads:'ads',notifications:'notifications',pages:'page_builder',theme:'theme',media:'media',ai:'ai',roles:'roles',backups:'backups',settings:'settings',audit:'audit'};
+const sectionPermission={dashboard:'dashboard',homepage:'page_builder',students:'students',attendance:'attendance',parents:'parents',orders:'orders',devices:'devices',content:'content','teacher-content':'content',exams:'exams',ads:'ads',notifications:'notifications',pages:'page_builder',theme:'theme',media:'media',ai:'ai',roles:'roles',backups:'backups',settings:'settings',audit:'audit'};
 function canSeeSection(key){
   const permissions=state.admin?.permissions||[];
   const needed=sectionPermission[key]||key;
@@ -655,6 +664,42 @@ window.__toggleSubjectArchive=async(id,action)=>{
   try{ await api(`/api/admin/subjects/${id}/${action}`,{method:'POST'}); showMsg(action==='archive'?'تمت أرشفة المادة':'تمت استعادة المادة',true); await loadSubjects(); }
   catch(e){ showMsg(e.message); }
 };
+
+async function loadTeacherSubmissions(){
+ const tb=$('#teacherContentTbody');if(!tb)return;
+ tb.innerHTML='<tr><td colspan="7" class="muted">جارٍ تحميل الطلبات...</td></tr>';
+ try{
+  const status=$('#teacherContentStatus')?.value||'pending';
+  const d=await api('/api/admin/platform/teacher-content/submissions'+(status?'?status='+encodeURIComponent(status):''));
+  const labels={pending:'بانتظار المراجعة',approved:'تمت الموافقة',rejected:'مرفوض'};
+  const types={pdf:'PDF',image:'صورة',video:'فيديو',link:'رابط'};
+  tb.innerHTML=(d.submissions||[]).map(x=>{
+   const attachment=x.file_key?'<button class="ghost small" type="button" onclick="window.previewTeacherFile('+Number(x.id)+')">معاينة الملف ↗</button>':x.external_url?'<a target="_blank" rel="noopener noreferrer" href="'+esc(x.external_url)+'">فتح الرابط ↗</a>':'—';
+   const action=x.status==='pending'?'<button class="small" onclick="window.reviewTeacherSubmission('+Number(x.id)+',\'approved\')">موافقة ونشر</button> <button class="danger small" onclick="window.reviewTeacherSubmission('+Number(x.id)+',\'rejected\')">رفض</button>':'—';
+   return '<tr><td>'+esc(x.teacher_name||x.username)+'</td><td>'+esc(x.grade)+' · '+esc(x.subject_name)+'</td><td><b>'+esc(x.title)+'</b><div class="muted small">'+(types[x.content_type]||esc(x.content_type))+'</div></td><td>'+attachment+'</td><td>'+esc(x.created_at||'—')+'</td><td>'+esc(labels[x.status]||x.status)+'</td><td>'+(x.review_note?'<div class="small">'+esc(x.review_note)+'</div>':'')+action+'</td></tr>';
+  }).join('')||'<tr><td colspan="7" class="muted">لا توجد طلبات في هذا التصنيف.</td></tr>';
+ }catch(e){tb.innerHTML='<tr><td colspan="7">تعذر تحميل الطلبات: '+esc(e.message)+'</td></tr>';}
+}
+window.previewTeacherFile=async function(id){
+ const previewWindow=window.open('about:blank','_blank');
+ try{
+  const response=await fetch(API+'/api/admin/platform/teacher-content/submissions/'+Number(id)+'/file',{headers:{Authorization:'Bearer '+state.token}});
+  if(!response.ok){const data=await response.json().catch(()=>({}));throw new Error(data.error||'تعذر فتح الملف');}
+  const blob=await response.blob(),url=URL.createObjectURL(blob);
+  if(previewWindow)previewWindow.location.href=url;
+  else{const link=document.createElement('a');link.href=url;link.download='teacher-content-'+Number(id);link.click();}
+  setTimeout(()=>URL.revokeObjectURL(url),60000);
+ }catch(e){if(previewWindow)previewWindow.close();showMsg(e.message||'تعذر معاينة الملف');}
+};
+window.reviewTeacherSubmission=async function(id,decision){
+ let note=window.prompt(decision==='approved'?'ملاحظة اختيارية للموافقة:':'سبب رفض المحتوى (مطلوب):','');
+ if(note===null)return;
+ if(decision==='rejected'&&!note.trim()){showMsg('اكتب سبب الرفض حتى يعرف المدرس المطلوب تعديله.');return;}
+ let price=0,is_free=1;
+ if(decision==='approved'){is_free=window.confirm('هل تريد نشر المحتوى مجانًا؟ اضغط إلغاء لتحديد سعر.');if(!is_free){const raw=window.prompt('أدخل السعر بالجنيه:','0');if(raw===null)return;price=Number(raw);if(!Number.isFinite(price)||price<0||price>1000000){showMsg('السعر غير صالح.');return;}}}
+ try{await api('/api/admin/platform/teacher-content/submissions/'+id+'/review',{method:'POST',body:JSON.stringify({decision,note,price,is_free:is_free?1:0})});showMsg(decision==='approved'?'تمت الموافقة ونشر المحتوى.':'تم رفض المحتوى.',true);await loadTeacherSubmissions();}
+ catch(e){showMsg(e.message);}
+};
 async function loadMaterials(){
   const tb=$('#materialsTbody'); tb.innerHTML='<tr><td colspan="5" class="muted">جارٍ التحميل...</td></tr>';
   try{
@@ -846,6 +891,7 @@ async function loadSection(key){
   if(key==='students') return loadStudents();
   if(key==='attendance') return loadAttendance();
   if(key==='content'){ await loadSubjects(); return loadMaterials(); }
+  if(key==='teacher-content') return loadTeacherSubmissions();
   if(key==='orders') return loadOrders();
   if(key==='devices') return loadDevices();
   if(key==='parents') return loadParents();
@@ -906,7 +952,9 @@ $('#matFile').addEventListener('change',()=>{const file=$('#matFile').files?.[0]
 const resetMaterialEditor=()=>{$('#matEditId').value='';$('#matTitle').value='';$('#matPrice').value='';$('#matFile').value='';$('#matFileName').textContent='لم يتم اختيار ملف';$('#addMaterialBtn').textContent='إضافة المحتوى';$('#cancelMaterialEditBtn').hidden=true;};
 $('#cancelMaterialEditBtn').onclick=resetMaterialEditor;
 $('#addMaterialBtn').onclick=async()=>{const btn=$('#addMaterialBtn');const editingId=Number($('#matEditId').value||0);try{const body={title:$('#matTitle').value.trim(),subject_id:Number($('#matSubjectId').value||0),type:$('#matType').value,price:Number($('#matPrice').value||0),is_free:Number($('#matFree').value||0)};const file=$('#matFile').files?.[0];if(!body.title||!body.subject_id)return showMsg('اكتب عنوان الدرس واختر المادة');if(!Number.isFinite(body.price)||body.price<0)return showMsg('السعر غير صحيح');if(file){if(!materialFileMime(file))return showMsg('الصيغ المسموحة: PDF وJPG وPNG وWEBP فقط');if(file.size<1||file.size>25*1024*1024)return showMsg('حجم الملف يجب ألا يتجاوز 25 ميجابايت');}if(body.type==='video'&&file)return showMsg('رفع ملفات الفيديو غير مدعوم حاليًا؛ استخدم رابطًا خارجيًا');btn.disabled=true;if(file){btn.textContent='جارٍ رفع الملف...';const fd=new FormData();fd.append('file',file,file.name);const response=await fetch(API+'/api/admin/upload',{method:'POST',headers:{Authorization:'Bearer '+state.token},body:fd});const uploaded=await response.json().catch(()=>({success:false,error:'استجابة رفع غير صالحة'}));if(!response.ok||uploaded.success!==true||!uploaded.file_key)throw new Error((uploaded.error||'تعذر رفع الملف')+(uploaded.request_id?' — مرجع: '+uploaded.request_id:''));body.file_key=uploaded.file_key;}btn.textContent=editingId?'جارٍ حفظ التعديلات...':'جارٍ حفظ المحتوى...';const result=await api('/api/admin/materials',{method:editingId?'PUT':'POST',body:JSON.stringify({...body,...(editingId?{id:editingId}:{})})});resetMaterialEditor();showMsg(editingId?'تم تحديث المحتوى بنجاح':'تمت إضافة المحتوى بنجاح (رقم '+result.id+')',true);await loadMaterials();}catch(e){showMsg(e.message);}finally{btn.disabled=false;btn.textContent=$('#matEditId').value?'حفظ التعديلات':'إضافة المحتوى';}};
-$('#reloadOrders').onclick=loadOrders; $('#orderFilter').onchange=loadOrders;
+$('#reloadOrders').onclick=loadOrders;
+$('#reloadTeacherContent').onclick=loadTeacherSubmissions;
+$('#teacherContentStatus').onchange=loadTeacherSubmissions; $('#orderFilter').onchange=loadOrders;
 $('#reloadDevices').onclick=loadDevices;
 const resetExamForm=()=>{ ['examEditId','examTitle','examGrade','examSubject','examDuration','examStartsAt','examEndsAt'].forEach(id=>$('#'+id).value=''); ['examGrade','examSubject','examDuration','examAttempts','examShuffle','examShowResults','examStartsAt','examEndsAt'].forEach(id=>$('#'+id).disabled=false); $('#examStatus').disabled=false; $('#examStatus').value='draft'; $('#examAttempts').value='1'; $('#examShuffle').checked=false; $('#examShowResults').checked=true; $('#addExamBtn').textContent='إنشاء اختبار'; };
 $('#resetExamBtn').onclick=resetExamForm;

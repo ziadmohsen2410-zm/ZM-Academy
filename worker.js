@@ -2347,6 +2347,7 @@ if (method === "POST" && rejectPasswordMatch) {
 
   // المحتوى الدراسي المتاح للطالب المسجل
   if (method === "GET" && path === "/api/materials") {
+    await ensureColumn(env, "materials", "external_url", "TEXT");
     const session = await studentSession(request, env);
 
     if (!session) {
@@ -2368,7 +2369,7 @@ if (method === "POST" && rejectPasswordMatch) {
 
     const rows = subjectId
       ? await env.DB.prepare(
-          `SELECT m.id, m.subject_id, m.title, m.type, m.price, m.is_free
+          `SELECT m.id, m.subject_id, m.title, m.type, m.price, m.is_free, m.external_url
            FROM materials m
            JOIN student_subjects ss ON ss.subject_id = m.subject_id
            WHERE ss.student_id = ?
@@ -2384,7 +2385,7 @@ if (method === "POST" && rejectPasswordMatch) {
           .bind(session.student_id, subjectId)
           .all()
       : await env.DB.prepare(
-          `SELECT m.id, m.subject_id, m.title, m.type, m.price, m.is_free
+          `SELECT m.id, m.subject_id, m.title, m.type, m.price, m.is_free, m.external_url
            FROM materials m
            JOIN student_subjects ss ON ss.subject_id = m.subject_id
            WHERE ss.student_id = ?
@@ -4136,6 +4137,136 @@ if (method === "POST" && rejectPasswordMatch) {
           const rows=await env.DB.prepare('SELECT id,name,grade,school FROM students WHERE grade=? AND COALESCE(is_active,1)=1 ORDER BY name COLLATE NOCASE LIMIT 500').bind(grade).all();
           return reply(request,env,{success:true,students:rows.results||[]});
         }
+      }
+    }
+
+
+    // Teacher-submitted learning content: teacher uploads are private until admin approval.
+    if (path.startsWith('/api/admin/platform/teacher-content') || path.startsWith('/api/admin/platform/teacher-portal/content')) {
+      await env.DB.prepare(`CREATE TABLE IF NOT EXISTS teacher_content_submissions (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        teacher_admin_id INTEGER NOT NULL,
+        subject_id INTEGER NOT NULL,
+        title TEXT NOT NULL,
+        content_type TEXT NOT NULL CHECK(content_type IN ('pdf','image','video','link')),
+        file_key TEXT,
+        external_url TEXT,
+        status TEXT NOT NULL DEFAULT 'pending' CHECK(status IN ('pending','approved','rejected')),
+        review_note TEXT,
+        reviewed_by INTEGER,
+        reviewed_at TEXT,
+        material_id INTEGER,
+        created_at TEXT NOT NULL DEFAULT (datetime('now'))
+      )`).run();
+      await ensureColumn(env,'materials','external_url','TEXT');
+      await ensureColumn(env,'materials','file_key','TEXT');
+
+      if (path === '/api/admin/platform/teacher-portal/content') {
+        if (admin.role !== 'teacher') return reply(request,env,{success:false,error:'هذه الخدمة مخصصة لحسابات المدرسين.'},403);
+        if (method === 'GET') {
+          const rows = await env.DB.prepare(`SELECT s.id,s.title,s.content_type,s.status,s.review_note,s.created_at,s.reviewed_at,
+            sub.name AS subject_name,sub.grade,s.external_url,s.material_id
+            FROM teacher_content_submissions s JOIN subjects sub ON sub.id=s.subject_id
+            WHERE s.teacher_admin_id=? ORDER BY s.id DESC LIMIT 200`).bind(admin.id).all();
+          return reply(request,env,{success:true,submissions:rows.results||[]});
+        }
+        if (method === 'POST') {
+          try {
+            const form=await request.formData();
+            const subjectId=Number(form.get('subject_id')||0);
+            const title=clean(String(form.get('title')||''),180);
+            const contentType=clean(String(form.get('content_type')||''),20);
+            const subject=await env.DB.prepare('SELECT id,name,grade FROM subjects WHERE id=?').bind(subjectId).first();
+            if(!subject||!title||!['pdf','image','video','link'].includes(contentType))
+              return reply(request,env,{success:false,error:'حدد المادة والعنوان ونوع المحتوى بشكل صحيح.'},400);
+            const assignment=await env.DB.prepare('SELECT id FROM teacher_assignments WHERE teacher_admin_id=? AND grade=? AND subject=?')
+              .bind(admin.id,subject.grade,subject.name).first();
+            if(!assignment)return reply(request,env,{success:false,error:'هذه المادة ليست ضمن إسنادات حسابك.'},403);
+            let fileKey=null,externalUrl=null;
+            if(contentType==='pdf'||contentType==='image'){
+              const file=form.get('file');
+              if(!file||typeof file.arrayBuffer!=='function'||file.size<1||file.size>MAX_FILE_SIZE)
+                return reply(request,env,{success:false,error:'اختر ملفًا صالحًا لا يتجاوز 25 ميجابايت.'},400);
+              const bytes=new Uint8Array(await file.arrayBuffer());
+              const sig=bytes.slice(0,12),head=new TextDecoder().decode(sig);
+              const isPDF=contentType==='pdf'&&head.startsWith('%PDF-');
+              const isJpeg=contentType==='image'&&bytes.length>=3&&bytes[0]===0xff&&bytes[1]===0xd8&&bytes[2]===0xff;
+              const isPng=contentType==='image'&&bytes.length>=8&&bytes[0]===0x89&&head.slice(1,4)==='PNG';
+              const isWebp=contentType==='image'&&bytes.length>=12&&head.slice(0,4)==='RIFF'&&head.slice(8,12)==='WEBP';
+              if(!(isPDF||isJpeg||isPng||isWebp))return reply(request,env,{success:false,error:'صيغة الملف لا تطابق النوع المحدد. استخدم PDF أو JPG أو PNG أو WEBP.'},400);
+              fileKey=await uploadToGitHub(env,bytes,file.name||('teacher-'+contentType),isPDF?'application/pdf':isJpeg?'image/jpeg':isPng?'image/png':'image/webp');
+            } else {
+              externalUrl=clean(String(form.get('external_url')||''),1000);
+              if(!/^https:\/\//i.test(externalUrl))return reply(request,env,{success:false,error:'أدخل رابطًا آمنًا يبدأ بـ https://'},400);
+            }
+            const result=await env.DB.prepare(`INSERT INTO teacher_content_submissions
+              (teacher_admin_id,subject_id,title,content_type,file_key,external_url,status)
+              VALUES(?,?,?,?,?,?,'pending')`).bind(admin.id,subjectId,title,contentType,fileKey,externalUrl).run();
+            await logAudit(env,{actor_type:'teacher',actor_id:admin.id,actor_label:admin.username,action:'teacher.content.submit',entity_type:'teacher_content_submission',entity_id:result.meta?.last_row_id,details_json:{subject_id:subjectId,content_type:contentType},ip,user_agent:ua});
+            return reply(request,env,{success:true,id:result.meta?.last_row_id,status:'pending',message:'تم إرسال المحتوى للمراجعة، ولن يظهر للطلاب قبل موافقة الإدارة.'},201);
+          } catch(error) {
+            console.error('Teacher content submission error:',error?.message||error);
+            return reply(request,env,{success:false,error:'تعذر إرسال المحتوى. تحقق من إعدادات التخزين وحاول مرة أخرى.'},500);
+          }
+        }
+      }
+
+      if (path === '/api/admin/platform/teacher-content/submissions') {
+        if (!hasPerm(admin.role,'content')) return reply(request,env,{success:false,error:'Forbidden'},403);
+        if (method === 'GET') {
+          const status=clean(url.searchParams.get('status')||'',20);
+          const valid=['pending','approved','rejected'];
+          const filter=valid.includes(status)?' WHERE s.status=?':'';
+          const query=`SELECT s.id,s.teacher_admin_id,s.subject_id,s.title,s.content_type,s.file_key,s.external_url,
+            s.status,s.review_note,s.created_at,s.reviewed_at,s.material_id,a.display_name AS teacher_name,a.username,
+            sub.name AS subject_name,sub.grade
+            FROM teacher_content_submissions s
+            JOIN admin_users a ON a.id=s.teacher_admin_id JOIN subjects sub ON sub.id=s.subject_id${filter}
+            ORDER BY CASE WHEN s.status='pending' THEN 0 ELSE 1 END,s.id DESC LIMIT 300`;
+          const rows=valid.includes(status)?await env.DB.prepare(query).bind(status).all():await env.DB.prepare(query).all();
+          return reply(request,env,{success:true,submissions:rows.results||[]});
+        }
+      }
+      const fileMatch=path.match(/^\/api\/admin\/platform\/teacher-content\/submissions\/(\d+)\/file$/);
+      if(fileMatch&&method==='GET'){
+        if(!hasPerm(admin.role,'content'))return reply(request,env,{success:false,error:'Forbidden'},403);
+        const item=await env.DB.prepare('SELECT file_key FROM teacher_content_submissions WHERE id=?').bind(Number(fileMatch[1])).first();
+        if(!item?.file_key||!/^(materials|media)\//.test(item.file_key)||item.file_key.includes('..'))
+          return reply(request,env,{success:false,error:'الملف غير موجود.'},404);
+        if(!env.GITHUB_STORAGE_TOKEN)return reply(request,env,{success:false,error:'التخزين غير مهيأ.'},503);
+        const stored=await fetch(githubContentsUrl(item.file_key),{headers:githubHeaders(env)});
+        if(!stored.ok)return reply(request,env,{success:false,error:'تعذر جلب الملف من التخزين.'},502);
+        const data=await stored.json();
+        if(!data?.content||data.encoding!=='base64')return reply(request,env,{success:false,error:'صيغة الملف المخزن غير صالحة.'},502);
+        const binary=atob(String(data.content).replace(/\s/g,''));
+        const bytes=Uint8Array.from(binary,ch=>ch.charCodeAt(0));
+        const ext=item.file_key.toLowerCase().split('.').pop();
+        const contentType=ext==='pdf'?'application/pdf':ext==='png'?'image/png':ext==='webp'?'image/webp':'image/jpeg';
+        return new Response(bytes,{status:200,headers:{...corsHeaders(request,env),'Content-Type':contentType,'Content-Disposition':'inline','Cache-Control':'private, no-store','X-Content-Type-Options':'nosniff'}});
+      }
+      const reviewMatch=path.match(/^\/api\/admin\/platform\/teacher-content\/submissions\/(\d+)\/review$/);
+      if(reviewMatch&&method==='POST'){
+        if(!hasPerm(admin.role,'content'))return reply(request,env,{success:false,error:'Forbidden'},403);
+        const id=Number(reviewMatch[1]),body=await readBody(request),decision=clean(body?.decision,20),note=clean(body?.note,1000);
+        if(!['approved','rejected'].includes(decision))return reply(request,env,{success:false,error:'قرار المراجعة غير صالح.'},400);
+        const submission=await env.DB.prepare(`SELECT s.*,sub.name AS subject_name FROM teacher_content_submissions s
+          JOIN subjects sub ON sub.id=s.subject_id WHERE s.id=?`).bind(id).first();
+        if(!submission)return reply(request,env,{success:false,error:'طلب المحتوى غير موجود.'},404);
+        if(submission.status!=='pending')return reply(request,env,{success:false,error:'تمت مراجعة هذا الطلب من قبل.'},409);
+        if(decision==='approved'){
+          const price=Number(body?.price??0),isFree=body?.is_free===false||Number(body?.is_free)===0?0:1;
+          if(!Number.isFinite(price)||price<0||price>MAX_PRICE)return reply(request,env,{success:false,error:'السعر غير صالح.'},400);
+          const materialType=submission.content_type==='pdf'?'pdf':submission.content_type==='image'?'lesson':submission.content_type==='video'?'video':'link';
+          const created=await env.DB.prepare(`INSERT INTO materials(subject_id,title,type,price,is_free,file_key,external_url)
+            VALUES(?,?,?,?,?,?,?)`).bind(submission.subject_id,submission.title,materialType,price,isFree,submission.file_key,submission.external_url).run();
+          await env.DB.prepare(`UPDATE teacher_content_submissions SET status='approved',review_note=?,reviewed_by=?,reviewed_at=datetime('now'),material_id=? WHERE id=?`)
+            .bind(note||null,admin.id,Number(created.meta?.last_row_id||0),id).run();
+        } else {
+          await env.DB.prepare(`UPDATE teacher_content_submissions SET status='rejected',review_note=?,reviewed_by=?,reviewed_at=datetime('now') WHERE id=?`)
+            .bind(note||'لم يتم توضيح سبب الرفض.',admin.id,id).run();
+        }
+        await logAudit(env,{actor_type:'admin',actor_id:admin.id,actor_label:admin.username,action:'teacher.content.'+decision,entity_type:'teacher_content_submission',entity_id:id,details_json:{note},ip,user_agent:ua});
+        return reply(request,env,{success:true,status:decision,message:decision==='approved'?'تمت الموافقة ونشر المحتوى في المادة المحددة.':'تم رفض طلب المحتوى.'});
       }
     }
 
