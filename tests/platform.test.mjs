@@ -1020,3 +1020,10 @@ test("teacher accounts are separate from public teacher profiles and scoped by e
   assert.ok(management.includes("/api/admin/platform/teacher-accounts"));
   assert.ok(!worker.includes("hasPerm('teacher','attendance')"));
 });
+
+test("teacher role has no global content, exam, analytics, notification, or student-directory permissions", () => {
+  const worker = read("worker.js");
+  assert.match(worker, /teacher:\s*\['dashboard'\]/);
+  assert.ok(worker.includes("if(admin.role!=='teacher')return reply"));
+  assert.ok(worker.includes("غير مصرح بعرض هذا الصف أو المادة"));
+});
