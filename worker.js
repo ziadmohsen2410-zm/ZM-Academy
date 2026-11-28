@@ -699,16 +699,28 @@ async function ensureStudentLearningTables(env) {
       )
     `)
   ]);
-  // This helper is module-scoped; keep schema upgrades local to this helper.
-  let columns = await env.DB.prepare("PRAGMA table_info(student_material_progress)").all();
-  if (!(columns.results || []).some(column => column.name === "completed_at")) {
+  // Upgrade legacy tables safely: older installs may not have these columns.
+  const ensureLocalColumn = async (table, column, ddl) => {
+    let info = await env.DB.prepare(`PRAGMA table_info(${table})`).all();
+    if ((info.results || []).some(item => item.name === column)) return;
     try {
-      await env.DB.prepare("ALTER TABLE student_material_progress ADD COLUMN completed_at TEXT").run();
+      await env.DB.prepare(`ALTER TABLE ${table} ADD COLUMN ${column} ${ddl}`).run();
     } catch (error) {
-      columns = await env.DB.prepare("PRAGMA table_info(student_material_progress)").all();
-      if (!(columns.results || []).some(column => column.name === "completed_at")) throw error;
+      info = await env.DB.prepare(`PRAGMA table_info(${table})`).all();
+      if (!(info.results || []).some(item => item.name === column)) throw error;
     }
-  }
+    info = await env.DB.prepare(`PRAGMA table_info(${table})`).all();
+    if (!(info.results || []).some(item => item.name === column)) {
+      throw new Error(`Student learning schema verification failed: ${table}.${column}`);
+    }
+  };
+  await ensureLocalColumn("student_material_progress", "completed_at", "TEXT");
+  await ensureLocalColumn("student_favorites", "created_at", "TEXT");
+  await env.DB.prepare(`
+    UPDATE student_favorites
+    SET created_at = COALESCE(NULLIF(created_at, ''), CURRENT_TIMESTAMP)
+    WHERE created_at IS NULL OR created_at = ''
+  `).run();
 }
 
 async function route(request, env) {
