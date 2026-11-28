@@ -769,6 +769,53 @@ async function route(request, env) {
     }
   }
 
+  // Public teacher application: candidates request access; accounts are created only after admin approval.
+  if (method === "GET" && path === "/api/teacher/subjects") {
+    await ensureArchivedSubjectsTable(env);
+    const rows = await env.DB.prepare(`SELECT DISTINCT grade, name AS subject
+      FROM subjects WHERE id NOT IN (SELECT subject_id FROM archived_subjects)
+      ORDER BY grade, name`).all();
+    return reply(request, env, { success: true, subjects: rows.results || [] });
+  }
+  if (method === "POST" && path === "/api/teacher/applications") {
+    await env.DB.prepare(`CREATE TABLE IF NOT EXISTS teacher_applications (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      display_name TEXT NOT NULL, username TEXT NOT NULL, password_hash TEXT NOT NULL,
+      email TEXT, phone TEXT, assignments_json TEXT NOT NULL,
+      status TEXT NOT NULL DEFAULT 'pending' CHECK(status IN ('pending','approved','rejected')),
+      review_note TEXT, reviewed_by INTEGER, reviewed_at TEXT,
+      created_at TEXT NOT NULL DEFAULT (datetime('now'))
+    )`).run();
+    const body = await readBody(request);
+    const displayName = clean(body?.display_name, 120);
+    const username = clean(body?.username, 60);
+    const password = String(body?.password || '');
+    const email = clean(body?.email, 120).toLowerCase();
+    const phone = clean(body?.phone, 30);
+    const rawAssignments = Array.isArray(body?.assignments) ? body.assignments.slice(0, 30) : [];
+    if (!displayName || !/^[A-Za-z0-9_.-]{3,60}$/.test(username) || password.length < 12 || !rawAssignments.length) {
+      return reply(request, env, { success:false, error:'أدخل الاسم واسم مستخدم صحيحًا وكلمة مرور 12 حرفًا على الأقل وإسنادًا دراسيًا واحدًا.' }, 400);
+    }
+    if (!(await consumeApiRateLimit(env, request, 'teacher-application', username, 3, 3600))) {
+      return reply(request, env, { success:false, error:'وصلت للحد المسموح من الطلبات. حاول لاحقًا.' }, 429);
+    }
+    const existing = await env.DB.prepare('SELECT id FROM admin_users WHERE LOWER(username)=LOWER(?)').bind(username).first();
+    if (existing) return reply(request, env, { success:false, error:'اسم المستخدم مستخدم بالفعل.' }, 409);
+    const pending = await env.DB.prepare("SELECT id FROM teacher_applications WHERE LOWER(username)=LOWER(?) AND status='pending'").bind(username).first();
+    if (pending) return reply(request, env, { success:false, error:'يوجد طلب قيد المراجعة بنفس اسم المستخدم.' }, 409);
+    const assignments = [];
+    for (const item of rawAssignments) {
+      const grade = clean(item?.grade, 80), subject = clean(item?.subject, 120);
+      if (!grade || !subject) return reply(request, env, { success:false, error:'كل إسناد يجب أن يحتوي على الصف والمادة.' }, 400);
+      if (!assignments.some(x => x.grade === grade && x.subject === subject)) assignments.push({ grade, subject });
+    }
+    const hash = await passwordHash(password);
+    const saved = await env.DB.prepare(`INSERT INTO teacher_applications
+      (display_name,username,password_hash,email,phone,assignments_json,status)
+      VALUES(?,?,?,?,?,?,'pending')`).bind(displayName, username, hash, email || null, phone || null, JSON.stringify(assignments)).run();
+    return reply(request, env, { success:true, id:saved.meta?.last_row_id, status:'pending', message:'تم استلام طلبك. سيتم تفعيل الحساب بعد مراجعة الإدارة.' }, 201);
+  }
+
   // Public image delivery for academy media stored in the private GitHub storage repo.
   if (method === "GET" && path.startsWith("/api/media/")) {
     try {
@@ -4060,6 +4107,60 @@ if (method === "POST" && rejectPasswordMatch) {
       return reply(request, env, {success:true, admin:{id:admin.id, username:admin.username, display_name:admin.display_name, role:admin.role, permissions: ADMIN_PERMS[admin.role]||[]}});
     }
 
+    if (path==='/api/admin/platform/teacher-applications') {
+      if (!hasPerm(admin.role,'roles')) return reply(request,env,{success:false,error:'Forbidden'},403);
+      await env.DB.prepare(`CREATE TABLE IF NOT EXISTS teacher_applications (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        display_name TEXT NOT NULL, username TEXT NOT NULL, password_hash TEXT NOT NULL,
+        email TEXT, phone TEXT, assignments_json TEXT NOT NULL,
+        status TEXT NOT NULL DEFAULT 'pending' CHECK(status IN ('pending','approved','rejected')),
+        review_note TEXT, reviewed_by INTEGER, reviewed_at TEXT,
+        created_at TEXT NOT NULL DEFAULT (datetime('now'))
+      )`).run();
+      if(method==='GET'){
+        const status=clean(url.searchParams.get('status')||'pending',20);
+        const valid=['pending','approved','rejected'];
+        const rows=valid.includes(status)
+          ? await env.DB.prepare('SELECT id,display_name,username,email,phone,assignments_json,status,review_note,created_at FROM teacher_applications WHERE status=? ORDER BY id DESC LIMIT 200').bind(status).all()
+          : await env.DB.prepare('SELECT id,display_name,username,email,phone,assignments_json,status,review_note,created_at FROM teacher_applications ORDER BY id DESC LIMIT 200').all();
+        return reply(request,env,{success:true,applications:(rows.results||[]).map(x=>({...x,assignments:safeJsonParse(x.assignments_json,[])}))});
+      }
+    }
+    const teacherApplicationReview=path.match(/^\\/api\\/admin\\/platform\\/teacher-applications\\/(\\d+)\\/review$/);
+    if(teacherApplicationReview && method==='POST'){
+      if(!hasPerm(admin.role,'roles'))return reply(request,env,{success:false,error:'Forbidden'},403);
+      const id=Number(teacherApplicationReview[1]),body=await readBody(request);
+      const decision=clean(body?.decision,20),note=clean(body?.note,1000);
+      if(!['approved','rejected'].includes(decision))return reply(request,env,{success:false,error:'قرار المراجعة غير صالح.'},400);
+      const app=await env.DB.prepare("SELECT * FROM teacher_applications WHERE id=?").bind(id).first();
+      if(!app)return reply(request,env,{success:false,error:'طلب المدرس غير موجود.'},404);
+      if(app.status!=='pending')return reply(request,env,{success:false,error:'تمت مراجعة الطلب من قبل.'},409);
+      if(decision==='approved'){
+        const duplicate=await env.DB.prepare('SELECT id FROM admin_users WHERE LOWER(username)=LOWER(?)').bind(app.username).first();
+        if(duplicate)return reply(request,env,{success:false,error:'اسم المستخدم أصبح مستخدمًا بالفعل. ارفض الطلب واطلب اسمًا آخر.'},409);
+        const created=await env.DB.prepare(`INSERT INTO admin_users(username,password_hash,display_name,email,role,is_active,created_at)
+          VALUES(?,?,?,?, 'teacher',1,datetime('now'))`).bind(app.username,app.password_hash,app.display_name,app.email).run();
+        const teacherId=Number(created.meta?.last_row_id||0);
+        const assignments=safeJsonParse(app.assignments_json,[]);
+        for(const item of assignments){
+          const grade=clean(item?.grade,80),subjectName=clean(item?.subject,120);
+          if(!grade||!subjectName)continue;
+          let subject=await env.DB.prepare('SELECT id FROM subjects WHERE TRIM(grade)=TRIM(?) AND LOWER(TRIM(name))=LOWER(TRIM(?)) LIMIT 1').bind(grade,subjectName).first();
+          if(!subject){
+            const added=await env.DB.prepare('INSERT INTO subjects(name,grade) VALUES(?,?)').bind(subjectName,grade).run();
+            subject={id:Number(added.meta?.last_row_id||0)};
+          }
+          await env.DB.prepare('INSERT OR IGNORE INTO teacher_assignments(teacher_admin_id,grade,subject) VALUES(?,?,?)').bind(teacherId,grade,subjectName).run();
+        }
+        await env.DB.prepare("UPDATE teacher_applications SET status='approved',review_note=?,reviewed_by=?,reviewed_at=datetime('now') WHERE id=?").bind(note||null,admin.id,id).run();
+        await logAudit(env,{actor_type:'admin',actor_id:admin.id,actor_label:admin.username,action:'teacher.application.approve',entity_type:'teacher_application',entity_id:id,details_json:{teacher_id:teacherId},ip,user_agent:ua});
+        return reply(request,env,{success:true,status:'approved',teacher_id:teacherId,message:'تم قبول الطلب وإنشاء حساب المدرس وإسناد الصفوف والمواد.'});
+      }
+      await env.DB.prepare("UPDATE teacher_applications SET status='rejected',review_note=?,reviewed_by=?,reviewed_at=datetime('now') WHERE id=?").bind(note||'لم يتم توضيح سبب الرفض.',admin.id,id).run();
+      await logAudit(env,{actor_type:'admin',actor_id:admin.id,actor_label:admin.username,action:'teacher.application.reject',entity_type:'teacher_application',entity_id:id,ip,user_agent:ua});
+      return reply(request,env,{success:true,status:'rejected',message:'تم رفض طلب المدرس.'});
+    }
+
     // Teacher accounts and grade-scoped assignments (Phase 2 foundation).
     if (path.startsWith('/api/admin/platform/teacher-accounts') || path.startsWith('/api/admin/platform/teacher-portal/')) {
       await env.DB.prepare(`CREATE TABLE IF NOT EXISTS teacher_assignments (
@@ -4129,6 +4230,15 @@ if (method === "POST" && rejectPasswordMatch) {
           const rows=await env.DB.prepare('SELECT id,grade,subject FROM teacher_assignments WHERE teacher_admin_id=? ORDER BY grade,subject').bind(admin.id).all();
           return reply(request,env,{success:true,assignments:rows.results||[]});
         }
+        if(path.endsWith('/subjects')){
+          await ensureArchivedSubjectsTable(env);
+          const rows=await env.DB.prepare(`SELECT s.id,s.name,s.grade
+            FROM subjects s JOIN teacher_assignments ta
+              ON ta.teacher_admin_id=? AND TRIM(ta.grade)=TRIM(s.grade) AND LOWER(TRIM(ta.subject))=LOWER(TRIM(s.name))
+            WHERE s.id NOT IN (SELECT subject_id FROM archived_subjects)
+            ORDER BY s.grade,s.name`).bind(admin.id).all();
+          return reply(request,env,{success:true,subjects:rows.results||[]});
+        }
         if(method==='GET'&&path.endsWith('/roster')){
           const grade=clean(url.searchParams.get('grade')||'',80),subject=clean(url.searchParams.get('subject')||'',120);
           if(!grade||!subject)return reply(request,env,{success:false,error:'اختر الصف والمادة المسندين.'},400);
@@ -4179,6 +4289,9 @@ if (method === "POST" && rejectPasswordMatch) {
             const subject=await env.DB.prepare('SELECT id,name,grade FROM subjects WHERE id=?').bind(subjectId).first();
             if(!subject||!title||!['pdf','image','video','link'].includes(contentType))
               return reply(request,env,{success:false,error:'حدد المادة والعنوان ونوع المحتوى بشكل صحيح.'},400);
+            const requestedGrade=clean(String(form.get('grade')||''),80);
+            if(!requestedGrade || requestedGrade!==subject.grade)
+              return reply(request,env,{success:false,error:'الصف المختار لا يطابق صف المادة. اختر الصف والمادة من الإسنادات.'},400);
             const assignment=await env.DB.prepare('SELECT id FROM teacher_assignments WHERE teacher_admin_id=? AND grade=? AND subject=?')
               .bind(admin.id,subject.grade,subject.name).first();
             if(!assignment)return reply(request,env,{success:false,error:'هذه المادة ليست ضمن إسنادات حسابك.'},403);
