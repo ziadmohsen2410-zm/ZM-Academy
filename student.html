@@ -1714,6 +1714,14 @@ async function loadDashboard(){
    dashboard.classList.remove("hidden");
    message.textContent="تم تحميل لوحة الطالب بنجاح.";
 
+   const requestedMaterialId=Number(new URLSearchParams(location.search).get("openMaterial")||0);
+   if(requestedMaterialId){
+    const requested=mine.find(m=>Number(m.id)===requestedMaterialId);
+    const canOpen=requested&&(Number(requested.is_free)===1||purchaseList.some(p=>Number(p.material_id)===requestedMaterialId&&(p.status==="approved"||p.status==="completed")));
+    if(canOpen)openPdf(requestedMaterialId,requested.title,getSavedPage(requestedMaterialId));
+    else if(requested)showMsg("هذه المذكرة تحتاج إلى موافقة طلب الشراء أولًا.");
+   }
+
    loadStudentPhoto();
 
   }catch(e){
