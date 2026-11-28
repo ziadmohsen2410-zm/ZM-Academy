@@ -1027,3 +1027,21 @@ test("teacher role has no global content, exam, analytics, notification, or stud
   assert.ok(worker.includes("if(admin.role!=='teacher')return reply"));
   assert.ok(worker.includes("غير مصرح بعرض هذا الصف أو المادة"));
 });
+
+test("teacher assignment migration is additive and repeat-safe", () => {
+  const sql = read("migrations/004_teacher_assignments.sql");
+  assert.match(sql, /CREATE TABLE IF NOT EXISTS teacher_assignments/i);
+  assert.match(sql, /UNIQUE\s*\(teacher_admin_id,\s*grade,\s*subject\)/i);
+  assert.doesNotMatch(sql, /\bDROP\s+(?:TABLE|COLUMN|INDEX)\b|\bDELETE\s+FROM\b|\bTRUNCATE\b/i);
+});
+test("preview smoke verifies teacher login, allowed roster, and denied cross-scope/global access", () => {
+  const workflow = read(".github/workflows/preview-smoke.yml");
+  for (const text of [
+    "/api/admin/platform/teacher-accounts",
+    "/api/admin/platform/teacher-portal/me",
+    "/api/admin/platform/teacher-portal/roster?grade=Preview&subject=Logic",
+    "teacher-wrong-scope.json",
+    "teacher-global-students.json",
+    "teacher-attendance.json"
+  ]) assert.ok(workflow.includes(text), "Preview teacher smoke assertion missing: " + text);
+});
